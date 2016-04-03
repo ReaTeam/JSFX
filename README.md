@@ -17,26 +17,8 @@ https://github.com/ReaTeam/JSFX/raw/master/index.xml
 Fork this repository, add your JS effect(s) in an appropriate category (directory)
 and send a pull request here.
 
-Example of a basic JSFX package (the main files must have the `.jsfx` extension):
+Example of a basic JSFX package (the main files must have the `.jsfx` extension) are included in the Templates subfolder.
 
-```c
-/*
- * @version 1.0
- * @author John Doe
- * @changelog
- *   - Added super cool feature XYZ
- *   - Removed unused triggers
- */
-
-desc:Description for REAPER
-
-@init
-
-@slider
-
-@block
-
-@sample
-```
+Choose one JSFX header format and you can then start to code your effects !
 
 [List of supported metadata tags](https://github.com/cfillion/reapack-index#packaging-documentation)
