@@ -4,6 +4,14 @@ Community-maintained collection of JS effects for REAPER
 
 [![Build Status](https://travis-ci.org/ReaTeam/JSFX.svg?branch=master)](https://travis-ci.org/ReaTeam/JSFX)
 
+## Installation
+
+Copy and paste this URL in Extensions > ReaPack > Import a repository:
+
+```
+https://github.com/ReaTeam/JSFX/raw/master/index.xml
+```
+
 ## Contributing
 
 Fork this repository, add your JS effect(s) in an appropriate category (directory)
