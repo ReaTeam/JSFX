@@ -1,0 +1,17 @@
+/*
+ * @version 1.0
+ * @author John Doe
+ * @changelog
+ *   - Added super cool feature XYZ
+ *   - Removed unused triggers
+ */
+
+desc:Description for REAPER
+
+@init
+
+@slider
+
+@block
+
+@sample
