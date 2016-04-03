@@ -11,3 +11,13 @@
  * v1.0 (2016-01-29)
   + Initial Release
  */
+
+desc:Description for REAPER
+
+@init
+
+@slider
+
+@block
+
+@sample
