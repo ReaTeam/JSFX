@@ -6,8 +6,8 @@ Community-maintained collection of JS effects for REAPER
 
 ## Contributing
 
-Fork this repository, add your JS effect in an appropriate category (directory)
-and make a pull request here.
+Fork this repository, add your JS effect(s) in an appropriate category (directory)
+and send a pull request here.
 
 Example of a basic JSFX package (the main files must have the `.jsfx` extension):
 
@@ -16,8 +16,8 @@ Example of a basic JSFX package (the main files must have the `.jsfx` extension)
  * @version 1.0
  * @author John Doe
  * @changelog
- *  - Added super cool feature XYZ
- *  - Removed unused triggers
+ *   - Added super cool feature XYZ
+ *   - Removed unused triggers
  */
 
 desc:Description for REAPER
