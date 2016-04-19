@@ -21,4 +21,4 @@ Example of a basic JSFX package (the main files must have the `.jsfx` extension)
 
 Choose one JSFX header format and you can then start to code your effects !
 
-[List of supported metadata tags](https://github.com/cfillion/reapack-index#packaging-documentation)
+[Packaging Documentation](https://github.com/cfillion/reapack-index/wiki/Packaging-Documentation)
