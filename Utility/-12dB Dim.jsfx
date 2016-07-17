@@ -1,8 +1,9 @@
 /**
  * JSFX Name: -12dB Dim
- * Usage: no controls needed, shift-click the plugin from the mixer to disable. 
- 	Insert on master as a secondary monitor reference level.
- 	Insert after a particularly loud plugin to get closer to sensible levels.
+* About:
+ *   No controls needed, shift-click the plugin from the mixer to disable.  
+ *   Insert on master as a secondary monitor reference level.  
+ *   Insert after a particularly loud plugin to get closer to sensible levels.
  * Author: The REAPER Blog
  * Licence: GPL v3
  * REAPER: 5.0
