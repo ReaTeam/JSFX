@@ -1,12 +1,9 @@
-/*
- * @version 1.0
- * @author John Doe
- * @changelog
- *   - Added super cool feature XYZ
- *   - Removed unused triggers
- */
-
-desc:Description for REAPER
+desc:Description for REAPER and ReaPack package browser
+// @version 1.0.5
+// @author John Doe
+// @changelog
+//   - Added super cool feature XYZ
+//   - Removed unused triggers
 
 @init
 
