@@ -1,2 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="61ba1bd82c48bff0e43f2cadf0d57a30e980b213"/>
+<index version="1" name="ReaTeam JSFX" commit="6d2d133d93b60f3a2326101e3c0e7799637052d4">
+  <category name="Utility">
+    <reapack name="-12dB Dim.jsfx" type="effect" desc="-12dB Dim">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 No controls needed, shift-click the plugin from the mixer to disable.\line Insert on master as a secondary monitor reference level.\line Insert after a particularly loud plugin to get closer to sensible levels.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="The REAPER Blog" time="2016-07-17T23:25:22Z">
+        <changelog><![CDATA[+ Initial Release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/6d2d133d93b60f3a2326101e3c0e7799637052d4/Utility/-12dB%20Dim.jsfx</source>
+      </version>
+    </reapack>
+  </category>
+</index>
