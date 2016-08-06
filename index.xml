@@ -1,5 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="6d2d133d93b60f3a2326101e3c0e7799637052d4">
+<index version="1" name="ReaTeam JSFX" commit="7ffdc06c2c64fdaa3e04c59132311cacf04f56a6">
+  <category name="TiaR">
+    <reapack name="ZeCheesyHarmo_01.jsfx" type="effect" desc="ZeCheesyHarmo_01">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 An additive synth based on Walsh functions\par}
+}
+]]></description>
+      </metadata>
+      <version name="0.1" author="T.Rochebois" time="2016-08-06T21:15:56Z">
+        <changelog><![CDATA[added    additive outputs (so that you can chain synths)
+added    gfx waveform
+added    adsr enveloppe : with log Attack Decay Release times
+improved Glide rate range
+added    Detune (semitones)
+added    vibrato rate
+added    pan
+added    gain (dB)]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/57094de3767c291a8b02e282216a0ab316d7131c/TiaR/ZeCheesyHarmo_01.jsfx</source>
+      </version>
+    </reapack>
+  </category>
   <category name="Utility">
     <reapack name="-12dB Dim.jsfx" type="effect" desc="-12dB Dim">
       <metadata>
