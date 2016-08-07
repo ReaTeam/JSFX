@@ -6,7 +6,9 @@
  * Licence: LGPL
  * REAPER: 5.0
  * Version: 0.1
- * Provides: spk77_temporary fx files/*.{jsfx-inc,png}
+ * Provides:
+ *  spk77_temporary fx files/spk77_temp_inc_file.jsfx-inc
+ *  spk77_temporary fx files/spk77_volthumb_47x21.png
  */
 
 /**
