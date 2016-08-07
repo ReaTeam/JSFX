@@ -5,57 +5,52 @@
  * Author: T.Rochebois
  * Licence: LGPL
  * REAPER: 5.0
- * Version: 0.1
+ * Version: 0.2
  */
 
 /**
  * Changelog:
+ * v0.2 (2016-08-07)
+ *   + improved keyboard (priority to last or highest note)
+ *   + added    tremolo
+ *   + added    ModWheel/Aftertouch vibrato depth
+ *   + added    Pitch bend +- 1 octave
+ *   + modified Seq gains can be negative (opposite phase)
+ *   + modified Seq. init to fundamental seq
  * v0.1 (2016-08-05)
-    added    additive outputs (so that you can chain synths)
-    added    gfx waveform
-    added    adsr enveloppe : with log Attack Decay Release times
-    improved Glide rate range
-    added    Detune (semitones)
-    added    vibrato rate
-    added    pan
-    added    gain (dB)
+ *   + added    additive outputs (so that you can chain synths)
+ *   + added    gfx waveform
+ *   + added    adsr enveloppe : with log Attack Decay Release times
+ *   + improved Glide rate range
+ *   + added    Detune (semitones)
+ *   + added    vibrato rate
+ *   + added    pan
+ *   + added    gain (dB)
  */
- desc:Ze Cheesy Harmonic Synth 01
-/* T.Rochebois 08/2016
-  WT code based on code developped at IEF/AXIS lab around 1997.
-  Walsh function generation based on patent US3878749 by Allen Organs/RMI (1975)
-  rev 01
-    added    additive outputs (so that you can chain synths)
-    added    gfx waveform
-    added    adsr enveloppe : with log Attack Decay Release times
-    improved Glide rate range
-    added    Detune (semitones)
-    added    vibrato rate
-    added    pan
-    added    gain (dB)
-*/
+desc:Ze Cheesy Harmonic Synth 01
 
-slider1:0<0,1,0.001>Seq. 1
-slider2:0.4<0,1,0.001>Seq. 2
-slider3:0<0,1,0.001>Seq. 3
-slider4:0.2<0,1,0.001>Seq. 4
-slider5:0<0,1,0.001>Seq. 5
-slider6:0.2<0,1,0.001>Seq. 6
-slider7:0<0,1,0.001>Seq. 7
-slider8:0<0,1,0.001>Seq. 8
-slider9:0.2<0,1,0.001>Seq. 9
-slider10:0.3<0,1,0.001>Seq. 10
-slider11:0<0,1,0.001>Seq. 11
-slider12:0<0,1,0.001>Seq. 12
-slider13:0<0,1,0.001>Seq. 13
-slider14:0<0,1,0.001>Seq. 14
-slider15:0.3<0,1,0.001>Seq. 15
-slider16:0.6<0,1,0.001>Seq. 16
+slider1:1<-1,1,0.001>Seq. 1
+slider2:0<-1,1,0.001>Seq. 2
+slider3:0<-1,1,0.001>Seq. 3
+slider4:0<-1,1,0.001>Seq. 4
+slider5:0<-1,1,0.001>Seq. 5
+slider6:0<-1,1,0.001>Seq. 6
+slider7:0<-1,1,0.001>Seq. 7
+slider8:0<-1,1,0.001>Seq. 8
+slider9:0<-1,1,0.001>Seq. 9
+slider10:0<-1,1,0.001>Seq. 10
+slider11:0<-1,1,0.001>Seq. 11
+slider12:0<-1,1,0.001>Seq. 12
+slider13:0<-1,1,0.001>Seq. 13
+slider14:0<-1,1,0.001>Seq. 14
+slider15:0<-1,1,0.001>Seq. 15
+slider16:0<-1,1,0.001>Seq. 16
 
 slider20:0<-24,24,0.0001>Detune (semitones)
 slider21:5.5<1,20>Vibrato rate
 slider22:0.4<0,1,0.0001>Vibrato depth
 slider23:1<0,1,0.0001>Glide rate
+slider24:0<0,1>Tremolo depth
 
 slider31:-3<-3,1,0.0001>Attack
 slider32:0<-3,1,0.0001>Decay
@@ -89,7 +84,7 @@ function ADSR_kProc(gate trig)
 //  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
   this.AttackSeg === 1 ? (
     this.ADSR += this.A * (1.5 - this.ADSR);
-    this.ADSR >= 1.0 ? 
+    this.ADSR >= 1 ? 
     ( this.ADSR = 1.0;
       this.AttackSeg = 0;
     );
@@ -198,12 +193,16 @@ _srate = 1 / srate;
 KRATE = 8; _KRATE = 1/KRATE;
 piwt.PIWT_init(32);
 wsh.WSH_init();
+kbNotes = ad; ad += 128;
+bendFactor = bendFactorF = 1;
 // ___________________________________________________________________
 @slider
 gain = 2^((1/6)*slider42);
 gLeft  = gain * cos(0.5*$pi*slider41);
 gRight = gain * sin(0.5*$pi*slider41);
 dpLfo = 2*$pi*slider21*32*_srate;
+vibMin = slider22*0.05;
+vibMax = 0.025 + 2 * vibMin;
 adsr.ADSR_setP10(slider31, slider32, slider33, slider34);
 glideCoef = 32 * _srate * (0.1 + 100 * slider23 * slider23);
 x = 0; loop(32,
@@ -222,18 +221,36 @@ piwt.PIWT_disc();
 @block
 while (midirecv(offset, msg1, msg23)) (
   msg2 = msg23 & 0x7F; msg3 = msg23 >> 8; status = msg1 & $xF0;
-  status == $x80 ? ( status = $x90; msg3 = 0; );  // note off
-  status == $x90 ? (                              // note on
-    msg3 == 0 ? (msg2 == note ? gate = gate2 = 0; )
-  : ( 
+  status == $x80 ? ( status = $x90; msg3 = 0; )  // note off
+: status == $x90 ? (                              // note on
+    msg3 == 0 ? (
+      kbNotes[msg2] = 0;
+      gate = 0; i=0; loop(128, kbNotes[i] !== 0 ? (gate = kBNotes[i]; note=i;); i+=1;);
+      gate ? dpc = (piwt.n*440*_srate) * 2 ^ ((note + slider20 - 69) * (1/12)); 
+    ) : ( 
       gate == 0 ? trig = 1;
+      kbNotes[msg2] = gate = sqrt(msg3 * (1/127));
       note = msg2;
       dpc = (piwt.n*440*_srate) * 2 ^ ((note + slider20 - 69) * (1/12));
-      gate2 == 0 ? (dpg = dpc;);
-      gate2 = msg3 * (1/127);
-      gate = sqrt(gate2);   
+      trig ? (dpg = dpc;); 
     );
-  );
+  )
+: status == $xB0 ? (     
+    msg2 == 1    ? modWhl = msg3 * (1/127);
+
+    // All notes off
+    msg2 == 123 ? (trig = gate = 0;i=0; loop(128, kBNotes[i] = 0; note=i;); i+=1;);
+  )
+: status == $xD0 ? (aftertouch = msg2 * (1/127);)
+: status === 14 * 16 ? (
+  bend = (msg3 << 7 | msg2) - 8192;
+  bend <= 0 ? bend *= 1 / 8192 : bend *= 1 / 8191;
+  bendFactor = 2^bend;
+  
+);
+  co_vib = vibMin + modWhl * (vibMax - vibMin); 
+  co_vibA = max(co_vib, vibMin + aftertouch * (vibMax - vibMin)); 
+
   midisend(offset, msg1, msg23);
 );
 // ___________________________________________________________________
@@ -247,10 +264,14 @@ k2 -= 1;
 // _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 k <= 0 ? (
   k = 32;
+  bendFactorF += 0.05 * (bendFactor - bendFactorF);
+  slider23 >=1 ? dpg = bendFactorF * dpc
+               : dpg  += glideCoef * (bendFactorF * dpc - dpg);
   pLfo += dpLfo; pLfo -= 2*$pi*(pLfo>0);
-  slider23 >=1 ? dpg = dpc
-               : dpg  += glideCoef * (dpc - dpg);
-  piwt.dp = dpg * (1 + slider22*0.05*sin(pLfo));
+  lfo = sin(pLfo);
+  dTrem = (1/32)*(  1 + slider24 * (0.5*lfo+0.5 - 1) - trem);
+  co_vibAf += 0.05 * (co_vibA - co_vibAf);
+  piwt.dp = dpg * (1 + co_vibAf * lfo);
   piwt._dp = 1 / piwt.dp;
   piwt._dp3 = piwt._dp * piwt._dp * piwt._dp;
   piwt.PIWT_disc();
@@ -258,7 +279,8 @@ k <= 0 ? (
 k -= 1;
 // _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 env += dEnv;
-out =  min(10,max(-10,env*piwt.PIWT_aProc()));
+trem += dTrem;
+out =  min(10,max(-10,trem*env*piwt.PIWT_aProc()));
 spl0 += gLeft * out;
 spl1 += gRight * out;
 // ___________________________________________________________________
