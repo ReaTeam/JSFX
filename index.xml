@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="7ffdc06c2c64fdaa3e04c59132311cacf04f56a6">
+<index version="1" name="ReaTeam JSFX" commit="338adc6f0854f8884b12d4d387b49800a34434a8">
+  <category name="spk77">
+    <reapack name="spk77_temporary fx.jsfx" type="effect" desc="temporary fx">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 temporary fx, will be deleted\par}
+}
+]]></description>
+      </metadata>
+      <version name="0.1" author="spk77" time="2016-08-07T11:18:52Z">
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/338adc6f0854f8884b12d4d387b49800a34434a8/spk77/spk77_temporary%20fx.jsfx</source>
+        <source file="spk77_temporary fx files/spk77_temp_inc_file.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/338adc6f0854f8884b12d4d387b49800a34434a8/spk77/spk77_temporary%20fx%20files/spk77_temp_inc_file.jsfx-inc</source>
+        <source file="spk77_temporary fx files/spk77_volthumb_47x21.png">https://github.com/ReaTeam/JSFX/raw/338adc6f0854f8884b12d4d387b49800a34434a8/spk77/spk77_temporary%20fx%20files/spk77_volthumb_47x21.png</source>
+      </version>
+    </reapack>
+  </category>
   <category name="TiaR">
     <reapack name="ZeCheesyHarmo_01.jsfx" type="effect" desc="ZeCheesyHarmo_01">
       <metadata>
