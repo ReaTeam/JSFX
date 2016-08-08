@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="c91712bec00656125225a9c457beac96ea04ed6b">
+<index version="1" name="ReaTeam JSFX" commit="d2bb87431560cbfc0e6e751c46880b7ca65f64a0">
   <category name="spk77">
     <reapack name="spk77_temporary fx.jsfx" type="effect" desc="temporary fx">
       <metadata>
@@ -39,6 +39,15 @@ added    vibrato rate
 added    pan
 added    gain (dB)]]></changelog>
         <source main="true">https://github.com/ReaTeam/JSFX/raw/57094de3767c291a8b02e282216a0ab316d7131c/TiaR/ZeCheesyHarmo_01.jsfx</source>
+      </version>
+      <version name="0.2" author="T.Rochebois" time="2016-08-07T18:11:30Z">
+        <changelog><![CDATA[*   + improved keyboard (priority to last or highest note)
+*   + added    tremolo
+*   + added    ModWheel/Aftertouch vibrato depth
+*   + added    Pitch bend +- 1 octave
+*   + modified Seq gains can be negative (opposite phase)
+*   + modified Seq. init to fundamental seq]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c32ebbe92375cb34c50db047fe9a28adde5ecf5e/TiaR/ZeCheesyHarmo_01.jsfx</source>
       </version>
     </reapack>
   </category>
