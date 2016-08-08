@@ -5,13 +5,13 @@
   @changelog
     + Initial release
   @provides
-	TiaR_Complex X Filter synth/TiaR_ADSR_03.jsfx-inc
-	TiaR_Complex X Filter Synth/TiaR_CXF_10.jsfx-inc
-	TiaR_Complex X Filter Synth/TiaR_DC5.jsfx-inc
-	TiaR_Complex X Filter Synth/TiaR_KBD_03.jsfx-inc
-	TiaR_Complex X Filter Synth/TiaR_LFO_00.jsfx-inc
-	TiaR_Complex X Filter Synth/TiaR_SCP_01.jsfx-inc
-	TiaR_Complex X Filter Synth/TiaR_SIN_01.jsfx-inc
+    TiaR_Complex X Filter synth/TiaR_ADSR_03.jsfx-inc
+    TiaR_Complex X Filter Synth/TiaR_CXF_10.jsfx-inc
+    TiaR_Complex X Filter Synth/TiaR_DC5.jsfx-inc
+    TiaR_Complex X Filter Synth/TiaR_KBD_03.jsfx-inc
+    TiaR_Complex X Filter Synth/TiaR_LFO_00.jsfx-inc
+    TiaR_Complex X Filter Synth/TiaR_SCP_01.jsfx-inc
+    TiaR_Complex X Filter Synth/TiaR_SIN_01.jsfx-inc
 */
 
 //http://stash.reaper.fm/v/22067/TiaR_CXF_synth_deluxe.zip
