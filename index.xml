@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="d2bb87431560cbfc0e6e751c46880b7ca65f64a0">
+<index version="1" name="ReaTeam JSFX" commit="58bb8d696599194a4aa96d3a29e3926d0f0f6164">
   <category name="spk77">
     <reapack name="spk77_temporary fx.jsfx" type="effect" desc="temporary fx">
       <metadata>
@@ -18,53 +18,41 @@
       </version>
     </reapack>
   </category>
-  <category name="TiaR">
-    <reapack name="ZeCheesyHarmo_01.jsfx" type="effect" desc="ZeCheesyHarmo_01">
-      <metadata>
-        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
-{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
-\widowctrl\hyphauto
-
-{\pard \ql \f0 \sa180 \li0 \fi0 An additive synth based on Walsh functions\par}
-}
-]]></description>
-      </metadata>
-      <version name="0.1" author="T.Rochebois" time="2016-08-06T21:15:56Z">
-        <changelog><![CDATA[added    additive outputs (so that you can chain synths)
-added    gfx waveform
-added    adsr enveloppe : with log Attack Decay Release times
-improved Glide rate range
-added    Detune (semitones)
-added    vibrato rate
-added    pan
-added    gain (dB)]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/57094de3767c291a8b02e282216a0ab316d7131c/TiaR/ZeCheesyHarmo_01.jsfx</source>
-      </version>
-      <version name="0.2" author="T.Rochebois" time="2016-08-07T18:11:30Z">
+  <category name="Synth">
+    <reapack name="TiaR_ZeCheesyHarmo_01.jsfx" type="effect">
+      <version name="0.2" author="T.Rochebois" time="2016-08-08T14:07:30Z">
         <changelog><![CDATA[*   + improved keyboard (priority to last or highest note)
 *   + added    tremolo
 *   + added    ModWheel/Aftertouch vibrato depth
 *   + added    Pitch bend +- 1 octave
 *   + modified Seq gains can be negative (opposite phase)
 *   + modified Seq. init to fundamental seq]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c32ebbe92375cb34c50db047fe9a28adde5ecf5e/TiaR/ZeCheesyHarmo_01.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/58bb8d696599194a4aa96d3a29e3926d0f0f6164/Synth/TiaR_ZeCheesyHarmo_01.jsfx</source>
+      </version>
+    </reapack>
+  </category>
+  <category name="Synth/TiaR_PWave poly synth Mark II">
+    <reapack name="TiaR_PWT_02.jsfx" type="effect">
+      <version name="1.0" author="T.Rochebois" time="2016-08-08T14:07:30Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/58bb8d696599194a4aa96d3a29e3926d0f0f6164/Synth/TiaR_PWave%20poly%20synth%20Mark%20II/TiaR_PWT_02.jsfx</source>
+        <source file="PWT_02.RPL">https://github.com/ReaTeam/JSFX/raw/58bb8d696599194a4aa96d3a29e3926d0f0f6164/Synth/TiaR_PWave%20poly%20synth%20Mark%20II/PWT_02.RPL</source>
+        <source file="TiaR_ADSR_03.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/58bb8d696599194a4aa96d3a29e3926d0f0f6164/Synth/TiaR_PWave%20poly%20synth%20Mark%20II/TiaR_ADSR_03.jsfx-inc</source>
+        <source file="TiaR_KB6_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/58bb8d696599194a4aa96d3a29e3926d0f0f6164/Synth/TiaR_PWave%20poly%20synth%20Mark%20II/TiaR_KB6_01.jsfx-inc</source>
+        <source file="TiaR_LFO_04.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/58bb8d696599194a4aa96d3a29e3926d0f0f6164/Synth/TiaR_PWave%20poly%20synth%20Mark%20II/TiaR_LFO_04.jsfx-inc</source>
+        <source file="TiaR_LIM_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/58bb8d696599194a4aa96d3a29e3926d0f0f6164/Synth/TiaR_PWave%20poly%20synth%20Mark%20II/TiaR_LIM_01.jsfx-inc</source>
+        <source file="TiaR_MAP_02.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/58bb8d696599194a4aa96d3a29e3926d0f0f6164/Synth/TiaR_PWave%20poly%20synth%20Mark%20II/TiaR_MAP_02.jsfx-inc</source>
+        <source file="TiaR_PPWT_02.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/58bb8d696599194a4aa96d3a29e3926d0f0f6164/Synth/TiaR_PWave%20poly%20synth%20Mark%20II/TiaR_PPWT_02.jsfx-inc</source>
+        <source file="TiaR_SCP_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/58bb8d696599194a4aa96d3a29e3926d0f0f6164/Synth/TiaR_PWave%20poly%20synth%20Mark%20II/TiaR_SCP_01.jsfx-inc</source>
+        <source file="TiaR_VCT_PPWT_02.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/58bb8d696599194a4aa96d3a29e3926d0f0f6164/Synth/TiaR_PWave%20poly%20synth%20Mark%20II/TiaR_VCT_PPWT_02.jsfx-inc</source>
       </version>
     </reapack>
   </category>
   <category name="Utility">
-    <reapack name="-12dB Dim.jsfx" type="effect" desc="-12dB Dim">
-      <metadata>
-        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
-{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
-\widowctrl\hyphauto
-
-{\pard \ql \f0 \sa180 \li0 \fi0 No controls needed, shift-click the plugin from the mixer to disable.\line Insert on master as a secondary monitor reference level.\line Insert after a particularly loud plugin to get closer to sensible levels.\par}
-}
-]]></description>
-      </metadata>
-      <version name="1.0" author="The REAPER Blog" time="2016-07-17T23:25:22Z">
+    <reapack name="ReaperBlog_-12dB Dim.jsfx" type="effect">
+      <version name="1.0" author="The REAPER Blog" time="2016-08-08T14:07:30Z">
         <changelog><![CDATA[+ Initial Release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/6d2d133d93b60f3a2326101e3c0e7799637052d4/Utility/-12dB%20Dim.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/58bb8d696599194a4aa96d3a29e3926d0f0f6164/Utility/ReaperBlog_-12dB%20Dim.jsfx</source>
       </version>
     </reapack>
   </category>
