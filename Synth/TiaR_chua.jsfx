@@ -1,0 +1,313 @@
+/*
+  @description chua
+  @version 1.0
+  @author T.Rochebois
+  @changelog
+    + Initial release
+*/
+
+
+//http://stash.reaper.fm/v/21646/TiaR_chua_02.zip
+
+desc:TiaR_chua
+//Osc based on Leon Chua osc (trig 0 restart, trig 1-7 presets)
+
+slider1:15.6<-10,10>alpha
+slider2:28.58<-10,10>beta
+slider3:0<-10,10>gamma
+slider4:-1.142857<-10,10>a
+slider5:-0.7142857<-10,00>b
+slider6:0.001<-2,2>k
+slider11:0.0<-0.1,0.1,0.001>Fine alpha
+slider12:0.0<-0.1,0.1,0.001>Fine beta
+slider13:0.0<-0.1,0.1,0.001>Fine gamma
+slider14:0.0<-0.1,0.1,0.001>Fine a
+slider15:0.0<-0.1,0.1,0.001>Fine b
+slider20:0<0,1,{x,y}>Left
+slider21:0<0,1,{x,z}>Right
+@init
+function DC5() (
+  DEC5_h0 = 346 / 692;
+  DEC5_h1 = 208 / 692;
+  DEC5_h3 = -44 / 692;
+  DEC5_h5 =   9 / 692;
+);
+
+function DC5_init() (
+  this.R1 = this.R2 = this.R3 = this.R4 = this.R5 = 0;
+);
+
+function DC5_aProc(x0 x1) 
+  local(h5x0 h3x0 h1x0) (
+  h5x0 = DEC5_h5 * x0;
+  h3x0 = DEC5_h3 * x0;
+  h1x0 = DEC5_h1 * x0;
+  this.R6 = this.R5 + h5x0;
+  this.R5 = this.R4 + h3x0;
+  this.R4 = this.R3 + h1x0;
+  this.R3 = this.R2 + h1x0 + DEC5_h0 * x1;
+  this.R2 = this.R1 + h3x0;
+  this.R1 = h5x0;
+  this.R6;
+);
+
+
+bpos=0;
+v.x = 1;
+v.z = 0;
+v.y = 0;
+
+DC5();
+dc_x.DC5_init();
+dc_y.DC5_init();
+dc_z.DC5_init();
+
+@slider
+  alpha = slider1+slider11;
+  beta = slider2+slider12;
+  gamma = slider3+slider13;
+  a = slider4+slider14;
+  b = slider5+slider15;
+  k = slider6;
+
+@block
+
+xmax*= 0.99;
+xmin*=0.99;
+ymax*=0.99;
+ymin*=0.99;
+zmax*=0.99;
+zmin*=0.99;
+dt = 4/10;
+dt_2 = dt / 2;
+trigger != 0 ? (
+  xmin = v.x;
+  xmax = v.x;
+  ymin = v.y;
+  ymax = v.y;
+trigger & 2 ? 
+  (
+    slider1 = -1.301814;
+    slider2 = -0.0136073;
+    slider3 = -0.02969968;
+    slider4 = 0.1690817;
+    slider5 = -0.4767822;
+    slider6 = 0.5;
+  );
+trigger & 4 ? 
+  (
+    slider1 = -6.69191;
+    slider2 = -1.52067;
+    slider3 = -0.0;
+    slider4 = -1.142857;
+    slider5 = -0.7142857;
+    slider6 = 0.15;
+    slider11=slider12=slider13=slider14=slider15=0;
+  );
+trigger & 8 ? 
+  (
+    slider1 = -1.2331692348;
+    slider2 = 0.0072338195;
+    slider3 = 0.0857850567;
+    slider4 = -0.1767031151;
+    slider5 = -0.0162669575;
+    slider6 = -0.5;
+    slider11=slider12=slider13=slider14=slider15=0;
+  );
+trigger & 16 ? 
+  (
+    slider1 = -4.898979;
+    slider2 = -3.624135;
+    slider3 = -0.001180888;
+    slider4 = -2.501256;
+    slider5 = -0.9297201;
+    slider6 = 0.5;
+    slider11=slider12=slider13=slider14=slider15=0;
+  );
+trigger & 32 ? 
+  (
+    slider1 = -1.458906;
+    slider2 = -0.09307192;
+    slider3 = -0.3214346;
+    slider4 = 1.218416;
+    slider5 = -0.5128436;
+    slider6 = -1;
+    slider11=slider12=slider13=slider14=slider15=0;
+  );
+trigger & 64 ? 
+  (
+    slider1 = -1.424;
+    slider2 = 0.02944;
+    slider3 = 0.3226;
+    slider4 = -0.0715;
+    slider5 = -0.1817;
+    slider6 = 1;
+    slider11=slider12=slider13=slider14=slider15=0;
+  );
+trigger & 128 ? 
+  (
+    slider1 = -1.23;
+    slider2 = 0.007;
+    slider3 = 0.085;
+    slider4 = -0.001;
+    slider5 = -0.177;
+    slider6 = -1;
+    slider11=slider12=slider13=slider14=slider15=0;
+  );
+trigger & 256 ? 
+  (
+    slider1 = 3.10182609;
+    slider2 = 4.13728103;
+    slider3 = 0.08366743;
+    slider4 = -1.341354;
+    slider5 = -0.6293224;
+    slider6 = 0.1;
+    slider11=slider12=slider13=slider14=slider15=0;
+  );
+
+  v.x=0; v.y=0; v.z=0;
+  alpha = slider1+slider11;
+  beta = slider2+slider12;
+  gamma = slider3+slider13;
+  a = slider4+slider14;
+  b = slider5+slider15;
+  k = slider6;
+  sliderchange(slider1);
+  sliderchange(slider2);
+  sliderchange(slider3);
+  sliderchange(slider4);
+  sliderchange(slider5);
+  sliderchange(slider6);
+  sliderchange(slider11);
+  sliderchange(slider12);
+  sliderchange(slider13);
+  sliderchange(slider14);
+  sliderchange(slider15);
+);
+
+@sample
+function chua(d* v*) (
+  d.x= k * alpha * (v.y - v.x - b * v.x - 0.5 * (a - b ) * (abs(v.x + 1) - abs(v.x - 1)));
+  d.y = k * (v.x - v.y + v.z);
+  d.z = k * (-beta * v.y - gamma * v.z);
+); 
+c = 0;
+loop(2,
+chua(d_s, v);
+
+v_m1.x = v.x + d_s.x * dt_2;
+v_m1.y = v.y + d_s.y * dt_2;
+v_m1.z = v.z + d_s.z * dt_2;
+
+chua(d_m1, v_m1);
+
+v_m2.x = v.x + d_m1.x * dt_2;
+v_m2.y = v.y + d_m1.y * dt_2;
+v_m2.z = v.z + d_m1.z * dt_2;
+
+chua(d_m2, v_m2);
+
+v_e.x = v.x + d_m2.x * dt;
+v_e.y = v.y + d_m2.y * dt;
+v_e.z = v.z + d_m2.z * dt;
+
+chua(d_e, v_e);
+
+v.x += dt * ( (d_s.x + d_e.x) * (1/6) + (d_m1.x + d_m2.x)*(1/3) );
+v.y += dt * ( (d_s.y + d_e.y) * (1/6) + (d_m1.y + d_m2.y)*(1/3) );
+v.z += dt * ( (d_s.z + d_e.z) * (1/6) + (d_m1.z + d_m2.z)*(1/3) );
+
+c === 0 ? (
+  ax = v.x;
+  ay = v.y;
+  az = v.z;
+);
+
+c += 1;
+);
+
+a.x = dc_x.DC5_aProc(a.x, v.x);
+a.y = dc_y.DC5_aProc(a.y, v.y);
+a.z = dc_z.DC5_aProc(a.z, v.z);
+
+v.x += (rand()-0.5)*0.00001*(xmax-xmin);
+
+v.x = min(100,max(-100,v.x));
+v.y = min(100,max(-100,v.y));
+v.z = min(100,max(-100,v.z));
+a.x = v.x;
+a.y = v.y;
+a.Z = v.z;
+xmax = max(ax,xmax);
+xmin = min(ax,xmin);
+ymax = max(ay,ymax);
+ymin = min(ay,ymin);
+zmax = max(az,zmax);
+zmin = min(az,zmin);
+ax= 2*(ax-xmin)/(xmax-xmin) -1;
+ay= 2*(ay-ymin)/(ymax-ymin) -1;
+az= 2*(az-zmin)/(zmax-zmin) -1;
+
+sc > 40000 ?
+  sc = 40000 :
+( buf[sc  ] = ax;
+  buf[sc+1] = ay;
+  buf[sc+2] = az;
+);
+slider20 === 0 ? spl0 = ax : spl0 = ay;
+slider21 === 0 ? spl1 = ax : spl1 = az;
+sc += 3;
+
+
+@gfx
+gfx_clear = -1;
+gfx_mode = 0;
+gfx_a = 0.3; gfx_r = gfx_g = gfx_b = 0;
+gfx_rect(0,0,gfx_w,gfx_h);
+gfx_mode = 1;
+h_2 = gfx_h * 0.5;
+h_4 = gfx_h * 0.25;
+h3_4 = gfx_h * 0.75;
+
+h_8 = gfx_h * 0.125;
+w_2 = gfx_w * 0.5;
+w_4 = gfx_w * 0.25;
+w3_4 = gfx_w * 0.75;
+
+
+gfx_r = 0.2; gfx_g = 0.8; gfx_b = 0.15;
+gfx_x = w_4 + buf[0] * w_4;
+gfx_y = h3_4 + buf[2] * h_4;
+i = 3;
+m = sc/3-1;
+loop(m,
+  gfx_lineto(w_4 + buf[i] * w_4, h3_4 + buf[i+2] * h_4,0);
+  i+= 3;
+);
+
+gfx_r = 1; gfx_g = 0.3; gfx_b = 0.0;
+gfx_x = w3_4 + buf[1] * w_4;
+gfx_y = h3_4 + buf[2] * h_4;
+i = 3;
+m = sc/3-1;
+loop(m,
+  gfx_lineto(w3_4 + buf[i+1] * w_4, h3_4 + buf[i+2] * h_4,0);
+  i+= 3;
+);
+
+
+gfx_r = 0.2; gfx_g = 0.8; gfx_b = 0.15;
+gfx_x = w_4 + buf[0] * w_4;
+gfx_y = h_4 + buf[1] * h_4;
+i = 3;
+m = sc/3-1;
+loop(m,
+  gfx_r = 0.5*(buf[i+2]+1);
+  gfx_b = 1 - gfx_r;
+  gfx_g = 0.2;
+  gfx_lineto(w_4 + buf[i] * w_4, h_4 + buf[i+1] * h_4,0);
+  i+= 3;
+);
+buf = 0;
+sc = 0;
+

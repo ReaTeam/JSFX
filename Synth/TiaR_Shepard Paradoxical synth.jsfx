@@ -1,0 +1,295 @@
+/*
+  @description Shepard Paradoxical synth
+  @version 1.02
+  @author T.Rochebois
+  @changelog
+    + Initial release
+  @provides 
+	TiaR_Shepard Paradoxical synth/TiaR_ADSR_03.jsfx-inc
+	TiaR_Shepard Paradoxical synth/TiaR_KBD_03.jsfx-inc
+	TiaR_Shepard Paradoxical synth/TiaR_LFO_00.jsfx-inc
+	TiaR_Shepard Paradoxical synth/TiaR_LPF_00.jsfx-incTiaR_SHP_02.jsfx-inc
+	TiaR_Shepard Paradoxical synth/TiaR_SLD_00.jsfx-inc
+*/
+
+
+//http://stash.reaper.fm/v/22090/TiaR_SHP_synth_00.zip
+
+desc:TiaR_Shepard Paradoxical synth
+/*
+ Copyright 2014, Thierry Rochebois
+ All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without 
+  modification, are permitted provided that the following conditions are
+  met:
+  Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer. 
+
+  Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution. 
+
+  The name of Thierry Rochebois may not be used to endorse or promote
+  products derived from this software without specific prior written
+  permission. 
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+slider3:0<0,10>--Fb 0
+slider4:10<0,10>--Fb 1
+slider5:0.18<0,1>--Detune
+slider6:6.5<0,40>--LFO rate (Hz)
+slider7:10<0,100>--LFO depth (cents)
+slider8:1<0.5,2>--Spectral center
+slider9:4.6<1,6>--Drive
+
+slider10:0.001<0.001,10>--Env1 ---------- A
+slider11:0.1<0.001,10>--D
+slider12:1<0,1>--S
+slider13:0.001<0.001,10>--R
+
+slider14:0.001<0.001,10>--Env 2 --------- A
+slider15:0.1<0.001,10>--D
+slider16:0.99<0,1>--S
+slider17:0.5<0.001,10>--R
+
+slider18:120<1,127>--Filter pitch 1
+slider19:52<1,127>--Filter pitch 0
+slider20:7.1<0.25,10.0>--res
+
+slider21:0.15<0.001,10>--Env 3 --------- A
+slider22:9<0.001,10>--D
+slider23:0.1<0,1>--S
+slider24:0.5<0.001,10>--R
+//______________________________________________________________________
+slider62:16<0,16,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,All}>--Midi Channel
+
+//______________________________________________________________________
+in_pin:in Left
+in_pin:in Right
+out_pin:out Left
+out_pin:out Right
+import TiaR_KBD_03.jsfx-inc
+import TiaR_ADSR_03.jsfx-inc
+import TiaR_LFO_00.jsfx-inc
+import TiaR_SHP_02.jsfx-inc
+import TiaR_SLD_00.jsfx-inc
+import TiaR_LPF_00.jsfx-inc
+
+//______________________________________________________________________
+@init
+ad = 1;
+KRATE = 4; // control every 4 samples
+ONE_OVER_KRATE = 1.0 / KRATE;
+k = KRATE; // control rate counter
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+SLD();
+SLD_C_W = 130;
+SLD_C_R = 1; SLD_C_G = 0.5; SLD_C_B = 0;
+SLD_C_BR = 0; SLD_C_BG = 0; SLD_C_BB = 0;
+SLD_C_TR = 0.8; SLD_C_TG = 0.2; SLD_C_TB = 0;
+
+SLD_C_Y = 10; SLD_C_X = 10; 
+SLD_init(3, 3,    0,  10, SLD_LIN, "FeedBack1 %2.1f", 4);
+SLD_C_Y += 1;
+SLD_init(2, 0,    0,  10, SLD_LIN, "FeedBack1 %2.1f", 3);
+
+
+SLD_C_Y = 10;
+SLD_C_X += SLD_C_W + 10;
+SLD_C_R = 1; SLD_C_G = 1; SLD_C_B = 1;
+SLD_init(13, 0.001, 0.001, 10, SLD_LOG, "A  %2.3f", 14);
+SLD_init(14, 0.5,   0.001, 10, SLD_LOG, "D  %2.3f", 15);
+SLD_init(15, 0.5,   0.0,    1, SLD_LIN, "S  %1.2f", 16);
+SLD_init(16, 0.1,   0.001, 10, SLD_LOG, "R  %2.3f", 17);
+
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+SLD_C_TR = 1; SLD_C_TG = 0; SLD_C_TB = 0;
+SLD_C_X = 10; SLD_C_Y = 76;
+SLD_C_R = 1; SLD_C_G = 0.4; SLD_C_B = 1.0;
+SLD_init(7, 1,    0.5, 2, SLD_LIN, "Spectral center", 8);
+
+SLD_C_Y += 4;
+SLD_C_R = 1; SLD_C_G = 0.3; SLD_C_B = 0;
+SLD_init(8, 1.5,   1, 6, SLD_LIN, "Drive  %2.2f", 9);
+
+SLD_C_Y = 76; SLD_C_X += SLD_C_W + 10;
+
+SLD_C_R = 0; SLD_C_G = 1; SLD_C_B = 1;
+SLD_init(4, 0.07, 0,   1, SLD_LIN, "Detune    %2.2f", 5);
+
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+SLD_C_TR = 0; SLD_C_TG = 0.5; SLD_C_TB = 0;
+
+
+SLD_C_Y = 120;
+SLD_C_R = 1; SLD_C_G = 1; SLD_C_B = 1;
+SLD_init(20, 0.001, 0.001, 10, SLD_LOG, "A  %2.3f", 21);
+SLD_init(21, 0.5,   0.001, 10, SLD_LOG, "D  %2.3f", 22);
+SLD_init(22, 0.5,   0.0,    1, SLD_LIN, "S  %1.2f", 23);
+SLD_init(23, 0.1,   0.001, 10, SLD_LOG, "R  %2.3f", 24);
+SLD_C_Y = 120; SLD_C_X = 10;
+SLD_C_R = 1; SLD_C_G = 0.8; SLD_C_B = 0.6;
+SLD_init(17, 0.001, 0.001, 127, SLD_LIN, "Filter 1 %3.0f", 18);
+SLD_init(18, 0.5,   0.001, 127, SLD_LIN, "Filter 0 %3.0f", 19);
+SLD_C_Y += 13;
+SLD_C_R = 1; SLD_C_G = 0.8; SLD_C_B = 0.6;
+SLD_C_TR = 1; SLD_C_TG = 0.0; SLD_C_TB = 0.0;
+SLD_init(19, 1,   0.25, 10, SLD_LIN, "Reso     %2.2f", 20);
+
+
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+SLD_C_TR = 0; SLD_C_TG = 0.2; SLD_C_TB = 0.5;
+SLD_C_Y = 188; SLD_C_X = 10 + 10 + SLD_C_W;
+SLD_C_R = 1; SLD_C_G = 1; SLD_C_B = 1;
+SLD_init( 9, 0.001, 0.001, 10, SLD_LOG, "A  %2.3f", 10);
+SLD_init(10, 0.5,   0.001, 10, SLD_LOG, "D  %2.3f", 11);
+SLD_init(11, 0.5,   0.0,    1, SLD_LIN, "S  %1.2f", 12);
+SLD_init(12, 0.1,   0.001, 10, SLD_LOG, "R  %2.3f", 13);
+SLD_C_Y = 188; SLD_C_X = 10;
+
+SLD_C_R = 0; SLD_C_G = 1; SLD_C_B = 0;
+SLD_init(5, 5,    1,  40, SLD_LOG, "LFO rate  %2.2f", 6);
+SLD_C_Y += 1;
+SLD_init(6, 10,   0, 100, SLD_LIN, "LFO depth %2.1f", 7);
+
+SLD_C_Y += 13;
+SLD_C_R = 0.5; SLD_C_G = 0.5; SLD_C_B = 0.5;
+SLD_init(61,16,   0,  16, SLD_VAL, "Midi Chn ,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,All", 62);
+LPF();
+KBD();
+ADSR();
+LFO();
+SHP();
+shp.SHP_init();
+adsr1.ADSR_init(0.1,1,1,0.1);
+adsr2.ADSR_init(0.1,1,1,0.1);
+adsr3.ADSR_init(0.1,1,1,0.1);
+
+//______________________________________________________________________
+@slider
+
+//______________________________________________________________________
+@block
+KBD_setChannel(slider62);
+KBD_bProc();
+SLD_bProc();
+
+   SLD_tModified[ 9] === 1 
+|| SLD_tModified[10] === 1
+|| SLD_tModified[11] === 1
+|| SLD_tModified[12] === 1 ? (
+  adsr1.ADSR_set(SLD_tValue[9], SLD_tValue[10], SLD_tValue[11], SLD_tValue[12]);
+  SLD_tModified[9] = 0; SLD_tModified[10] = 0; SLD_tModified[11] = 0; SLD_tModified[12] = 0;
+);
+   SLD_tModified[13] === 1 
+|| SLD_tModified[14] === 1
+|| SLD_tModified[15] === 1
+|| SLD_tModified[16] === 1 ? (
+  adsr2.ADSR_set(SLD_tValue[13], SLD_tValue[14], SLD_tValue[15], SLD_tValue[16]);
+  SLD_tModified[13] = 0; SLD_tModified[14] = 0; SLD_tModified[15] = 0; SLD_tModified[16] = 0;
+);
+   SLD_tModified[20] === 1 
+|| SLD_tModified[21] === 1
+|| SLD_tModified[22] === 1
+|| SLD_tModified[23] === 1 ? (
+  adsr3.ADSR_set(SLD_tValue[20], SLD_tValue[21], SLD_tValue[22], SLD_tValue[23]);
+  SLD_tModified[20] = 0; SLD_tModified[21] = 0; SLD_tModified[22] = 0; SLD_tModified[23] = 0;
+);
+
+
+   
+SLD_tModified[5] === 1 ? (
+  lfo.LFO_setF(SLD_tValue[5]);
+  SLD_tModified[5] = 0;
+);
+SLD_tModified[0] === 1 ? (
+  adsr1.ADSR_preset(SLD_tValue[0]);
+  SLD_tModified[0] = 0;
+);
+SLD_tModified[1] === 1 ? (
+  adsr2.ADSR_preset(SLD_tValue[1]);
+  SLD_tModified[1] = 0;
+);
+SLD_tModified[4] === 1 ? (
+  shp.SHP_setDetune(SLD_tValue[4]);
+  SLD_tModified[4] = 0;
+);
+
+SLD_tModified[7] === 1 ? (
+  shp.SHP_setSpectEnv(SLD_tValue[7]);
+  SLD_tModified[7] = 0;
+);
+
+//_____________________________________________________________________
+@gfx
+  gfx_x = 6; gfx_y = 6;
+  gfx_r = 1; gfx_g = 0.8; gfx_b = 0.6;
+  gfx_rectto(SLD_C_W*2+26, 70);
+  
+  gfx_x = 6;
+  gfx_r = 0.7;  gfx_g = 0.5; gfx_b = 0.4;
+  gfx_rectto(SLD_C_W*2+26, gfx_y+44);
+  
+  gfx_x = 6;
+  gfx_r = 0.5;  gfx_g = 0.4; gfx_b = 0.3;
+  gfx_rectto(SLD_C_W*2+26, gfx_y+68);
+  
+  gfx_x = 6;
+  gfx_r = 0.3;  gfx_g = 0.2; gfx_b = 0.2;
+  gfx_rectto(SLD_C_W*2+26, gfx_y+68);  SLD_gProc();
+  
+  gfx_x = 10; gfx_y = 43;
+  gfx_setfont(1,"Arial", 20,'b');
+  gfx_drawstr("TiaR SHP synth");
+  
+  gfx_x = 15; gfx_y = 60;
+  gfx_setfont(2,"Arial", 10);
+  gfx_drawstr("Thierry Rochebois 2014");
+
+  gfx_setfont(0);
+
+//______________________________________________________________________
+@sample
+
+function satdist(x) (
+  x>1?1:x<-1?-1:  x*(1.5-0.5*x*x) 
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                         Control Rate
+k >= KRATE ? ( 
+  k = 0;
+  new_env1 = expression * adsr1.ADSR_kProc(gate, trig);
+  denv1 = (new_env1 - env1) * ONE_OVER_KRATE;
+  new_env2 = expression * adsr2.ADSR_kProc(gate, trig);
+  
+  adsr3.ADSR_kProc(gate, trig);
+  
+  lp.LPF_set(slider19 + adsr3.adsr * (slider18 - slider19), 1/slider20);
+  
+  lfo.LFO_kProc();
+
+  shp.SHP_kProc(note + slider7 * modWheel * 0.01 * lfo.sin + 12 * bend,
+                slider3 + adsr2.adsr * (slider4 - slider3));
+  KBD_kProc();
+);
+k += 1;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                           Audio Rate
+env1 += denv1; //linear interpolation
+spl0 = spl1 = env1*sin(slider9 * shp.SHP_aProc());
+spl0 = spl1 = satdist(lp.LPF_aProc(spl0));
+
+

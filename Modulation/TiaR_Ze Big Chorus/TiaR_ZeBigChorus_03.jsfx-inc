@@ -1,0 +1,540 @@
+//@noindex
+
+desc:Ze Big Chorus 03 lib
+@init
+/*
+______________________________________________________________________
+                                                           NAMESPACES
+
+4 level namespaces   
+                                                           
+l. r.  left and right channels
+
+  i delay write index (common to all the delay lines) (a rate)
+  l delay max length  (common to all the delay lines) (init)
+  
+  A. B. C. D. E. F. G.  (the seven allpass delay lines)
+
+    z   delay table         (a rate access)
+    u   delay input         (a rate)
+    v   delay output        (a rate)
+   
+    d.    Delay
+      v0  min                 (slider)
+      v1  max delay           (slider)
+      dv  delay delta interp                      (k rate)
+      _v  interpolated delay (float samples)      (a rate)
+      v   interp & smoothed delay (float samples) (a rate)
+      p   lfo phase                               (k rate)
+      dp      delta phase                         (k rate)
+      t       table                               (  init)
+      dt      delta table                         (  init)
+
+    g.    Feedback/feedforward coef
+      v0  min                 (slider)
+      v1  max G           (slider)
+      dv  G delta interp                          (k rate)
+      _v  interpolated G (float samples)          (a rate)
+      v   interp & smoothed G (float samples)     (a rate)
+      p   lfo phase                               (k rate)
+      dp      delta phase                         (k rate)
+      t       table                               (  init)
+      dt      delta table                         (  init)
+   
+*/
+/*
+ Copyright 2015, Thierry Rochebois
+ All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without 
+  modification, are permitted provided that the following conditions are
+  met:
+  Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer. 
+
+  Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution. 
+
+  The name of Thierry Rochebois may not be used to endorse or promote
+  products derived from this software without specific prior written
+  permission. 
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+// ___________________________________________________________________
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function coefOnePole(fc) local(c)(
+  c = cos(2 * $pi * fc / srate) - 2;
+  1 + c + sqrt(c * c - 1);
+);
+// ___________________________________________________________________
+
+function malloc(size) local(r)(
+  r = ad;
+  ad += size; // ad is the malloc top address
+  r;
+);
+// ___________________________________________________________________
+function NAP_init() local(f) instance(l) (
+  l = 0.4 * srate;  // 0.4 sec max delay (covers max modulation and dispersion)
+  this.A.z = malloc(l);  this.B.z = malloc(l);  this.C.z = malloc(l);
+  this.D.z = malloc(l);  this.E.z = malloc(l);  this.F.z = malloc(l);
+  this.G.z = malloc(l);
+  this.A.g.v = this.B.g.v = this.C.g.v = this.D.g.v = this.E.g.v = this.F.g.v = this.G.g.v = 0.707;
+);
+// ___________________________________________________________________
+//                        inits pseudo a random LFO table (16 cycles)
+function RLFO_init(f16 f32 f48 f64 f80 f96 f112
+                    m1  m2  m3  m4  m5  m6   m7
+                   ) local(i p dp mdl)(
+  this.t = malloc(4096);
+  this.dt = malloc(4096);
+  i = 0;
+  p = 0;
+  dp = 2 * $pi / 4096;
+  mdl = 1.5;
+  loop(4096,
+    this.t[i] = 0.850 * sin(f16 * p + abs(mdl*1/m1) * sin(m1 * p + 1))  // 16
+              + 0.085 * cos(f32 * p + abs(mdl*4/m2) * sin(m2 * p) + abs(mdl*4/m7) * cos(m7 * p))  // 32
+              - 0.025 * sin(f48 * p + abs(mdl*6/m3) * sin(m3 * p) + abs(mdl*6/m4) * cos(m4 * p))  // 48
+              + 0.015 * sin(f64 * p)  // 64
+              - 0.011 * cos(f80 * p - abs(mdl*20/m6) * sin(m6 * p))  // 80
+              + 0.009 * sin(f96 * p - abs(mdl*24/m7) * sin(m7 * p))  // 96
+              + 0.005 * sin(f112 * p);  // 112
+                 
+  // this.t[i] = sin(16 * p);  // 16
+    this.t[i] = 0.5 + 0.5 * this.t[i];  // [0, 1]
+    i += 1;
+    p += dp;
+  );
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  i = 0;
+  loop(4096,
+    this.dt[i] = this.t[(i + 1) % 4096] - this.t[i];
+    i += 1;
+  );
+  
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/*
+      typical
+  h   16
+  phi 0 $pi/2
+*/
+
+function RLFO_init2(h phi i1 h1 i2 h2 i3 h3 i4 h4)
+local(i i1 p dp)(
+  this.t = malloc(4096);
+  this.dt = malloc(4096);
+  i = 0;
+  dp = 2 * $pi / 4096;
+  p = 0;
+  loop(4096,
+    this.t[i] = sin(h * p + phi 
+                    + i1 * $pi * sin(h1 * p)
+                    + i2 * $pi * cos(h2 * p)
+                    - i3 * $pi * sin(h3 * p)
+                    - i4 * $pi * cos(h4 * p)
+                    );
+    this.t[i] = 0.5 + 0.5 * this.t[i];  // [0, 1]
+    i += 1;
+    p += dp;
+  );
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  i = 0;
+  loop(4096,
+    this.dt[i] = this.t[(i+1)%4096] - this.t[i];
+    i += 1;
+  );
+
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                       lfo phase inc and lin interp
+function RLFO_kProc() instance(p dp t dt) local(p0)(
+  p += dp;
+  p -= 4096 * (p >= 4096);
+  p0 = p|0;
+  t[p0] + (p - p0) * dt[p0];
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+function RLFO_setRate(rate)(
+  rate *= 1/16; // 16 cycles per table
+  this.dp = 4096 * rate * KRATE / srate;
+);
+// ___________________________________________________________________
+//                            linear interpolation of the delay lines
+function NAP_interp(z i l)
+local(i0 i1 a)(
+  i0 = i|0;
+  a = i - i0;
+  i0 %= l;
+  // i0 -= l * (i0 >= l);
+  i1 = (i0 + 1) % l;
+  // i1 = i0 + 1; i1 -= l * (i1 >= l);
+  z[i0] + a * (z[i1] - z[i0]);
+);
+// ___________________________________________________________________
+//                                          iteration on a delay line
+// g.v and d.v interpolation and smoothing
+// update of delay line and of output v
+function NAP_pDelay(i il l)(
+  this.g._v += this.g.dv; this.g.v += coefSmooth * (this.g._v - this.g.v);
+  this.d._v += this.d.dv; this.d.v += coefSmooth * (this.d._v - this.d.v);
+  this.z[i] = this.u; this.v = NAP_interp(this.z, il - this.d.v, l); 
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                   iteration on all the delay lines
+function NAP_pDelays()
+local(il)(
+  this.i += 1; this.i %= this.l;  // i is common to the 7 delay lines
+  il = this.i + this.l;  // for simpler modulo operation
+  this.A.NAP_pDelay(this.i, il, this.l);
+  this.B.NAP_pDelay(this.i, il, this.l);
+  this.C.NAP_pDelay(this.i, il, this.l);
+  this.D.NAP_pDelay(this.i, il, this.l);
+  this.E.NAP_pDelay(this.i, il, this.l);
+  this.F.NAP_pDelay(this.i, il, this.l);
+  this.G.NAP_pDelay(this.i, il, this.l);
+);
+// ___________________________________________________________________
+//                                            Basic nested structures
+function softSat(x)(  x = min(1,max(-1,x));  x*(1.5 -0.5*x*x); );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                        [A]                  single
+function p(A* x)(
+  A.u = x - A.g.v * A.v;
+  A.v + A.g.v * A.u;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                    [[A] B]                  A in B
+function p(A* B* x)(
+  A.x = x - B.g.v * B.v;
+  A.u = A.x - A.g.v * A.v;
+  
+  B.u = A.v + A.g.v * A.u;
+  B.v + B.g.v * A.x;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                [[A] [B] C]            A and B in C
+function p(A* B* C* x)(
+  A.x = x - C.g.v * C.v;
+  A.u = A.x - A.g.v * A.v;
+  
+  B.x = A.v + A.g.v * A.u;
+  B.u = B.x - B.g.v * B.v;
+  
+  C.u = B.v + B.g.v * B.u;
+  C.v + C.g.v * A.x;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                            [[A] [B] [C] D]          A,B and C in D
+function p(A* B* C* D* x)(
+  A.x = x - D.g.v * D.v;
+  A.u = A.x - A.g.v * A.v;
+  
+  B.x = A.v + A.g.v * A.u;
+  B.u = B.x - B.g.v * B.v;
+  
+  C.x = B.v + B.g.v * B.u;
+  C.u = C.x - C.g.v * C.v;
+
+  D.u = C.v + C.g.v * C.u;
+  D.v + D.g.v * A.x;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                        [[A] [B] [C] [D] E]        A,B,C and D in E
+function p(A* B* C* D* E* x)(
+  A.x = x - E.g.v * E.v;
+  A.u = A.x - A.g.v * A.v;
+  
+  B.x = A.v + A.g.v * A.u;
+  B.u = B.x - B.g.v * B.v;
+  
+  C.x = B.v + B.g.v * B.u;
+  C.u = C.x - C.g.v * C.v;
+
+  D.x = C.v + C.g.v * C.u;
+  D.u = D.x - D.g.v * D.v;
+  
+  E.u = D.v + D.g.v * D.u;
+  E.v + E.g.v * A.x;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                    [[A] [B] [C] [D] [E] F]      A,B,C,D and E in F
+function p(A* B* C* D* E* F* x)(
+  A.x = x - F.g.v * F.v;
+  A.u = A.x - A.g.v * A.v;
+  
+  B.x = A.v + A.g.v * A.u;
+  B.u = B.x - B.g.v * B.v;
+  
+  C.x = B.v + B.g.v * B.u;
+  C.u = C.x - C.g.v * C.v;
+
+  D.x = C.v + C.g.v * C.u;
+  D.u = D.x - D.g.v * D.v;
+
+  E.x = D.v + D.g.v * D.u;
+  E.u = E.x - E.g.v * E.v;
+  
+  F.u = E.v + E.g.v * E.u;
+  F.v + F.g.v * A.x;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                [[A] [B] [C] [D] [E] [F] G]    A,B,C,D,E and F in G
+function p(A* B* C* D* E* F* G* x)(
+  A.x = x - G.g.v * G.v;
+  A.u = A.x - A.g.v * A.v;
+  
+  B.x = A.v + A.g.v * A.u;
+  B.u = B.x - B.g.v * B.v;
+  
+  C.x = B.v + B.g.v * B.u;
+  C.u = C.x - C.g.v * C.v;
+
+  D.x = C.v + C.g.v * C.u;
+  D.u = D.x - D.g.v * D.v;
+
+  E.x = D.v + D.g.v * D.u;
+  E.u = E.x - E.g.v * E.v;
+
+  F.x = E.v + E.g.v * E.u;
+  F.u = F.x - F.g.v * F.v;
+  
+  G.u = F.v + F.g.v * F.u;
+  G.v + G.g.v * A.x;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                 Experimental stuff may be unstable
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                   [Sat(A)]              single sat
+function pDist(A* x)local(m)(
+  A.vf += 0.1 * (A.v - A.vf);
+  m = cos(gl_dist*A.vf);
+  A.u = x - m*A.g.v * A.v;
+  A.v + m*A.g.v * A.u;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                    [[A] B]                  A in B
+function pDist(A* B* x)local(m)(
+  B.vf += 0.1 * (B.v - B.vf);
+  m = cos(gl_dist*B.vf);
+
+  A.x = x - m*B.g.v * B.v;
+  A.u = A.x - A.g.v * A.v;
+  
+  B.u = A.v + A.g.v * A.u;
+  B.v + m*B.g.v * A.x;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                [[A] [B] [C] [D] [E] [F] G]    A,B,C,D,E and F in G
+function pDist(A* B* C* D* E* F* G* x)local(m)(
+  G.vf += 0.1 * (G.v - G.vf);
+  m = cos(gl_dist*G.vf);
+
+  A.x = x - m*G.g.v * G.v;
+  A.u = A.x - A.g.v * A.v;
+  
+  B.x = A.v + A.g.v * A.u;
+  B.u = B.x - B.g.v * B.v;
+  
+  C.x = B.v + B.g.v * B.u;
+  C.u = C.x - C.g.v * C.v;
+
+  D.x = C.v + C.g.v * C.u;
+  D.u = D.x - D.g.v * D.v;
+
+  E.x = D.v + D.g.v * D.u;
+  E.u = E.x - E.g.v * E.v;
+
+  F.x = E.v + E.g.v * E.u;
+  F.u = F.x - F.g.v * F.v;
+  
+  G.u = F.v + F.g.v * F.u;
+  G.v + m*G.g.v * A.x;
+);
+// ___________________________________________________________________
+//                       k rate processing for a lfo controlled value
+// this = l. r.
+//          A. B. C. D. E. F. G.
+//            d. g.
+function k() local(_v)(
+  _v = this.v0 + this.RLFO_kProc() * (this.v1mv0);
+  this.dv = (_v - this.v) * _KRATE;
+);
+//jump
+function j() local(_v)(
+  v = this.v0 + this.RLFO_kProc() * (this.v1mv0);
+  this.dv = 0;
+);
+function NAP_j()(
+  this.A.d.j(); this.B.d.j(); this.C.d.j(); this.D.d.j(); this.E.d.j(); 
+  this.F.d.j(); this.G.d.j();
+  this.A.g.j(); this.B.g.j(); this.C.g.j(); this.D.g.j(); this.E.g.j(); 
+  this.F.g.j(); this.G.g.j();
+);
+// ___________________________________________________________________
+//                k rate processing for all the lfo controlled values
+// this = r or l
+function NAP_kProc()(
+  this.A.d.k(); this.B.d.k(); this.C.d.k(); this.D.d.k(); this.E.d.k(); 
+  this.F.d.k(); this.G.d.k();
+  this.A.g.k(); this.B.g.k(); this.C.g.k(); this.D.g.k(); this.E.g.k(); 
+  this.F.g.k(); this.G.g.k();
+);
+function NAP_clear()instance(l)(
+  memset(this.A.z,0,l);
+  memset(this.B.z,0,l);
+  memset(this.C.z,0,l);
+  memset(this.D.z,0,l);
+  memset(this.E.z,0,l);
+  memset(this.F.z,0,l);
+  memset(this.G.z,0,l);
+  this.NAP_j();
+);
+// ___________________________________________________________________
+//                               Algorithms based on basic structures
+// this = r or l
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// 1 [A]~[B*]~[C]~[D]~[E]~[F]~[G]                               series
+function NAP_alg1(x)local(y)(
+  y = p(this.G, 
+        p(this.F, 
+          p(this.E, 
+            p(this.D, 
+              p(this.C, 
+                p(this.B, 
+                  p(this.A, x)))))));
+  this.NAP_pDelays();
+  y;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// 2 [[A]C*] ~ [[B]D] ~ [[E]F] ~ [G]                  series of nested
+function NAP_alg2(x)local(y)(
+  y = p(this.G, 
+        p(this.E, this.F, 
+          p(this.B, this.D, 
+            p(this.A, this.C, x))));
+  this.NAP_pDelays();
+  y;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// 3 [[A][C]E]~[[B][D]F]~[G*]                         series of nested
+function NAP_alg3(x)local(y)(
+  y = p(this.G, 
+        p(this.B, this.D, this.F, 
+          p(this.A, this.C, this.E, x)));
+  this.NAP_pDelays();
+  y;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// 4 [A*]-[B*]+[C*]+[D*]+[E*]+[F*]-[G*]                      parallel
+// added some different gains to limit beating effects
+function NAP_alg4(x) local(y)(
+  y = 0.377 * (p(this.A, x) 
+             -0.7* p(this.B, x) 
+             + 1.4*p(this.C, x) 
+             + p(this.D, x) 
+             + 0.5* p(this.E, x) 
+             + p(this.F, x) 
+             - 1.5*p(this.G, x));
+  this.NAP_pDelays();
+  y;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// 5 ([A*]+[B]-[C*]-[D]+[E*]) ~ [F] ~ [G]         parallel and series
+function NAP_alg5(x) local(y)(
+  y = p(this.G, 
+        p(this.F, 
+        0.447 * (p(this.A, x) 
+               + p(this.B, x) 
+               - p(this.C, x) 
+               - p(this.D, x) 
+               + p(this.E, x) )));
+
+  this.NAP_pDelays();
+  y;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// 6 [A]~[C*] + [B]~[D*] - [E]~[F*] + [G*]         series in parallel
+function NAP_alg6(x) local(y)(
+  y = p(this.C, p(this.A, x));
+  y += p(this.D, p(this.B, x));
+  y -= p(this.F, p(this.E, x));
+  y += p(this.G, x);
+  y *= 0.5; 
+  this.NAP_pDelays();
+  y;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// 7 [[A]C*] + [[B]D*] - [[E]F*] + [G]             nested in parallel
+function NAP_alg7(x) local(y)(
+  y = p(this.A, this.C, x);
+  y += p(this.B, this.D, x);
+  y -= p(this.E, this.F, x);
+  y += p(this.G, x);
+  y *= 0.5; 
+  this.NAP_pDelays();
+  y;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// 8 ([[A]C*] - [[B]D*]) ~ [[E][F] G]              nested in parallel
+function NAP_alg8(x) local(y)(
+  y = p(this.A, this.C, x);
+  y -= p(this.B, this.D, x);
+  y = p(this.E, this.F, this.G, y);
+  y *= 0.7; 
+  this.NAP_pDelays();
+  y;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// 9 [[A][B][C][D][E][F] G*]                               all nested 
+function NAP_alg9(x) local(y)(
+  y = p(this.A, this.B, this.C, this.D, this.E, this.F, this.G, x);
+  this.NAP_pDelays();
+  y;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// 10 [A] ~ [B*] ~ [[C][D][E][F] G]                   series and nest 
+function NAP_alg10(x) local(y)(
+  y = p(this.C, this.D, this.E, this.F, this.G, p(this.B, p(this.A,x)));
+  this.NAP_pDelays();
+  y;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// 11 [A] +~ ([B*]+[C*]) ~ ([D]+[E]) ~ ([F]+[G])      series of combs
+function NAP_alg11(x)local(y)(
+  y = x + p(this.A, x);
+  y = p(this.B, y) + p(this.C, y);
+  y = p(this.D, y) + p(this.E, y);
+  y = p(this.F, y) + p(this.G, y);
+  y *= 1 / sqrt(16);
+  this.NAP_pDelays();
+  y;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// 12 [A]+~[B*]+~[C]+~[D]+~[E]+~[F]+~[G]                    Catacombs
+function NAP_alg12(x)local(y)(
+  y = x + p(this.A, x);
+  y += p(this.B, y);
+  y += p(this.C, y);
+  y += p(this.D, y);
+  y += p(this.E, y);
+  y += p(this.F, y);
+  y += p(this.G, y);
+  y *= 1 / sqrt(128);
+  this.NAP_pDelays();
+  y;
+);
+

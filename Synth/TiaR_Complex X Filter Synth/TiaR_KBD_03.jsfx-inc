@@ -1,0 +1,449 @@
+//@noindex
+
+desc: MIDI KBD library rev02
+/*
+ Copyright 2014, Thierry Rochebois
+ All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without 
+  modification, are permitted provided that the following conditions are
+  met:
+  Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer. 
+
+  Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution. 
+
+  The name of Thierry Rochebois may not be used to endorse or promote
+  products derived from this software without specific prior written
+  permission. 
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+//______________________________________________________________________
+//                                                              Features
+// Monophonic
+// high note priority
+// note       [0 127] integer
+// gate       [0  1]    velocity
+// trig       1       on transients
+// bend       [-1 1[
+// modWheel   [ 0 1[
+// expression [ 0 1]
+// aftertouch [ 0 1]
+//______________________________________________________________________
+//                                                                 USAGE
+
+//______________________________________________________________________
+//                                                                 TO DO
+//  Aftertouch smoothing
+//  control rate time accuracy (currently block rate accurate)
+//______________________________________________________________________
+//                                                                 Ideas
+
+
+
+//______________________________________________________________________
+@init
+//______________________________________________________________________
+//                                                            ressources
+function KBD()
+  local() ( 
+  ad === 0 ? ad = 1;
+  KBD_tV   = ad; ad += 256;  // MIDI notes velocities table
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  gate = 0;     // gate * latest velocity (0 -> 1)
+  trig = 0;
+  expression = 1;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  note = 60;
+  bend = 0;
+  channel = 16;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  KBD_inBuf === 0 ? (
+    KBD_inBuf = ad; ad += 1024;
+  );
+  KBD_sysexBuf === 0 ? (
+    KBD_sysexBuf = ad; ad += 1024;
+  );
+  KBD_tNoReceive = ad; ad += 129;
+);
+//______________________________________________________________________
+// converts a float to sysex serialisable format
+// x -> v.s v.e v.m0 v.m1 v.m2 v.m3 v.m4
+function KBD_XtoV(x v*) (
+  x < 0   ? v.s = -1;
+  x > 0   ? v.s =  1;
+  x === 0 ? v.s =  0;
+  v.s !== 0 ? (
+    x = abs(x);
+    v.e = floor(log(x) * (1 / log(2)));
+    v.e >= -64 && v.e <= 63 ? (
+      m = x * (2 ^ -v.e);
+      v.m0 = (m * 32) & 127;
+      v.m1 = (m * 32 * 128) & 127;
+      v.m2 = (m * 32 * 128 * 128) & 127;
+      v.m3 = (m * 32 * 128 * 128 * 128) & 127;
+      v.m4 = (m * 32 * 128 * 128 * 128 * 128) & 127;
+      v.e += 64;
+    ) : ( //zero
+      v.m1 = v.m2 = v.m3 = v.s = 0;
+      v.m0 = 64;
+      v.e = 64;
+    );
+  ) : ( //zero
+      v.m1 = v.m2 = v.m3 = 0;
+      v.m0 = 64;
+      v.e = 64;
+  );
+);
+//______________________________________________________________________
+function KBD_VtoBuf(v* buf)(
+  buf[0] = 0xF0;
+  buf[1] = 0x7D;  //manufact ID -> educ / dev
+  buf[2] = 0x01;  //message type ID
+  
+  buf[3] = KBD_synthID;  //synth ID
+  buf[4] = v.id;  //Param/ID
+  
+  buf[5] = v.s + 1;
+  buf[6] = v.e;
+  buf[7] = v.m0;
+  buf[8] = v.m1;
+  buf[9] = v.m2;
+  buf[10] = v.m3;
+  buf[11] = v.m4;
+  buf[12] = 0xF7;
+);
+//______________________________________________________________________
+function KBD_toSysex(x id buf)(
+  KBD_XtoV(x, KBD_v);
+  KBD_v.id = id|0;
+  KBD_VtoBuf(KBD_v, buf);
+);
+//______________________________________________________________________
+function KBD_VtoX(v*) (
+v.s * ( v.m4 * (1/(32*128*128*128*128))
+      + v.m3 * (1/(32*128*128*128))
+      + v.m2 * (1/(32*128*128))
+      + v.m1 * (1/(32*128))
+      + v.m0 * (1/32) 
+      ) * 2 ^ (v.e - 64);
+);
+//______________________________________________________________________
+function KBD_isType01(buf) (
+  buf[0] === 0xF0 &&  buf[1] === 0x7D
+&& buf[2] === 0x01 && buf[3] === KBD_synthID && buf[12] === 0xF7;
+);
+//______________________________________________________________________
+// v.id = -1 si incorrect
+function KBD_BufToV(buf v*)(
+  KBD_isType01(buf) ? ( 
+    v.id = buf[4];
+    v.s = buf[5] - 1;
+    v.e = buf[6];
+    v.m0 = buf[7];
+    v.m1 = buf[8];
+    v.m2 = buf[9];
+    v.m3 = buf[10];
+    v.m4 = buf[11];
+  ): v.id = -1;
+);
+//______________________________________________________________________
+// output : v.x and v.id
+function KBD_fromSysex(buf v*)(
+  KBD_BuftoV(buf, v);
+  v.id !== -1 ?
+    v.x = KBD_VtoX(v);
+);
+
+//______________________________________________________________________
+function KBD_sysexPS(val num) (
+  KBD_toSysex(val, num, KBD_sysexBuf);  midisend_buf(0,KBD_sysexBuf, 13)
+);
+
+function KBD_sysexBSend()(
+  KBD_synthID !== 0 ? (
+    slider1 !== KBD_aslider1 ? (KBD_sysexPS(slider1, 1); KBD_aslider1 = slider1 );
+    slider2 !== KBD_aslider2 ? (KBD_sysexPS(slider2, 2); KBD_aslider2 = slider2 );
+    slider3 !== KBD_aslider3 ? (KBD_sysexPS(slider3, 3); KBD_aslider3 = slider3 );
+    slider4 !== KBD_aslider4 ? (KBD_sysexPS(slider4, 4); KBD_aslider4 = slider4 );
+    slider5 !== KBD_aslider5 ? (KBD_sysexPS(slider5, 5); KBD_aslider5 = slider5 );
+    slider6 !== KBD_aslider6 ? (KBD_sysexPS(slider6, 6); KBD_aslider6 = slider6 );
+    slider7 !== KBD_aslider7 ? (KBD_sysexPS(slider7, 7); KBD_aslider7 = slider7 );
+    slider8 !== KBD_aslider8 ? (KBD_sysexPS(slider8, 8); KBD_aslider8 = slider8 );
+    slider9 !== KBD_aslider9 ? (KBD_sysexPS(slider9, 9); KBD_aslider9 = slider9 );    
+    slider10 !== KBD_aslider10 ? (KBD_sysexPS(slider10, 10); KBD_aslider10 = slider10 );
+    
+    slider11 !== KBD_aslider11 ? (KBD_sysexPS(slider11, 11); KBD_aslider11 = slider11 );
+    slider12 !== KBD_aslider12 ? (KBD_sysexPS(slider12, 12); KBD_aslider12 = slider12 );
+    slider13 !== KBD_aslider13 ? (KBD_sysexPS(slider13, 13); KBD_aslider13 = slider13 );
+    slider14 !== KBD_aslider14 ? (KBD_sysexPS(slider14, 14); KBD_aslider14 = slider14 );
+    slider15 !== KBD_aslider15 ? (KBD_sysexPS(slider15, 15); KBD_aslider15 = slider15 );
+    slider16 !== KBD_aslider16 ? (KBD_sysexPS(slider16, 16); KBD_aslider16 = slider16 );
+    slider17 !== KBD_aslider17 ? (KBD_sysexPS(slider17, 17); KBD_aslider17 = slider17 );
+    slider18 !== KBD_aslider18 ? (KBD_sysexPS(slider18, 18); KBD_aslider18 = slider18 );
+    slider19 !== KBD_aslider19 ? (KBD_sysexPS(slider19, 19); KBD_aslider19 = slider19 );
+    slider20 !== KBD_aslider20 ? (KBD_sysexPS(slider20, 20); KBD_aslider20 = slider20 );
+    
+    slider21 !== KBD_aslider21 ? (KBD_sysexPS(slider21, 21); KBD_aslider21 = slider21 );
+    slider22 !== KBD_aslider22 ? (KBD_sysexPS(slider22, 22); KBD_aslider22 = slider22 );
+    slider23 !== KBD_aslider23 ? (KBD_sysexPS(slider23, 23); KBD_aslider23 = slider23 );
+    slider24 !== KBD_aslider24 ? (KBD_sysexPS(slider24, 24); KBD_aslider24 = slider24 );
+    slider25 !== KBD_aslider25 ? (KBD_sysexPS(slider25, 25); KBD_aslider25 = slider25 );
+    slider26 !== KBD_aslider26 ? (KBD_sysexPS(slider26, 26); KBD_aslider26 = slider26 );
+    slider27 !== KBD_aslider27 ? (KBD_sysexPS(slider27, 27); KBD_aslider27 = slider27 );
+    slider28 !== KBD_aslider28 ? (KBD_sysexPS(slider28, 28); KBD_aslider28 = slider28 );
+    slider29 !== KBD_aslider29 ? (KBD_sysexPS(slider29, 29); KBD_aslider29 = slider29 );    
+    slider30 !== KBD_aslider30 ? (KBD_sysexPS(slider30, 30); KBD_aslider30 = slider30 );
+
+    slider31 !== KBD_aslider31 ? (KBD_sysexPS(slider31, 31); KBD_aslider31 = slider31 );
+    slider32 !== KBD_aslider32 ? (KBD_sysexPS(slider32, 32); KBD_aslider32 = slider32 );
+    slider33 !== KBD_aslider33 ? (KBD_sysexPS(slider33, 33); KBD_aslider33 = slider33 );
+    slider34 !== KBD_aslider34 ? (KBD_sysexPS(slider34, 34); KBD_aslider34 = slider34 );
+    slider35 !== KBD_aslider35 ? (KBD_sysexPS(slider35, 35); KBD_aslider35 = slider35 );
+    slider36 !== KBD_aslider36 ? (KBD_sysexPS(slider36, 36); KBD_aslider36 = slider36 );
+    slider37 !== KBD_aslider37 ? (KBD_sysexPS(slider37, 37); KBD_aslider37 = slider37 );
+    slider38 !== KBD_aslider38 ? (KBD_sysexPS(slider38, 38); KBD_aslider38 = slider38 );
+    slider39 !== KBD_aslider39 ? (KBD_sysexPS(slider39, 39); KBD_aslider39 = slider39 );    
+    slider40 !== KBD_aslider40 ? (KBD_sysexPS(slider40, 40); KBD_aslider40 = slider40 );
+    
+    slider41 !== KBD_aslider41 ? (KBD_sysexPS(slider41, 41); KBD_aslider41 = slider41 );
+    slider42 !== KBD_aslider42 ? (KBD_sysexPS(slider42, 42); KBD_aslider42 = slider42 );
+    slider43 !== KBD_aslider43 ? (KBD_sysexPS(slider43, 43); KBD_aslider43 = slider43 );
+    slider44 !== KBD_aslider44 ? (KBD_sysexPS(slider44, 44); KBD_aslider44 = slider44 );
+    slider45 !== KBD_aslider45 ? (KBD_sysexPS(slider45, 45); KBD_aslider45 = slider45 );
+    slider46 !== KBD_aslider46 ? (KBD_sysexPS(slider46, 46); KBD_aslider46 = slider46 );
+    slider47 !== KBD_aslider47 ? (KBD_sysexPS(slider47, 47); KBD_aslider47 = slider47 );
+    slider48 !== KBD_aslider48 ? (KBD_sysexPS(slider48, 48); KBD_aslider48 = slider48 );
+    slider49 !== KBD_aslider49 ? (KBD_sysexPS(slider49, 49); KBD_aslider49 = slider49 );    
+    slider50 !== KBD_aslider50 ? (KBD_sysexPS(slider50, 50); KBD_aslider50 = slider50 );
+
+    slider51 !== KBD_aslider51 ? (KBD_sysexPS(slider51, 51); KBD_aslider51 = slider51 );
+    slider52 !== KBD_aslider52 ? (KBD_sysexPS(slider52, 52); KBD_aslider52 = slider52 );
+    slider53 !== KBD_aslider53 ? (KBD_sysexPS(slider53, 53); KBD_aslider53 = slider53 );
+    slider54 !== KBD_aslider54 ? (KBD_sysexPS(slider54, 54); KBD_aslider54 = slider54 );
+    slider55 !== KBD_aslider55 ? (KBD_sysexPS(slider55, 55); KBD_aslider55 = slider55 );
+    slider56 !== KBD_aslider56 ? (KBD_sysexPS(slider56, 56); KBD_aslider56 = slider56 );
+    slider57 !== KBD_aslider57 ? (KBD_sysexPS(slider57, 57); KBD_aslider57 = slider57 );
+    slider58 !== KBD_aslider58 ? (KBD_sysexPS(slider58, 58); KBD_aslider58 = slider58 );
+    slider59 !== KBD_aslider59 ? (KBD_sysexPS(slider59, 59); KBD_aslider59 = slider59 );    
+    slider60 !== KBD_aslider60 ? (KBD_sysexPS(slider60, 60); KBD_aslider60 = slider60 );
+
+    slider61 !== KBD_aslider61 ? (KBD_sysexPS(slider61, 61); KBD_aslider61 = slider61 );
+    slider62 !== KBD_aslider62 ? (KBD_sysexPS(slider62, 62); KBD_aslider62 = slider62 );
+    slider63 !== KBD_aslider63 ? (KBD_sysexPS(slider63, 63); KBD_aslider63 = slider63 );
+    slider64 !== KBD_aslider64 ? (KBD_sysexPS(slider64, 64); KBD_aslider64 = slider64 );
+  );
+);
+//______________________________________________________________________
+//update sliders
+//returns true if processed.
+// do not transmit if processed (the slider update will trigger a new transmit !!) 
+function KBD_sysexBProc(buf)(
+  KBD_fromSysex(buf, KBD_V);
+  KBD_V.id > 0 && KBD_tNoReceive[KBD_V.id] === 0 ?
+  (
+   KBD_V.id ===  1 ? (slider1  = KBD_V.x; sliderchange(slider1 );)
+:  KBD_V.id ===  2 ? (slider2  = KBD_V.x; sliderchange(slider2 );)
+:  KBD_V.id ===  3 ? (slider3  = KBD_V.x; sliderchange(slider3 );)
+:  KBD_V.id ===  4 ? (slider4  = KBD_V.x; sliderchange(slider4 );)
+:  KBD_V.id ===  5 ? (slider5  = KBD_V.x; sliderchange(slider5 );)
+:  KBD_V.id ===  6 ? (slider6  = KBD_V.x; sliderchange(slider6 );)
+:  KBD_V.id ===  7 ? (slider7  = KBD_V.x; sliderchange(slider7 );)
+:  KBD_V.id ===  8 ? (slider8  = KBD_V.x; sliderchange(slider8 );)
+:  KBD_V.id ===  9 ? (slider9  = KBD_V.x; sliderchange(slider9 );)
+:  KBD_V.id === 10 ? (slider10 = KBD_V.x; sliderchange(slider10);)
+
+:  KBD_V.id === 11 ? (slider11 = KBD_V.x; sliderchange(slider11);)
+:  KBD_V.id === 12 ? (slider12 = KBD_V.x; sliderchange(slider12);)
+:  KBD_V.id === 13 ? (slider13 = KBD_V.x; sliderchange(slider13);)
+:  KBD_V.id === 14 ? (slider14 = KBD_V.x; sliderchange(slider14);)
+:  KBD_V.id === 15 ? (slider15 = KBD_V.x; sliderchange(slider15);)
+:  KBD_V.id === 16 ? (slider16 = KBD_V.x; sliderchange(slider16);)
+:  KBD_V.id === 17 ? (slider17 = KBD_V.x; sliderchange(slider17);)
+:  KBD_V.id === 18 ? (slider18 = KBD_V.x; sliderchange(slider18);)
+:  KBD_V.id === 19 ? (slider19 = KBD_V.x; sliderchange(slider19);)
+
+:  KBD_V.id === 20 ? (slider20 = KBD_V.x; sliderchange(slider20);)
+:  KBD_V.id === 21 ? (slider21 = KBD_V.x; sliderchange(slider21);)
+:  KBD_V.id === 22 ? (slider22 = KBD_V.x; sliderchange(slider22);)
+:  KBD_V.id === 23 ? (slider23 = KBD_V.x; sliderchange(slider23);)
+:  KBD_V.id === 24 ? (slider24 = KBD_V.x; sliderchange(slider24);)
+:  KBD_V.id === 25 ? (slider25 = KBD_V.x; sliderchange(slider25);)
+:  KBD_V.id === 26 ? (slider26 = KBD_V.x; sliderchange(slider26);)
+:  KBD_V.id === 27 ? (slider27 = KBD_V.x; sliderchange(slider27);)
+:  KBD_V.id === 28 ? (slider28 = KBD_V.x; sliderchange(slider28);)
+:  KBD_V.id === 29 ? (slider29 = KBD_V.x; sliderchange(slider29);)
+:  KBD_V.id === 30 ? (slider30 = KBD_V.x; sliderchange(slider30);)
+
+:  KBD_V.id === 31 ? (slider31 = KBD_V.x; sliderchange(slider31);)
+:  KBD_V.id === 32 ? (slider32 = KBD_V.x; sliderchange(slider32);)
+:  KBD_V.id === 33 ? (slider33 = KBD_V.x; sliderchange(slider33);)
+:  KBD_V.id === 34 ? (slider34 = KBD_V.x; sliderchange(slider34);)
+:  KBD_V.id === 35 ? (slider35 = KBD_V.x; sliderchange(slider35);)
+:  KBD_V.id === 36 ? (slider36 = KBD_V.x; sliderchange(slider36);)
+:  KBD_V.id === 37 ? (slider37 = KBD_V.x; sliderchange(slider37);)
+:  KBD_V.id === 38 ? (slider38 = KBD_V.x; sliderchange(slider38);)
+:  KBD_V.id === 39 ? (slider39 = KBD_V.x; sliderchange(slider39);)
+:  KBD_V.id === 40 ? (slider40 = KBD_V.x; sliderchange(slider40);)
+
+:  KBD_V.id === 41 ? (slider41 = KBD_V.x; sliderchange(slider41);)
+:  KBD_V.id === 42 ? (slider42 = KBD_V.x; sliderchange(slider42);)
+:  KBD_V.id === 43 ? (slider43 = KBD_V.x; sliderchange(slider43);)
+:  KBD_V.id === 44 ? (slider44 = KBD_V.x; sliderchange(slider44);)
+:  KBD_V.id === 45 ? (slider45 = KBD_V.x; sliderchange(slider45);)
+:  KBD_V.id === 46 ? (slider46 = KBD_V.x; sliderchange(slider46);)
+:  KBD_V.id === 47 ? (slider47 = KBD_V.x; sliderchange(slider47);)
+:  KBD_V.id === 48 ? (slider48 = KBD_V.x; sliderchange(slider48);)
+:  KBD_V.id === 49 ? (slider49 = KBD_V.x; sliderchange(slider49);)
+:  KBD_V.id === 50 ? (slider50 = KBD_V.x; sliderchange(slider50);)
+
+:  KBD_V.id === 51 ? (slider51 = KBD_V.x; sliderchange(slider51);)
+:  KBD_V.id === 52 ? (slider52 = KBD_V.x; sliderchange(slider52);)
+:  KBD_V.id === 53 ? (slider53 = KBD_V.x; sliderchange(slider53);)
+:  KBD_V.id === 54 ? (slider54 = KBD_V.x; sliderchange(slider54);)
+:  KBD_V.id === 55 ? (slider55 = KBD_V.x; sliderchange(slider55);)
+:  KBD_V.id === 56 ? (slider56 = KBD_V.x; sliderchange(slider56);)
+:  KBD_V.id === 57 ? (slider57 = KBD_V.x; sliderchange(slider57);)
+:  KBD_V.id === 58 ? (slider58 = KBD_V.x; sliderchange(slider58);)
+:  KBD_V.id === 59 ? (slider59 = KBD_V.x; sliderchange(slider59);)
+:  KBD_V.id === 60 ? (slider60 = KBD_V.x; sliderchange(slider60);)
+
+:  KBD_V.id === 61 ? (slider61 = KBD_V.x; sliderchange(slider61);)
+:  KBD_V.id === 62 ? (slider62 = KBD_V.x; sliderchange(slider62);)
+:  KBD_V.id === 63 ? (slider63 = KBD_V.x; sliderchange(slider63);)
+:  KBD_V.id === 64 ? (slider64 = KBD_V.x; sliderchange(slider64););
+   );
+  KBD_V.id > 0;
+);
+
+
+
+
+//______________________________________________________________________
+function KBD_setMIDIstack(midiStack)(
+  KBD_midiStack = midiStack;
+);  
+//______________________________________________________________________
+//                                                         Use in @block
+function KBD_bProc()
+  local(offset recvlen status dataL dataH vel activeNote n) (
+  maxlen = 1024;
+//    while ((recvlen = midirecv_buf(offset,MidiBuffer,MidiBufferLen)) > 0) (
+  while ((recvlen = midirecv_buf(offset, KBD_inBuf, maxlen)) > 0) (
+    KBD_test=1;
+    KBD_filtered = 0;
+    !KBD_sysexBProc(KBD_inBuf) ? (
+      KBD_inBuf[0] !== 0xF0 ? (
+        status = KBD_inBuf[0] & 240;
+        (channel === 16 || channel === (KBD_inBuf[0] & 15)) ? (
+          dataL = KBD_inBuf[1];
+          dataH = KBD_inBuf[2];
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                           Note on/off
+          (status === 9 * 16 || status === 8 * 16) ? (      
+            status === 8 * 16 ? vel = 0 : vel = dataH;      
+            //interception des notes on si on est en mode midiStack
+            vel !== 0 && KBD_midiStack > 1 && KBD_midiCount !== 0 ? ( 
+              KBD_midiCount += 1;
+              KBD_midiCount %= KBD_midiStack
+            ) : (
+              // si on est en mode stack, on filtre ce note on en sortie
+              KBD_filtered = KBD_midiStack > 1 && vel !== 0;
+              KBD_filtered ? KBD_midiCount += 1;
+          
+              KBD_tV[dataL] = vel;     
+              //the latest vel != 0 sets the amplitude
+              vel !== 0 ? (
+                gate === 0 ? trig = 1;     //if not legato
+                gate = vel * (1 / 127.0);
+              );     
+              //the highest note sets the pitch
+              activeNote = -1;
+              n = 0;
+              loop(128,
+                KBD_tV[n] > 0 ? activeNote = n;
+                n += 1;
+              );     
+              //if there is no active note, we set gate to 0
+              activeNote >= 0 ? (
+                note = activeNote;
+              ) : (
+                gate = 0;
+              );
+            );
+          );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                                    CC
+          status === 11 * 16 ? (     
+            dataL ===  1      ? KBD_modWheelH = dataH;
+            dataL ===  1 + 32 ? KBD_modWheelL = dataH;
+            dataL === 11      ? expression = dataH/127;
+            KBD_modWheel = (KBD_modWheelH + KBD_modWheelL / 128 ) / 128;
+            dataL === 123 ? ( // all notes off
+              gate = 0;
+              n = 0; loop(128, KBD_tV[n] = 0; n += 1; );
+              bend = 0;
+              KBD_modWheelL = 0; KBD_modWheelH = 0; KBD_modWheel = 0;
+            );
+          );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                            aftertouch
+          status === 13 * 16 ? (
+            KBD_aftertouch = dataL * (1/127);
+          );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                            pitch bend
+          status === 14 * 16 ? (
+            KBD_bend = (dataH << 7 | dataL) - 8192;
+            KBD_bend <= 0 ? KBD_bend *= 1 / 8192 : KBD_bend *= 1 / 8191;
+          );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+        ); //channel
+      ); //Not a sysex 
+      !KBD_filtered ? midisend_buf(offset, KBD_inBuf, recvlen);
+    );
+  ); //while
+  KBD_sysexBSend();
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+);
+
+//______________________________________________________________________
+//                                               use in @init or @slider
+//                                      0 -> 15 mdi channel    16 -> all
+function KBD_setChannel(newChannel)
+  local(n) (
+  channel !== (newChannel|0) ? (
+    //All notes off if we change the receive channel
+    gate = 0;
+    n = 0; loop(128, KBD_tV[n] = 0; n += 1; );
+    expression = 0;
+    KBD_bend = bend = 0;
+    KBD_modWheel = KBD_modWheelL = KBD_modWheelH = modWheel = 0;
+    channel = newChannel|0;
+  );
+);
+//______________________________________________________________________
+//              must be called at the end of the k subsection in @sample
+function KBD_kProc()
+  local() (
+  // smoothing to avoid clicks.
+  modWheel += 0.05 * (KBD_modWheel - modWheel);
+  aftertouch += 0.05 * (KBD_aftertouch - aftertouch); 
+  bend += 0.05 * (KBD_bend - bend); 
+  trig = 0;
+);
+

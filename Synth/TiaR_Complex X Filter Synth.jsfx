@@ -1,0 +1,428 @@
+/*
+  @description Complex X Filter Synth
+  @version 1.0
+  @author T.Rochebois
+  @changelog
+    + Initial release
+  @provides
+	TiaR_Complex X Filter synth/TiaR_ADSR_03.jsfx-inc
+	TiaR_Complex X Filter Synth/TiaR_CXF_10.jsfx-inc
+	TiaR_Complex X Filter Synth/TiaR_DC5.jsfx-inc
+	TiaR_Complex X Filter Synth/TiaR_KBD_03.jsfx-inc
+	TiaR_Complex X Filter Synth/TiaR_LFO_00.jsfx-inc
+	TiaR_Complex X Filter Synth/TiaR_SCP_01.jsfx-inc
+	TiaR_Complex X Filter Synth/TiaR_SIN_01.jsfx-inc
+*/
+
+//http://stash.reaper.fm/v/22067/TiaR_CXF_synth_deluxe.zip
+
+desc:TiaR_Complex X Filter Synth
+//complex X Filter Synth Deluxe x4 oversampling 
+/*
+ Copyright 2014, Thierry Rochebois
+ All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without 
+  modification, are permitted provided that the following conditions are
+  met:
+  Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer. 
+
+  Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution. 
+
+  The name of Thierry Rochebois may not be used to endorse or promote
+  products derived from this software without specific prior written
+  permission. 
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+/*
+  "Deluxe edition" with x4 oversampling
+  complex X Filter Synth rev10
+  
+  ~3% CPU on Intel i5-4440
+  2 ADSR
+    - 17 presets (one slider/selector per ADSR)
+    - velocity and expression sensitive
+    - time factor/vel sensitivity
+
+  Oscillators
+     - cos/sin quadrature oscillators
+     - one auxiliary osc
+       - ratio (over or sub tone -> enhances distorsion effect)
+       - beating detune (fixed frequency offset -> pad/phasing effect) 
+       - modulated mix (15 selectable modulation sources)
+       
+  External input
+      - can be used as a MIDI controlled effect.
+      - select Auxiliary Osc Ratio / Source
+        - External: the external signal is processed by the cXFilter
+        - Ring mod External: the external signal is ring modulated and
+                             processed by the cXFilter
+                             
+  cXFilter
+    - 16 presets (including noise modulated presets).
+    - "morphing" between two presets
+    - 14 modulation sources available for "morphing".
+    - Complex valued resonator
+      - complex input (should be analytic)
+      - complex analytic state
+        - real and imaginary part
+        can be converted to
+        - instantaneous phase (fast diamond angle or atan2)
+        - instantaneous amplitude (useful for normalisation)
+      - stability
+      - modulation robustness (even with audiorate noise modulation)
+    - Nonlinear audiorate modulations
+      - Based on input and internal state
+      - Four point control (diamond angle)
+      - Forward pitch modulation (based on input signal)
+      - FedBack pitch modulation (based on internal state)
+    - internal LPF on pitch modulation (anti aliasing)
+    - output normalisation (inverse of smoothed instaneous amplitude)
+  
+  Frequency shifter
+    - coupled with the pitch bend and note pitch
+    - presets for simplified operation
+  
+  LFO and VLFO
+    - LFO : "fast" from 0.1 to 40Hz
+    - VLFO: "slow" from 0.125s to 32s
+    - sine/ramp/inv ramp/random
+    - modWheel controlled vibrato
+  Glide
+    - presets
+    - separate glide effect for aux oscillator for dissonant transients
+    
+  MIDI stack
+    - polyphony by stacking (equivalent to round robin)
+    - set 5 instances in a track
+    - set them to the same preset
+    - the first in the chain must have "MIDI Stack 5" as Glide/MIDI stack
+    - the second, must have "MIDI Stack 4"
+    - ..
+    - the fifth must have "MIDI Stack 1"
+    - the first in the chain (ex Stack5) is the MASTER :
+      if you tweak its sliders it will send sysex to its slave.
+      (if you want to automate sliders you only need to automate
+       the masters sliders).
+    
+  Oscilloscope
+    - helps sound design
+    - automatic sync & gain
+    - one sample per pixel
+    - antialiased graphics
+    - freezes (and saves CPU) on click
+*/
+slider1:1<0,16,1{Piano,Organ,Pad,Slow,Very Slow,Reverso,Breathaway,Harp,Gate,Bass,Fast Bass,Long,Very Long,Fast Reverso,Fast Breathaway,Smooth Bass,Oboe}>Env ---------------------- Main
+slider2:0<0,16,1{Piano,Organ,Pad,Slow,Very Slow,Reverso,Breathaway,Harp,Gate,Bass,Fast Bass,Long,Very Long,Fast Reverso,Fast Breathaway,Smooth Bass,Oboe}>Auxiliary  
+slider3:1<0.25,7.75>Time factor (>4 vel sens)
+//______________________________________________________________________
+slider4:2<0,15,1{Zero,Typical,Classic resonance,Super resonance,Multi resonance,Pulse,Square,Super Pulse,Dirty square,Sync lead,Soft sync,Disto,Noisy I,Noisy II,Noisy III,Noisy IV}>cXFilter -- Morph Preset 1 
+slider5:1<0,15,1{Zero,Typical,Classic resonance,Super resonance,Multi resonance,Pulse,Square,Super Pulse,Dirty square,Sync lead,Soft sync,Disto,Noisy I,Noisy II,Noisy III,Noisy IV}>Morph Preset 0 
+slider6:0<0,20,1{Modulation Wheel,Aftertouch,Aux Env (velocity sensitive),Aux Env,Main Env,LFO Sine,LFO Ramp,LFO Inv Ramp,LFO Rand,VLFO Sine,VLFO Ramp,VLFO Inv Ramp,VLFO Rand,Note Rand,VLFO + Rand LFO,VLFO + LFO,Static 0,Static 0.25,Static 0.5,Static 0.75,Static 1}>Morph Mod src 
+slider7:36<-48,48>Pitch offset 1 
+slider8:12<-48,48>Pitch offset 0 
+slider9:2<0,20,1{Modulation Wheel,Aftertouch,Aux Env (velocity sensitive),Aux Env,Main Env,LFO Sine,LFO Ramp,LFO Inv Ramp,LFO Rand,VLFO Sine,VLFO Ramp,VLFO Inv Ramp,VLFO Rand,Note Rand,VLFO + Rand LFO,VLFO + LFO,Static 0,Static 0.25,Static 0.5,Static 0.75,Static 1}>Pitch Mod src
+slider10:18<0,20,1{Modulation Wheel,Aftertouch,Aux Env (velocity sensitive),Aux Env,Main Env,LFO Sine,LFO Ramp,LFO Inv Ramp,LFO Rand,VLFO Sine,VLFO Ramp,VLFO Inv Ramp,VLFO Rand,Note Rand,VLFO + Rand LFO,VLFO + LFO,Minimum,Static 0.25,Static 0.5,Static 0.75,Maximum}>Resonance  
+//______________________________________________________________________
+slider11:0<0,21,1{2,1/2,3/2,2 + 1/2,1/4,1 - 1/4,1 + 1/4,2 - 1/4,2 + 1/4,1/2 - 1/8,1/2 + 1/8,1 - 1/8,1 + 1/8,2 - 1/8,2 + 1/8,3,3 - 1/2,3 + 1/2,3 - 1/4,3 + 1/4,External,Ring mod External}>Auxiliary Osc Ratio / Source
+slider12:8<0.1,32>Beat (s)       
+slider13:0<0,20,1{Modulation Wheel,Aftertouch,Aux Env (velocity sensitive),Aux Env,Main Env,LFO Sine,LFO Ramp,LFO Inv Ramp,LFO Rand,VLFO Sine,VLFO Ramp,VLFO Inv Ramp,VLFO Rand,Note Rand,VLFO + Rand LFO,VLFO + LFO,Static 0,Static 0.25,Static 0.5,Static 0.75,Static 1}>Mix Mod src 
+//______________________________________________________________________
+slider14:0<0,12,1{Normal,Square,1/4,Square II,Bend Square,Bend Spread,Bend Sub Octave,Bend Sub Fifth,Bend Sub Octave2,Bend Sub Fifth2,Exper 1,Exper 2,Exper 3}>Ring'n Bend -----------------------
+slider15:4<0.125,30>VLFO ------------------ cycle (s)
+slider16:5.5<0.125,40>LFO -------------------- rate (Hz)
+slider17:10<0,100>Vibrato depth (cents)
+slider18:0<0,13,1{Off,Fast Aux,Med Aux,Slow Aux,Very Slow Aux,Fast,Med,Slow,Very Slow,MIDI Stack 5,MIDI Stack 4,MIDI Stack 3,MIDI Stack 2,MIDI Stack 1}>Glide type / MIDI stack
+
+//______________________________________________________________________
+slider62:16<0,16,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,All}>--Midi -------------- Channel
+//______________________________________________________________________
+in_pin:in Left
+in_pin:in Right
+out_pin:out Left
+out_pin:out Right
+import TiaR_DC5.jsfx-inc
+import TiaR_KBD_03.jsfx-inc
+import TiaR_ADSR_03.jsfx-inc
+import TiaR_LFO_00.jsfx-inc
+import TiaR_CXF_10.jsfx-inc
+import TiaR_SCP_01.jsfx-inc
+import TiaR_SIN_01.jsfx-inc
+//______________________________________________________________________
+@init
+sr=4*srate;
+ad = 1;
+KRATE = 4; // control every 4 samples
+ONE_OVER_KRATE = 1.0 / KRATE;
+k = KRATE; // control rate counter
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+DC5();
+KBD();
+CXF();
+CXF_defPresets();
+ADSR();
+LFO();
+SINI();
+
+synthID = 13;
+dc5A.DC5_init();
+dc5B.DC5_init();
+KBD_synthID = synthI;
+KBD_tNoReceive[18] = 1;
+
+scp.SCP_init();
+scp.r = 1; scp.g = 0.7; scp.b = 0.3;
+cxf.CXF_init();
+cxf2.CXF_init();
+osc1.CXF_oscInit();                     // inits at A4
+osc2.SIN_init();
+
+tModSrces = ad; ad += 21;
+tModSrces[16] = 0;
+tModSrces[17] = 0.25;
+tModSrces[18] = 0.5;
+tModSrces[19] = 0.75;
+tModSrces[20] = 1;
+//______________________________________________________________________
+function sliderProc()
+(
+  slADSR1 = slider1;
+slADSR2 = slider2;
+slTimeFactor = slider3;
+
+slPresetA = slider4;
+slPresetB = slider5;
+slMorphSrc = slider6;
+
+slP1 = slider7;
+slP0 = slider8;
+slPsrc = slider9;
+slResCoef = slider10;
+
+slRatio = slider11;
+slBeat = slider12;
+slAuxSrc = slider13;
+
+slBendType = slider14;
+
+slVlfoCycle = slider15;
+slLfoRate = slider16;
+slVibrato = slider17;
+slGlide = slider18;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                  effect mode => do not receive sysex 
+slRatio >= 20 ? KBD_synthID = 0 : KBD_synthID = synthID;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                                glide 
+slGlide === 0 || slGlide > 8 ? (glCoefAux = 1; glCoef = 1;); //Off
+
+slGlide === 1 ? (glCoefAux =  50 / sr; glCoef = 1;); //Fast aux
+slGlide === 2 ? (glCoefAux =  25 / sr; glCoef = 1;);
+slGlide === 3 ? (glCoefAux =   5 / sr; glCoef = 1;);
+slGlide === 4 ? (glCoefAux =   1 / sr; glCoef = 1;);
+
+slGlide === 5 ? (glCoef = glCoefAux =  50 / sr; ); //Fast 
+slGlide === 6 ? (glCoef = glCoefAux =  25 / sr; );
+slGlide === 7 ? (glCoef = glCoefAux =   5 / sr; );
+slGlide === 8 ? (glCoef = glCoefAux =   1 / sr; );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                           Midi Stack 
+// slGlide === 9 MIDI stack 5
+// slGlide === 10 MIDI stack 4
+// slGlide === 11 MIDI stack 3
+// slGlide === 12 MIDI stack 2
+// slGlide === 13 MIDI stack 1
+slGlide >= 9 && slGlide <= 13 ?
+  (KBD_setMIDIstack(14 - slGlide); KBD_synthID = synthID;) // activate sysex rec
+: (KBD_setMIDIstack(0);            KBD_synthID = 0;      );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                 cXf Pitch modulation 
+sl18msl19x16 = (slP1 - slP0) * 16;
+sl19x16 = slP0 * 16;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                                 LFOs
+beatFreq = 1 / slBeat;
+lfo.LFO_setF(slLfoRate);
+vlfo.LFO_setF(1 / slVlfoCycle);
+
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                         ADSR presets
+adsr1.ADSR_preset(slADSR1);
+adsr2.ADSR_preset(slADSR2);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                oscilloscope settings
+scp.SCP_sProc(0, 0.01);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                           bend modes
+slBendType ==  0 ? (fShifterH = 0;   fShifterDpCoef = 0;   );
+
+slBendType ==  1 ? (fShifterH = 0;   fShifterDpCoef = -1/2 );
+slBendType ==  2 ? (fShifterH = 0;   fShifterDpCoef = -3/4 );
+slBendType ==  3 ? (fShifterH = 0;   fShifterDpCoef = 1);
+
+slBendType ==  4 ? (fShifterH = 1;   fShifterDpCoef = 0;   );
+slBendType ==  5 ? (fShifterH = 2;   fShifterDpCoef = 0;   );
+slBendType ==  6 ? (fShifterH = 3/2; fShifterDpCoef = 0;   );
+slBendType ==  7 ? (fShifterH = 4/3; fShifterDpCoef = 0;   );
+slBendType ==  8 ? (fShifterH = 1/2; fShifterDpCoef = 0;   );
+slBendType ==  9 ? (fShifterH = 1/3; fShifterDpCoef = 0;   );
+slBendType == 10 ? (fShifterH = 1;   fShifterDpCoef = -1/2+0.001;);
+slBendType == 11 ? (fShifterH = 3/2; fShifterDpCoef = -3/4;);
+slBendType == 12 ? (fShifterH = 3;   fShifterDpCoef = -3.5;);
+);
+
+function atSample()
+(
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                           Audio Rate
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+//                                                                input
+slRatio < 20 ? (
+  osc2.SIN_aProc();
+  osc1.CXF_oscAProc();
+  //                                  osc2 mix controlled by modulation
+  mod = 0.5 * tModSrces[slAuxSrc];
+  v.r = osc1.v.r + mod * (osc2.r - osc1.v.r);
+  v.i = osc1.v.i + mod * (osc2.i - osc1.v.i);
+) : slRatio === 20 ? ( // 20: External
+  v.r = spl0;
+  v.i = spl1;
+) : (                  // 21: Ring mod External
+  osc1.CXF_oscAProc();
+  v.r = osc1.v.r * spl0;
+  v.i = osc1.v.i * spl1;
+);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+//                                                           processing
+cxf.p = p16f + sl19x16 + tModSrces[slPsrc] * sl18msl19x16; //pitch + mod
+cxf.CXF_aProc(v);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+//                                                    frequency shifter
+fShifter.SIN_freqShifterProc(s, cxf.out);
+coef = cxf.CXF_softNorm(s);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+//                                                               output
+
+//N'apporte rien :(
+//out2 =  hbt.HBT_invProc15(s) * coef * env1;
+
+out = s.r * coef * env1;
+);
+//______________________________________________________________________
+@slider
+
+
+//______________________________________________________________________
+@block
+KBD_setChannel(slider62);
+KBD_bProc();
+
+sliderProc();  // ------------------------------------------
+
+
+gate !== 0 ? vel = gate;
+note !== anote || agate !== gate ? (
+  anote = note;
+  agate = gate;
+  tModSrces[13] = rand(1);
+);
+osc1.CXF_oscBProc();                    // normalisation
+
+slTimeFactor < 4 ? 
+  timeFactor = slTimeFactor 
+: timeFactor = 4 - vel * (slTimeFactor - 4); //4 -> 7.75 => 0 3.75
+
+adsr1.ADSR_setTimeFactor(timeFactor);
+adsr2.ADSR_setTimeFactor(timeFactor);
+
+p16 = (note + 12 * bend) * 16;
+
+fShifter.SIN_freqShifterSet(note * 16, fShifterDpCoef, fShifterH, bend);
+
+cxf.CXF_bProc();
+//______________________________________________________________________
+@sample
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                         Control Rate
+k >= KRATE ? ( 
+  k = 0;
+  new_env1 = expression * adsr1.ADSR_kProc(gate, trig);
+  denv1 = (new_env1 - env1) * ONE_OVER_KRATE;
+  new_env2 = expression * adsr2.ADSR_kProc(gate, trig);
+  lfo.LFO_kProc();
+  vlfo.LFO_kProc();
+  
+  p16f    += glCoef    * (p16 - p16f);
+  p16fAux += glCoefAux * (p16 - p16fAux);
+  trig ? (
+    p16fAux = p16f = p16;
+  );
+  
+  p16vib = 0.16 * slVibrato * modWheel * lfo.sin;
+  slRatio < 20 ? (
+    osc1.CXF_oscKProc(p16f + p16vib);// pitch*16
+    osc2.SIN_kProc(p16fAux + p16vib, slRatio, beatFreq);
+  );
+  KBD_kProc();
+  
+  tModSrces[0] = modWheel;
+  tModSrces[1] = aftertouch;
+  tModSrces[2] = new_env2;
+  tModSrces[3] = adsr2.adsr;
+  tModSrces[4] = adsr1.adsr;
+  tModSrces[5] = 0.5 + 0.5 * lfo.sin; //lfo
+  tModSrces[6] = (lfo.p + 1) * (1/4); //lfo ramp
+  tModSrces[7] = 1 - tModSrces[6]; //lfo inv ramp
+  tModSrces[8] = lfo.rand; //lfo rand
+  
+  tModSrces[9] = 0.5 + 0.5 * vlfo.sin; //vlfo sin
+  tModSrces[10] = (vlfo.p + 1) * (1/4); //vlfo ramp
+  tModSrces[11] = 1 - tModSrces[10]; //vlfo inv ramp
+  tModSrces[12] = vlfo.rand; //vlfo rand
+  //13 -> Note rand (set in block)
+  tModSrces[14] = 0.8 * tModSrces[9] + 0.2 * lfo.rand; //lfo rand
+  tModSrces[15] = 0.8 * tModSrces[9] + 0.2 * tModSrces[5]; //lfo sin
+  
+  cxf.CXF_presetMorph(slPresetB, slPresetA, tModSrces[slMorphSrc]);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                            Resonance
+  cxf.resCoef = 1 / (5 + 35 * tModSrces[slResCoef]);
+  cxf.resCoef *= srate/sr;
+);
+k += 1;
+env1 += denv1; //linear interpolation of env
+
+atSample();
+out0 = out;
+atSample();
+outA0 = dc5A.DC5_aProc(out0, out);
+atSample();
+out0 = out;
+atSample();
+outA1 = dc5A.DC5_aProc(out0, out);
+out = dc5B.DC5_aProc(outA0, outA1);
+
+slRatio < 20 ? (
+  spl0 += out;
+  spl1 += out; 
+) : spl0 = spl1 = out;
+scp.SCP_aProcOneTrace(spl0);
+//______________________________________________________________________
+@gfx 0 200
+scp.SCP_gProcOneTrace(0,0,gfx_w,gfx_h);
+

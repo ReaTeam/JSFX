@@ -1,0 +1,340 @@
+//@noindex
+
+desc: Scope lib rev01
+/*
+ Copyright 2014, Thierry Rochebois
+ All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without 
+  modification, are permitted provided that the following conditions are
+  met:
+  Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer. 
+
+  Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution. 
+
+  The name of Thierry Rochebois may not be used to endorse or promote
+  products derived from this software without specific prior written
+  permission. 
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+/*slider1:0<0,4,1{1 sample per px,2 samples per px,4 samples per px,10 samples per px,20 samples per px}>Time scale
+slider2:0.01<0.001,0.1>Sync speed
+*/
+//______________________________________________________________________
+//                                                              Features
+// Automatic gain up to 30dB
+// Automatic limiter
+// Time scale from 1 sample per pixel to 20 samples per pixel (inc smoothing)
+// Graph antialiasing, including horizontal lines.
+// Freezes when clicking in graphic area
+//______________________________________________________________________
+//                                                                 TO DO
+//______________________________________________________________________
+@init
+function SCP_init()
+instance(LB tInL tInR coef scale cSamp maxGain maxGain1)
+(
+  LB = srate|0;
+  tInL = ad; ad += LB; 
+  tInR = ad; ad += LB;
+  coef = ad; ad += 20;
+  scale = ad; ad += 20;
+  scale[0] = 1;    coef[0] = 1;
+  scale[1] = 2;    coef[1] = 1/2;
+  scale[2] = 4;    coef[2] = 1/4;
+  scale[3] = 10;   coef[3] = 1/10;
+  scale[4] = 20;   coef[4] = 1/20;
+
+  cSamp = 0;
+  maxGain = 31.6227766; // <-> 30dB
+  maxGain1 = 1 / maxGain;
+  this.r = 0; this.g = 1; this.b = 0;
+);
+function SCP_sProc(samplePerPix syncSpeed)(
+  this.syncSpeed = syncSpeed;
+  this.samplePerPix = samplePerPix;
+);
+
+function SCP_aProc(s0 s1)
+instance(tInL tInR frozen coef scale sc a0 a1 low low2 dc spl0f aspl0f cSamp LB syncPos scaleType samplePerPix syncSpeed)
+(
+  !frozen ?
+  (
+    sc += 1;   //sample counter for subsampling (time scaling smoothing)
+    a0 += s0;   //sample accumulators for time scaling smoothing
+    a1 += s1;
+    sc >= scale[scaleType] ?
+    (
+      tInL[cSamp] = a0 * coef[scaleType];
+      tInR[cSamp] = a1 * coef[scaleType];
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                            SCOPE sync
+//                      zero crossing on a0 (wih low pass and dc remove) 
+      low  += syncSpeed * (a0 - low);
+      low2 += syncSpeed * (low  - low2);
+      dc   += syncSpeed * (low2 - dc);
+      spl0f = low2 - dc;
+      (spl0f > 0 && aspl0f <= 0) ? ( 
+        syncPos = cSamp;
+      );
+      aspl0f = spl0f;  
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+      cSamp = (cSamp + 1) % LB;
+      sc = 0;  a0 = 0; a1 = 0;
+      // to avoid side effects when changing slider1
+      scaleType = samplePerPix; 
+    );
+  );
+);
+//______________________________________________________________________
+function SCP_aProcOneTrace(s0)
+instance(tInL frozen coef scale sc a0 low low2 dc spl0f aspl0f cSamp LB syncPos scaleType samplePerPix syncSpeed)
+(
+  !frozen ?
+  (
+    sc += 1;   //sample counter for subsampling (time scaling smoothing)
+    a0 += s0;   //sample accumulators for time scaling smoothing
+    sc >= scale[scaleType] ?
+    (
+      tInL[cSamp] = a0 * coef[scaleType];
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                            SCOPE sync
+//                      zero crossing on a0 (wih low pass and dc remove) 
+      low  += syncSpeed * (a0 - low);
+      low2 += syncSpeed * (low  - low2);
+      dc   += syncSpeed * (low2 - dc);
+      spl0f = low2 - dc;
+      (spl0f > 0 && aspl0f <= 0) ? ( 
+        syncPos = cSamp;
+      );
+      aspl0f = spl0f;  
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+      cSamp = (cSamp + 1) % LB;
+      sc = 0;  a0 = 0;
+      // to avoid side effects when changing slider1
+      scaleType = samplePerPix; 
+    );
+  );
+);
+//______________________________________________________________________
+function SCP_gProc(px py w h)
+instance(tInL tInR old_mouse_cap frozen scaleType coef syncPos LB maxGain1 maxGain)
+local(h1_4 h3_4 h1_2 x i0 vmax i gain yOffset dispGain t y y0 yf)
+(
+  gfx_clear = 0;
+  h1_4 = h * 0.25;
+  h3_4 = h * 0.75;
+  h1_2 = h * 0.5;
+
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  mouse_x > px && mouse_x < px+w && mouse_y > py && mouse_y < py + h ?
+  (
+    old_mouse_cap == 0 && mouse_cap != 0 ? frozen = !frozen;
+    old_mouse_cap = mouse_cap;
+  );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  // Grad every 10 samples
+  scaleType == 0 ? (
+    gfx_r = 0.1; gfx_g = 0.1; gfx_b = 0.05;
+    x = px;
+    while(
+      gfx_y = py; gfx_x = x;
+      gfx_lineto(x, py + h, 0);
+      x += 10 * coef[scaleType];
+      x < px + w;
+    );
+  );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// Grad every 100 samples
+  gfx_r = 0.2; gfx_g = 0.15; gfx_b = 0.05;
+  x = 0;
+  while(
+    gfx_y = py; gfx_x = x;
+    gfx_lineto(x, py + h, 0);
+    x += 100 * coef[scaleType];
+    x < px + w;
+  );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// Grad every 1000 samples
+  gfx_r = 0.35; gfx_g = 0.1; gfx_b = 0;
+  x = 0;
+  while(
+    gfx_y = py; gfx_x = x;
+    gfx_lineto(x, py + h, 0);
+    x += 1000 * coef[scaleType];
+    x < px + w;
+  );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  gfx_r = 0.0; gfx_g = 0.0; gfx_b = 0.2;
+  gfx_x = px; gfx_y = py + h1_4; gfx_lineto(px + w, gfx_y, 0);
+  gfx_x = px; gfx_y = py + h3_4; gfx_lineto(px + w, gfx_y, 0);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// syncPos <-> relative to latest zero crossing
+  i0 = (syncPos - w + LB) % LB;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                             auto gain
+  vmax = maxGain1; 
+  i = i0;
+  loop(w - 1,
+    i += 1;
+    abs(tInL[i % LB]) > vmax ? vmax = abs(tInL[i % LB]);
+    abs(tInR[i % LB]) > vmax ? vmax = abs(tInR[i % LB]);
+  );
+  gain = 1 / vmax;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  yOffset = py + h1_4;
+  dispGain = gain * h1_4; //display scale
+  gfx_r = this.r; gfx_g = this.g; gfx_b = this.b;
+  t = tInL;
+  loop(2,
+    gfx_x = px; i = i0;
+    gfx_y = yOffset - dispGain * t[i];
+    loop(w - 1,
+      i += 1;
+      i >= LB ? i = 0;
+      y = yOffset - dispGain * t[i];
+      abs(y - gfx_y) > 1.2 ?
+        gfx_lineto(gfx_x + 1, y, 1)
+      : (
+        y0 = floor(y);
+        yf = y - y0;
+        gfx_x += 1;
+        gfx_y = y0 + 1;        
+        gfx_setpixel(yf*this.r, yf*this.g, yf*this.b);                      
+        gfx_y = y0;
+        yf = 1-yf;
+        gfx_setpixel(yf*this.r, yf*this.g, yf*this.b);                      
+       );
+    );
+    t += LB;
+    yOffset += h1_2;
+  );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  gfx_r = 1; gfx_g = 1; gfx_b = 1;
+  gfx_x = px; gfx_y = py + h - 1 - gfx_texth;
+  gfx_drawstr("Gain= ");
+  gain < 1                  ? (gfx_r = 1; gfx_g = 0; gfx_b = 0; )
+  : gain + 0.001 >= maxGain ? (gfx_r = 0; gfx_g = 0.7; gfx_b = 1; );
+  gfx_drawnumber(20 * log10(gain), 5);
+  gfx_drawstr("dB");
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  frozen ? (
+    gfx_x = px; gfx_y = py; gfx_r = 0; gfx_g = 1; gfx_b = 1;
+    gfx_drawstr("Frozen");
+  );
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//______________________________________________________________________
+function SCP_gProcOneTrace(px py w h)
+instance(tInL tInR old_mouse_cap frozen scaleType coef syncPos LB maxGain1 maxGain)
+local( h1_2 x i0 vmax i gain yOffset dispGain t y y0 yf)
+(
+  gfx_clear = 0;
+  h1_2 = h * 0.5;
+
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  mouse_x > px && mouse_x < px+w && mouse_y > py && mouse_y < py + h ?
+  (
+    old_mouse_cap == 0 && mouse_cap != 0 ? frozen = !frozen;
+    old_mouse_cap = mouse_cap;
+  );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  // Grad every 10 samples
+  scaleType == 0 ? (
+    gfx_r = 0.1; gfx_g = 0.1; gfx_b = 0.05;
+    x = px;
+    while(
+      gfx_y = py; gfx_x = x;
+      gfx_lineto(x, py + h, 0);
+      x += 10 * coef[scaleType];
+      x < px + w;
+    );
+  );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// Grad every 100 samples
+  gfx_r = 0.2; gfx_g = 0.15; gfx_b = 0.05;
+  x = px;
+  while(
+    gfx_y = py; gfx_x = x;
+    gfx_lineto(x, py + h, 0);
+    x += 100 * coef[scaleType];
+    x < px + w;
+  );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// Grad every 1000 samples
+  gfx_r = 0.35; gfx_g = 0.1; gfx_b = 0;
+  x = px;
+  while(
+    gfx_y = py; gfx_x = x;
+    gfx_lineto(x, py + h, 0);
+    x += 1000 * coef[scaleType];
+    x < px + w;
+  );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  gfx_r = 0.0; gfx_g = 0.0; gfx_b = 0.2;
+  gfx_x = px; gfx_y = py + h1_2; gfx_lineto(px + w, gfx_y, 0);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// syncPos <-> relative to latest zero crossing
+  i0 = (syncPos - w + LB) % LB;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                             auto gain
+  vmax = maxGain1; 
+  i = i0;
+  loop(w - 1,
+    i += 1;
+    abs(tInL[i % LB]) > vmax ? vmax = abs(tInL[i % LB]);
+  );
+  gain = 1 / vmax;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  yOffset = py + h1_2;
+  dispGain = gain * h1_2; //display scale
+  gfx_r = this.r; gfx_g = this.g; gfx_b = this.b;
+  t = tInL;
+    gfx_x = px; i = i0;
+    gfx_y = yOffset - dispGain * t[i];
+    loop(w - 1,
+      i += 1;
+      i >= LB ? i = 0;
+      y = yOffset - dispGain * t[i];
+      abs(y - gfx_y) > 1.2 ?
+        gfx_lineto(gfx_x + 1, y, 1)
+      : (
+        y0 = floor(y);
+        yf = y - y0;
+        gfx_x += 1;
+        gfx_y = y0 + 1;        
+        gfx_setpixel(yf*this.r, yf*this.g, yf*this.b);                      
+        gfx_y = y0;
+        yf = 1-yf;
+        gfx_setpixel(yf*this.r, yf*this.g, yf*this.b);                      
+       );
+    );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  gfx_r = 1; gfx_g = 1; gfx_b = 1;
+  gfx_x = px; gfx_y = py + h - 1 - gfx_texth;
+  gfx_drawstr("Gain= ");
+  gain < 1                  ? (gfx_r = 1; gfx_g = 0; gfx_b = 0; )
+  : gain + 0.001 >= maxGain ? (gfx_r = 0; gfx_g = 0.7; gfx_b = 1; );
+  gfx_drawnumber(20 * log10(gain), 5);
+  gfx_drawstr("dB");
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  frozen ? (
+    gfx_x = px; gfx_y = py; gfx_r = 0; gfx_g = 1; gfx_b = 1;
+    gfx_drawstr("Frozen");
+  );
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _

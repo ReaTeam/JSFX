@@ -1,23 +1,23 @@
 /*
-  @description PWave poly synth Mark II
+  @description PWave Poly Synth Mark II
   @version 1.0
   @author T.Rochebois
   @changelog
     + Initial release
   @provides   
-    PWT_02.RPL
-    TiaR_ADSR_03.jsfx-inc
-    TiaR_KB6_01.jsfx-inc
-    TiaR_LFO_04.jsfx-inc
-    TiaR_LIM_01.jsfx-inc
-    TiaR_MAP_02.jsfx-inc
-    TiaR_PPWT_02.jsfx-inc
-    TiaR_SCP_01.jsfx-inc
-    TiaR_VCT_PPWT_02.jsfx-inc 
+    TiaR_PWave Poly Synth Mark II/PWT_02.RPL
+    TiaR_PWave Poly Synth Mark II/TiaR_ADSR_03.jsfx-inc
+    TiaR_PWave Poly Synth Mark II/TiaR_KB6_01.jsfx-inc
+    TiaR_PWave Poly Synth Mark II/TiaR_LFO_04.jsfx-inc
+    TiaR_PWave Poly Synth Mark II/TiaR_LIM_01.jsfx-inc
+    TiaR_PWave Poly Synth Mark II/TiaR_MAP_02.jsfx-inc
+    TiaR_PWave Poly Synth Mark II/TiaR_PPWT_02.jsfx-inc
+    TiaR_PWave Poly Synth Mark II/TiaR_SCP_01.jsfx-inc
+    TiaR_PWave Poly Synth Mark II/TiaR_VCT_PPWT_02.jsfx-inc 
 */
 
 
-desc:TiaR PWave poly synth Mark II  Smashed.Transistors at gmail.com
+desc:TiaR_PWave Poly Synth Mark II
 /*
  Copyright 2015, Thierry Rochebois
  Smashed.Transistors at gmail.com

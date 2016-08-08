@@ -1,0 +1,31 @@
+//@noindex
+
+desc:LFO library
+
+//_____________________________________________________________________
+@init
+//_____________________________________________________________________
+//                    Static ressources & tables for all LFO "objects"
+function LFO()
+  local() (
+  LFO_time_coef = 4 / (srate/KRATE);
+);
+
+//_____________________________________________________________________
+//                                              Init of a LFO instance
+function LFO_setF(f) (
+  this.f = f;
+  this.dp = f * LFO_time_coef;
+  this.dp = min(this.dp, 1);
+);
+
+//_____________________________________________________________________
+//                                              Control rate processing
+function LFO_kProc()
+  local() (
+  this.p += this.dp;
+  this.p > 3 ? this.p -= 4;
+  this.p < 1 ? this.triangle = this.p :
+               this.triangle = 2 - this.p;
+  this.sin = 0.5 * this.triangle * (3 - this.triangle * this.triangle);
+);

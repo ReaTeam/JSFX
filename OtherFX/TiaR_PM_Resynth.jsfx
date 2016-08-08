@@ -1,0 +1,342 @@
+/*
+  @description PM_Resynth
+  @version 1.0
+  @author T.Rochebois
+  @changelog
+    + Initial release
+  @about
+	http://stash.reaper.fm/v/22117/TiaR_PM_Resynth.zip
+	This is an experimental midi controlled effect. So, even if its internals ar synth like, it needs an audio input (a synth, a chaos oscillator, an audio track) and midi control.
+	The incoming signal is sampled, windowed, phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded. until you stop pressing the keys.
+	So the output pitch is controlled by the keyboard, whatever the incoming signal is.
+	Feed it with whatever you want.
+*/
+
+
+desc:TiaR_PM_Resynth
+/*
+ Copyright 2014, Thierry Rochebois
+ All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without 
+  modification, are permitted provided that the following conditions are
+  met:
+  Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer. 
+
+  Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution. 
+
+  The name of Thierry Rochebois may not be used to endorse or promote
+  products derived from this software without specific prior written
+  permission. 
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+slider1:0<0,4,1{PM,Windowed PM,Resample,Backward,Phase Distorsion}>Type
+slider2:4<1,16,1>Cycles per xfade
+slider3:0.01<0.001,2>Glide (s)
+slider4:6.0<0.1,50>LFO speed (Hz)
+slider5:2.0<0,5>LFO depth (%)
+slider6:3.14<0,6.29>Secondary chain phase
+slider7:0<0,1,1{Off,On}>Freeze on note on
+
+slider10:16<0,16,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,All}>Midi Channel
+
+slider13:0<0,4>Attack time (ms decade)
+slider14:3<1,4>Decay time (ms decade)
+slider15:0.7<0,1>Sustain
+slider16:3<1,4>Release time (ms decade)
+
+slider20:0.5<0,6>PM depth
+slider21:0.5<0,6>ModW -> PM depth
+slider22:0.5<-6,6>ADSR -> PM depth
+
+//______________________________________________________________________________
+//                                                                      Features
+//
+//______________________________________________________________________________
+//                                                                   USER MANUAL
+//______________________________________________________________________________
+//                                                                         TO DO
+//______________________________________________________________________________
+//                                                                         Ideas
+//______________________________________________________________________________
+@init
+epsilon = 0.00000001;  // anti denorm
+// 2s buffers
+LB = 2 * srate|0;
+//coef for phase rate conversion
+cTuning = 2 * $pi * 440 / srate;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                                        Tables
+ad = 0;
+tV   = ad; ad += 256;  // MIDI notes velocities table
+tInL = ad; ad += LB;   // input buffers Left
+tInR = ad; ad += LB;   //           and Right
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+cSamp = 0;             //sample counter for tInL and tInR
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+gate = 0;     // gate * latest velocity (0 -> 1)
+expression = 1;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+note = 60;
+dpf = dpfm = dp = cTuning * pow(2.0, (bend + note - 69.0) * (1/12.0)) ;
+phi = 0; //oscillator phase
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// lfo for vibrato (phase and deltaphase)
+plfo = 0;  dplfo = 0; lfoDepth = 0;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+time_coef = 2.71 * 1000.0 / srate;
+ADSR = 0.0;
+ASR = 0.0;
+AttackSeg = 0;
+//______________________________________________________________________________
+@slider
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+nbc       = slider2|0;
+nbc2Pi    = nbc * 2 * $pi;
+nbc2PiInv = 1 / nbc2Pi;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+glide = 1.0 / (1.0 + slider3 * srate);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+dplfo = slider4 * 2 * $pi / srate;
+lfoDepth = slider5 * 0.01;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+A = time_coef * (10 ^ -slider13);      A > 1 ? A = 1;
+D = time_coef * (10 ^ -slider14);      D > 1 ? D = 1;
+S =                    slider15;
+R = time_coef * (10 ^ -slider16);      R > 1 ? R = 1;
+//______________________________________________________________________________
+@block
+while (
+  midirecv(ofs, msg1, msg23) ? (
+    c = msg1 & 15;
+    mCos = msg1 & 240;
+    (slider10 == 16 || slider10 == c) ? (
+      dataL = msg23 & 127;
+      dataH = (msg23/256)|0;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                                   Note on/off
+      (mCos == 9 * 16 || mCos == 8 * 16) ? (
+       
+        mCos == 8 * 16 ? vel = 0 : vel = dataH;
+        tV[dataL] = vel;
+      
+        //the latest vel!=0 sets the amplitude
+        vel != 0 ? (
+          gate = vel * (1 / 127.0);
+          AttackSeg = 1;
+        );
+      
+        //the highest note sets the pitch
+        activeNote = -1;
+        n = 0;
+        loop(128,
+          tV[n] > 0 ? activeNote = n;
+          n += 1;
+        );
+      
+        //if there is no active note, we set gate to 0
+        activeNote >= 0 ? (
+          note = activeNote;
+          dp = cTuning * pow(2.0, (bend + note - 69.0) * (1/12.0)) ;
+          dp > $pi ? dp = $pi;
+        ) : (
+          gate = 0;
+          AttackSeg = 0;
+        );
+      );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                                            CC
+      mCos == 11 * 16 ? (     
+        dataL ==  1      ? modWheelH = dataH;
+        dataL ==  1 + 32 ? modWheelL = dataH;
+        dataL == 11      ? expression = dataH/128;
+        modWheel = (modWheelH + modWheelL / 128 ) / 128;
+        dataL == 123 ? ( // all notes off
+          gate = 0;
+          n = 0; loop(128, tV[n] = 0; n += 1; );
+          bend = 0;
+          modWheelL = 0; modWheelH = 0; modWheel = 0;
+        );
+      );
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                                    pitch bend
+      mCos == 14 * 16 ? (
+        bend = dataH * 128 + dataL;
+        bend = 24 * (bend - 8192) * (1.0 / 8192);
+        // phase increment
+        dp = cTuning * pow(2.0, (bend + note - 69.0) * (1/12.0)) ;
+        dp > $pi ? dp = $pi;
+      );
+      freeze = (gate != 0) && slider7;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+    );
+    midisend(ofs, msg1, msg23);
+  ); // midirecv
+); // while
+//______________________________________________________________________________
+@sample
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+!frozen ? (
+  tInL[cSamp] = spl0;
+  tInR[cSamp] = spl1;
+  cSamp = (cSamp + 1) % LB;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                                          ADSR
+ASR < gate ?
+  ASR += A * (gate - ASR)
+: ASR += R * (gate + epsilon - ASR);
+//  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+AttackSeg == 1 ? (
+  ADSR += A * (1.5 - ADSR);
+  ADSR >= 1.0 ? 
+  ( ADSR = 1.0;
+    AttackSeg = 0;
+  );
+);
+AttackSeg == 0 ? (
+  gate != 0 ? (
+    ADSR += D * (S - ADSR);
+  ) : ( 
+    ADSR += R * (epsilon - ADSR);
+  );
+);
+gain = ASR * ADSR * expression;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                            lfo for modulation
+plfo += dplfo;
+plfo > 2 * $pi ? plfo -= 2 * $pi; // lfo phase modulo
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                                    oscillator
+//                                              filtered phase increment (glide)
+dpf += glide * (dp - dpf);
+//                                           dp filtred and modulated (modwheel)
+dpfm = dpf * (1 + lfoDepth * modWheel * sin(plfo));
+//                                                        osc phase accumulation
+phi += dpfm;
+phiphi += dpfm;
+phiphi > 2*$pi ? phiphi -= 2*$pi;
+//  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+(phi > nbc2Pi) ? (
+  // reset of osc phase
+  phi -= nbc2Pi;
+  phiphi = phi;
+
+  //   phi n     phi n-1   phi n-2 
+  //   incCos -> decCos
+  //          -> incSin -> DecSin
+
+  // pDeca = old pInca -> decaying
+  pDecCos = pIncCos;
+  // new fresh -> inc
+  frozen ?
+    pIncCos = pDecSin  //recycle if frozen
+  : pIncCos = cSamp - 1 + 4 * LB; // 4*LB anticipated modulo
+  
+  // sine chain
+  pDecSin = pIncSin;
+  pIncSin = pDecCos;
+);
+
+gain != 0 ? (
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+  coefm = slider20 + modWheel * slider21 + ADSR * slider22;
+  coefm = max(0.05, coefm);
+  coefm /= dpf;
+  envInc = phi * nbc2PiInv;
+  envDec = 1 - envInc;
+//  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+//                                                                  Cosine chain           
+// slider1 : 0 -> PM
+//           1 -> windowed PM
+//           2 -> Resample
+//           3 -> Resample Backwards
+//           4 -> Phase distorsion
+  ph = phiphi;
+  slider1   <= 1 ?  m = cos(ph) - 1 
+  : slider1 == 2 ?  m = ph * (1/$pi) - 2
+  : slider1 == 3 ?  m = -ph* (1/$pi)
+  : slider1 == 4 ? ( m = ph * (0.5/$pi);
+                     m = 2 * m * m - 2;
+                   );
+  m *= coefm;
+  
+  slider1   == 0 ?  cycleEnv = 1
+  : slider1 == 1 ?  cycleEnv = 0.5 - 0.5 * sin(ph)
+  : slider1 >= 2 ?  cycleEnv = 0.5 - 0.5 * cos(ph);
+  
+  alpha = m - floor(m);
+
+  m0 = floor(m + pIncCos) % LB;
+  m1 = (m0 + 1) % LB;
+  vRc = envInc * (tInL[m0] + alpha * (tInL[m1] - tInL[m0]));
+  vLc = envInc * (tInR[m0] + alpha * (tInR[m1] - tInR[m0]));
+  
+  m0 = floor(m + pDecCos) % LB;
+  m1 = (m0 + 1) % LB;
+  vRc += envDec * (tInL[m0] + alpha * (tInL[m1] - tInL[m0]));
+  vLc += envDec * (tInR[m0] + alpha * (tInR[m1] - tInR[m0]));
+  vRc *= cycleEnv;
+  vLc *= cycleEnv;
+//  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+//                                                                  Second chain  
+  ph = phiphi - slider6;
+  ph < 0 ? ph += 2*$pi;
+  slider1   <= 1 ?  m = cos(ph) - 1 
+  : slider1 == 2 ?  m = ph * (1/$pi) - 2
+  : slider1 == 3 ?  m = -ph* (1/$pi)
+  : slider1 == 4 ? ( m = ph * (0.5/$pi);
+                     m = 2 * m * m - 2;
+                   );
+  m *= coefm;
+  
+  slider1   == 0 ?  cycleEnv = 1
+  : slider1 == 1 ?  cycleEnv = 0.5 - 0.5 * sin(ph)
+  : slider1 >= 2 ?  cycleEnv = 0.5 - 0.5 * cos(ph);
+  
+  alpha = m - floor(m);
+
+  m0 = floor(m + pIncSin) % LB; 
+  m1 = (m0 + 1) % LB;
+  vRs = envInc * (tInL[m0] + alpha * (tInL[m1] - tInL[m0]));
+  vLs = envInc * (tInR[m0] + alpha * (tInR[m1] - tInR[m0]));
+  
+  m0 = floor(m + pDecSin) % LB;
+  m1 = (m0 + 1) % LB;
+  vRs += envDec * (tInL[m0] + alpha * (tInL[m1] - tInL[m0]));
+  vLs += envDec * (tInR[m0] + alpha * (tInR[m1] - tInR[m0]));
+  vRs *= cycleEnv;
+  vLs *= cycleEnv;
+
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  spl0 = gain * (vRc + vRs);
+  spl1 = gain * (vLc + vLs);
+) : (
+  spl0 = 0;
+  spl1 = 0;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,88 @@
+//@noindex
+
+desc:Hadamard verb
+// _____________________________________________________________________
+@init
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function HAD()(
+  HAD_NORM = 0.5; // 1/sqrt2 * 1/sqrt2
+  HAD_LM = 65536;   HAD_LM1 = HAD_LM - 1;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function HAD_init()(
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                    delay line tables
+  this.d0 = ad; ad+=HAD_LM;  
+  this.d1 = ad; ad+=HAD_LM;  
+  this.d2 = ad; ad+=HAD_LM;  
+  this.d3 = ad; ad+=HAD_LM;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                          hadamard4 mix x0..3 -> y0.3
+function HAD_mix()
+instance(x0 x1 x2 x3 y0 y1 y2 y3)
+local(x01 x23)(
+  x01 = x0 + x1;   x23 = x2 + x3;      y0 = x01 + x23;  y2 = x01 - x23;
+  x01 = x0 - x1;   x23 = x2 - x3;      y1 = x01 + x23;  y3 = x01 - x23;   
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function HAD_setDelays(ld0 ld1 ld2 ld3)(
+  this.ld0 = ld0;  this.ld1 = ld1;  this.ld2 = ld2;  this.ld3 = ld3;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function HAD_setFBs(fb0 fb1 fb2 fb3)(
+  this.fb0 = (1 - fb0) * HAD_NORM; 
+  this.fb1 = (1 - fb1) * HAD_NORM; 
+  this.fb2 = (1 - fb2) * HAD_NORM; 
+  this.fb3 = (1 - fb3) * HAD_NORM;
+  this.gi0 = fb0 * HAD_NORM;
+  this.gi1 = fb1 * HAD_NORM;
+  this.gi2 = fb2 * HAD_NORM;
+  this.gi3 = fb3 * HAD_NORM;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// x>=0 !!
+function HAD_interp(x t l)
+local(ix0 ix1 a)(
+  ix0 = floor(x);
+  a = x - ix0;
+  ix0 = ix0 % l;
+  ix1 = (ix0 + 1) % l;
+  t[ix0] + a * (t[ix1] - t[ix0]);
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function HAD_aProc(in0 in1 in2 in3)
+instance( d0  d1  d2  d3
+         ld0 ld1 ld2 ld3
+         ldf0 ldf1 ldf2 ldf3
+         fb0 fb1 fb2 fb3 
+         gi0 gi1 gi2 gi3
+          x0  x1  x2  x3 
+          y0  y1  y2  y3 c)
+local(cp)
+(
+ldf0 += 0.0001 * (ld0 - ldf0);
+ldf1 += 0.0001 * (ld1 - ldf1);
+ldf2 += 0.0001 * (ld2 - ldf2);
+ldf3 += 0.0001 * (ld3 - ldf3);
+
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                   Input and feedback
+  d0[c] = fb0 * y0 + in0 * gi0;
+  d1[c] = fb1 * y1 + in1 * gi1;
+  d2[c] = fb2 * y2 + in2 * gi2;
+  d3[c] = fb3 * y3 + in3 * gi3;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                  delay lines output to matrix inputs
+  cp = c + HAD_LM;
+  x0 = HAD_interp(cp - ldf0, d0, HAD_LM);
+  x1 = HAD_interp(cp - ldf1, d1, HAD_LM);
+  x2 = HAD_interp(cp - ldf2, d2, HAD_LM);
+  x3 = HAD_interp(cp - ldf3, d3, HAD_LM);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                           matrix mix
+  this.HAD_mix();
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  c = (c + 1) & HAD_LM1;
+);
+

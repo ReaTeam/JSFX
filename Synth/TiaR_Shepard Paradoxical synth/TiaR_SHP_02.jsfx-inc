@@ -1,0 +1,159 @@
+//@noindex
+
+desc:Sheppard gen
+/*
+ Copyright 2014, Thierry Rochebois
+ All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without 
+  modification, are permitted provided that the following conditions are
+  met:
+  Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer. 
+
+  Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution. 
+
+  The name of Thierry Rochebois may not be used to endorse or promote
+  products derived from this software without specific prior written
+  permission. 
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+@init
+function SHP() (
+  SHPTL = 8192;
+  SHPTL128 = 128 * SHPTL;
+  SHPTL_2pi = SHPTL/(2*$pi);
+  SHP_tSin8192 = ad; ad += SHPTL;
+  i = 0;
+  loop(SHPTL,
+    SHP_tSin8192[i] = sin(2*$pi * i / SHPTL);
+    i += 1;
+  );
+);
+//______________________________________________________________________
+//ajouter avant init
+//update when detune changes
+
+function SHP_setDetune(detune)
+local(c coef a da)
+instance(nbOcts tDp) (
+  coef = SHPTL * 440 / srate;
+  a  = (   -0.5 * detune - 69) * (1/12);
+  da = (detune/(nbOcts*12) + 1) * (1/12);
+  da = 2 ^ da;
+  tDp[0] = coef * 2 ^ a;
+  c = 1;
+  loop(nbOcts * 12,
+    tDp[c] = tDp[c - 1] * da;
+    c += 1;
+  );
+);
+
+//______________________________________________________________________
+//Add slider [0.25 4]
+function SHP_setSpectEnv(skew)
+local(a c) (
+  c = 0;
+  loop(this.nbOcts * 12 + 1,
+    a = c / (this.nbOcts * 12);
+    a = a ^ skew;
+    this.tEnvSpec[c] = 0.24 * 0.5 * (1 - cos(2*$pi*a));
+    c += 1;
+  );
+);
+//______________________________________________________________________
+function SHP_init() 
+local(a c)
+(
+  this.nbOcts = 10;
+  this.nbOcts1 = 1 / this.nbOcts;
+  this.dp  = ad;  ad += this.nbOcts;
+  this.p   = ad;  ad += this.nbOcts;
+  this.g   = ad;  ad += this.nbOcts;
+  this.fb  = ad;  ad += this.nbOcts;
+  this.out = ad;  ad += this.nbOcts;
+  
+  this.tEnvSpec = ad; ad += this.nbOcts*12+1; 
+  this.tDp      = ad; ad += this.nbOcts*12+1; 
+  // _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  //                                                      Spectral envelop
+  this.SHP_setSpectEnv(1);
+  // _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  //                                                             Init tDp
+  this.SHP_setDetune(0);
+  
+);
+//______________________________________________________________________
+// pitch  : pitch mod 12, may be integer or float
+// fb     : self feedback (phase mod)
+// detune : detuning in semitones for the whole range (10 oct)
+function SHP_kProc(pitchIn fb)
+local(oct  pitch note c pch pch0 a) 
+instance(nbOcts tEnvSpec tDp)(
+  
+  pitch = max(0, min(119, pitchIn));
+  oct = (pitch * (1/12)) | 0;
+  note = pitch - (oct*12);
+  c = 0;
+  loop(nbOcts,
+    pch = oct * 12 + note;
+    pch0 = pch | 0;
+    a = pch - pch0;
+    this.g[c] = tEnvSpec[pch0] + a * (tEnvSpec[pch0 + 1] - tEnvSpec[pch0]);
+    this.dp[c] =     tDp[pch0] + a * (     tDp[pch0 + 1] -      tDp[pch0]);
+    this.fb[c] = fb * SHPTL_2pi;
+    oct += 1;
+    oct %= nbOcts;
+    c += 1;
+  );  
+  /*
+  pitch = pitchIn;
+  pitch >= 96 ? pitch -= 96;
+  pitch >= 48 ? pitch -= 48;
+  pitch >= 24 ? pitch -= 24;
+  pitch >= 12 ? pitch -= 12;
+  pitch < 0  ? pitch += 12;
+  pitch == 0 ? pitch =0.01;
+  oct = 0;
+  loop(this.nbOcts,
+    a = (oct + pitch * (1/12)) * this.nbOcts1;      // [0  1]
+    this.g[oct] = 0.5 - 0.5 * cos(a * 2 * $pi);  // [0  1  0]
+    //16.3Hz -> 17kHz center 520 Hz
+    this.dp[oct] = vib*2*$pi*(440/srate) * 2 ^ ( 
+        (pitch + (a - 0.5) * detune - 57) * (1/12) + oct
+      );
+    this.fb[oct] = fb * (1 - a*a); // [fb 0] fb for low freq
+    oct += 1;
+  );*/
+);
+//______________________________________________________________________
+function SHP_aProc()
+local(oct ac v) (
+  ac = 0;
+  oct = 0;
+  loop(this.nbOcts,
+    this.p[oct] += this.dp[oct];
+    this.p[oct] > SHPTL128 ? this.p[oct] -= SHPTL;
+ 
+    //v = this.g[oct] * sin(this.p[oct] + this.fb[oct] * this.out[oct]);
+    
+    v = this.g[oct] * SHP_tSin8192[(this.p[oct] + this.fb[oct] * this.out[oct]) % SHPTL];
+    this.out[oct] = 0.5 * (this.out[oct] + v); //anti hunting filter
+    ac += v;
+    oct += 1;
+  );
+  ac;
+);

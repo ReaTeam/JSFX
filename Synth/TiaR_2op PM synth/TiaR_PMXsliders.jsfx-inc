@@ -1,0 +1,497 @@
+//@noindex
+
+desc:library for PMX sliders
+@init
+
+//_____________________________________________________________________
+function PMX_initWidgets() (
+//_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//FbType
+dy = 248;
+hsl8.HSL_init( 0, 0, 1, HSL_LIN,  //values / scale
+               170+170+11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.8, 0.5, 0.3,               //color
+               170+170+13,  dy+2,  0, 0, 0, "SAW   FbType   SQR");    //text pos & color
+//slider21:2<0,10>Ratio
+dy+=14;               
+hsl21.HSL_init( 1, 0, 10, HSL_LIN,  //values / scale
+               170+170+11,  dy, 148, 12, HSL_BAR,  // position / type
+               1, 0.3, 0.4,               //color
+               170+170+13,  dy+2,  0, 0, 0, "Ratio %1.3f");    //text pos & color
+//slider22:0<-10,10>modWheel -> Ratio
+dy+=14;               
+hsl22.HSL_init( 0, -10, 10, HSL_LIN,  //values / scale
+               170+170+11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.8, 0.3, 0.6,               //color
+               170+170+13,  dy+2,  0.2, 0, 0, "MW -> Ratio %1.3f");    //text pos & color
+//slider28:<0,1000>Delay(ms)
+dy+=14;               
+hsl28.HSL_init( 250, 0, 1000, HSL_LIN,  //values / scale
+               170+170+11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.2, 0.6, 0.8,               //color
+               170+170+13,  dy+2,  0.2, 0, 0, "DelayFb %1.3f ms");    //text pos & color
+//slider29:<0,0.99>Delay recycle
+dy+=14;               
+hsl29.HSL_init( 0.6, 0, 0.99, HSL_LIN,  //values / scale
+               170+170+11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.2, 0.8, 0.7,               //color
+               170+170+13,  dy+2,  0.2, 0, 0, "DelayFb G=%1.3f");    //text pos & color
+//slider39:8<0.25,32>VLFO cycle(s)
+dy+=14;               
+hsl39.HSL_init( 8, 0.25, 32, HSL_LIN,  //values / scale
+               170+170+11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.8, 0.8, 0.1,               //color
+               170+170+13,  dy+2,  0, 0, 0, "VLFO %1.3fs");    //text pos & color
+//slider49:0<0,5>Carrier Glide(s)
+dy+=14;               
+hsl49.HSL_init( 0, 0, 5, HSL_LIN,  //values / scale
+               170+170+11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.7, 0.7, 0.7,               //color
+               170+170+13,  dy+2,  0, 0, 0, "C Glide %1.3f s");    //text pos & color
+//slider50:0<0,5>Modulator Glide(s)
+dy+=14;               
+hsl50.HSL_init( 0, 0, 5, HSL_LIN,  //values / scale
+               170+170+11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.7, 0.7, 0.7,               //color
+               170+170+13,  dy+2,  0, 0, 0, "M Glide %1.3f s");    //text pos & color
+
+//_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//ADSR2
+dy = 248;
+hsl34.HSL_init( 0.001, 0.001, 10, HSL_LOG,  //values / scale
+               170+11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.8, 0.5, 0.3,               //color
+               170+13,  dy+2,  0, 0, 0, "A %1.3f s");    //text pos & color
+dy+=14;               
+hsl35.HSL_init( 0.001, 0.001, 10, HSL_LOG,  //values / scale
+               170+11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.7, 0.5, 0.35,               //color
+               170+13,  dy+2,  0, 0, 0, "D %1.3f s");    //text pos & color
+dy+=14;               
+hsl36.HSL_init( 0.5, 0, 1, HSL_LIN,  //values / scale
+               170+11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.9, 0.5, 0.2,               //color
+               170+13,  dy+2,  0, 0, 0, "S %1.2f");    //text pos & color
+dy+=14;               
+hsl37.HSL_init( 0.001, 0.001, 10, HSL_LOG,  //values / scale
+               170+11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.7, 0.5, 0.35,               //color
+               170+13,  dy+2,  0, 0, 0, "R %1.3f s");    //text pos & color
+//_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//ADSR1
+dy = 248;
+hsl3.HSL_init( 0.001, 0.001, 10, HSL_LOG,  //values / scale
+               11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.8, 0.5, 0.3,               //color
+               13,  dy+2,  0, 0, 0, "A %1.3f s");    //text pos & color
+dy+=14;               
+hsl4.HSL_init( 0.001, 0.001, 10, HSL_LOG,  //values / scale
+               11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.7, 0.5, 0.35,               //color
+               13,  dy+2,  0, 0, 0, "D %1.3f s");    //text pos & color
+dy+=14;               
+hsl5.HSL_init( 0.5, 0, 1, HSL_LIN,  //values / scale
+               11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.9, 0.5, 0.2,               //color
+               13,  dy+2,  0, 0, 0, "S %1.2f");    //text pos & color
+dy+=14;               
+hsl6.HSL_init( 0.001, 0.001, 10, HSL_LOG,  //values / scale
+               11,  dy, 148, 12, HSL_BAR,  // position / type
+               0.7, 0.5, 0.35,               //color
+               13,  dy+2,  0, 0, 0, "R %1.3f s");    //text pos & color
+dy=0;
+//_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//Carrier Fb
+hsl9.HSL_init( 0, 0,   5, HSL_LIN,  //values / scale
+               11,  40+dy, 299, 24, HSL_CURSOR,  // position / type
+               0, 0.0, 0.0,               //color
+               -10, 42+dy,  1, 1, 1, "");    //text pos & color
+               
+hsl10.HSL_init( 0, 0, 1.5, HSL_LIN,  //values / scale
+               401,  40+dy, 148, 12, HSL_BAR,  // position / type
+               0.8, 0.5, 0.3,               //color
+               402, 42+dy,  0, 0, 0, "V1 %1.2f");    //text pos & color
+hsl11.HSL_init( 0, 0, 1.5, HSL_LIN,  //values / scale
+               401,  52+dy, 148, 12, HSL_BAR,  // position / type
+               0.6, 0.5, 0.4,               //color
+               402, 54+dy,  0, 0, 0, "V0 %1.2f");    //text pos & color
+dy += 28; //Detune              
+hsl13.HSL_init( 0, 0,   5, HSL_LIN,  //values / scale
+               11,  40+dy, 299, 24, HSL_CURSOR,  // position / type
+               0, 0.4, 0.0,               //color
+               -10, 42+dy,  1, 1, 1, "");    //text pos & color
+               
+hsl14.HSL_init( 0, 0, 100, HSL_LIN,  //values / scale
+               401,  40+dy, 148, 12, HSL_BAR,  // position / type
+               0.3, 0.8, 0.3,               //color
+               402, 42+dy,  0, 0, 0, "V1 %1.2f");    //text pos & color
+hsl15.HSL_init( 0, 0, 100, HSL_LIN,  //values / scale
+               401,  52+dy, 148, 12, HSL_BAR,  // position / type
+               0.4, 0.6, 0.4,               //color
+               402, 54+dy,  0, 0, 0, "V0 %1.2f");    //text pos & color
+
+dy += 28; //Index                           
+hsl17.HSL_init( 0, 0,   5, HSL_LIN,  //values / scale
+               11,  40+dy, 299, 24, HSL_CURSOR,  // position / type
+               0.5, 0.0, 0.0,               //color
+               -10, 42+dy,  1, 1, 1, "");    //text pos & color
+hsl18.HSL_init( 0, 0, 20, HSL_LIN,  //values / scale
+               401,  40+dy, 148, 12, HSL_BAR,  // position / type
+               0.9, 0.4, 0.3,               //color
+               402, 42+dy,  0, 0, 0, "V1 %1.2f");    //text pos & color
+hsl19.HSL_init( 0, 0, 20, HSL_LIN,  //values / scale
+               401,  52+dy, 148, 12, HSL_BAR,  // position / type
+               0.8, 0.55, 0.45,               //color
+               402, 54+dy,  0, 0, 0, "V0 %1.2f");    //text pos & color
+
+dy += 28; //Modulator Fb                           
+hsl24.HSL_init( 0, 0,   5, HSL_LIN,  //values / scale
+               11,  40+dy, 299, 24, HSL_CURSOR,  // position / type
+               0, 0.0, 0.0,               //color
+               -10, 42+dy,  1, 1, 1, "");    //text pos & color
+hsl25.HSL_init( 0, 0, 1.5, HSL_LIN,  //values / scale
+               401,  40+dy, 148, 12, HSL_BAR,  // position / type
+               0.8, 0.5, 0.3,               //color
+               402, 42+dy,  0, 0, 0, "V1 %1.2f");    //text pos & color
+hsl26.HSL_init( 0, 0, 1.5, HSL_LIN,  //values / scale
+               401,  52+dy, 148, 12, HSL_BAR,  // position / type
+               0.6, 0.5, 0.4,               //color
+               402, 54+dy,  0, 0, 0, "V0 %1.2f");    //text pos & color
+
+dy += 28; //Delayed Fb                           
+hsl30.HSL_init( 0, 0,   5, HSL_LIN,  //values / scale
+               11,  40+dy, 299, 24, HSL_CURSOR,  // position / type
+               0, 0.3, 0.3,               //color
+               -10, 42+dy,  1, 1, 1, "");    //text pos & color
+hsl31.HSL_init( 0, 0, 1.5, HSL_LIN,  //values / scale
+               401,  40+dy, 148, 12, HSL_BAR,  // position / type
+               0.0, 0.7, 0.7,               //color
+               402, 42+dy,  0, 0, 0, "V1 %1.2f");    //text pos & color
+hsl32.HSL_init( 0, 0, 1.5, HSL_LIN,  //values / scale
+               401,  52+dy, 148, 12, HSL_BAR,  // position / type
+               0.3, 0.5, 0.6,               //color
+               402, 54+dy,  0, 0, 0, "V0 %1.2f");    //text pos & color
+
+dy += 28; //Vibrato Rate                          
+hsl41.HSL_init( 0, 0,   5, HSL_LIN,  //values / scale
+               11,  40+dy, 299, 24, HSL_CURSOR,  // position / type
+               0, 0.0, 0.0,               //color
+               -10, 42+dy,  1, 1, 1, "");    //text pos & color
+hsl42.HSL_init( 7, 0.05, 50, HSL_LOG,  //values / scale
+               401,  40+dy, 148, 12, HSL_BAR,  // position / type
+               0.8, 0.5, 0.3,               //color
+               402, 42+dy,  0, 0, 0, "V1 %1.2f Hz");    //text pos & color
+hsl43.HSL_init( 6, 0.05, 50, HSL_LOG,  //values / scale
+               401,  52+dy, 148, 12, HSL_BAR,  // position / type
+               0.6, 0.5, 0.4,               //color
+               402, 54+dy,  0, 0, 0, "V0 %1.2f Hz");    //text pos & color
+
+dy += 28; //Vibrato Depth                         
+hsl45.HSL_init( 0, 0,   5, HSL_LIN,  //values / scale
+               11,  40+dy, 299, 24, HSL_CURSOR,  // position / type
+               0, 0.5, 0.0,               //color
+               -10, 42+dy,  1, 1, 1, "");    //text pos & color
+hsl46.HSL_init( 0, 0, 0.2, HSL_LIN,  //values / scale
+               401,  40+dy, 148, 12, HSL_BAR,  // position / type
+               0.3, 0.8, 0.3,               //color
+               402, 42+dy,  0, 0, 0, "V1 %1.3f");    //text pos & color
+hsl47.HSL_init( 0, 0, 0.2, HSL_LIN,  //values / scale
+               401,  52+dy, 148, 12, HSL_BAR,  // position / type
+               0.4, 0.6, 0.4,               //color
+               402, 54+dy,  0, 0, 0, "V0 %1.3f");    //text pos & color
+  
+);
+//_____________________________________________________________________
+function _b()(gfx_r = 0; gfx_g = 0; gfx_b = 0;);
+function _w()(gfx_r = 1; gfx_g = 1; gfx_b = 1;);
+function _c1()(gfx_r = 0.9; gfx_g = 0.8; gfx_b = 0.6;);
+function _c2()(gfx_r = 0.85; gfx_g = 0.7; gfx_b = 0.55;);
+function _c3()(gfx_r = 1; gfx_g = 1; gfx_b = 1;);
+function _m(x y)
+( //_w();gfx_a=0.4;gfx_circle(x,y,3,1,1);
+  _w();
+  gfx_a=0.125; gfx_circle(x,y,7,1,0);
+  gfx_a=0.25; gfx_circle(x,y,5,1,0);
+  gfx_a=1; gfx_circle(x,y,3,1,0);
+  _b();gfx_a=1;gfx_circle(x,y,2,1,0);
+);
+function PMX_graphics() (
+//Draw interface
+//[...]
+gfx_clear = 0xB0E0F0;
+
+dy = 0;
+_c1(); gfx_x =  10; gfx_y = 38+dy; gfx_rectto(550,66+dy);
+_b();  gfx_x = 315; gfx_y = 48+dy; gfx_printf("Carrier Fb");
+dy += 28;
+_c2(); gfx_x =  10; gfx_y = 38+dy; gfx_rectto(550,66+dy);
+_b(); gfx_g=0.4;  gfx_x = 315; gfx_y = 48+dy; gfx_printf("Detune");
+dy += 28;
+_c1(); gfx_x =  10; gfx_y = 38+dy; gfx_rectto(550,66+dy);
+_b();  gfx_r = 0.5; gfx_x = 315; gfx_y = 48+dy; gfx_printf("Index");
+dy += 28;
+_c2(); gfx_x =  10; gfx_y = 38+dy; gfx_rectto(550,66+dy);
+_b();  gfx_x = 315; gfx_y = 48+dy; gfx_printf("Mod. Fb");
+dy += 28;
+_c1(); gfx_x =  10; gfx_y = 38+dy; gfx_rectto(550,66+dy);
+gfx_r = 0;  gfx_g = 0.5; gfx_b = 0.5;   
+gfx_x = 315; gfx_y = 48+dy; gfx_printf("Delayed Fb");
+dy += 28;
+_c2(); gfx_x =  10; gfx_y = 38+dy; gfx_rectto(550,66+dy);
+_b();  gfx_x = 315; gfx_y = 48+dy; gfx_printf("LFO Rate");
+dy += 28;
+_c1(); gfx_x =  10; gfx_y = 38+dy; gfx_rectto(550,66+dy);
+_b();  gfx_g = 0.4; gfx_x = 315; gfx_y = 48+dy; gfx_printf("Vib Depth");
+
+dy += 40+38;
+//ADSR1
+_c1(); gfx_x =  10; gfx_y = dy; gfx_rectto(160,14*4+dy);
+//ADSR2
+_c1(); gfx_x =  10+170; gfx_y = dy; gfx_rectto(160+170,14*4+dy);
+//autres
+_c3(); gfx_x =  10+170+170; gfx_y = dy; gfx_rectto(160+170+170,14*8+dy);
+_b();
+gfx_x = 400; gfx_y = 38;
+gfx_lineto(gfx_x, gfx_y + 195);
+gfx_x = 550; gfx_y = 38;
+gfx_lineto(gfx_x, gfx_y + 195);
+_b();
+gfx_x = 10; 
+loop(6,
+  gfx_y = 0; gfx_lineto(gfx_x, gfx_y + 195+38);
+  gfx_x += 300/5;
+);
+_w();
+gfx_x = 9; 
+loop(6,
+  gfx_y = 0; gfx_lineto(gfx_x, gfx_y + 195+38);
+  gfx_x += 300/5;
+);
+gfx_x = 11; 
+loop(6,
+  gfx_y = 0; gfx_lineto(gfx_x, gfx_y + 195+38);
+  gfx_x += 300/5;
+);
+_b();
+gfx_x = 13; gfx_y = 2; gfx_printf("Wheel   ADSR1  LFO     VLFO   ADSR2   AftTch");
+gfx_x = 10; gfx_y = 38; gfx_lineto(gfx_x+540, gfx_y );
+
+
+
+
+
+//______________________________________________________________________
+
+//Process and draw sliders
+hsl3.HSL_proc()  ? (slider3  = hsl3.value;  slider_automate(slider3);  );
+hsl4.HSL_proc()  ? (slider4  = hsl4.value;  slider_automate(slider4);  );
+hsl5.HSL_proc()  ? (slider5  = hsl5.value;  slider_automate(slider5);  );
+hsl6.HSL_proc()  ? (slider6  = hsl6.value;  slider_automate(slider6);  );
+//FbType
+hsl8.HSL_proc()  ? (slider8  = hsl8.value;  slider_automate(slider8);  );
+
+
+hsl9.HSL_proc()  ? (slider9  = hsl9.value;  slider_automate(slider9);  );
+hsl10.HSL_proc() ? (slider10 = hsl10.value; slider_automate(slider10);  );
+hsl11.HSL_proc() ? (slider11 = hsl11.value; slider_automate(slider11);  );
+
+hsl13.HSL_proc() ? (slider13 = hsl13.value; slider_automate(slider13);  );
+hsl14.HSL_proc() ? (slider14 = hsl14.value; slider_automate(slider14);  );
+hsl15.HSL_proc() ? (slider15 = hsl15.value; slider_automate(slider15);  );
+
+hsl17.HSL_proc() ? (slider17 = hsl17.value; slider_automate(slider17);  );
+hsl18.HSL_proc() ? (slider18 = hsl18.value; slider_automate(slider18);  );
+hsl19.HSL_proc() ? (slider19 = hsl19.value; slider_automate(slider19);  );
+
+hsl21.HSL_proc() ? (slider21 = hsl21.value; slider_automate(slider21);  );
+hsl22.HSL_proc() ? (slider22 = hsl22.value; slider_automate(slider22);  );
+
+hsl24.HSL_proc() ? (slider24 = hsl24.value; slider_automate(slider24);  );
+hsl25.HSL_proc() ? (slider25 = hsl25.value; slider_automate(slider25);  );
+hsl26.HSL_proc() ? (slider26 = hsl26.value; slider_automate(slider26);  );
+
+hsl28.HSL_proc() ? (slider28 = hsl28.value; slider_automate(slider28);  );
+hsl29.HSL_proc() ? (slider29 = hsl29.value; slider_automate(slider29);  );
+
+hsl30.HSL_proc() ? (slider30 = hsl30.value; slider_automate(slider30);  );
+hsl31.HSL_proc() ? (slider31 = hsl31.value; slider_automate(slider31);  );
+hsl32.HSL_proc() ? (slider32 = hsl32.value; slider_automate(slider32);  );
+
+hsl34.HSL_proc() ? (slider34 = hsl34.value; slider_automate(slider34);  );
+hsl35.HSL_proc() ? (slider35 = hsl35.value; slider_automate(slider35);  );
+hsl36.HSL_proc() ? (slider36 = hsl36.value; slider_automate(slider36);  );
+hsl37.HSL_proc() ? (slider37 = hsl37.value; slider_automate(slider37);  );
+
+hsl39.HSL_proc() ? (slider39 = hsl39.value; slider_automate(slider39);  );
+
+hsl41.HSL_proc() ? (slider41 = hsl41.value; slider_automate(slider41);  );
+hsl42.HSL_proc() ? (slider42 = hsl42.value; slider_automate(slider42);  );
+hsl43.HSL_proc() ? (slider43 = hsl43.value; slider_automate(slider43);  );
+
+hsl45.HSL_proc() ? (slider45 = hsl45.value; slider_automate(slider45);  );
+hsl46.HSL_proc() ? (slider46 = hsl46.value; slider_automate(slider46);  );
+hsl47.HSL_proc() ? (slider47 = hsl47.value; slider_automate(slider47);  );
+
+hsl49.HSL_proc() ? (slider49 = hsl49.value; slider_automate(slider49);  );
+hsl50.HSL_proc() ? (slider50 = hsl50.value; slider_automate(slider50);  );
+
+//______________________________________________________________________
+// Real time values
+_b(); gfx_a = 0.5;
+//modWheel
+gfx_x=10+0*60;  gfx_y=35 - modWheel               * 25;
+//env
+gfx_lineto(10+1*60,35 - adsr1.ADSR * adsr1.ASR * 25);
+//lfo
+gfx_lineto(10+2*60,35 - (0.5+0.5*lfo.sin)      * 25);
+//vlfo
+gfx_lineto(10+3*60,35 - (0.5+0.5*vlfo.sin)     * 25);
+//adsr2
+gfx_lineto(10+4*60,35 - adsr2.ADSR * adsr2.ASR * 25);
+//aftertouch
+gfx_lineto(10+5*60,35 - aftertouch * 25);
+gfx_a = 1;
+//modWheel
+_m(10+0*60,35 - modWheel               * 25);
+//env
+_m(10+1*60,35 - adsr1.ADSR * adsr1.ASR * 25);
+//lfo
+_m(10+2*60,35 - (0.5+0.5*lfo.sin)      * 25);
+//vlfo
+_m(10+3*60,35 - (0.5+0.5*vlfo.sin)     * 25);
+//adsr2
+_m(10+4*60,35 - adsr2.ADSR * adsr2.ASR * 25);
+//aftertouch
+_m(10+5*60,35 - aftertouch * 25);
+//  modIndex  =        xFade(slider19, slider18, interpSource(slider17));
+_m(hsl19.HSL_getValueToCursor(modIndex),108);
+//  detune    = 0.01 * xFade(slider15, slider14, interpSource(slider13));
+_m(hsl15.HSL_getValueToCursor(100*detune), 80);
+//  selfMod   =        xFade(slider26, slider25, interpSource(slider24));
+_m(hsl25.HSL_getValueToCursor(selfMod),108+28);
+//  selfCar   =        xFade(slider11, slider10, interpSource(slider9));
+_m(hsl11.HSL_getValueToCursor(selfCar), 52);
+//  dFb       =        xFade(slider32, slider31, interpSource(slider30));
+_m(hsl32.HSL_getValueToCursor(dFb), 108+56);
+//  lfo.LFO_setF(      xFade(slider43, slider42, interpSource(slider41)));
+_m(hsl43.HSL_getValueToCursor(lfo.f), 108+56+28);
+//  vibDepth  =        xFade(slider47, slider46, interpSource(slider45));
+_m(hsl47.HSL_getValueToCursor(vibDepth), 108+56+56);
+
+
+// reset, if it had to be used,
+// it has been used !
+mouse_wheel = 0;
+  
+);
+
+//_____________________________________________________________________
+function PMX_slidersInBlock() (
+slider28 !== aaslider28 ? (
+  delay =slider28*srate/2000;
+  osc1.sch.SCH_setDelay(delay);
+  osc2.sch.SCH_setDelay(delay);
+  osc3.sch.SCH_setDelay(delay);
+);
+slider29 !== aaslider29 ? (
+  osc1.sch.SCH_setG(slider29);
+  osc2.sch.SCH_setG(slider29);
+  osc3.sch.SCH_setG(slider29);
+);
+slider39 !== aasllider39 ? (
+  slider39 !== 0 ?
+    vlfo.LFO_setF(1/slider39);
+);
+slider49 !== aaslider49 ? (
+  osc1.PMX_setGlideC(slider49);
+  osc2.PMX_setGlideC(slider49);
+  osc3.PMX_setGlideC(slider49);
+);
+slider50 !== aaslider50 ? (
+  osc1.PMX_setGlideM(slider50);
+  osc2.PMX_setGlideM(slider50);
+  osc3.PMX_setGlideM(slider50);
+);
+aaslider28 = slider28;
+aaslider29 = slider29;
+aaslider39 = slider39;
+aaslider49 = slider49;
+aaslider50 = slider50;
+);
+
+//_____________________________________________________________________
+function PMX_HSL_setValues() (
+aslider3  !== slider3  ? hsl3.HSL_setValue(slider3);
+aslider4  !== slider4  ? hsl4.HSL_setValue(slider4);
+aslider5  !== slider5  ? hsl5.HSL_setValue(slider5);
+aslider6  !== slider6  ? hsl6.HSL_setValue(slider6);
+//FbType
+aslider8  !== slider8  ? hsl8.HSL_setValue(slider8);
+
+aslider9  !== slider9  ? hsl9.HSL_setValue(slider9);
+aslider10 !== slider10 ? hsl10.HSL_setValue(slider10);
+aslider11 !== slider11 ? hsl11.HSL_setValue(slider11);
+
+aslider13 !== slider13 ? hsl13.HSL_setValue(slider13);
+aslider14 !== slider14 ? hsl14.HSL_setValue(slider14);
+aslider15 !== slider15 ? hsl15.HSL_setValue(slider15);
+
+aslider17 !== slider17 ? hsl17.HSL_setValue(slider17);
+aslider18 !== slider18 ? hsl18.HSL_setValue(slider18);
+aslider19 !== slider19 ? hsl19.HSL_setValue(slider19);
+
+aslider21 !== slider21 ? hsl21.HSL_setValue(slider21);
+aslider22 !== slider22 ? hsl22.HSL_setValue(slider22);
+
+aslider24 !== slider24 ? hsl24.HSL_setValue(slider24);
+aslider25 !== slider25 ? hsl25.HSL_setValue(slider25);
+aslider26 !== slider26 ? hsl26.HSL_setValue(slider26);
+
+aslider28 !== slider28 ? hsl28.HSL_setValue(slider28);
+aslider29 !== slider29 ? hsl29.HSL_setValue(slider29);
+
+aslider30 !== slider30 ? hsl30.HSL_setValue(slider30);
+aslider31 !== slider31 ? hsl31.HSL_setValue(slider31);
+aslider32 !== slider32 ? hsl32.HSL_setValue(slider32);
+
+aslider34 !== slider34 ? hsl34.HSL_setValue(slider34);
+aslider35 !== slider35 ? hsl35.HSL_setValue(slider35);
+aslider36 !== slider36 ? hsl36.HSL_setValue(slider36);
+aslider37 !== slider37 ? hsl37.HSL_setValue(slider37);
+
+aslider39 !== slider39 ? hsl39.HSL_setValue(slider39);
+
+aslider41 !== slider41 ? hsl41.HSL_setValue(slider41);
+aslider42 !== slider42 ? hsl42.HSL_setValue(slider42);
+aslider43 !== slider43 ? hsl43.HSL_setValue(slider43);
+
+aslider45 !== slider45 ? hsl45.HSL_setValue(slider45);
+aslider46 !== slider46 ? hsl46.HSL_setValue(slider46);
+aslider47 !== slider47 ? hsl47.HSL_setValue(slider47);
+
+aslider49 !== slider49 ? hsl49.HSL_setValue(slider49);
+aslider50 !== slider50 ? hsl50.HSL_setValue(slider50);
+
+);
+
+//_____________________________________________________________________
+function PMX_copyASlider() (
+aslider3  = slider3; aslider4  = slider4; aslider5  = slider5; aslider6  = slider6;
+aslider8  = slider8;//FbType
+aslider9  = slider9;  aslider10 = slider10; aslider11 = slider11;
+
+aslider13 = slider13; aslider14 = slider14; aslider15 = slider15;
+
+aslider17 = slider17; aslider18 = slider18; aslider19 = slider19;
+aslider21 = slider21; aslider22 = slider22;
+aslider24 = slider24; aslider25 = slider25; aslider26 = slider26;
+aslider28 = slider28; aslider29 = slider29;
+aslider30 = slider30; aslider31 = slider31; aslider32 = slider32;
+
+aslider34 = slider34; aslider35 = slider35; aslider36 = slider36; aslider37 = slider37;
+aslider39 = slider39;
+aslider41 = slider41; aslider42 = slider42; aslider43 = slider43;
+
+aslider45 = slider45; aslider46 = slider46; aslider47 = slider47;
+aslider49 = slider49; aslider50 = slider50;
+  );

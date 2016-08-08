@@ -1,12 +1,15 @@
-/**
- * JSFX Name:ZeCheesyHarmo_01
- * About:
- *  An additive synth based on Walsh functions 
- * Author: T.Rochebois
- * Licence: LGPL
- * REAPER: 5.0
- * Version: 0.2
- */
+/*
+  @description Ze Cheesy Harmonic Synth
+  @version 1.0
+  @author T.Rochebois
+  @changelog
+    + Initial release
+  @about 
+	An additive synth based on Walsh functions 
+*/
+
+
+desc:TiaR_Ze Cheesy Harmonic Synth
 
 /**
  * Changelog:
@@ -27,7 +30,7 @@
  *   + added    pan
  *   + added    gain (dB)
  */
-desc:Ze Cheesy Harmonic Synth 01
+
 
 slider1:1<-1,1,0.001>Seq. 1
 slider2:0<-1,1,0.001>Seq. 2

@@ -1,0 +1,53 @@
+//@noindex
+
+desc:LFX lattice filter library
+
+@init
+//______________________________________________________________________
+function LFX_init(L)(
+  this.L = L;
+  ad === 0 ? ad = 1;
+  this.d = ad; ad += L + 1;
+  this.a = ad; ad += L + 1;
+  this.k = ad; ad += L;
+  this.y = ad; ad += L;
+  this.b = ad; ad += L;
+);
+
+//______________________________________________________________________
+//this.d[0..L] (L+1 entries) set of diameters 0:lips L+1:glottis
+function LFX_updateK()
+instance(L d a k)
+local(n)(
+  this.kNorm = 1;
+  n = 0;
+  loop(L + 1,
+    a[n] = d[n] * d[n];
+    n += 1;
+  );
+  n = 0;
+  loop(L,
+    k[n] = (a[n] - a[n + 1]) / (a[n] + a[n + 1]);
+    k[n] = max(-0.99,min(0.99,k[n]));
+    this.kNorm *= sqrt(1 - k[n]*k[n]);
+    n += 1;
+  );
+);
+//______________________________________________________________________
+// Reflection coefficients (k[0] lips k[L-1] glottis)
+function LFX_aProc(x)
+instance(L k y b)
+local(n) ( 
+  y[L - 1] = x * this.kNorm - k[L - 1] * b[L - 1];
+  //n=L-1 .. 1
+  n = L - 1;
+  loop(L - 1,
+    y[n - 1] = y[n] - k[n - 1] * b[n - 1];
+    b[n] = b[n - 1] + k[n - 1] * y[n - 1];
+    n -= 1;
+  );
+  b[0] = 0.98*y[0]; //output
+  b[0] = min(1,max(-1,b[0]));
+);
+
+

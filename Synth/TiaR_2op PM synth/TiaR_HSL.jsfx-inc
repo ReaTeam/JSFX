@@ -1,0 +1,119 @@
+//@noindex
+
+desc:Horizontal slider library
+@init 
+//_____________________________________________________________________
+function HSL() (
+  HSL_BAR = 0;  HSL_CURSOR = 1;   // Graphic type
+  HSL_LIN = 0;  HSL_LOG = 1;      // scaleType
+ 0;
+);
+
+//_____________________________________________________________________
+function HSL_cursorToValue()
+local (a v) (
+  a = (this.cursor - this.x) / this.w;
+  this.scaleType === HSL_LIN ?
+          v = this.vMin  + a * (    this.vMax  -     this.vMin ) //lin
+  : v = exp(log(this.vMin) + a * (log(this.vMax) - log(this.vMin))); //log
+  max(this.vMin,min(this.vMax,v));
+);
+//_____________________________________________________________________
+function HSL_valueToCursor()
+local (v a) (
+  this.scaleType != HSL_LOG ? (
+    a = (    this.value  -     this.vMin)  / (     this.vMax  -     this.vMin );
+  ) : (
+    a = (log(this.value) - log(this.vMin)) / ((log(this.vMax) - log(this.vMin)));
+  );
+  v = this.x + this.w * a;
+  //max(this.x,min( this.x + this.w,v));
+  this.x + this.w * a;
+);
+//_____________________________________________________________________
+function HSL_getValueToCursor(value)
+local (v a) (
+  this.scaleType != HSL_LOG ? (
+    a = (    value  -     this.vMin)  / (     this.vMax  -     this.vMin );
+  ) : (
+    a = (log(value) - log(this.vMin)) / ((log(this.vMax) - log(this.vMin)));
+  );
+  v = this.x + this.w * a;
+  //max(this.x,min( this.x + this.w,v));
+  this.x + this.w * a;
+);
+//_____________________________________________________________________
+function HSL_setValue(value)
+local() (
+  this.value = value;
+  this.cursor = this.HSL_valueToCursor(this.value);
+);
+//_____________________________________________________________________
+//type 0 : bar
+//type 1 : cursor
+function HSL_init( value, vMin, vMax, scaleType
+             x,y,w,h, type, r,g,b,
+             tx,ty,tr,tg,tb,format)
+local() (
+  this.vMin = vMin; this.vMax = vMax; this.scaleType = scaleType;
+  this.x = x; this.y = y; this.w = w; this.h = h; this.type = type;
+  this.r = r; this.g = g; this.b = b;
+  this.tx = tx; this.ty = ty;
+  this.tr = tr; this.tg = tg; this.tb = tb;
+  #this.format = format;
+  this.HSL_setValue(value);
+);
+//_____________________________________________________________________
+
+function HSL_draw()
+local(str) (
+  this.type === HSL_BAR ? (
+    gfx_r = this.r; gfx_g = this.g; gfx_b = this.b;
+    gfx_x = this.x;          gfx_y = this.y;
+    gfx_rectto(this.cursor + 1, this.y + this.h);
+  );
+  //negative tx to avoid drawing
+  this.tx >= 0 ? (
+    gfx_r = this.tr; gfx_g = this.tg; gfx_b = this.tb;
+    gfx_x = this.tx; gfx_y = this.ty;
+    str = #;
+    sprintf(str, #this.format, this.value);
+    gfx_printf(str);
+  );
+  this.type === HSL_CURSOR ? (
+    gfx_r = this.r; gfx_g = this.g; gfx_b = this.b;
+    gfx_x = this.cursor - 2; gfx_y = this.y;  
+    gfx_rectto(this.cursor + 2, this.y + this.h);
+  );
+  
+);
+//_____________________________________________________________________
+//two pixel tolerance on both sides
+function HSL_mouseIn() (
+     mouse_x >= this.x - 2 && mouse_x <= this.x + this.w + 2 
+  && mouse_y >= this.y && mouse_y <= this.y + this.h;
+);
+//_____________________________________________________________________
+// returns 0 if nothing modified
+function HSL_proc()
+local(modified) (
+  modified = 0;
+  this.HSL_mouseIn() ? (
+    mouse_cap == 1 ? (
+      this.cursor = max(this.x,min( this.x + this.w, mouse_x));
+      this.value = this.HSL_cursorToValue(this.cursor);
+      modified = 1;
+    ) : (
+      mouse_wheel != 0 ? (
+        //mouse_wheel incs by 120
+        this.cursor += mouse_wheel/1200; //10th of pix
+        this.cursor = max(min(this.cursor, this.x + this.w), this.x);
+        mouse_wheel = 0;
+        this.value = this.HSL_cursorToValue(this.cursor);
+        modified = 1;
+      );
+    );
+  );
+  this.HSL_draw();
+  modified;
+);

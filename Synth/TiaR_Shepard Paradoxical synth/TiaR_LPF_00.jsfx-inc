@@ -1,0 +1,95 @@
+//@noindex
+
+desc: RBJ LPF 12dB/oct filter
+/*
+ Copyright 2014, Thierry Rochebois
+ All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without 
+  modification, are permitted provided that the following conditions are
+  met:
+  Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer. 
+
+  Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution. 
+
+  The name of Thierry Rochebois may not be used to endorse or promote
+  products derived from this software without specific prior written
+  permission. 
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
+/* Example
+
+   desc:Low-pass filter
+   slider1:60<0,127,1>Pitch
+   slider2:1<0.25,100.0,0.01>1/2Q
+
+   import TiaR_LPF_00.jsfx-inc
+   @init
+   LPF();
+   
+   @slider
+   lp.LPF_set(slider1, slider2);
+
+   @sample
+   spl0 = spl1 = lp.LPF_aProc(spl0);
+
+*/
+
+@init
+
+function LPF() 
+local(i f w0) (
+  LPF_tCW0 = ad; ad += 128;
+  LPF_tSW0 = ad; ad += 128;
+  i = 0;
+  loop(128,
+    f = 440 * 2 ^ ((pitch - 69) * (1/12));
+    w0 = 2 * $pi * f / srate;
+    LPF_tCW0[i] = cos(w0);
+    LPF_tSW0[i] = sin(w0);
+    i += 1;    
+  );
+);
+
+// _q = 1/(2*q)
+function LPF_set(pitch _q)
+local(f w0 cos_w0 alpha A0)
+instance(a1 a2 b02) (
+  f = 440 * 2 ^ ((pitch - 69) * (1/12));
+  w0 = 2 * $pi * f / srate;
+  cos_w0 = cos(w0);
+  alpha = sin(w0) * _q;
+
+  A0 = 1 / (1 + alpha);
+
+  b02 = 0.5 * (1 - cos_w0) * A0;
+
+  a1 = -2 * cos_w0 * A0;
+  a2 = (1 - alpha) * A0;
+  
+);
+
+function LPF_aProc(x)
+instance(a1 a2 b02 x0 x1 x2 y0 y1 y2) (
+  x2 = x1;  x1 = x0;  x0 = x;
+  y2 = y1;  y1 = y0;
+  y0 = b02 * (x0 + x2 + x1 + x1) - a1 * y1 - a2 * y2;
+);
+
+

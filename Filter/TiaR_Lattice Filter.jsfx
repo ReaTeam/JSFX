@@ -1,0 +1,143 @@
+/*
+  @description Lattice Filter 
+  @version 1.0
+  @author T.Rochebois
+  @changelog
+    + Initial release
+  @provides   
+    TiaR_Lattice Filter/TiaR_LFX_01.jsfx-inc
+*/
+
+desc:TiaR_Lattice Filter
+slider1:0.25<0,5>Diameter (cm) -------- Min
+slider2:3.2<0,7>Max
+
+slider3:0.8<0.2,2>Cavities -- Smooth -- Nb
+slider4:0.25<-1,1>Chge rate (cps)
+
+slider5:0.9<0.5,8>Detail ---- Nb
+slider6:-0.17<-4,4>Chge rate (cps)
+
+slider7:0.3<0,1>Mix A B
+
+slider8:0.8<0.5,8>Detail ---- Nb
+slider9:0.13<-4,4>Chge rate (cps)
+
+slider10:0.5<0,1>Mix Bb Bc
+
+slider12:0.7<0.5,5>Modulator --- Nb
+slider13:0.9<-4,4>Chge rate (cps)
+
+slider15:0<0,1>Quantize ----- Diam (cm)
+slider16:1<1,10,1>Length
+slider17:5<0.1,100>Ctrl period (ms)
+
+import TiaR_LFX_01.jsfx-inc
+//______________________________________________________________________
+@init
+
+KRATE = 32;
+lfx.LFX_init(50);
+//______________________________________________________________________
+@slider
+KRATE = slider17 * 0.001 * srate;
+
+dpLFOa = 2 * $pi * slider4 * KRATE / srate;
+dpLFOb = 2 * $pi * slider6 * KRATE / srate;
+dpLFOc = 2 * $pi * slider9 * KRATE / srate;
+dpLFOd = 2 * $pi * slider13 * KRATE / srate;
+slider15 > 0.05 ? _slider15 = 1 / slider15;
+DMAX = max(slider1, slider2);
+
+//______________________________________________________________________
+@sample
+k >= KRATE ? (
+  k -= KRATE;
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  pLFOa += dpLFOa;
+  pLFOa > 2*$pi ? pLFOa -= 2*$pi;
+  pLFOa < 0 ? pLFOa += 2*$pi;
+  ga = pLFOa; //geometry
+  dga = slider3 * 2 * $pi/(lfx.L + 1);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  pLFOb += dpLFOb;
+  pLFOb > 2*$pi ? pLFOb -= 2*$pi;
+  pLFOb < 0 ? pLFOb += 2*$pi;
+  gb = pLFOb; //geometry
+  dgb = slider5 * 2 *$pi/(lfx.L + 1);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  pLFOc += dpLFOc;
+  pLFOc > 2*$pi ? pLFOc -= 2*$pi;
+  pLFOc < 0 ? pLFOc += 2*$pi;
+  gc = pLFOc; //geometry
+  dgc = slider8 * 2 *$pi/(lfx.L + 1);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  pLFOd += dpLFOd;
+  pLFOd > 2*$pi ? pLFOd -= 2*$pi;
+  pLFOd < 0 ? pLFOd += 2*$pi;
+  gd = pLFOd; //geometry
+  dgd = slider12 * 2 *$pi/(lfx.L + 1);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  n = 0;
+  loop((lfx.L+1),
+    aa = 0.5 + 0.5 * sin(ga);
+    bb = 0.5 + 0.5 * sin(gb);
+    bc = 0.5 + 0.5 * sin(gc);
+    ab = bb + slider10 * (bc-bb);
+    a = aa + slider7 * (ab - aa);
+    env = (0.5 + 0.5 * sin(gd));
+    env*=env;
+    env*=env;
+    env*=env;
+    a*=1-env;
+    lfx.d[n] = slider1 + a * (slider2 - slider1);
+    slider15 > 0.05 ?
+      lfx.d[n] = slider15 * (floor(lfx.d[n] * _slider15)+0.5);
+    n += 1;
+    ga += dga;
+    gb += dgb;
+    gc += dgc;
+    gd += dgd;
+  );
+  
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  lq = floor(slider16);
+  lq > 1 ? (
+    n = 0;
+    loop((lfx.L + 1) / lq,
+      i = 1;
+      loop(lq - 1,
+        n + i <= lfx.L ?
+          lfx.d[n+i] = lfx.d[n]; 
+        i += 1;
+      );
+      n += lq;
+    );
+  );
+  lfx.LFX_updateK();
+);
+k += 1;
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+spl0 = spl1 = lfx.LFX_aProc(spl0);
+
+//______________________________________________________________________
+@gfx
+gfx_r = 1; gfx_g = 1; gfx_b = 1;
+coef = (0.5 * gfx_h - 2) / DMAX;
+dx = (gfx_w - 8) / (lfx.L-1);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+gfx_x = gfx_w - 4;
+gfx_y = gfx_h/2 - lfx.d[0] * coef;
+gn = 1;
+loop(lfx.L-1,
+  gfx_lineto(gfx_x - dx, gfx_h/2 - lfx.d[gn] * coef);
+  gn += 1;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+gfx_x = gfx_w - 4;
+gfx_y = gfx_h/2 + lfx.d[0] * coef;
+gn = 1;
+loop(lfx.L-1,
+  gfx_lineto(gfx_x - dx, gfx_h/2 + lfx.d[gn] * coef);
+  gn += 1;
+);
