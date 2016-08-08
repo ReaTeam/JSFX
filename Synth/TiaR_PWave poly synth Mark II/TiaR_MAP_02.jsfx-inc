@@ -1,0 +1,334 @@
+//@noindex
+
+desc:MIP MAP lib
+/*
+  18 wavetables for 0 127 midi notes <-> one wt every major third
+  bandwidth limitation by fft
+*/
+@init
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//Must be called before everything else
+function MAP() local(i)(
+  MAP_fftTable = 0;
+  ad = 65536;
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  // h= fmax/f1
+  MAP_h1 = ad; ad += 20;
+  MAP_h2 = ad; ad += 20;
+  i = 0;
+  loop(20,
+    MAP_h1[i] = (srate / 2) / (440 * 2 ^ (((i+13+0.5) * 4 - 69) * (1 / 12)));
+    MAP_h1[i] |= 0;
+    MAP_h1[i] = min(MAP_h1[i], 128); //4 samples per cycles to obtain nice linear interp
+    
+    MAP_h2[i] = (srate / 2) / (440 * 2 ^ (((i+13-0.5) * 4 - 69) * (1 / 12)));
+    MAP_h2[i] |= 0;
+    MAP_h2[i] = min(MAP_h2[i], 128); //4 samples per cycles to obtain nice linear interp
+    
+    i += 1;
+  );
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function MAP_mulH(h g)(
+  MAP_fftTable[h + h    ] *= g;           //Re Pos
+  MAP_fftTable[h + h + 1] *= g;           //Im Pos 
+  //MAP_fftTable[2*(l-h)  ] *= g;           //Re Pos
+  //MAP_fftTable[2*(l-h)+1] *= g;           //Re Pos
+  
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function MAP_fft(t l) local(i i2 _2_l)(
+  //copy to work buffer
+  i = 0;
+  i2 = 0;
+  //copy and prenormalisation
+  _2_l = 2 / (1 * l);
+  loop(l,
+    MAP_fftTable[i2] = t[i] * _2_l;  //Re
+    i2 += 1;
+    MAP_fftTable[i2] = 0;     //Im
+    i2 += 1;
+    i += 1;
+  );
+  //fft
+  fft(MAP_fftTable, l);
+  fft_permute(MAP_fftTable, l );
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function MAP_ifft_zeroing(t l) local( i)(
+  //inverse fft
+  MAP_fftTable[0] = 0;
+  MAP_fftTable[1] = 0;
+  //zeroing the negative freqs
+  memset(MAP_fftTable + l,0, l);
+  fft_ipermute(MAP_fftTable, l);
+  ifft(MAP_fftTable, l );
+
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  i = 0;
+  loop(l,
+    t[i] = MAP_fftTable[i + i];     //Re renorm
+    i += 1;
+  );
+  
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function MAP_ifft(t l) local( i)(
+  //inverse fft
+ 
+  fft_ipermute(MAP_fftTable, l);
+  ifft(MAP_fftTable, l );
+
+  //copy
+  i = 0;
+  loop(l,
+    t[i] = MAP_fftTable[i + i];     //Re renorm
+    i += 1;
+  );
+  
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function MAP_fft_save(l) (
+  memcpy(MAP_fftTable + 2*l, MAPfftTable, l);
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function MAP_fft_restore(l) (
+  memcpy(MAP_fftTable, MAP_fftTable + 2*l, 2 * l);
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// limits the number of harmonics of table t length l to hMax harmonics
+// saves the fft result so that further limitations of the same
+// table will only need ifft (see MAP_limit_restore).
+function MAP_limit_save(t l h1 h2) local(i g _h)(
+  MAP_fft(t, l);
+  MAP_fftTable[0] = 0;
+  MAP_fftTable[1] = 0;
+  //attenuate h7
+  MAP_mulH(7, 0.0);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  //limitation
+  i = h1;
+  dg = -1 / (h2 - h1);
+  g = 1 + dg;
+  loop(h2 - h1 - 2,
+    MAP_mulH(i, g);
+    g += dg;
+    i += 1;
+  );
+  MAP_mulH(i, g);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  memset(MAP_fftTable + h2 + h2, 0, l + l - h2 - h2); // +l tzeroes the neg freqs
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  MAP_fft_save(l); //saves this first fft for further use by MAP_limit_restore
+  MAP_ifft(t, l);
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// limits the number of harmonics of table t length l to hMax harmonics
+// uses former calculated fft of the same table calculated by MAP_limit_save
+function MAP_limit_restore(t l h1 h2) local(i g _h)(
+  MAP_fft_restore(l);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  //limitation
+  i = h1;
+  dg = -1 / (h2 - h1);
+  g = 1 + dg;
+  loop(h2 - h1 - 2,
+    MAP_mulH(i, g);
+    g += dg;
+    i += 1;
+  );
+  MAP_mulH(i, g);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  memset(MAP_fftTable + h2 + h2, 0, l - h2 - h2);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  MAP_ifft(t, l);
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// limits the number of harmonics of table t length l to hMax harmonics
+function MAP_limit(t l h1 h2) local(i g dg)(
+  MAP_fft(t, l);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  //limitation
+  i = h1;
+  dg = -1 / (h2 - h1);
+  g = 1 + dg;
+  loop(h2 - h1 - 2,
+    MAP_mulH(i, g);
+    g += dg;
+    i += 1;
+  );
+  MAP_mulH(i, g);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  memset(MAP_fftTable + 2 * h2, 0, l - 2 * h2);  
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  //delete h7 h11 and h13
+  MAP_mulH(7, 0);
+//_  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  MAP_ifft_zeroing(t, l);
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// copies the updated table and resets the mipmaps
+function MAP_update(t nt no)
+instance(mipmap l l1 l1x19)
+local(i h1 h2 m)(
+  m = mipmap + l1x19 * no;
+  memcpy(m + nt * l1, t, l);
+  
+  h1 = MAP_h1[nt];
+  h2 = MAP_h2[nt];
+  nt === 0 ?
+    MAP_limit_save(m + l1 * nt, l, h1, h2)
+  : MAP_limit_restore(m + l1 * nt, l, h1, h2);
+  m[l1 * nt + l] = m[l1 * nt]; // for modulo
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// copies the updated table and resets the mipmaps
+function MAP_update(t no)
+instance(mipmap l)
+local(nt)
+(
+  nt = 0;
+  loop(18,
+    this.MAP_update(t, nt, no);
+    nt += 1;
+  );
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// with mipmap alloc
+function MAP_init(l nb)(
+  //function MAP() must be called first. Anyway this should save the day
+  ad === 0 ? (MAP_fftTable = 0; ad = 65536;);
+  
+  this.mipmap = ad;
+  this.l = l;
+  this.l1 = l + 1;
+  this.l1x19 = this.l1 * 19;
+  ad += this.l1x19 * nb; 
+  this.nb = nb;
+);
+
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// bilinear interpolation
+// pitch  Midi pitch [0 127]
+// phi    phase      [0 l[
+// no num of mipmap
+function MAP_interp(pitch phi no)
+instance(l l1 l1x19 mipmap)
+local(p18 p0 p1 a nt0 nt1 b v0 v1)
+(
+  p0 = phi|0;
+  a = phi - p0;
+  p1 = p0 + 1;
+  
+  p18 = (pitch - 52) * (1/4);
+  p18 = min(17.99, max(0, p18));
+  nt0 = p18|0;
+  b = p18 - nt0;
+  nt0 = mipmap + l1x19 * no + nt0 * l1;
+  nt1 = nt0 + l1;
+  
+  v0 = nt0[p0] + a * (nt0[p1] - nt0[p0]);
+  v1 = nt1[p0] + a * (nt1[p1] - nt1[p0]);
+  v0 + b * (v1 - v0);
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// Optimized trilinear interpolation (control rate)
+function MAP_kTriInterp(v* no pitch)
+instance(l l1 l1x19 mipmap nb)
+(
+  v.mipmap0 = no|0;
+  v.alpha = no - v.mipmap0;
+  v.mipmap1 = v.mipmap0 + 1;
+  v.mipmap0 = min(nb - 1, v.mipmap0);
+  v.mipmap1 = min(nb - 1, v.mipmap1);
+  v.mipmap0 = mipmap + l1x19 * v.mipmap0;
+  v.mipmap1 = mipmap + l1x19 * v.mipmap1;
+  
+  v.p18 = (pitch - 52) * (1/4);
+  v.p18 = min(17.99, max(0, v.p18));
+  v.nt0a = v.p18|0;
+  v.b = v.p18 - v.nt0a;
+  
+  v.nt0a = v.mipmap0 + v.nt0a * l1;
+  v.nt1a = v.nt0a + l1;
+  
+  v.nt0b = v.nt0a + v.mipmap1 - v.mipmap0;
+  v.nt1b = v.nt0b + l1;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// Optimized trilinear interpolation (audio rate)
+function MAP_aTriInterp(v* phi)
+local(p0 p1 a v0 v1 m0 m1)
+(
+  p0 = phi|0;
+  p1 = p0 + 1;  //no need for % l, the actual length of the table is l+1
+                // the first sample is copied to the end
+  a = phi - p0;
+
+  v0 = v.nt0a[p0] + a * (v.nt0a[p1] - v.nt0a[p0]);  //   lin
+  v1 = v.nt1a[p0] + a * (v.nt1a[p1] - v.nt1a[p0]);  //   lin
+  m0 = v0 + v.b * (v1 - v0);                        // bilin
+    
+  v0 = v.nt0b[p0] + a * (v.nt0b[p1] - v.nt0b[p0]);  //   lin
+  v1 = v.nt1b[p0] + a * (v.nt1b[p1] - v.nt1b[p0]);  //   lin
+  m1 = v0 + v.b * (v1 - v0);                        // bilin
+  
+  m0 + v.alpha * (m1 - m0);                         //trilin
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// trilinear interpolation
+// pitch  Midi pitch [0 127]
+// phi    phase      [0 l[
+// no of mipmap
+function MAP_TriInterp(pitch phi no)
+instance(l l1 l1x19 mipmap nb)
+local(p18 p0 p1 a nt0 nt1 b v0 v1 m0 m1 mipmap0 mipmap1 alpha)
+(
+  mipmap0 = no|0;
+  alpha = no - mipmap0;
+  mipmap1 = mipmap0 + 1;
+  mipmap0 > nb - 1 ? mipmap0 = nb - 1;
+  mipmap1 > nb - 1 ? mipmap1 = nb - 1;
+  mipmap0 = mipmap + l1x19 * mipmap0;
+  mipmap1 = mipmap + l1x19 * mipmap1;
+  
+  p0 = phi|0;
+  a = phi - p0;
+  p1 = p0 + 1;
+  
+  p18 = (pitch - 52) * (1/4);
+  p18 = min(17.99, max(0, p18));
+  nt0 = p18|0;
+  b = p18 - nt0;
+  nt0 = mipmap0 + nt0 * l1;
+  nt1 = nt0 + l1;
+ 
+  
+  v0 = nt0[p0] + a * (nt0[p1] - nt0[p0]);
+  v1 = nt1[p0] + a * (nt1[p1] - nt1[p0]);
+  m0 = v0 + b * (v1 - v0);
+  
+  nt0 += mipmap1 - mipmap0;
+  nt1 = nt0 + l1;
+  
+  v0 = nt0[p0] + a * (nt0[p1] - nt0[p0]);
+  v1 = nt1[p0] + a * (nt1[p1] - nt1[p0]);
+  m1 = v0 + b * (v1 - v0);
+  
+  m0 + alpha * (m1 - m0);
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// pitch [0 127]
+function MAP_draw(pitch x y w h no)
+instance(mipmap l)
+local(i v)(
+  gfx_x = x;
+  v = this.MAP_triInterp(pitch, 0, no);
+  gfx_y = y + h * (0.5 - 0.5 * v);
+  i = 1;
+  loop(l - 1,
+    v = this.MAP_triInterp(pitch, i, no);
+    gfx_lineto(x + (i * w)/l, y + h * (0.5 - 0.3 * v)  );
+    i += 1;
+  );
+);
