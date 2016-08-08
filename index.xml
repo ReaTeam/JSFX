@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="e3cd9bd6a06d07a0edd8980a0ef3f2f85f3ca4e7">
+<index version="1" name="ReaTeam JSFX" commit="86af4ad311ce70e65f9409fea4d17be87d5e3584">
+  <category name="Distortion">
+    <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect">
+      <version name="1.0" author="T.Rochebois" time="2016-08-08T20:52:46Z">
+        <changelog><![CDATA[+ Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/86af4ad311ce70e65f9409fea4d17be87d5e3584/Distortion/TiaR_Ze%20Morpho%20Dist.jsfx</source>
+        <source file="TiaR_Ze Morpho Dist/ZeMorphoDistIII.RPL">https://github.com/ReaTeam/JSFX/raw/86af4ad311ce70e65f9409fea4d17be87d5e3584/Distortion/TiaR_Ze%20Morpho%20Dist/ZeMorphoDistIII.RPL</source>
+      </version>
+    </reapack>
+  </category>
   <category name="Filter">
     <reapack name="TiaR_Lattice Filter.jsfx" type="effect">
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:46:50Z">
