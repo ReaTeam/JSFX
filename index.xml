@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="a4194de1efbbb1543a21f5bd555d465e9c10eeeb">
+<index version="1" name="ReaTeam JSFX" commit="a7cf6fd8dcea0f725df7943b1c0ac4cde3efc4af">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect">
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:52:46Z">
@@ -78,21 +78,6 @@
         <source file="TiaR_Complex X Filter Synth/TiaR_LFO_00.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_LFO_00.jsfx-inc</source>
         <source file="TiaR_Complex X Filter Synth/TiaR_SCP_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_SCP_01.jsfx-inc</source>
         <source file="TiaR_Complex X Filter Synth/TiaR_SIN_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_SIN_01.jsfx-inc</source>
-      </version>
-    </reapack>
-    <reapack name="TiaR_PWave Poly Synth Mark II.jsfx" type="effect">
-      <version name="1.0" author="T.Rochebois" time="2016-08-09T14:43:51Z">
-        <changelog><![CDATA[+ Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/a4194de1efbbb1543a21f5bd555d465e9c10eeeb/Synth/TiaR_PWave%20Poly%20Synth%20Mark%20II.jsfx</source>
-        <source file="TiaR_PWave Poly Synth Mark II/PWT_02.RPL">https://github.com/ReaTeam/JSFX/raw/a4194de1efbbb1543a21f5bd555d465e9c10eeeb/Synth/TiaR_PWave%20Poly%20Synth%20Mark%20II/PWT_02.RPL</source>
-        <source file="TiaR_PWave Poly Synth Mark II/TiaR_ADSR_03.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a4194de1efbbb1543a21f5bd555d465e9c10eeeb/Synth/TiaR_PWave%20Poly%20Synth%20Mark%20II/TiaR_ADSR_03.jsfx-inc</source>
-        <source file="TiaR_PWave Poly Synth Mark II/TiaR_KB6_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a4194de1efbbb1543a21f5bd555d465e9c10eeeb/Synth/TiaR_PWave%20Poly%20Synth%20Mark%20II/TiaR_KB6_01.jsfx-inc</source>
-        <source file="TiaR_PWave Poly Synth Mark II/TiaR_LFO_04.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a4194de1efbbb1543a21f5bd555d465e9c10eeeb/Synth/TiaR_PWave%20Poly%20Synth%20Mark%20II/TiaR_LFO_04.jsfx-inc</source>
-        <source file="TiaR_PWave Poly Synth Mark II/TiaR_LIM_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a4194de1efbbb1543a21f5bd555d465e9c10eeeb/Synth/TiaR_PWave%20Poly%20Synth%20Mark%20II/TiaR_LIM_01.jsfx-inc</source>
-        <source file="TiaR_PWave Poly Synth Mark II/TiaR_MAP_02.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a4194de1efbbb1543a21f5bd555d465e9c10eeeb/Synth/TiaR_PWave%20Poly%20Synth%20Mark%20II/TiaR_MAP_02.jsfx-inc</source>
-        <source file="TiaR_PWave Poly Synth Mark II/TiaR_PPWT_02.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a4194de1efbbb1543a21f5bd555d465e9c10eeeb/Synth/TiaR_PWave%20Poly%20Synth%20Mark%20II/TiaR_PPWT_02.jsfx-inc</source>
-        <source file="TiaR_PWave Poly Synth Mark II/TiaR_SCP_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a4194de1efbbb1543a21f5bd555d465e9c10eeeb/Synth/TiaR_PWave%20Poly%20Synth%20Mark%20II/TiaR_SCP_01.jsfx-inc</source>
-        <source file="TiaR_PWave Poly Synth Mark II/TiaR_VCT_PPWT_02.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a4194de1efbbb1543a21f5bd555d465e9c10eeeb/Synth/TiaR_PWave%20Poly%20Synth%20Mark%20II/TiaR_VCT_PPWT_02.jsfx-inc</source>
       </version>
     </reapack>
     <reapack name="TiaR_Shepard Paradoxical synth.jsfx" type="effect">
