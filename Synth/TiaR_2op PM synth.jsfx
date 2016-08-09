@@ -5,15 +5,15 @@
   @changelog
     + Initial release
   @provides   
-  	TiaR_2op PM synth/js-TiaR_PMX_js.ini
-	TiaR_2op PM synth/TiaR_ADSR.jsfx-inc
-	TiaR_2op PM synth/TiaR_HSL.jsfx-inc
-	TiaR_2op PM synth/TiaR_KBD.jsfx-inc
-	TiaR_2op PM synth/TiaR_LFO.jsfx-inc
-	TiaR_2op PM synth/TiaR_PMX.jsfx-inc
-	TiaR_2op PM synth/TiaR_PMXsliders.jsfx-inc
-	TiaR_2op PM synth/TiaR_SCH.jsfx-inc
- 	TiaR_2op PM synth/TiaR_Scope.jsfx-inc
+  	TiaR_2op PM Synth/js-TiaR_PMX_js.ini
+	TiaR_2op PM Synth/TiaR_ADSR.jsfx-inc
+	TiaR_2op PM Synth/TiaR_HSL.jsfx-inc
+	TiaR_2op PM Synth/TiaR_KBD.jsfx-inc
+	TiaR_2op PM Synth/TiaR_LFO.jsfx-inc
+	TiaR_2op PM Synth/TiaR_PMX.jsfx-inc
+	TiaR_2op PM Synth/TiaR_PMXsliders.jsfx-inc
+	TiaR_2op PM Synth/TiaR_SCH.jsfx-inc
+ 	TiaR_2op PM Synth/TiaR_Scope.jsfx-inc
 */
 
 

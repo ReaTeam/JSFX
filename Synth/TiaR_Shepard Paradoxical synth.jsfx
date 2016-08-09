@@ -5,12 +5,12 @@
   @changelog
     + Initial release
   @provides 
-    TiaR_Shepard Paradoxical synth/TiaR_ADSR_03.jsfx-inc
-    TiaR_Shepard Paradoxical synth/TiaR_KBD_03.jsfx-inc
-    TiaR_Shepard Paradoxical synth/TiaR_LFO_00.jsfx-inc
-    TiaR_Shepard Paradoxical synth/TiaR_LPF_00.jsfx-inc 
-    TiaR_Shepard Paradoxical synth/TiaR_SHP_02.jsfx-inc
-    TiaR_Shepard Paradoxical synth/TiaR_SLD_00.jsfx-inc
+    TiaR_Shepard Paradoxical Synth/TiaR_ADSR_03.jsfx-inc
+    TiaR_Shepard Paradoxical Synth/TiaR_KBD_03.jsfx-inc
+    TiaR_Shepard Paradoxical Synth/TiaR_LFO_00.jsfx-inc
+    TiaR_Shepard Paradoxical Synth/TiaR_LPF_00.jsfx-inc 
+    TiaR_Shepard Paradoxical Synth/TiaR_SHP_02.jsfx-inc
+    TiaR_Shepard Paradoxical Synth/TiaR_SLD_00.jsfx-inc
 */
 
 
