@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="e6edd0915b35bdd9b2b889d479cf130ab5440605">
+<index version="1" name="ReaTeam JSFX" commit="baf7d257dc115cba2a6d1eb69a70b4d0cc2b944c">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -27,7 +27,7 @@
     </reapack>
   </category>
   <category name="Misc">
-    <reapack name="TiaR_PM_Resynth.jsfx" type="effect" desc="MIDI PM resynth">
+    <reapack name="TiaR_PM_Resynth.jsfx" type="effect" desc="MIDI PM Resynth">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
@@ -40,7 +40,7 @@
       </metadata>
       <version name="1.0" author="T.Rochebois" time="2016-08-10T03:43:51Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/e6edd0915b35bdd9b2b889d479cf130ab5440605/Misc/TiaR_PM_Resynth.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/baf7d257dc115cba2a6d1eb69a70b4d0cc2b944c/Misc/TiaR_PM_Resynth.jsfx</source>
       </version>
     </reapack>
   </category>
@@ -118,16 +118,14 @@
         <link rel="website">http://stash.reaper.fm/v/22067/TiaR_CXF_synth_deluxe.zip</link>
       </metadata>
     </reapack>
-    <reapack name="TiaR_Shepard Paradoxical synth.jsfx" type="effect" desc="Shepard Paradoxical synth">
-      <version name="1.02" author="T.Rochebois" time="2016-08-08T20:59:58Z">
-        <changelog><![CDATA[+ Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Shepard%20Paradoxical%20synth.jsfx</source>
-        <source file="TiaR_Shepard Paradoxical synth/TiaR_ADSR_03.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Shepard%20Paradoxical%20synth/TiaR_ADSR_03.jsfx-inc</source>
-        <source file="TiaR_Shepard Paradoxical synth/TiaR_KBD_03.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Shepard%20Paradoxical%20synth/TiaR_KBD_03.jsfx-inc</source>
-        <source file="TiaR_Shepard Paradoxical synth/TiaR_LFO_00.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Shepard%20Paradoxical%20synth/TiaR_LFO_00.jsfx-inc</source>
-        <source file="TiaR_Shepard Paradoxical synth/TiaR_LPF_00.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Shepard%20Paradoxical%20synth/TiaR_LPF_00.jsfx-inc</source>
-        <source file="TiaR_Shepard Paradoxical synth/TiaR_SHP_02.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Shepard%20Paradoxical%20synth/TiaR_SHP_02.jsfx-inc</source>
-        <source file="TiaR_Shepard Paradoxical synth/TiaR_SLD_00.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Shepard%20Paradoxical%20synth/TiaR_SLD_00.jsfx-inc</source>
+    <reapack name="TiaR_Shepard Paradoxical Synth.jsfx" type="effect" desc="Shepard Paradoxical Synth">
+      <metadata>
+        <link rel="website">http://stash.reaper.fm/v/22090/TiaR_SHP_synth_00.zip</link>
+      </metadata>
+      <version name="1.02" author="T.Rochebois" time="2016-08-10T04:32:03Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/baf7d257dc115cba2a6d1eb69a70b4d0cc2b944c/Synth/TiaR_Shepard%20Paradoxical%20Synth.jsfx</source>
+        <source file="TiaR_Shepard Paradoxical Synth/TiaR_ADSR_03.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/baf7d257dc115cba2a6d1eb69a70b4d0cc2b944c/Synth/TiaR_Shepard%20Paradoxical%20Synth/TiaR_ADSR_03.jsfx-inc</source>
       </version>
     </reapack>
     <reapack name="TiaR_Ze Cheesy Harmonic Synth.jsfx" type="effect" desc="Ze Cheesy Harmonic Synth">
