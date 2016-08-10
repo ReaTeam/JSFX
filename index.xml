@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="c46009203b00c1b069aaee5f3b38bb36bbae7701">
+<index version="1" name="ReaTeam JSFX" commit="e6edd0915b35bdd9b2b889d479cf130ab5440605">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -27,6 +27,24 @@
       </version>
     </reapack>
   </category>
+  <category name="Misc">
+    <reapack name="TiaR_PM_Resynth.jsfx" type="effect" desc="MIDI PM resynth">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 This is an experimental midi controlled effect. So, even if its internals ar synth like, it needs an audio input (a synth, a chaos oscillator, an audio track) and midi control.\line The incoming signal is sampled, windowed, phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded. until you stop pressing the keys.\line So the output pitch is controlled by the keyboard, whatever the incoming signal is.\line Feed it with whatever you want.\par}
+}
+]]></description>
+        <link rel="website">http://stash.reaper.fm/v/22117/TiaR_PM_Resynth.zip</link>
+      </metadata>
+      <version name="1.0" author="T.Rochebois" time="2016-08-10T03:43:51Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/e6edd0915b35bdd9b2b889d479cf130ab5440605/Misc/TiaR_PM_Resynth.jsfx</source>
+      </version>
+    </reapack>
+  </category>
   <category name="Modulation">
     <reapack name="TiaR_Ze Big Chorus.jsfx" type="effect" desc="Ze Big Chorus">
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:46:50Z">
@@ -41,24 +59,6 @@
       <version name="1.06" author="T.Rochebois" time="2016-08-08T20:46:50Z">
         <changelog><![CDATA[+ Initial release]]></changelog>
         <source main="true">https://github.com/ReaTeam/JSFX/raw/e3cd9bd6a06d07a0edd8980a0ef3f2f85f3ca4e7/Modulation/TiaR_Ze%20Little%20Scanner%20Chorus.jsfx</source>
-      </version>
-    </reapack>
-  </category>
-  <category name="OtherFX">
-    <reapack name="TiaR_PM_Resynth.jsfx" type="effect" desc="MIDI PM resynth">
-      <metadata>
-        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
-{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
-\widowctrl\hyphauto
-
-{\pard \ql \f0 \sa180 \li0 \fi0 This is an experimental midi controlled effect. So, even if its internals ar synth like, it needs an audio input (a synth, a chaos oscillator, an audio track) and midi control.\line The incoming signal is sampled, windowed, phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded. until you stop pressing the keys.\line So the output pitch is controlled by the keyboard, whatever the incoming signal is.\line Feed it with whatever you want.\par}
-}
-]]></description>
-        <link rel="website">http://stash.reaper.fm/v/22117/TiaR_PM_Resynth.zip</link>
-      </metadata>
-      <version name="1.0" author="T.Rochebois" time="2016-08-10T03:14:13Z">
-        <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/OtherFX/TiaR_PM_Resynth.jsfx</source>
       </version>
     </reapack>
   </category>
