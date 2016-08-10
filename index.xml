@@ -12,18 +12,17 @@
 ]]></description>
       </metadata>
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:52:46Z">
-        <changelog><![CDATA[+ Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/86af4ad311ce70e65f9409fea4d17be87d5e3584/Distortion/TiaR_Ze%20Morpho%20Dist.jsfx</source>
-        <source file="TiaR_Ze Morpho Dist/ZeMorphoDistIII.RPL">https://github.com/ReaTeam/JSFX/raw/86af4ad311ce70e65f9409fea4d17be87d5e3584/Distortion/TiaR_Ze%20Morpho%20Dist/ZeMorphoDistIII.RPL</source>
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Distortion/TiaR_Ze%20Morpho%20Dist.jsfx</source>
       </version>
     </reapack>
   </category>
   <category name="Filter">
     <reapack name="TiaR_Lattice Filter.jsfx" type="effect" desc="Lattice Filter">
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:46:50Z">
-        <changelog><![CDATA[+ Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/e3cd9bd6a06d07a0edd8980a0ef3f2f85f3ca4e7/Filter/TiaR_Lattice%20Filter.jsfx</source>
-        <source file="TiaR_Lattice Filter/TiaR_LFX_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/e3cd9bd6a06d07a0edd8980a0ef3f2f85f3ca4e7/Filter/TiaR_Lattice%20Filter/TiaR_LFX_01.jsfx-inc</source>
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Filter/TiaR_Lattice%20Filter.jsfx</source>
+        <source file="TiaR_Lattice Filter/TiaR_LFX_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Filter/TiaR_Lattice%20Filter/TiaR_LFX_01.jsfx-inc</source>
       </version>
     </reapack>
   </category>
@@ -48,17 +47,17 @@
   <category name="Modulation">
     <reapack name="TiaR_Ze Big Chorus.jsfx" type="effect" desc="Ze Big Chorus">
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:46:50Z">
-        <changelog><![CDATA[+ Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/e3cd9bd6a06d07a0edd8980a0ef3f2f85f3ca4e7/Modulation/TiaR_Ze%20Big%20Chorus.jsfx</source>
-        <source file="TiaR_Ze Big Chorus/TiaR_ZeBigChorus_03.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/e3cd9bd6a06d07a0edd8980a0ef3f2f85f3ca4e7/Modulation/TiaR_Ze%20Big%20Chorus/TiaR_ZeBigChorus_03.jsfx-inc</source>
-        <source file="TiaR_Ze Big Chorus/TiaR_SCP_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/e3cd9bd6a06d07a0edd8980a0ef3f2f85f3ca4e7/Modulation/TiaR_Ze%20Big%20Chorus/TiaR_SCP_01.jsfx-inc</source>
-        <source file="TiaR_Ze Big Chorus/TiaR_ZeBigChorus_03.RPL">https://github.com/ReaTeam/JSFX/raw/e3cd9bd6a06d07a0edd8980a0ef3f2f85f3ca4e7/Modulation/TiaR_Ze%20Big%20Chorus/TiaR_ZeBigChorus_03.RPL</source>
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Modulation/TiaR_Ze%20Big%20Chorus.jsfx</source>
+        <source file="TiaR_Ze Big Chorus/TiaR_SCP_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Modulation/TiaR_Ze%20Big%20Chorus/TiaR_SCP_01.jsfx-inc</source>
+        <source file="TiaR_Ze Big Chorus/TiaR_ZeBigChorus_03.RPL">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Modulation/TiaR_Ze%20Big%20Chorus/TiaR_ZeBigChorus_03.RPL</source>
+        <source file="TiaR_Ze Big Chorus/TiaR_ZeBigChorus_03.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Modulation/TiaR_Ze%20Big%20Chorus/TiaR_ZeBigChorus_03.jsfx-inc</source>
       </version>
     </reapack>
     <reapack name="TiaR_Ze Little Scanner Chorus.jsfx" type="effect" desc="Ze Scanner Chorus">
       <version name="1.06" author="T.Rochebois" time="2016-08-08T20:46:50Z">
-        <changelog><![CDATA[+ Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/e3cd9bd6a06d07a0edd8980a0ef3f2f85f3ca4e7/Modulation/TiaR_Ze%20Little%20Scanner%20Chorus.jsfx</source>
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Modulation/TiaR_Ze%20Little%20Scanner%20Chorus.jsfx</source>
       </version>
     </reapack>
   </category>
@@ -79,16 +78,16 @@
     <reapack name="TiaR_2op PM Synth.jsfx" type="effect" desc="2op PM Synth">
       <version name="1.0" author="T.Rochebois" time="2016-08-10T03:39:32Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/b635e1126dc290cd56132ea57daeeedb9fd50ae5/Synth/TiaR_2op%20PM%20Synth.jsfx</source>
-        <source file="TiaR_2op PM Synth/TiaR_ADSR.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b635e1126dc290cd56132ea57daeeedb9fd50ae5/Synth/TiaR_2op%20PM%20Synth/TiaR_ADSR.jsfx-inc</source>
-        <source file="TiaR_2op PM Synth/TiaR_HSL.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b635e1126dc290cd56132ea57daeeedb9fd50ae5/Synth/TiaR_2op%20PM%20Synth/TiaR_HSL.jsfx-inc</source>
-        <source file="TiaR_2op PM Synth/TiaR_KBD.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b635e1126dc290cd56132ea57daeeedb9fd50ae5/Synth/TiaR_2op%20PM%20Synth/TiaR_KBD.jsfx-inc</source>
-        <source file="TiaR_2op PM Synth/TiaR_LFO.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b635e1126dc290cd56132ea57daeeedb9fd50ae5/Synth/TiaR_2op%20PM%20Synth/TiaR_LFO.jsfx-inc</source>
-        <source file="TiaR_2op PM Synth/TiaR_PMX.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b635e1126dc290cd56132ea57daeeedb9fd50ae5/Synth/TiaR_2op%20PM%20Synth/TiaR_PMX.jsfx-inc</source>
-        <source file="TiaR_2op PM Synth/TiaR_PMXsliders.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b635e1126dc290cd56132ea57daeeedb9fd50ae5/Synth/TiaR_2op%20PM%20Synth/TiaR_PMXsliders.jsfx-inc</source>
-        <source file="TiaR_2op PM Synth/TiaR_SCH.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b635e1126dc290cd56132ea57daeeedb9fd50ae5/Synth/TiaR_2op%20PM%20Synth/TiaR_SCH.jsfx-inc</source>
-        <source file="TiaR_2op PM Synth/TiaR_Scope.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b635e1126dc290cd56132ea57daeeedb9fd50ae5/Synth/TiaR_2op%20PM%20Synth/TiaR_Scope.jsfx-inc</source>
-        <source file="TiaR_2op PM Synth/js-TiaR_PMX_js.ini">https://github.com/ReaTeam/JSFX/raw/b635e1126dc290cd56132ea57daeeedb9fd50ae5/Synth/TiaR_2op%20PM%20Synth/js-TiaR_PMX_js.ini</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c46009203b00c1b069aaee5f3b38bb36bbae7701/Synth/TiaR_2op%20PM%20Synth.jsfx</source>
+        <source file="TiaR_2op PM Synth/TiaR_ADSR.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c46009203b00c1b069aaee5f3b38bb36bbae7701/Synth/TiaR_2op%20PM%20Synth/TiaR_ADSR.jsfx-inc</source>
+        <source file="TiaR_2op PM Synth/TiaR_HSL.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c46009203b00c1b069aaee5f3b38bb36bbae7701/Synth/TiaR_2op%20PM%20Synth/TiaR_HSL.jsfx-inc</source>
+        <source file="TiaR_2op PM Synth/TiaR_KBD.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c46009203b00c1b069aaee5f3b38bb36bbae7701/Synth/TiaR_2op%20PM%20Synth/TiaR_KBD.jsfx-inc</source>
+        <source file="TiaR_2op PM Synth/TiaR_LFO.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c46009203b00c1b069aaee5f3b38bb36bbae7701/Synth/TiaR_2op%20PM%20Synth/TiaR_LFO.jsfx-inc</source>
+        <source file="TiaR_2op PM Synth/TiaR_PMX.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c46009203b00c1b069aaee5f3b38bb36bbae7701/Synth/TiaR_2op%20PM%20Synth/TiaR_PMX.jsfx-inc</source>
+        <source file="TiaR_2op PM Synth/TiaR_PMXsliders.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c46009203b00c1b069aaee5f3b38bb36bbae7701/Synth/TiaR_2op%20PM%20Synth/TiaR_PMXsliders.jsfx-inc</source>
+        <source file="TiaR_2op PM Synth/TiaR_SCH.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c46009203b00c1b069aaee5f3b38bb36bbae7701/Synth/TiaR_2op%20PM%20Synth/TiaR_SCH.jsfx-inc</source>
+        <source file="TiaR_2op PM Synth/TiaR_Scope.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c46009203b00c1b069aaee5f3b38bb36bbae7701/Synth/TiaR_2op%20PM%20Synth/TiaR_Scope.jsfx-inc</source>
+        <source file="TiaR_2op PM Synth/js-TiaR_PMX_js.ini">https://github.com/ReaTeam/JSFX/raw/c46009203b00c1b069aaee5f3b38bb36bbae7701/Synth/TiaR_2op%20PM%20Synth/js-TiaR_PMX_js.ini</source>
       </version>
       <metadata>
         <link rel="website">http://forum.cockos.com/showthread.php?p=1385314&amp;posted=1#post1385314</link>
@@ -96,8 +95,8 @@
     </reapack>
     <reapack name="TiaR_chua.jsfx" type="effect" desc="chua">
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:46:50Z">
-        <changelog><![CDATA[+ Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/e3cd9bd6a06d07a0edd8980a0ef3f2f85f3ca4e7/Synth/TiaR_chua.jsfx</source>
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Synth/TiaR_chua.jsfx</source>
       </version>
       <metadata>
         <link rel="website">http://stash.reaper.fm/v/21646/TiaR_chua_02.zip</link>
@@ -105,15 +104,15 @@
     </reapack>
     <reapack name="TiaR_Complex X Filter Synth.jsfx" type="effect" desc="Complex X Filter Synth">
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:59:58Z">
-        <changelog><![CDATA[+ Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Complex%20X%20Filter%20Synth.jsfx</source>
-        <source file="TiaR_Complex X Filter Synth/TiaR_ADSR_03.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_ADSR_03.jsfx-inc</source>
-        <source file="TiaR_Complex X Filter Synth/TiaR_CXF_10.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_CXF_10.jsfx-inc</source>
-        <source file="TiaR_Complex X Filter Synth/TiaR_DC5.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_DC5.jsfx-inc</source>
-        <source file="TiaR_Complex X Filter Synth/TiaR_KBD_03.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_KBD_03.jsfx-inc</source>
-        <source file="TiaR_Complex X Filter Synth/TiaR_LFO_00.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_LFO_00.jsfx-inc</source>
-        <source file="TiaR_Complex X Filter Synth/TiaR_SCP_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_SCP_01.jsfx-inc</source>
-        <source file="TiaR_Complex X Filter Synth/TiaR_SIN_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_SIN_01.jsfx-inc</source>
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Synth/TiaR_Complex%20X%20Filter%20Synth.jsfx</source>
+        <source file="TiaR_Complex X Filter Synth/TiaR_ADSR_03.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_ADSR_03.jsfx-inc</source>
+        <source file="TiaR_Complex X Filter Synth/TiaR_CXF_10.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_CXF_10.jsfx-inc</source>
+        <source file="TiaR_Complex X Filter Synth/TiaR_DC5.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_DC5.jsfx-inc</source>
+        <source file="TiaR_Complex X Filter Synth/TiaR_KBD_03.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_KBD_03.jsfx-inc</source>
+        <source file="TiaR_Complex X Filter Synth/TiaR_LFO_00.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_LFO_00.jsfx-inc</source>
+        <source file="TiaR_Complex X Filter Synth/TiaR_SCP_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_SCP_01.jsfx-inc</source>
+        <source file="TiaR_Complex X Filter Synth/TiaR_SIN_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_SIN_01.jsfx-inc</source>
       </version>
       <metadata>
         <link rel="website">http://stash.reaper.fm/v/22067/TiaR_CXF_synth_deluxe.zip</link>
@@ -130,9 +129,6 @@
         <source file="TiaR_Shepard Paradoxical synth/TiaR_SHP_02.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Shepard%20Paradoxical%20synth/TiaR_SHP_02.jsfx-inc</source>
         <source file="TiaR_Shepard Paradoxical synth/TiaR_SLD_00.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1c96e9a1ab13d963926fbaef5c99eff4e8a7ac47/Synth/TiaR_Shepard%20Paradoxical%20synth/TiaR_SLD_00.jsfx-inc</source>
       </version>
-      <metadata>
-        <link rel="website">http://stash.reaper.fm/v/22090/TiaR_SHP_synth_00.zip</link>
-      </metadata>
     </reapack>
     <reapack name="TiaR_Ze Cheesy Harmonic Synth.jsfx" type="effect" desc="Ze Cheesy Harmonic Synth">
       <metadata>
@@ -171,8 +167,8 @@
 ]]></description>
       </metadata>
       <version name="1.0" author="The REAPER Blog" time="2016-08-08T14:07:30Z">
-        <changelog><![CDATA[+ Initial Release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/58bb8d696599194a4aa96d3a29e3926d0f0f6164/Utility/ReaperBlog_-12dB%20Dim.jsfx</source>
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Utility/ReaperBlog_-12dB%20Dim.jsfx</source>
       </version>
     </reapack>
   </category>
