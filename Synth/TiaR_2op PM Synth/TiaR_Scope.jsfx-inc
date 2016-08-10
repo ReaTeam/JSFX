@@ -1,5 +1,3 @@
-//@noindex
-
 desc: Scope
 slider1:0<0,4,1{1 sample per px,2 samples per px,4 samples per px,10 samples per px,20 samples per px}>Time scale
 slider2:0.01<0.001,0.1>Sync speed
