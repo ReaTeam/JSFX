@@ -1,15 +1,9 @@
-/*
-  @description chua
-  @version 1.0
-  @author T.Rochebois
-  @changelog
-    + Initial release
-*/
+desc: chua
+version: 1.0
+author: T.Rochebois
+changelog: Initial release
+link: http://stash.reaper.fm/v/21646/TiaR_chua_02.zip
 
-
-//http://stash.reaper.fm/v/21646/TiaR_chua_02.zip
-
-desc:TiaR_chua
 //Osc based on Leon Chua osc (trig 0 restart, trig 1-7 presets)
 
 slider1:15.6<-10,10>alpha

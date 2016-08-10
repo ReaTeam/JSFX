@@ -1,14 +1,9 @@
-/*
-  @description Lattice Filter 
-  @version 1.0
-  @author T.Rochebois
-  @changelog
-    + Initial release
-  @provides   
-    TiaR_Lattice Filter/TiaR_LFX_01.jsfx-inc
-*/
+desc: Lattice Filter
+version: 1.0
+author: T.Rochebois
+changelog: Initial release
+provides: TiaR_Lattice Filter/*
 
-desc:TiaR_Lattice Filter
 slider1:0.25<0,5>Diameter (cm) -------- Min
 slider2:3.2<0,7>Max
 

@@ -1,25 +1,11 @@
-/*
-  @description 2op PM synth
-  @version 1.0
-  @author T.Rochebois
-  @changelog
-    + Initial release
-  @provides   
-  	TiaR_2op PM Synth/js-TiaR_PMX_js.ini
-	TiaR_2op PM Synth/TiaR_ADSR.jsfx-inc
-	TiaR_2op PM Synth/TiaR_HSL.jsfx-inc
-	TiaR_2op PM Synth/TiaR_KBD.jsfx-inc
-	TiaR_2op PM Synth/TiaR_LFO.jsfx-inc
-	TiaR_2op PM Synth/TiaR_PMX.jsfx-inc
-	TiaR_2op PM Synth/TiaR_PMXsliders.jsfx-inc
-	TiaR_2op PM Synth/TiaR_SCH.jsfx-inc
- 	TiaR_2op PM Synth/TiaR_Scope.jsfx-inc
-*/
-
+desc: 2op PM synth
+version: 1.0
+author: T.Rochebois
+changelog: Initial release
+provides: TiaR_2op PM Synth/*
 
 //http://forum.cockos.com/showthread.php?p=1385314&posted=1#post1385314
 
-desc:TiaR_2op PM synth
 //PMX - 2op PM synth with crazy feedback  (x3 with detune for fatness)
 //_____________________________________________________________________
 slider1:<0,11,1{Mono,Mono 8ct,Mono 5th,Stereo,Stereo 8ct,Stereo 5th,All Mono,All Mono 8ct,All Mono 5th,All Stereo,All Stereo 8ct,All Stereo 5th}>Mix Type

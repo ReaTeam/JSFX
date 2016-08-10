@@ -1,22 +1,10 @@
-/*
-  @description Complex X Filter Synth
-  @version 1.0
-  @author T.Rochebois
-  @changelog
-    + Initial release
-  @provides
-    TiaR_Complex X Filter Synth/TiaR_ADSR_03.jsfx-inc
-    TiaR_Complex X Filter Synth/TiaR_CXF_10.jsfx-inc
-    TiaR_Complex X Filter Synth/TiaR_DC5.jsfx-inc
-    TiaR_Complex X Filter Synth/TiaR_KBD_03.jsfx-inc
-    TiaR_Complex X Filter Synth/TiaR_LFO_00.jsfx-inc
-    TiaR_Complex X Filter Synth/TiaR_SCP_01.jsfx-inc
-    TiaR_Complex X Filter Synth/TiaR_SIN_01.jsfx-inc
-*/
+desc: Complex X Filter Synth
+author: T.Rochebois
+version: 1.0
+changelog: Initial release
+provides: TiaR_Complex X Filter Synth/*
+link: http://stash.reaper.fm/v/22067/TiaR_CXF_synth_deluxe.zip
 
-//http://stash.reaper.fm/v/22067/TiaR_CXF_synth_deluxe.zip
-
-desc:TiaR_Complex X Filter Synth
 //complex X Filter Synth Deluxe x4 oversampling 
 /*
  Copyright 2014, Thierry Rochebois

@@ -1,15 +1,8 @@
-/*
-  @description Ze Cheesy Harmonic Synth
-  @version 1.0
-  @author T.Rochebois
-  @changelog
-    + Initial release
-  @about 
-	An additive synth based on Walsh functions 
-*/
-
-
-desc:TiaR_Ze Cheesy Harmonic Synth
+desc: Ze Cheesy Harmonic Synth
+version: 1.0
+author: T.Rochebois
+changelog: Initial release
+about: An additive synth based on Walsh functions 
 
 /**
  * Changelog:

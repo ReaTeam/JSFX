@@ -1,13 +1,8 @@
-/*
-  @description Ze Scanner Chorus 
-  @version 1.06
-  @author T.Rochebois
-  @changelog
-    + Initial release
-*/
+desc: Ze Scanner Chorus
+version: 1.06
+author: T.Rochebois
+changelog: Initial release
 
-
-desc:TiaR_Ze Scanner Chorus 
 /* Author: T.Rochebois  06/2016
 */
 slider1:sl_lfoA=7<0.2500,20,0.0001>LFO A Rate 
