@@ -143,10 +143,6 @@
 }
 ]]></description>
       </metadata>
-      <version name="1.0" author="T.Rochebois" time="2016-08-10T03:14:13Z">
-        <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Synth/TiaR_Ze%20Cheesy%20Harmonic%20Synth.jsfx</source>
-      </version>
       <version name="0.2" author="T.Rochebois" time="2016-08-10T03:20:50Z">
         <changelog><![CDATA[+ improved keyboard (priority to last or highest note)
 + added    tremolo
