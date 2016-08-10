@@ -2,7 +2,7 @@ desc: Shepard Paradoxical Synth
 version: 1.02
 author: T.Rochebois
 changelog: Initial release
-provides: TiaR_Shepard Paradoxical Synth/TiaR_ADSR_03.jsfx-inc
+provides: TiaR_Shepard Paradoxical Synth/*
 link: http://stash.reaper.fm/v/22090/TiaR_SHP_synth_00.zip
 
 /*
