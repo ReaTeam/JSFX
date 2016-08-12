@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="8fffc96a216c99ae5e0f4c899b3905133f332b58">
+<index version="1" name="ReaTeam JSFX" commit="fb8a98fe9dc7f06e960939de974857958eff1eca">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -93,14 +93,14 @@
         <link rel="website">http://forum.cockos.com/showthread.php?p=1385314&amp;posted=1#post1385314</link>
       </metadata>
     </reapack>
-    <reapack name="TiaR_chua.jsfx" type="effect" desc="chua">
-      <version name="1.0" author="T.Rochebois" time="2016-08-08T20:46:50Z">
-        <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Synth/TiaR_chua.jsfx</source>
-      </version>
+    <reapack name="TiaR_Chua Oscillator.jsfx" type="effect" desc="Chua Oscillator">
       <metadata>
         <link rel="website">http://stash.reaper.fm/v/21646/TiaR_chua_02.zip</link>
       </metadata>
+      <version name="0.2" author="T.Rochebois" time="2016-08-12T22:44:14Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/fb8a98fe9dc7f06e960939de974857958eff1eca/Synth/TiaR_Chua%20Oscillator.jsfx</source>
+      </version>
     </reapack>
     <reapack name="TiaR_Complex X Filter Synth.jsfx" type="effect" desc="Complex X Filter Synth">
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:59:58Z">
