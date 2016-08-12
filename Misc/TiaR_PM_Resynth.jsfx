@@ -4,9 +4,12 @@ author: T.Rochebois
 changelog: Initial release
 link: http://stash.reaper.fm/v/22117/TiaR_PM_Resynth.zip
 about:
-  This is an experimental midi controlled effect. So, even if its internals ar synth like, it needs an audio input (a synth, a chaos oscillator, an audio track) and midi control.  
-  The incoming signal is sampled, windowed, phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded. until you stop pressing the keys.  
-  So the output pitch is controlled by the keyboard, whatever the incoming signal is.  
+  This is an experimental midi controlled effect. So, even if its internals ar synth like, it needs an audio input (a synth, a chaos oscillator, an audio track) and midi control.
+
+  The incoming signal is sampled, windowed, phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded. until you stop pressing the keys.
+
+  So the output pitch is controlled by the keyboard, whatever the incoming signal is.
+
   Feed it with whatever you want.
 
 /*
