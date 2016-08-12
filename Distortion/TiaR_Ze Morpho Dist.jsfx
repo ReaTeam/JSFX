@@ -1,9 +1,10 @@
 desc: Ze Morpho Dist
-version: 1.0
 author: T.Rochebois
+version: 1.0
 changelog: Initial release
-provides TiaR_Ze Morpho Dist/ZeMorphoDistIII.RPL
-about: Morphing Stereo Distortion effect
+provides: TiaR_Ze Morpho Dist/*
+link: http://forum.cockos.com/showthread.php?t=173611
+about: This is a LFO controlled Stereo Distortion Effect
 
 //Author: Thierry Rochebois 2016
 slider10:1<0.1,10>A Gain
