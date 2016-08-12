@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="fb8a98fe9dc7f06e960939de974857958eff1eca">
+<index version="1" name="ReaTeam JSFX" commit="87e83f1a1b4bb6a25f482d5efb5bd306dc5c3e1e">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -7,13 +7,15 @@
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 Morphing Stereo Distortion effect\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This is a LFO controlled Stereo Distortion Effect\par}
 }
 ]]></description>
+        <link rel="website">http://forum.cockos.com/showthread.php?t=173611</link>
       </metadata>
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:52:46Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/b1e781a0e8b0b003aa898cc15051f5e9e519d3f9/Distortion/TiaR_Ze%20Morpho%20Dist.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/afa272d8c6777dccab3f7e1cf5fe050dfb4daa32/Distortion/TiaR_Ze%20Morpho%20Dist.jsfx</source>
+        <source file="TiaR_Ze Morpho Dist/ZeMorphoDistIII.RPL">https://github.com/ReaTeam/JSFX/raw/afa272d8c6777dccab3f7e1cf5fe050dfb4daa32/Distortion/TiaR_Ze%20Morpho%20Dist/ZeMorphoDistIII.RPL</source>
       </version>
     </reapack>
   </category>
@@ -33,14 +35,17 @@
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 This is an experimental midi controlled effect. So, even if its internals ar synth like, it needs an audio input (a synth, a chaos oscillator, an audio track) and midi control.\line The incoming signal is sampled, windowed, phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded. until you stop pressing the keys.\line So the output pitch is controlled by the keyboard, whatever the incoming signal is.\line Feed it with whatever you want.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This is an experimental midi controlled effect. So, even if its internals ar synth like, it needs an audio input (a synth, a chaos oscillator, an audio track) and midi control.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The incoming signal is sampled, windowed, phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded with incoming signal that is again sampled, windowed phase modulated and looped and crossfaded. until you stop pressing the keys.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 So the output pitch is controlled by the keyboard, whatever the incoming signal is.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Feed it with whatever you want.\par}
 }
 ]]></description>
         <link rel="website">http://stash.reaper.fm/v/22117/TiaR_PM_Resynth.zip</link>
       </metadata>
       <version name="1.0" author="T.Rochebois" time="2016-08-10T03:43:51Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/baf7d257dc115cba2a6d1eb69a70b4d0cc2b944c/Misc/TiaR_PM_Resynth.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/87e83f1a1b4bb6a25f482d5efb5bd306dc5c3e1e/Misc/TiaR_PM_Resynth.jsfx</source>
       </version>
     </reapack>
   </category>
