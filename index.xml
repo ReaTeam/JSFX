@@ -45,7 +45,7 @@
       </metadata>
       <version name="1.0" author="T.Rochebois" time="2016-08-10T03:43:51Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/87e83f1a1b4bb6a25f482d5efb5bd306dc5c3e1e/Misc/TiaR_PM_Resynth.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/4f4e6c6a06323b963e8199a02f3b9d0e0211ff6d/Misc/TiaR_PM_Resynth.jsfx</source>
       </version>
     </reapack>
   </category>
