@@ -1,7 +1,8 @@
 desc: Ze Cheesy Harmonic Synth
-version: 0.2
+version: 0.3
 author: T.Rochebois
 changelog:
+  # Note off bug corrected
   + improved keyboard (priority to last or highest note)
   + added    tremolo
   + added    ModWheel/Aftertouch vibrato depth
@@ -202,8 +203,8 @@ piwt.PIWT_disc();
 @block
 while (midirecv(offset, msg1, msg23)) (
   msg2 = msg23 & 0x7F; msg3 = msg23 >> 8; status = msg1 & $xF0;
-  status == $x80 ? ( status = $x90; msg3 = 0; )  // note off
-: status == $x90 ? (                              // note on
+  status == $x80 ? ( status = $x90; msg3 = 0; );  // note off
+  status == $x90 ? (                              // note on
     msg3 == 0 ? (
       kbNotes[msg2] = 0;
       gate = 0; i=0; loop(128, kbNotes[i] !== 0 ? (gate = kBNotes[i]; note=i;); i+=1;);
