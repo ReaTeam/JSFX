@@ -1,18 +1,8 @@
-/*
-  @description Ze Big Chorus
-  @version 1.0
-  @author T.Rochebois
-  @changelog
-    + Initial release
-  @provides   
-    TiaR_Ze Big Chorus/TiaR_ZeBigChorus_03.jsfx-inc
-    TiaR_Ze Big Chorus/TiaR_SCP_01.jsfx-inc
-    TiaR_Ze Big Chorus/TiaR_ZeBigChorus_03.RPL
-*/
-
-
-desc:TiaR_Ze Big Chorus
-
+desc: Ze Big Chorus
+author: T.Rochebois
+version: 1.0
+changelog: Initial release
+provides: TiaR_Ze Big Chorus/*
 
 /*
   Smashed.Transistors at gmail.com                   T.Rochebois 2015

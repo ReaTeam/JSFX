@@ -1,18 +1,10 @@
-/*
-  @description HadamVerb
-  @version 1.0
-  @author T.Rochebois
-  @changelog
-    + Initial release
-  @about
-	Hadamard Variable Delay Array
-  @provides   
-    TiaR_HadamVerb/TiaR_HAD_00.jsfx-inc
-    TiaR_HadamVerb/HadamVerb.RPL
-*/
+desc: Hadamard Variable Delay Array
+version: 1.0
+author: T.Rochebois
+changelog: Initial release
+provides: TiaR_HadamVerb/*
+link: http://stash.reaper.fm/v/23730/TiaR_HadamVerb.zip
 
-//http://stash.reaper.fm/v/23730/TiaR_HadamVerb.zip
-desc:TiaR_HadamVerb
 slider1:0.2<0.01,1>Base Delay (s)
 
 slider4:2<0,5>Fb 1
