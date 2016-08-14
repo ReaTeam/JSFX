@@ -1,36 +1,14 @@
-/*
-  @description Ze Cheesy Harmonic Synth
-  @version 1.0
-  @author T.Rochebois
-  @changelog
-    + Initial release
-  @about 
-	An additive synth based on Walsh functions 
-*/
-
-
-desc:TiaR_Ze Cheesy Harmonic Synth
-
-/**
- * Changelog:
- * v0.2 (2016-08-07)
- *   + improved keyboard (priority to last or highest note)
- *   + added    tremolo
- *   + added    ModWheel/Aftertouch vibrato depth
- *   + added    Pitch bend +- 1 octave
- *   + modified Seq gains can be negative (opposite phase)
- *   + modified Seq. init to fundamental seq
- * v0.1 (2016-08-05)
- *   + added    additive outputs (so that you can chain synths)
- *   + added    gfx waveform
- *   + added    adsr enveloppe : with log Attack Decay Release times
- *   + improved Glide rate range
- *   + added    Detune (semitones)
- *   + added    vibrato rate
- *   + added    pan
- *   + added    gain (dB)
- */
-
+desc: Ze Cheesy Harmonic Synth
+version: 0.2
+author: T.Rochebois
+changelog:
+  + improved keyboard (priority to last or highest note)
+  + added    tremolo
+  + added    ModWheel/Aftertouch vibrato depth
+  + added    Pitch bend +- 1 octave
+  + modified Seq gains can be negative (opposite phase)
+  + modified Seq. init to fundamental seq
+about: An additive synth based on Walsh functions
 
 slider1:1<-1,1,0.001>Seq. 1
 slider2:0<-1,1,0.001>Seq. 2

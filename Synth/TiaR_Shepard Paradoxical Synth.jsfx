@@ -1,22 +1,10 @@
-/*
-  @description Shepard Paradoxical synth
-  @version 1.02
-  @author T.Rochebois
-  @changelog
-    + Initial release
-  @provides 
-    TiaR_Shepard Paradoxical Synth/TiaR_ADSR_03.jsfx-inc
-    TiaR_Shepard Paradoxical Synth/TiaR_KBD_03.jsfx-inc
-    TiaR_Shepard Paradoxical Synth/TiaR_LFO_00.jsfx-inc
-    TiaR_Shepard Paradoxical Synth/TiaR_LPF_00.jsfx-inc 
-    TiaR_Shepard Paradoxical Synth/TiaR_SHP_02.jsfx-inc
-    TiaR_Shepard Paradoxical Synth/TiaR_SLD_00.jsfx-inc
-*/
+desc: Shepard Paradoxical Synth
+version: 1.02
+author: T.Rochebois
+changelog: Initial release
+provides: TiaR_Shepard Paradoxical Synth/*
+link: http://stash.reaper.fm/v/22090/TiaR_SHP_synth_00.zip
 
-
-//http://stash.reaper.fm/v/22090/TiaR_SHP_synth_00.zip
-
-desc:TiaR_Shepard Paradoxical synth
 /*
  Copyright 2014, Thierry Rochebois
  All rights reserved.
