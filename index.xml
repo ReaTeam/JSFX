@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="c36715048f3cd3ceb49407fd4354f841201731e0">
+<index version="1" name="ReaTeam JSFX" commit="d039a69476343dadf4518d74e97d168cab593907">
   <category name="Analysis">
     <reapack name="StigeT_Skope.jsfx" type="effect">
       <version name="2.0" author="Stige T." time="2016-08-15T11:38:16Z">
@@ -76,6 +76,16 @@
       <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
         <changelog><![CDATA[Initial release]]></changelog>
         <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_SEGX2%20Gate.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="StigeT_Stereo Hybrid Bus Compressor.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:41:20Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d039a69476343dadf4518d74e97d168cab593907/Dynamics/StigeT_Stereo%20Hybrid%20Bus%20Compressor.jsfx</source>
+        <source file="StigeT_Stereo Hybrid Bus Compressor/liuku.png">https://github.com/ReaTeam/JSFX/raw/d039a69476343dadf4518d74e97d168cab593907/Dynamics/StigeT_Stereo%20Hybrid%20Bus%20Compressor/liuku.png</source>
+        <source file="StigeT_Stereo Hybrid Bus Compressor/liuku2.png">https://github.com/ReaTeam/JSFX/raw/d039a69476343dadf4518d74e97d168cab593907/Dynamics/StigeT_Stereo%20Hybrid%20Bus%20Compressor/liuku2.png</source>
+        <source file="StigeT_Stereo Hybrid Bus Compressor/sm_liuku.png">https://github.com/ReaTeam/JSFX/raw/d039a69476343dadf4518d74e97d168cab593907/Dynamics/StigeT_Stereo%20Hybrid%20Bus%20Compressor/sm_liuku.png</source>
+        <source file="StigeT_Stereo Hybrid Bus Compressor/switch.png">https://github.com/ReaTeam/JSFX/raw/d039a69476343dadf4518d74e97d168cab593907/Dynamics/StigeT_Stereo%20Hybrid%20Bus%20Compressor/switch.png</source>
       </version>
     </reapack>
     <reapack name="StigeT_Transpire.jsfx" type="effect">
