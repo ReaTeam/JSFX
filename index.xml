@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f51e3fcc00cf854983cf470e67c0bfd1c6a935ec">
+<index version="1" name="ReaTeam JSFX" commit="b09371c49ff8d628d1d5cd7680ba906c5c6756b9">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -81,6 +81,9 @@
   </category>
   <category name="Synth">
     <reapack name="TiaR_2op PM Synth.jsfx" type="effect" desc="2op PM Synth">
+      <metadata>
+        <link rel="website">http://forum.cockos.com/showthread.php?p=1385314&amp;posted=1#post1385314</link>
+      </metadata>
       <version name="1.0" author="T.Rochebois" time="2016-08-10T03:39:32Z">
         <changelog><![CDATA[Initial release]]></changelog>
         <source main="true">https://github.com/ReaTeam/JSFX/raw/1073abf5b49f81fd815bda67392213a781046b0f/Synth/TiaR_2op%20PM%20Synth.jsfx</source>
@@ -94,9 +97,6 @@
         <source file="TiaR_2op PM Synth/TiaR_Scope.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1073abf5b49f81fd815bda67392213a781046b0f/Synth/TiaR_2op%20PM%20Synth/TiaR_Scope.jsfx-inc</source>
         <source file="TiaR_2op PM Synth/js-TiaR_PMX_js.ini">https://github.com/ReaTeam/JSFX/raw/1073abf5b49f81fd815bda67392213a781046b0f/Synth/TiaR_2op%20PM%20Synth/js-TiaR_PMX_js.ini</source>
       </version>
-      <metadata>
-        <link rel="website">http://forum.cockos.com/showthread.php?p=1385314&amp;posted=1#post1385314</link>
-      </metadata>
     </reapack>
     <reapack name="TiaR_Chua Oscillator.jsfx" type="effect" desc="Chua Oscillator">
       <metadata>
@@ -108,6 +108,9 @@
       </version>
     </reapack>
     <reapack name="TiaR_Complex X Filter Synth.jsfx" type="effect" desc="Complex X Filter Synth">
+      <metadata>
+        <link rel="website">http://stash.reaper.fm/v/22067/TiaR_CXF_synth_deluxe.zip</link>
+      </metadata>
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:59:58Z">
         <changelog><![CDATA[Initial release]]></changelog>
         <source main="true">https://github.com/ReaTeam/JSFX/raw/1073abf5b49f81fd815bda67392213a781046b0f/Synth/TiaR_Complex%20X%20Filter%20Synth.jsfx</source>
@@ -119,9 +122,6 @@
         <source file="TiaR_Complex X Filter Synth/TiaR_SCP_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1073abf5b49f81fd815bda67392213a781046b0f/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_SCP_01.jsfx-inc</source>
         <source file="TiaR_Complex X Filter Synth/TiaR_SIN_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1073abf5b49f81fd815bda67392213a781046b0f/Synth/TiaR_Complex%20X%20Filter%20Synth/TiaR_SIN_01.jsfx-inc</source>
       </version>
-      <metadata>
-        <link rel="website">http://stash.reaper.fm/v/22067/TiaR_CXF_synth_deluxe.zip</link>
-      </metadata>
     </reapack>
     <reapack name="TiaR_Shepard Paradoxical Synth.jsfx" type="effect" desc="Shepard Paradoxical Synth">
       <metadata>
@@ -166,6 +166,51 @@
 + modified Seq gains can be negative (opposite phase)
 + modified Seq. init to fundamental seq]]></changelog>
         <source main="true">https://github.com/ReaTeam/JSFX/raw/f51e3fcc00cf854983cf470e67c0bfd1c6a935ec/Synth/TiaR_Ze%20Cheesy%20Harmonic%20Synth.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="TiaR_Ze Musette Organ.jsfx" type="effect" desc="Ze Musette Organ">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Ze Musette Organ\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 An {\b easy to use} jsfx instrument reminiscent of some italian electronic organs of the late 70s.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Features\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\b Full polyphony}\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Smooth sound\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Five tone "characters"\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Adjustable "brilliance"\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Vibrato controlled by the Modulation Wheel and Aftertouch\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab +- one octave pitch bend\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Anti aliased sound generation\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Stackable:\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Many Ze Musette Organ can be stacked, their outputs will be added together.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab different Gain and Pan settings can be used to widden the stereo field.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab The keyboard range for every Musette Organ can be set with transition zones.\sa180\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Controls:\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Character\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Brilliance\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Pan and Gain\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Transposition/Detune\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Vibrato depth\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Velocity sensitivity\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Attack, Decay, Sustain and Release\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Keyboard range (Low and High notes and transition zones).\sa180\sa180\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="T.Rochebois" time="2016-08-15T11:19:11Z">
+        <changelog><![CDATA[+ ADSR enveloppe
++ Selectable velocity curve
+# Brilliance and Character
++ modwheel Vibrato depth
++ After touch sensitive Vibrato speed
++ Pitch bend +-1 octave
++ Tremulant rate (detune between operators)
++ phase modulation synthesis (3 operators per note) 
++ Per note index limitation (anti aliasing)]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/146b45dbef85b8208146727558e65bc1f3cda638/Synth/TiaR_Ze%20Musette%20Organ.jsfx</source>
       </version>
     </reapack>
   </category>
