@@ -2,7 +2,7 @@ desc: Stereo Hybrid Bus Compressor
 author: Stige T.
 version: 1.0
 changelog: Initial release
-provides: StigeT_Hybrid Bus Compressor/*
+provides: StigeT_Stereo Hybrid Bus Compressor/*
 link: http://jsplugins.supermaailma.net/
 about:
 	5.1 Hybrid Bus Compressor is yet another dynamics tool you can find on this page. It uses both peak & RMS detectors simultaneously and the resulting effect is quite pleasant and transparent. The RMS component helps with the signal levelling purposes better than using a peak method alone. There is no abundance of 5.1 capable compressors out there, but now here's one more, for free. It doesn't really matter to use it for stereo applications as well, but for convenience there is also a stereo version of the same thing.
@@ -21,10 +21,10 @@ BusComp [Build 140325] by Stige T.
 Compressor with peak+rms detectors
 Reaper 4.59+ Required
 
-filename:0,surrcomp_gfx/liuku.png
-filename:1,surrcomp_gfx/liuku2.png
-filename:2,surrcomp_gfx/switch.png
-filename:3,surrcomp_gfx/sm_liuku.png
+filename:0,StigeT_Stereo Hybrid Bus Compressor/liuku.png
+filename:1,StigeT_Stereo Hybrid Bus Compressor/liuku2.png
+filename:2,StigeT_Stereo Hybrid Bus Compressor/switch.png
+filename:3,StigeT_Stereo Hybrid Bus Compressor/sm_liuku.png
 
 @serialize
 

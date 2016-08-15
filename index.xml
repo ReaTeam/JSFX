@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f51e3fcc00cf854983cf470e67c0bfd1c6a935ec">
+<index version="1" name="ReaTeam JSFX" commit="c36715048f3cd3ceb49407fd4354f841201731e0">
+  <category name="Analysis">
+    <reapack name="StigeT_Skope.jsfx" type="effect">
+      <version name="2.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Analysis/StigeT_Skope.jsfx</source>
+      </version>
+    </reapack>
+  </category>
+  <category name="Delay">
+    <reapack name="StigeT_LeetDelay.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Delay/StigeT_LeetDelay.jsfx</source>
+      </version>
+    </reapack>
+  </category>
   <category name="Distortion">
+    <reapack name="StigeT_Growl.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Distortion/StigeT_Growl.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
@@ -19,12 +41,95 @@
       </version>
     </reapack>
   </category>
+  <category name="Dynamics">
+    <reapack name="StigeT_5.1 Hybrid Bus Compressor.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_5.1%20Hybrid%20Bus%20Compressor.jsfx</source>
+        <source file="StigeT_Hybrid Bus Compressor/liuku.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_Hybrid%20Bus%20Compressor/liuku.png</source>
+        <source file="StigeT_Hybrid Bus Compressor/liuku2.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_Hybrid%20Bus%20Compressor/liuku2.png</source>
+        <source file="StigeT_Hybrid Bus Compressor/sm_liuku.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_Hybrid%20Bus%20Compressor/sm_liuku.png</source>
+        <source file="StigeT_Hybrid Bus Compressor/switch.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_Hybrid%20Bus%20Compressor/switch.png</source>
+      </version>
+    </reapack>
+    <reapack name="StigeT_5.1 Master Limiter.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_5.1%20Master%20Limiter.jsfx</source>
+        <source file="StigeT_5.1 Master Limiter/5.1 Master Limiter.pdf">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_5.1%20Master%20Limiter/5.1%20Master%20Limiter.pdf</source>
+      </version>
+    </reapack>
+    <reapack name="StigeT_7.1 Master Limiter.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_7.1%20Master%20Limiter.jsfx</source>
+        <source file="StigeT_7.1 Master Limiter/5.1 Master Limiter.pdf">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_7.1%20Master%20Limiter/5.1%20Master%20Limiter.pdf</source>
+      </version>
+    </reapack>
+    <reapack name="StigeT_SEG Gate.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_SEG%20Gate.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="StigeT_SEGX2 Gate.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_SEGX2%20Gate.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="StigeT_Transpire.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_Transpire.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="StigeT_TriLeveler.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_TriLeveler.jsfx</source>
+        <source file="StigeT_TriLeveler/TriLeveler.pdf">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_TriLeveler/TriLeveler.pdf</source>
+      </version>
+    </reapack>
+    <reapack name="StigeT_VCX Retro Compressor.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_VCX%20Retro%20Compressor.jsfx</source>
+        <source file="StigeT_VCX Retro Compressor/chicken_knob.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_VCX%20Retro%20Compressor/chicken_knob.png</source>
+        <source file="StigeT_VCX Retro Compressor/vcbg.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_VCX%20Retro%20Compressor/vcbg.png</source>
+        <source file="StigeT_VCX Retro Compressor/vu.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_VCX%20Retro%20Compressor/vu.png</source>
+      </version>
+    </reapack>
+    <reapack name="StigeT_VOLA-EX.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_VOLA-EX.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="StigeT_VOLA.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_VOLA.jsfx</source>
+      </version>
+    </reapack>
+  </category>
   <category name="Filter">
     <reapack name="TiaR_Lattice Filter.jsfx" type="effect" desc="Lattice Filter">
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:46:50Z">
         <changelog><![CDATA[Initial release]]></changelog>
         <source main="true">https://github.com/ReaTeam/JSFX/raw/1073abf5b49f81fd815bda67392213a781046b0f/Filter/TiaR_Lattice%20Filter.jsfx</source>
         <source file="TiaR_Lattice Filter/TiaR_LFX_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/1073abf5b49f81fd815bda67392213a781046b0f/Filter/TiaR_Lattice%20Filter/TiaR_LFX_01.jsfx-inc</source>
+      </version>
+    </reapack>
+  </category>
+  <category name="Guitar">
+    <reapack name="StigeT_Bassprofessor.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Guitar/StigeT_Bassprofessor.jsfx</source>
+        <source file="StigeT_Bassprofessor/Bass Professor Mark II.pdf">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Guitar/StigeT_Bassprofessor/Bass%20Professor%20Mark%20II.pdf</source>
+        <source file="StigeT_Bassprofessor/bg.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Guitar/StigeT_Bassprofessor/bg.png</source>
+        <source file="StigeT_Bassprofessor/vsliderhandle.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Guitar/StigeT_Bassprofessor/vsliderhandle.png</source>
       </version>
     </reapack>
   </category>
@@ -183,6 +288,22 @@
       <version name="1.0" author="The REAPER Blog" time="2016-08-08T14:07:30Z">
         <changelog><![CDATA[Initial Release]]></changelog>
         <source main="true">https://github.com/ReaTeam/JSFX/raw/1073abf5b49f81fd815bda67392213a781046b0f/Utility/ReaperBlog_-12dB%20Dim.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="StigeT_Stero2SurroundRotator.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Utility/StigeT_Stero2SurroundRotator.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="StigeT_Surround Pan.jsfx" type="effect">
+      <version name="2.1" author="Stige T." time="2016-08-15T11:38:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Utility/StigeT_Surround%20Pan.jsfx</source>
+        <source file="StigeT_Surround Pan/Surround Pan.pdf">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Utility/StigeT_Surround%20Pan/Surround%20Pan.pdf</source>
+        <source file="StigeT_Surround Pan/bg.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Utility/StigeT_Surround%20Pan/bg.png</source>
+        <source file="StigeT_Surround Pan/radar.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Utility/StigeT_Surround%20Pan/radar.png</source>
+        <source file="StigeT_Surround Pan/sliderknob.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Utility/StigeT_Surround%20Pan/sliderknob.png</source>
       </version>
     </reapack>
   </category>
