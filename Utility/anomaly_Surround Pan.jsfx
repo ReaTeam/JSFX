@@ -2,7 +2,7 @@ desc: Surround Pan
 author: Stige T.
 version: 2.1
 changelog: Initial release
-provides: StigeT_Surround Pan/*
+provides: anomaly_Surround Pan/*
 link: http://jsplugins.supermaailma.net/
 about:
 	Surround Pan is a specialized panning plugin for distributing a stereo or mono signal into a 5.1 surround space.
@@ -49,9 +49,9 @@ slider29:1<0,1,0.1>-Y Scale
 slider30:0<-1,1,0.01>-X Offset
 slider31:0<-1,1,0.01>-Y Offset
 
-filename:0,StigeT_Surround Pan/radar.png
-filename:1,StigeT_Surround Pan/bg.png
-filename:2,StigeT_Surround Pan/sliderknob.png
+filename:0,anomaly_Surround Pan/radar.png
+filename:1,anomaly_Surround Pan/bg.png
+filename:2,anomaly_Surround Pan/sliderknob.png
 
 resource:0,1,2
 

@@ -2,7 +2,7 @@ desc: TriLeveler
 author: Stige T.
 version: 1.0
 changelog: Initial release
-provides: StigeT_TriLeveler/*
+provides: anomaly_TriLeveler/*
 link: http://jsplugins.supermaailma.net/
 about:
 	Trileveler is an ultimate broadcast voice leveler. It offers three RMS driven dynamics sections chained in series. Each section has a slightly different purpose in the chain. When signal progresses from section to next, it becomes more and more compressed and tied to the target level.

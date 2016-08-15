@@ -1,7 +1,7 @@
 desc: VCX Retro Compressor
 author: Stige T.
 version: 1.0
-provides: StigeT_VCX Retro Compressor/*
+provides: anomaly_VCX Retro Compressor/*
 changelog: Initial release
 link: http://jsplugins.supermaailma.net/
 about:
@@ -15,9 +15,9 @@ about:
 // Designed by Stige T.
 // Programmed by Stige T. and Connor O.
 
-filename:0,StigeT_VCX Retro Compressor/vu.png
-filename:1,StigeT_VCX Retro Compressor/chicken_knob.png
-filename:2,StigeT_VCX Retro Compressor/vcbg.png
+filename:0,anomaly_VCX Retro Compressor/vu.png
+filename:1,anomaly_VCX Retro Compressor/chicken_knob.png
+filename:2,anomaly_VCX Retro Compressor/vcbg.png
 
 @serialize
 
