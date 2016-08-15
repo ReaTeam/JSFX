@@ -210,7 +210,7 @@
 + Tremulant rate (detune between operators)
 + phase modulation synthesis (3 operators per note) 
 + Per note index limitation (anti aliasing)]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/146b45dbef85b8208146727558e65bc1f3cda638/Synth/TiaR_Ze%20Musette%20Organ.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/b09371c49ff8d628d1d5cd7680ba906c5c6756b9/Synth/TiaR_Ze%20Musette%20Organ.jsfx</source>
       </version>
     </reapack>
   </category>
