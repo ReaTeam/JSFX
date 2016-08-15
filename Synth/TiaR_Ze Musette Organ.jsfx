@@ -11,29 +11,31 @@ changelog:
   + Tremulant rate (detune between operators)
   + phase modulation synthesis (3 operators per note) 
   + Per note index limitation (anti aliasing)
-about:# Ze Musette Organ
-An __easy to use__ jsfx instrument reminiscent of some italian electronic organs of the late 70s.
-## Features
-* __Full polyphony__
-* Smooth sound
-* Five tone "characters" 
-* Adjustable "brilliance"
-* Vibrato controlled by the Modulation Wheel and Aftertouch
-* +- one octave pitch bend
-* Anti aliased sound generation
-* Stackable:
-  * Many Ze Musette Organ can be stacked, their outputs will be added together.
-  * different Gain and Pan settings can be used to widden the stereo field.
-  * The keyboard range for every Musette Organ can be set with transition zones.
-* Controls:
-  * Character
-  * Brilliance
-  * Pan and Gain
-  * Transposition/Detune
-  * Vibrato depth
-  * Velocity sensitivity
-  * Attack, Decay, Sustain and Release
-  * Keyboard range (Low and High notes and transition zones).
+about:
+  # Ze Musette Organ
+  An __easy to use__ jsfx instrument reminiscent of some italian electronic organs of the late 70s.
+  ## Features
+  * __Full polyphony__
+  * Smooth sound
+  * Five tone "characters" 
+  * Adjustable "brilliance"
+  * Vibrato controlled by the Modulation Wheel and Aftertouch
+  * +- one octave pitch bend
+  * Anti aliased sound generation
+  * Stackable:
+    * Many Ze Musette Organ can be stacked, their outputs will be added together.
+    * different Gain and Pan settings can be used to widden the stereo field.
+    * The keyboard range for every Musette Organ can be set with transition zones.
+  * Controls:
+    * Character
+    * Brilliance
+    * Pan and Gain
+    * Transposition/Detune
+    * Vibrato depth
+    * Velocity sensitivity
+    * Attack, Decay, Sustain and Release
+    * Keyboard range (Low and High notes and transition zones).
+    
 // sliders ________________________________________________________{{{
 slider1:0<-24,12,0.0001>Gain (dB)
 slider2:0.5<0,1,0.0001>Pan
