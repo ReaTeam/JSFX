@@ -1,7 +1,8 @@
 desc:Ze Musette Organ
-version: 1.0
+version: 1.1
 author: T.Rochebois
 changelog:
+  # note off bug
   + ADSR enveloppe
   + Selectable velocity curve
   # Brilliance and Character
@@ -278,7 +279,7 @@ v120.ini(120);v121.ini(121);v122.ini(122);v123.ini(123);v124.ini(124);v125.ini(1
 // midi  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _{{{
 while (midirecv(offset, msg1, msg23)) (
   msg2 = msg23 & 0x7F;  msg3 = msg23 >> 8;  status = msg1 & $xF0;
-  status === $x80 ? (status = $x90; msg2 = 0; );             // Note off
+  status === $x80 ? (status = $x90; msg3 = 0; );             // Note off
   status === $x90 ? (
     note = msg2;
     note >= gLowNote - gLowTrans && note <= gHighNote + gHighTrans ?
