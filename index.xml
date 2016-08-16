@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="d039a69476343dadf4518d74e97d168cab593907">
+<index version="1" name="ReaTeam JSFX" commit="d7e83f8097965c488761a260e36adb6c663f15a5">
   <category name="Analysis">
-    <reapack name="StigeT_Skope.jsfx" type="effect">
-      <version name="2.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_Skope.jsfx" type="effect">
+      <version name="2.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Analysis/StigeT_Skope.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Analysis/anomaly_Skope.jsfx</source>
       </version>
     </reapack>
   </category>
   <category name="Delay">
-    <reapack name="StigeT_LeetDelay.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_LeetDelay.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Delay/StigeT_LeetDelay.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Delay/anomaly_LeetDelay.jsfx</source>
       </version>
     </reapack>
   </category>
   <category name="Distortion">
-    <reapack name="StigeT_Growl.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_Growl.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Distortion/StigeT_Growl.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Distortion/anomaly_Growl.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
@@ -42,84 +42,84 @@
     </reapack>
   </category>
   <category name="Dynamics">
-    <reapack name="StigeT_5.1 Hybrid Bus Compressor.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_5.1 Hybrid Bus Compressor.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_5.1%20Hybrid%20Bus%20Compressor.jsfx</source>
-        <source file="StigeT_Hybrid Bus Compressor/liuku.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_Hybrid%20Bus%20Compressor/liuku.png</source>
-        <source file="StigeT_Hybrid Bus Compressor/liuku2.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_Hybrid%20Bus%20Compressor/liuku2.png</source>
-        <source file="StigeT_Hybrid Bus Compressor/sm_liuku.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_Hybrid%20Bus%20Compressor/sm_liuku.png</source>
-        <source file="StigeT_Hybrid Bus Compressor/switch.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_Hybrid%20Bus%20Compressor/switch.png</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_5.1%20Hybrid%20Bus%20Compressor.jsfx</source>
+        <source file="anomaly_5.1 Hybrid Bus Compressor/liuku.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_5.1%20Hybrid%20Bus%20Compressor/liuku.png</source>
+        <source file="anomaly_5.1 Hybrid Bus Compressor/liuku2.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_5.1%20Hybrid%20Bus%20Compressor/liuku2.png</source>
+        <source file="anomaly_5.1 Hybrid Bus Compressor/sm_liuku.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_5.1%20Hybrid%20Bus%20Compressor/sm_liuku.png</source>
+        <source file="anomaly_5.1 Hybrid Bus Compressor/switch.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_5.1%20Hybrid%20Bus%20Compressor/switch.png</source>
       </version>
     </reapack>
-    <reapack name="StigeT_5.1 Master Limiter.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_5.1 Master Limiter.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_5.1%20Master%20Limiter.jsfx</source>
-        <source file="StigeT_5.1 Master Limiter/5.1 Master Limiter.pdf">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_5.1%20Master%20Limiter/5.1%20Master%20Limiter.pdf</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_5.1%20Master%20Limiter.jsfx</source>
+        <source file="anomaly_5.1 Master Limiter/5.1 Master Limiter.pdf">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_5.1%20Master%20Limiter/5.1%20Master%20Limiter.pdf</source>
       </version>
     </reapack>
-    <reapack name="StigeT_7.1 Master Limiter.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_7.1 Master Limiter.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_7.1%20Master%20Limiter.jsfx</source>
-        <source file="StigeT_7.1 Master Limiter/5.1 Master Limiter.pdf">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_7.1%20Master%20Limiter/5.1%20Master%20Limiter.pdf</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_7.1%20Master%20Limiter.jsfx</source>
+        <source file="anomaly_7.1 Master Limiter/5.1 Master Limiter.pdf">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_7.1%20Master%20Limiter/5.1%20Master%20Limiter.pdf</source>
       </version>
     </reapack>
-    <reapack name="StigeT_SEG Gate.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_SEG Gate.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_SEG%20Gate.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_SEG%20Gate.jsfx</source>
       </version>
     </reapack>
-    <reapack name="StigeT_SEGX2 Gate.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_SEGX2 Gate.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_SEGX2%20Gate.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_SEGX2%20Gate.jsfx</source>
       </version>
     </reapack>
-    <reapack name="StigeT_Stereo Hybrid Bus Compressor.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:41:20Z">
+    <reapack name="anomaly_Stereo Hybrid Bus Compressor.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/d039a69476343dadf4518d74e97d168cab593907/Dynamics/StigeT_Stereo%20Hybrid%20Bus%20Compressor.jsfx</source>
-        <source file="StigeT_Stereo Hybrid Bus Compressor/liuku.png">https://github.com/ReaTeam/JSFX/raw/d039a69476343dadf4518d74e97d168cab593907/Dynamics/StigeT_Stereo%20Hybrid%20Bus%20Compressor/liuku.png</source>
-        <source file="StigeT_Stereo Hybrid Bus Compressor/liuku2.png">https://github.com/ReaTeam/JSFX/raw/d039a69476343dadf4518d74e97d168cab593907/Dynamics/StigeT_Stereo%20Hybrid%20Bus%20Compressor/liuku2.png</source>
-        <source file="StigeT_Stereo Hybrid Bus Compressor/sm_liuku.png">https://github.com/ReaTeam/JSFX/raw/d039a69476343dadf4518d74e97d168cab593907/Dynamics/StigeT_Stereo%20Hybrid%20Bus%20Compressor/sm_liuku.png</source>
-        <source file="StigeT_Stereo Hybrid Bus Compressor/switch.png">https://github.com/ReaTeam/JSFX/raw/d039a69476343dadf4518d74e97d168cab593907/Dynamics/StigeT_Stereo%20Hybrid%20Bus%20Compressor/switch.png</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_Stereo%20Hybrid%20Bus%20Compressor.jsfx</source>
+        <source file="anomaly_Stereo Hybrid Bus Compressor/liuku.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_Stereo%20Hybrid%20Bus%20Compressor/liuku.png</source>
+        <source file="anomaly_Stereo Hybrid Bus Compressor/liuku2.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_Stereo%20Hybrid%20Bus%20Compressor/liuku2.png</source>
+        <source file="anomaly_Stereo Hybrid Bus Compressor/sm_liuku.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_Stereo%20Hybrid%20Bus%20Compressor/sm_liuku.png</source>
+        <source file="anomaly_Stereo Hybrid Bus Compressor/switch.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_Stereo%20Hybrid%20Bus%20Compressor/switch.png</source>
       </version>
     </reapack>
-    <reapack name="StigeT_Transpire.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_Transpire.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_Transpire.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_Transpire.jsfx</source>
       </version>
     </reapack>
-    <reapack name="StigeT_TriLeveler.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_TriLeveler.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_TriLeveler.jsfx</source>
-        <source file="StigeT_TriLeveler/TriLeveler.pdf">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_TriLeveler/TriLeveler.pdf</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_TriLeveler.jsfx</source>
+        <source file="anomaly_TriLeveler/TriLeveler.pdf">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_TriLeveler/TriLeveler.pdf</source>
       </version>
     </reapack>
-    <reapack name="StigeT_VCX Retro Compressor.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_VCX Retro Compressor.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_VCX%20Retro%20Compressor.jsfx</source>
-        <source file="StigeT_VCX Retro Compressor/chicken_knob.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_VCX%20Retro%20Compressor/chicken_knob.png</source>
-        <source file="StigeT_VCX Retro Compressor/vcbg.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_VCX%20Retro%20Compressor/vcbg.png</source>
-        <source file="StigeT_VCX Retro Compressor/vu.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_VCX%20Retro%20Compressor/vu.png</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_VCX%20Retro%20Compressor.jsfx</source>
+        <source file="anomaly_VCX Retro Compressor/chicken_knob.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_VCX%20Retro%20Compressor/chicken_knob.png</source>
+        <source file="anomaly_VCX Retro Compressor/vcbg.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_VCX%20Retro%20Compressor/vcbg.png</source>
+        <source file="anomaly_VCX Retro Compressor/vu.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_VCX%20Retro%20Compressor/vu.png</source>
       </version>
     </reapack>
-    <reapack name="StigeT_VOLA-EX.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_VOLA-EX.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_VOLA-EX.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_VOLA-EX.jsfx</source>
       </version>
     </reapack>
-    <reapack name="StigeT_VOLA.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_VOLA.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Dynamics/StigeT_VOLA.jsfx</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Dynamics/anomaly_VOLA.jsfx</source>
       </version>
     </reapack>
   </category>
@@ -133,13 +133,13 @@
     </reapack>
   </category>
   <category name="Guitar">
-    <reapack name="StigeT_Bassprofessor.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
+    <reapack name="anomaly_Bassprofessor.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Guitar/StigeT_Bassprofessor.jsfx</source>
-        <source file="StigeT_Bassprofessor/Bass Professor Mark II.pdf">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Guitar/StigeT_Bassprofessor/Bass%20Professor%20Mark%20II.pdf</source>
-        <source file="StigeT_Bassprofessor/bg.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Guitar/StigeT_Bassprofessor/bg.png</source>
-        <source file="StigeT_Bassprofessor/vsliderhandle.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Guitar/StigeT_Bassprofessor/vsliderhandle.png</source>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Guitar/anomaly_Bassprofessor.jsfx</source>
+        <source file="anomaly_Bassprofessor/Bass Professor Mark II.pdf">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Guitar/anomaly_Bassprofessor/Bass%20Professor%20Mark%20II.pdf</source>
+        <source file="anomaly_Bassprofessor/bg.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Guitar/anomaly_Bassprofessor/bg.png</source>
+        <source file="anomaly_Bassprofessor/vsliderhandle.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Guitar/anomaly_Bassprofessor/vsliderhandle.png</source>
       </version>
     </reapack>
   </category>
@@ -285,6 +285,22 @@
     </reapack>
   </category>
   <category name="Utility">
+    <reapack name="anomaly_Stero2SurroundRotator.jsfx" type="effect">
+      <version name="1.0" author="Stige T." time="2016-08-15T20:05:11Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Utility/anomaly_Stero2SurroundRotator.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="anomaly_Surround Pan.jsfx" type="effect">
+      <version name="2.1" author="Stige T." time="2016-08-15T20:05:11Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Utility/anomaly_Surround%20Pan.jsfx</source>
+        <source file="anomaly_Surround Pan/Surround Pan.pdf">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Utility/anomaly_Surround%20Pan/Surround%20Pan.pdf</source>
+        <source file="anomaly_Surround Pan/bg.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Utility/anomaly_Surround%20Pan/bg.png</source>
+        <source file="anomaly_Surround Pan/radar.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Utility/anomaly_Surround%20Pan/radar.png</source>
+        <source file="anomaly_Surround Pan/sliderknob.png">https://github.com/ReaTeam/JSFX/raw/d7e83f8097965c488761a260e36adb6c663f15a5/Utility/anomaly_Surround%20Pan/sliderknob.png</source>
+      </version>
+    </reapack>
     <reapack name="ReaperBlog_-12dB Dim.jsfx" type="effect" desc="-12dB Dim">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
@@ -298,22 +314,6 @@
       <version name="1.0" author="The REAPER Blog" time="2016-08-08T14:07:30Z">
         <changelog><![CDATA[Initial Release]]></changelog>
         <source main="true">https://github.com/ReaTeam/JSFX/raw/1073abf5b49f81fd815bda67392213a781046b0f/Utility/ReaperBlog_-12dB%20Dim.jsfx</source>
-      </version>
-    </reapack>
-    <reapack name="StigeT_Stero2SurroundRotator.jsfx" type="effect">
-      <version name="1.0" author="Stige T." time="2016-08-15T11:38:16Z">
-        <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Utility/StigeT_Stero2SurroundRotator.jsfx</source>
-      </version>
-    </reapack>
-    <reapack name="StigeT_Surround Pan.jsfx" type="effect">
-      <version name="2.1" author="Stige T." time="2016-08-15T11:38:16Z">
-        <changelog><![CDATA[Initial release]]></changelog>
-        <source main="true">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Utility/StigeT_Surround%20Pan.jsfx</source>
-        <source file="StigeT_Surround Pan/Surround Pan.pdf">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Utility/StigeT_Surround%20Pan/Surround%20Pan.pdf</source>
-        <source file="StigeT_Surround Pan/bg.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Utility/StigeT_Surround%20Pan/bg.png</source>
-        <source file="StigeT_Surround Pan/radar.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Utility/StigeT_Surround%20Pan/radar.png</source>
-        <source file="StigeT_Surround Pan/sliderknob.png">https://github.com/ReaTeam/JSFX/raw/c36715048f3cd3ceb49407fd4354f841201731e0/Utility/StigeT_Surround%20Pan/sliderknob.png</source>
       </version>
     </reapack>
   </category>
