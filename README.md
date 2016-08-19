@@ -4,6 +4,12 @@ Community-maintained collection of JS effects for REAPER
 
 [![Build Status](https://travis-ci.org/ReaTeam/JSFX.svg?branch=master)](https://travis-ci.org/ReaTeam/JSFX)
 
+## Contributors
+
+- [Smashed Transistors(TiaR)](http://forum.cockos.com/member.php?u=98780) ([website](http://forum.cockos.com/member.php?u=92538)
+- [The REAPER Blog (Jon Tidey)](http://forum.cockos.com/member.php?u=98780) ([website](http://reaperblog.net/)
+
+
 ## Installation
 
 Copy and paste this URL in Extensions > ReaPack > Import a repository:
