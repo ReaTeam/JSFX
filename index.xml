@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="86ab5336313da589bb54c8e2a42583fe827f1133">
+<index version="1" name="ReaTeam JSFX" commit="7691aab88e23bba10e4e17c7915f3563654dd3b9">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -50,6 +50,15 @@
     </reapack>
   </category>
   <category name="Modulation">
+    <reapack name="TiaR_ChopChop.jsfx" type="effect" desc="Stereo Chop chop">
+      <metadata>
+        <link rel="website">https://www.youtube.com/watch?v=LHbSUXsJ82M</link>
+      </metadata>
+      <version name="1.0" author="T.Rochebois" time="2016-08-20T19:09:22Z">
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/7691aab88e23bba10e4e17c7915f3563654dd3b9/Modulation/TiaR_ChopChop.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="TiaR_Ze Big Chorus.jsfx" type="effect" desc="Ze Big Chorus">
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:46:50Z">
         <changelog><![CDATA[Initial release]]></changelog>
