@@ -1,8 +1,8 @@
-desc: Bassprofessor 
+desc: Bass professor MK2
 author: Stige T.
 version: 1.0
 changelog: Initial release
-provides: anomaly_Bassprofessor/*
+provides: anomaly_Bass professor MK2/*
 link: http://jsplugins.supermaailma.net/
 about:
 	Bassprofessor is aimed at bass guitar players. It turns your raw line sound into something more interesting. It colours signal quite a bit, but in a pleasant way for bass guitar. If you are looking for a transparent effect, perhaps look somewhere else.
@@ -39,8 +39,8 @@ slider20:0<-20,20,1>-Output
 
 slider21:0<-10,10,1>-Input Trim
 
-filename:0,anomaly_Bassprofessor/bg.png
-filename:1,anomaly_Bassprofessor/vsliderhandle.png
+filename:0,anomaly_Bass professor MK2/bg.png
+filename:1,anomaly_Bass professor MK2/vsliderhandle.png
 
 resource:0,1
 
