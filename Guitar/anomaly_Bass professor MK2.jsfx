@@ -5,14 +5,9 @@ changelog: Initial release
 provides: anomaly_Bass professor MK2/*
 link: http://jsplugins.supermaailma.net/
 about:
-	Bassprofessor is aimed at bass guitar players. It turns your raw line sound into something more interesting. It colours signal quite a bit, but in a pleasant way for bass guitar. If you are looking for a transparent effect, perhaps look somewhere else.
+	Bass Professor Mark II is a sound shaping suite for a bass guitar. It can be used for changing a dull DI recorded signal into a powerfull amped-like bass sound with lots of character. Bass Professor Mark II offers dynamics processing, eq and a ruff distortion specifically suited for bass guitar.
+	Bass Professor Mark II is not a replacement for the first generation of Bass Professor. It is meant to be an alternative for those situations (but not limited to) where more neutral and less colored bass sound is prefered.
 	The GUI was designed by crimsonmerry.
-	4-band signal leveler.
-	Automatic peak limiter.
-	Presence adds some intimacy.
-	3-band eq with suitable tunings for bass. Asymmetric boost & cut.
-	Dirt knob for overdrive effect.
-	Destroys everything save bass guitar.
 
 EffectName: Bass Professor Mark II
 VendorString: Stige T.
