@@ -12,6 +12,12 @@ Community-maintained collection of JS effects for REAPER
 
 ## Installation
 
+### ReaPack Automatic Installation
+
+This repository is natively included in [ReaPack](http://www.reapack.com). Just activate it, and you will be able to download the JSFX. See ReaPack website for more detailed instructions.
+
+### ReaPack Manual Installation
+
 Copy and paste this URL in Extensions > ReaPack > Import a repository:
 
 ```
