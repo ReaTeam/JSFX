@@ -6,8 +6,8 @@ Community-maintained collection of JS effects for REAPER
 
 ## Contributors
 
-- [Smashed Transistors(TiaR)](http://forum.cockos.com/member.php?u=98780) ([website](http://forum.cockos.com/member.php?u=92538)
-- [The REAPER Blog (Jon Tidey)](http://forum.cockos.com/member.php?u=98780) ([website](http://reaperblog.net/)
+- Smashed Transistors(TiaR) ([website](http://forum.cockos.com/member.php?u=92538))
+- The REAPER Blog (Jon Tidey) ([website](http://reaperblog.net/))
 
 
 ## Installation
