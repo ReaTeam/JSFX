@@ -6,9 +6,11 @@ Community-maintained collection of JS effects for REAPER
 
 ## Contributors
 
+The following genereous people share their JSFX scripts on this repository.
+
 - Smashed Transistors(TiaR) ([website](http://forum.cockos.com/member.php?u=92538))
 - The REAPER Blog (Jon Tidey) ([website](http://reaperblog.net/))
-
+- anomaly (Stige T) ([website](http://jsplugins.supermaailma.net/plugins.php))
 
 ## Installation
 
