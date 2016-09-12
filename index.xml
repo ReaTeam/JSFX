@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="5e2edee646a858d3c463ff7d707dcf3832095118">
+<index version="1" name="ReaTeam JSFX" commit="668cd154b1f31e9ac91f146339549f54d7b616c7">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -461,6 +461,12 @@
 + modified Seq gains can be negative (opposite phase)
 + modified Seq. init to fundamental seq]]></changelog>
         <source main="true">https://github.com/ReaTeam/JSFX/raw/f51e3fcc00cf854983cf470e67c0bfd1c6a935ec/Synth/TiaR_Ze%20Cheesy%20Harmonic%20Synth.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="TiaR_Ze DigiThArmOrgan.jsfx" type="effect" desc="Ze DigiThArmOrgan">
+      <version name="0.1" author="T.Rochebois" time="2016-09-12T21:18:14Z">
+        <changelog><![CDATA[version 0.1 first release 12th september 2016]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/668cd154b1f31e9ac91f146339549f54d7b616c7/Synth/TiaR_Ze%20DigiThArmOrgan.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_Ze Musette Organ.jsfx" type="effect" desc="Ze Musette Organ">
