@@ -4,7 +4,7 @@ author: T.Rochebois
 changelog: 
   version 0.1 first release 12th september 2016
 about:
-  #Ze DigiThArmOrgan
+  # Ze DigiThArmOrgan
   This is a fully polyphonic synthesizer based on Digital Harmonics
   i.e. Walsh functions.
   It features 3 detuned oscillator and a two pole low pass filter
