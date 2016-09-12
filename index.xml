@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="668cd154b1f31e9ac91f146339549f54d7b616c7">
+<index version="1" name="ReaTeam JSFX" commit="4b08fb06bb90d8c6f17cdb8e4bf8ad9701acd61d">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -464,6 +464,15 @@
       </version>
     </reapack>
     <reapack name="TiaR_Ze DigiThArmOrgan.jsfx" type="effect" desc="Ze DigiThArmOrgan">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 #Ze DigiThArmOrgan This is a fully polyphonic synthesizer based on Digital Harmonics i.e. Walsh functions. It features 3 detuned oscillator and a two pole low pass filter per voice. It is antialiased by third order integration/differentiation scheme.\par}
+}
+]]></description>
+      </metadata>
       <version name="0.1" author="T.Rochebois" time="2016-09-12T21:18:14Z">
         <changelog><![CDATA[version 0.1 first release 12th september 2016]]></changelog>
         <source main="true">https://github.com/ReaTeam/JSFX/raw/668cd154b1f31e9ac91f146339549f54d7b616c7/Synth/TiaR_Ze%20DigiThArmOrgan.jsfx</source>
