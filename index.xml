@@ -591,4 +591,55 @@
       </version>
     </reapack>
   </category>
+  <metadata>
+    <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 ReaTeam JSFX Repository\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Community-maintained collection of JS effects for REAPER\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 {\field{\*\fldinst{HYPERLINK "https://travis-ci.org/ReaTeam/JSFX"}}{\fldrslt{\ul
+{\cf1 [image: https://travis-ci.org/ReaTeam/JSFX.svg?branch=master]\cf0}
+}}}
+\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Contributors\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The following genereous people share their JSFX scripts on this repository.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Smashed Transistors (TiaR) ({\field{\*\fldinst{HYPERLINK "http://forum.cockos.com/member.php?u=92538"}}{\fldrslt{\ul
+website
+}}}
+)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The REAPER Blog (Jon Tidey) ({\field{\*\fldinst{HYPERLINK "http://reaperblog.net/"}}{\fldrslt{\ul
+website
+}}}
+)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab anomaly (Stige T) ({\field{\*\fldinst{HYPERLINK "http://jsplugins.supermaailma.net/plugins.php"}}{\fldrslt{\ul
+website
+}}}
+)\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Installation\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 ReaPack Automatic Installation\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This repository is natively included in {\field{\*\fldinst{HYPERLINK "http://www.reapack.com"}}{\fldrslt{\ul
+ReaPack
+}}}
+. Just activate it, and you will be able to download the JSFX. See ReaPack website for more detailed instructions.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 ReaPack Manual Installation\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Copy and paste this URL in Extensions > ReaPack > Import a repository:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \f1 https://github.com/ReaTeam/JSFX/raw/master/index.xml\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Contributing\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 1.\tx360\tab {\field{\*\fldinst{HYPERLINK "https://github.com/ReaTeam/JSFX/fork"}}{\fldrslt{\ul
+Fork
+}}}
+ this repository in your GitHub account\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 2.\tx360\tab Add your JS effect(s) as {\f1 .jsfx} files in an appropriate category (directory)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 3.\tx360\tab Insert metadata at the top of the files (check out the {\field{\*\fldinst{HYPERLINK "https://github.com/cfillion/reapack-index/wiki/Examples"}}{\fldrslt{\ul
+package examples
+}}}
+ and reapack-index's {\field{\*\fldinst{HYPERLINK "https://github.com/cfillion/reapack-index/wiki/Packaging-Documentation"}}{\fldrslt{\ul
+packaging documentation
+}}}
+)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 4.\tx360\tab Send a pull request here, done!\sa180\par}
+}
+]]></description>
+  </metadata>
 </index>
