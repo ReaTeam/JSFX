@@ -6,11 +6,19 @@ Community-maintained collection of JS effects for REAPER
 
 ## Contributors
 
-- [Smashed Transistors(TiaR)](http://forum.cockos.com/member.php?u=98780) ([website](http://forum.cockos.com/member.php?u=92538)
-- [The REAPER Blog (Jon Tidey)](http://forum.cockos.com/member.php?u=98780) ([website](http://reaperblog.net/)
+The following genereous people share their JSFX scripts on this repository.
 
+- Smashed Transistors (TiaR) ([website](http://forum.cockos.com/member.php?u=92538))
+- The REAPER Blog (Jon Tidey) ([website](http://reaperblog.net/))
+- anomaly (Stige T) ([website](http://jsplugins.supermaailma.net/plugins.php))
 
 ## Installation
+
+### ReaPack Automatic Installation
+
+This repository is natively included in [ReaPack](http://www.reapack.com). Just activate it, and you will be able to download the JSFX. See ReaPack website for more detailed instructions.
+
+### ReaPack Manual Installation
 
 Copy and paste this URL in Extensions > ReaPack > Import a repository:
 

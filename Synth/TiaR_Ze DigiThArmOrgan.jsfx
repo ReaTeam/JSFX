@@ -1,0 +1,611 @@
+desc:Ze DigiThArmOrgan
+version: 0.1
+author: T.Rochebois
+changelog: 
+  version 0.1 first release 12th september 2016
+about:
+  # Ze DigiThArmOrgan
+  This is a fully polyphonic synthesizer based on Digital Harmonics
+  i.e. Walsh functions.
+  It features 3 detuned oscillator and a two pole low pass filter
+  per voice.
+  It is antialiased by third order integration/differentiation scheme.
+  
+// sliders ________________________________________________________{{{
+
+slider1:1<-1,1,0.001>Seq. 1
+slider2:0.5<-1,1,0.001>Seq. 2
+slider3:0<-1,1,0.001>Seq. 3
+slider4:0.25<-1,1,0.001>Seq. 4
+slider5:0<-1,1,0.001>Seq. 5
+slider6:0<-1,1,0.001>Seq. 6
+slider7:0<-1,1,0.001>Seq. 7
+slider8:0.125<-1,1,0.001>Seq. 8
+slider9:0<-1,1,0.001>Seq. 9
+slider10:0<-1,1,0.001>Seq. 10
+slider11:0<-1,1,0.001>Seq. 11
+slider12:0.5<-1,1,0.001>Seq. 12
+slider13:0<-1,1,0.001>Seq. 13
+slider14:0<-1,1,0.001>Seq. 14
+slider15:0<-1,1,0.001>Seq. 15
+slider16:0.0625<-1,1,0.001>Seq. 16
+
+slider22:0.5<0,1>Vibrato depth
+
+slider31:-1.2<-3,0,0.0001>Attack
+slider32:1<-3,1,0.0001>Decay
+slider33:0.5<0,1,0.0001>Sustain
+slider34:0.4<-3,1,0.0001>Release
+
+slider41:0<-24,12,0.0001>Gain (dB)
+slider42:0.5<0,1,0.0001>Pan
+
+slider44:-1.5<-3,0,0.0001>LP Attack
+slider45:0.5<-3,1,0.0001>LP Decay
+slider46:0.5<0,1,0.0001>LP Sustain
+slider47:0.5<-3,1,0.0001>LP Release
+slider48:sl_res=0.15<0,1,0.0001>Resonance
+slider49:sl_pitch1=72<-12,84,0.0001>Cutoff 1
+slider50:sl_pitch0=24<-12,84,0.0001>Cutoff 0
+
+
+slider51:sl_velCurve=0<0,3,1{linear,sensitive,sensitiver,hard>Velocity sensitivity
+slider52:sl_midiCtl=0<0,1,1{Off,A D S R}>--Slider Midi Control
+slider53:sl_attackVel=1<0,1,0.0001>Attack Vel Sensit
+
+slider55:sl_ratio2=1.001<0,3,0.00001>Osc2 ratio
+slider56:sl_ratio3=0.995<0,3,0.00001>Osc3 ratio
+
+slider59:sl_HighTrans=12<0,127,1>--KB High Transition
+slider60:sl_HighNote=127<24,127,1>--KB High Note
+slider61:sl_LowNote=<0,84,1>--KB Low Note
+slider62:sl_LowTrans=12<0,127,1>--KB Low Transition
+
+slider64:sl_Transpose=0<-36,36,0.0001>Transpose
+
+// }}} sliders
+// ___________________________________________________________________
+@init
+function TABLE(len) local(tmp) (tmp = heapAddress; heapAddress += len; tmp;);
+function gainKBrange(note)(
+  note < gLowNote - gLowTrans ? 0
+: note < gLowNote ? sin(0.5*$pi*(note-gLowNote+gLowTrans-1)/(gLowTrans+1))
+: note <= gHighNote ? 1
+: note <= gHighNote+gHighTrans ? cos(0.5*$pi*(note-gHighNote)/(gHighTrans+1))
+: 0;
+);
+//____________________________________________________________________
+function sat7(x)local(x2)(
+  x = min(215/104, max(-215/104,x));
+  x2 = x*x;
+   x * (1
++ x2 * (     ( -411008.0/1987675.0)
++ x2 * ( ( 11581599744.0/459401384375.0)
++ x2 *( -5061276073984.0/4247165798546875.0))));
+);
+function sat7_8(x)(8*sat7(x*0.125););
+//____________________________________________________________________
+function makeUp(x) instance(x0 x1 x2) (
+  x0 = x1; x1 = x2; x2 = x;
+  2.0 * x1 - 0.5 * (x0 + x2);
+);
+//____________________________________________________________________
+function ZCF() local(i) (
+  ZCF_iter = 4;
+  ZCF_coef = (440 * $pi/srate) * 2 ^ (-ZCF_iter - 69/12);
+  ZCF_f = TABLE(141);
+  i=0;loop(141,
+    ZCF_f[i] = 2 * sin(min(1.4, ZCF_coef * 2 ^ (i * (1/12))));
+    i+=1;
+  );
+);
+function ZCF_F(pitch) local(p0) (
+  pitch = max(0, min(pitch, 139.9));
+  p0 = pitch|0;
+  ZCF_f[p0] + (pitch - p0) * (ZCF_f[p0 + 1] - ZCF_f[p0]);
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                               control rate process
+function ZCF_kProc(pitch _2Q)
+local(b2) instance(F a b c)(
+  this._2Q = _2Q;
+  F = ZCF_F(pitch);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                         Matrix init and iterations
+  c = 1 - F * (_2Q + F);
+  b2 = F * F;
+  b = (1 + c) * F;
+  a = 1 - b2;
+  c *= c; c -= b2;
+  loop(ZCF_iter-1,
+    b2 = b * b;
+    b *= a + c;
+    a *= a; a -= b2;
+    c *= c; c -= b2;
+
+  );
+);
+
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                          audio rate stereo process 
+function ZCF_aProc(l_x)local(x_LP aBP) 
+instance(l_LP l_BP l_aBP l_HP a b c _2Q)(
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                        Filter calc
+  x_LP = l_x - l_LP;
+  l_BP = min(8,max(-8, l_BP));                                          // Left
+  l_LP = l_x - a * x_LP + b * l_BP;
+  l_HP = l_x - _2Q * l_BP - l_LP;
+  l_BP = b * x_LP + c * l_BP;
+  l_LP;
+);
+         // ___________________________________________________________________
+function ADSR_kProc(gate trig A D S R)
+  instance(AttackSeg ASR ADSR) local() (
+  gate === 0 ? AttackSeg = 0;
+  trig ? AttackSeg = 1;
+  ASR < gate ?
+    ASR += A * (gate - ASR)
+  : ASR += R * (gate + 0.00000001 - ASR);
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  AttackSeg === 1 ? (
+    ADSR += A * (1.5 - ADSR);
+    ADSR >= 1.0 ? ( ADSR = 1.0;  AttackSeg = 0;  );
+  ):(
+    gate != 0 ? (    ADSR += D * (S - ADSR);           ) 
+              : (    ADSR += R * (0.00000001 - ADSR);  );
+  );
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+  ASR * ADSR;
+);
+// ____________________________________________________________________
+function WSH_init()
+  instance(sal) local(seq x x0 x1 x2 x3 x4)(
+  sal  = TABLE(32*16);
+  x = 0; loop(32,
+    x0 =  (x& 1)    ?1:-1;
+    x1 = ((x& 2)>>1)?1:-1;
+    x2 = ((x& 4)>>2)?1:-1;
+    x3 = ((x& 8)>>3)?1:-1;
+    x4 = ((x&16)>>4)?1:-1;
+    sal[x + 32 *  0] =             x4;
+    sal[x + 32 *  1] =          x3   ;
+    sal[x + 32 *  2] =       x2*x3*x4;
+    sal[x + 32 *  3] =       x2      ;
+    sal[x + 32 *  4] =    x1*x2*   x4;
+    sal[x + 32 *  5] =    x1*x2*x3   ;
+    sal[x + 32 *  6] =    x1   *x3*x4;
+    sal[x + 32 *  7] =    x1         ;
+    sal[x + 32 *  8] = x0*x1      *x4;
+    sal[x + 32 *  9] = x0*x1   *x3   ;
+    sal[x + 32 * 10] = x0*x1*x2*x3*x4;
+    sal[x + 32 * 11] = x0*x1*x2      ;
+    sal[x + 32 * 12] = x0   *x2   *x4;
+    sal[x + 32 * 13] = x0   *x2*x3   ;
+    sal[x + 32 * 14] = x0      *x3*x4;
+    sal[x + 32 * 15] = x0            ;
+    x += 1;
+  );
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+function PIWT_init(nMax) instance(n x y z w dp _dp _dp3) (
+  n = nMax; x = TABLE(n);  y = TABLE(n);  z = TABLE(n);  w = TABLE(n);
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+function PIWT_dcRemove(t n) local(i m)(
+  m = 0;  i = 0; loop(n, m += t[i]; i += 1; );
+  m /= n; i = 0; loop(n, t[i] -= m; i += 1; );
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+function PIWT_norm(t n) local(i m)(
+  m = 0;  i = 0; loop(n, m = max(t[i], abs(m)); i += 1; );
+  m = 1.1/(m+0.1); i = 0; loop(n, t[i] *= m; i += 1; );
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _   
+function PIWT_integ()
+  instance(n w z y x)
+  local(i)(
+  PIWT_dcRemove(x, n);
+  i = 0; loop(n-1, y[i+1] = y[i] + x[i];                i += 1;  );
+  PIWT_dcRemove(y, n);
+  i = 0; loop(n-1, z[i+1] = z[i] + y[i] + (1/2) * x[i]; i += 1;  );
+  PIWT_dcRemove(z, n);
+  i = 0; loop(n,
+    y[i] *= 1/2;
+    x[i] *= 1/6;
+    i < n-1 ? w[i+1] = w[i] + z[i] + y[i] + x[i];
+    i += 1;
+  );
+  PIWT_dcRemove(w, n);
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+// Call before aProc if there is a discontinuity of dp _dp
+function PIWT_disc() 
+  instance(n dp p w z y x w0 w1 w2) local(p0 a)(
+  p -= 2*dp; p += n * (p < 0); p -= n * (p >= n); 
+  p0 = p|0; a = p - p0; 
+  w0 = w[p0] + a * (z[p0] + a * (y[p0] + a * x[p0]));
+  
+  p += dp; p -= n*(p>=n); p0 = p|0; a = p-p0;
+  w1 = w[p0] + a * (z[p0] + a * (y[p0] + a * x[p0]));
+  
+  p += dp; p -= n*(p>=n); p0 = p|0; a = p-p0;
+  w2 = w[p0] + a * (z[p0] + a * (y[p0] + a * x[p0]));
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+function PIWT_aProc()
+  instance(n dp _dp3 p out w z y x w0 w1 w2 w3) local(p0 a)(
+  p += dp; p -= n*(p>=n); p0 = p|0; a = p-p0;
+  w3 = w[p0] + a * (z[p0] + a * (y[p0] + a * x[p0]));
+  out = (w3 - w0 + 3 * (w1 - w2)) * _dp3;
+  w0 = w1; w1 = w2; w2 = w3;
+  max(-2,min(2,out));
+);
+// ___________________________________________________________________
+// ___________________________________________________________________
+//                                                        global init
+function para_ini()
+local(coef i)(
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+//                                                 init global things
+  ZCF();
+
+  gSin8192 = TABLE(8192);
+  coef = 2*$pi/8192;
+  i = 0; loop(8192, 
+    gSin8192[i] = sin(i * coef);
+    i += 1;
+  );
+  
+  gPiwt.PIWT_init(32);
+  gWsh.WSH_init();
+
+  gDplfo = 6.5 * 8192 * _srate * KRATE; // ex: the global LFO rate
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+//                                          init samples block tables
+//      that will contain things computed by para_blk and used in blk
+//                                            ex: common LFO and bend
+  gDpMod = TABLE(2048); 
+  g_Dp3Mod = TABLE(2048); 
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                         voice init
+//                   note is the voice number/id (one voice per note)
+function ini(note) local(f)
+  instance(nMax osc1 osc2 osc3 notedp note_dp note_dp3)(
+  this.note = note;
+  f = 440*2^((note-69)*(1/12)); // Hz equal temperament
+  f += 0.125*(note-60)*(1/12);  // slight offset: 1/8 Hz per octave
+  osc1.n = gPiwt.n;
+  osc1.x = gPiwt.x; osc1.y = gPiwt.y; osc1.z = gPiwt.z; osc1.w = gPiwt.w;
+  osc2.n = gPiwt.n;
+  osc2.x = gPiwt.x; osc2.y = gPiwt.y; osc2.z = gPiwt.z; osc2.w = gPiwt.w;
+  osc3.n = gPiwt.n;
+  osc3.x = gPiwt.x; osc3.y = gPiwt.y; osc3.z = gPiwt.z; osc3.w = gPiwt.w;
+  notedp = osc1.n * _srate * f;
+  note_dp = 1 / notedp; 
+  note_dp3 = note_dp * note_dp * note_dp;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                      global slider
+function para_sld()(
+  sl_Q = 0.5+2*sl_res+10*sl_res*sl_res;
+  sl_D = 1/(2*sl_Q);
+  
+  sl_gain = slider41;
+  sl_pan = slider42;
+  gGain = 2^(sl_gain*(1/6));
+  gGainLeft  = gGain * cos(sl_pan * 0.5 * $pi);
+  gGainRight = gGain * sin(sl_pan * 0.5 * $pi);
+
+  x = 0; loop(32,
+    gPiwt.x[x] = slider1 * gWsh.sal[x + 32 * 0];
+    seq = 1;loop(15,
+      gPiwt.x[x] += slider(seq + 1) * gWsh.sal[x + 32 * seq];
+      seq += 1;
+    );
+    x += 1;
+  );
+  PIWT_dcRemove(gPiwt.x,32);
+  PIWT_norm(gPiwt.x,32);
+  gPiwt.PIWT_integ();
+
+  // Attack and Release enveloppe rate
+  gA = min(1 - exp(log(0.33) / ((10^slider31) * (srate*_KRATE))), 1);
+  gD = min(1 - exp(log(0.10) / ((10^slider32) * (srate*_KRATE))), 1);
+  gS = slider33;
+  gR = min(1 - exp(log(0.10) / ((10^slider34) * (srate*_KRATE))), 1);
+
+  gLPA = min(1 - exp(log(0.33) / ((10^slider44) * (srate*_KRATE))), 1);
+  gLPD = min(1 - exp(log(0.10) / ((10^slider45) * (srate*_KRATE))), 1);
+  gLPS = slider46;
+  gLPR = min(1 - exp(log(0.10) / ((10^slider47) * (srate*_KRATE))), 1);
+  
+  sl_velCurve === 0 ? gVelExponent = 1    // linear
+: sl_velCurve === 1 ? gVelExponent = 1/2  // sensitive
+: sl_velCurve === 2 ? gVelExponent = 1/4  // oversensitive
+: sl_velCurve === 3 ? gVelExponent = 2;   // hard
+  
+  sl_HighTrans!=asl_HighTrans
+  || sl_HighNote!=asl_HighNote
+  ||sl_LowNote!= asl_LowNote
+  ||sl_LowTrans!=asl_LowTrans ?(
+     memset(gGate, 0, 128);        // All notes off
+    gHighTrans = sl_HighTrans;
+    gLowTrans = sl_LowTrans;
+    gLowNote = min(sl_LowNote,sl_HighNote);
+    gHighNote= max(sl_LowNote,sl_HighNote);
+    asl_HighTrans=sl_HighTrans;
+    asl_HighNote=sl_HighNote;
+    asl_LowNote= sl_LowNote;
+    asl_LowTrans=sl_LowTrans;
+  );
+  gTransposeFactor = 2^(sl_Transpose/12);
+  g_ratio2 = 1/sl_ratio2;
+  g_ratio3 = 1/sl_ratio3;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                       voice slider
+function sld()
+  instance(note gain) (
+  gain = gainKBrange(note);
+ 
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                            global block processing
+// "sample" level stuff are calculated here too (trick to limit cpu)
+function para_blk() local(n k newDpMod modDplfo)(
+  modDplfo = gDplfo * (1 + 0.2 * gAftTch);
+  k = gSavedK; n = 0; loop(samplesblock, 
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+    k += 1; k >= KRATE || gSliderBeforeSample? ( k = 0;                     // control rate 
+      gPlfo += modDplfo;
+      gPlfo -= 8192 * (gPlfo >= 8192);
+      newDpMod = gBendFactor * gTransposeFactor * (1 + 0.025 * (slider22+gModWhl+gAftTch) * gSin8192[gPlfo]); 
+      gSmoothDpMod += 0.1 * (newDpMod - gSmoothDpMod);
+      gDpMod[n] = gSmoothDpMod;
+      g_Dp3Mod[n] = 1/(gSmoothDpMod*gSmoothDpMod*gSmoothDpMod);
+    );
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+//                                                         audio rate
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+    n += 1;
+  );
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                             voice block processing
+// "sample" level stuff are calculated here too (trick to limit cpu)
+//                                outputs go into SP0 and SP1 tables
+function blk(gate)
+local(k n trig A LPA)
+instance(gain note agate env denv LPenv LPpitch notedp note_dp3 out)(
+  trig = gate > 0 && agate <= 0;
+  gate != 0 || env > 0.0005 ? (   // active ?
+  
+    gSliderBeforeSample ? (
+      this.osc1.PIWT_disc(); 
+      this.osc2.PIWT_disc(); 
+      this.osc3.PIWT_disc();
+      this.osc1.PIWT_aProc();
+      this.osc2.PIWT_aProc();
+      this.osc3.PIWT_aProc();
+    );
+  
+   // A = gA + sl_attackVel * ( gA * (0.01+0.99*gVel[note]) - gA);
+    A = gA * ((1-sl_attackVel)+sl_attackVel*gVel[note]);
+    LPA = gLPA * ((1-sl_attackVel)+sl_attackVel*gVel[note]);
+    k = gSavedK;  n = 0; loop(samplesblock,            // sample loop
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+      k += 1; k >= KRATE  ? ( k = 0;                   // control rate
+        // we use gDpMod from para_blk to modulate 
+        // the delta phase (frequency) -> vibrato
+        this.osc1.dp   = notedp   * gDpMod[n] ;
+        this.osc1._dp3 = note_dp3 * g_Dp3Mod[n];
+        this.osc1.PIWT_disc();
+        this.osc2.dp   = sl_ratio2*notedp   * gDpMod[n] ;
+        this.osc2._dp3 = note_dp3 * g_Dp3Mod[n]*g_ratio2;
+        this.osc2.PIWT_disc();
+        this.osc3.dp   = sl_ratio3*notedp   * gDpMod[n] ;
+        this.osc3._dp3 = note_dp3 * g_Dp3Mod[n]*g_ratio3;
+        this.osc3.PIWT_disc();
+        denv = _KRATE * (this.adsr.ADSR_kProc(gate, trig, A, gD, gS, gR) - env);
+        LPenv = this.LPadsr.ADSR_kProc(gate, trig, LPA, gLPD, gLPS, gLPR);
+        LPpitch = note + sl_pitch0 + LPenv * (sl_pitch1 - sl_pitch0); // Enveloppe
+        this.flt.ZCF_kProc(LPpitch, sl_D);
+  );
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+//                                                         audio rate
+      env += denv;
+      out = gain* env * this.flt.ZCF_aProc(
+        this.osc1.PIWT_aProc()
+        +0.5*this.osc2.PIWT_aProc()
+        -0.3*this.osc3.PIWT_aProc()
+        );
+      SP0[n] += out;
+      SP1[n] += out;
+      SUMENV2[n] += 1.4*env * env; // used for output global "compression"
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+      n += 1;
+    );
+  );
+  agate = gate;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function para_gfx_before()(
+  1;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+//                                                          voice gfx
+// called between para_gfx_before and para_gfx_after,
+// this should not draw a thing but it can prepare infos/stats used by 
+// para_gfx_after()
+function gfx()(
+  1;
+);
+// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+function col(r g b a) (gfx_r = r; gfx_g = g; gfx_b = b; gfx_a = a;);
+function sLine(x0 y0 x1 y1)(gfx_line(x0*12+8, 32-144*y0, x1*12+8, 32-144*y1););
+function para_gfx_after()local(gi)(
+  col(0.0,0,0.5,1);
+  gfx_rect(0,0,32*12+16, 64); 
+  col(1.0,1.0,1.0,1);
+  gi = 0; loop(32,
+    gi > 0 ?
+    sLine(gi, gPiwt.x[gi-1], gi, gPiwt.x[gi])
+    :
+    sLine(0, 0, 0, gPiwt.x[0]);
+    sLine(gi, gPiwt.x[gi], gi+1, gPiwt.x[gi]);
+    gi+=1;
+  );
+  sLine(gi, gPiwt.x[31], gi, 0);
+);
+function update_sliders()(
+para_sld();
+v000.sld();v001.sld();v002.sld();v003.sld();v004.sld();v005.sld();v006.sld();v007.sld();v008.sld();v009.sld();v010.sld();v011.sld();
+v012.sld();v013.sld();v014.sld();v015.sld();v016.sld();v017.sld();v018.sld();v019.sld();v020.sld();v021.sld();v022.sld();v023.sld();
+v024.sld();v025.sld();v026.sld();v027.sld();v028.sld();v029.sld();v030.sld();v031.sld();v032.sld();v033.sld();v034.sld();v035.sld();
+v036.sld();v037.sld();v038.sld();v039.sld();v040.sld();v041.sld();v042.sld();v043.sld();v044.sld();v045.sld();v046.sld();v047.sld();
+v048.sld();v049.sld();v050.sld();v051.sld();v052.sld();v053.sld();v054.sld();v055.sld();v056.sld();v057.sld();v058.sld();v059.sld();
+v060.sld();v061.sld();v062.sld();v063.sld();v064.sld();v065.sld();v066.sld();v067.sld();v068.sld();v069.sld();v070.sld();v071.sld();
+v072.sld();v073.sld();v074.sld();v075.sld();v076.sld();v077.sld();v078.sld();v079.sld();v080.sld();v081.sld();v082.sld();v083.sld();
+v084.sld();v085.sld();v086.sld();v087.sld();v088.sld();v089.sld();v090.sld();v091.sld();v092.sld();v093.sld();v094.sld();v095.sld();
+v096.sld();v097.sld();v098.sld();v099.sld();v100.sld();v101.sld();v102.sld();v103.sld();v104.sld();v105.sld();v106.sld();v107.sld();
+v108.sld();v109.sld();v110.sld();v111.sld();v112.sld();v113.sld();v114.sld();v115.sld();v116.sld();v117.sld();v118.sld();v119.sld();
+v120.sld();v121.sld();v122.sld();v123.sld();v124.sld();v125.sld();v126.sld();v127.sld();
+);
+// ===================================================================
+// @init _____________________________________________________________{{{
+_srate = 1 / srate;
+KRATE = 8;
+gSavedK = KRATE - 1;
+_KRATE = 1 / KRATE;
+gCoefDC = 40 * _srate;
+SP0     = TABLE(2048);// sample buffer (gen at @block, copied at @sample)
+SP1     = TABLE(2048);// sample buffer (gen at @block, copied at @sample)
+SUMENV2 = TABLE(2048);  // sum of square ARenv. (for dyn compression)
+gGate   = TABLE(128);
+gVel    = TABLE(128);
+gBendFactor = 1;
+// ___________________________________________________________________
+para_ini();
+// ___________________________________________________________________
+v000.ini(  0);v001.ini(  1);v002.ini(  2);v003.ini(  3);v004.ini(  4);v005.ini(  5);v006.ini(  6);v007.ini(  7);v008.ini(  8);v009.ini(  9);v010.ini( 10);v011.ini( 11);
+v012.ini( 12);v013.ini( 13);v014.ini( 14);v015.ini( 15);v016.ini( 16);v017.ini( 17);v018.ini( 18);v019.ini( 19);v020.ini( 20);v021.ini( 21);v022.ini( 22);v023.ini( 23);
+v024.ini( 24);v025.ini( 25);v026.ini( 26);v027.ini( 27);v028.ini( 28);v029.ini( 29);v030.ini( 30);v031.ini( 31);v032.ini( 32);v033.ini( 33);v034.ini( 34);v035.ini( 35);
+v036.ini( 36);v037.ini( 37);v038.ini( 38);v039.ini( 39);v040.ini( 40);v041.ini( 41);v042.ini( 42);v043.ini( 43);v044.ini( 44);v045.ini( 45);v046.ini( 46);v047.ini( 47);
+v048.ini( 48);v049.ini( 49);v050.ini( 50);v051.ini( 51);v052.ini( 52);v053.ini( 53);v054.ini( 54);v055.ini( 55);v056.ini( 56);v057.ini( 57);v058.ini( 58);v059.ini( 59);
+v060.ini( 60);v061.ini( 61);v062.ini( 62);v063.ini( 63);v064.ini( 64);v065.ini( 65);v066.ini( 66);v067.ini( 67);v068.ini( 68);v069.ini( 69);v070.ini( 70);v071.ini( 71);
+v072.ini( 72);v073.ini( 73);v074.ini( 74);v075.ini( 75);v076.ini( 76);v077.ini( 77);v078.ini( 78);v079.ini( 79);v080.ini( 80);v081.ini( 81);v082.ini( 82);v083.ini( 83);
+v084.ini( 84);v085.ini( 85);v086.ini( 86);v087.ini( 87);v088.ini( 88);v089.ini( 89);v090.ini( 90);v091.ini( 91);v092.ini( 92);v093.ini( 93);v094.ini( 94);v095.ini( 95);
+v096.ini( 96);v097.ini( 97);v098.ini( 98);v099.ini( 99);v100.ini(100);v101.ini(101);v102.ini(102);v103.ini(103);v104.ini(104);v105.ini(105);v106.ini(106);v107.ini(107);
+v108.ini(108);v109.ini(109);v110.ini(110);v111.ini(111);v112.ini(112);v113.ini(113);v114.ini(114);v115.ini(115);v116.ini(116);v117.ini(117);v118.ini(118);v119.ini(119);
+v120.ini(120);v121.ini(121);v122.ini(122);v123.ini(123);v124.ini(124);v125.ini(125);v126.ini(126);v127.ini(127);
+// @init }}}
+// @block ____________________________________________________________{{{
+@block
+// midi  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _{{{
+while (midirecv(offset, msg1, msg23)) (
+  msg2 = msg23 & 0x7F;  msg3 = msg23 >> 8;  status = msg1 & $xF0;
+  status === $x80 ? (status = $x90; msg3 = 0; );             // Note off
+  status === $x90 ? (
+    note = msg2;
+    note >= gLowNote - gLowTrans && note <= gHighNote + gHighTrans ?
+      gGate[note] = (gVel[note] = msg3*(1/127)) ^ gVelExponent;
+  )
+: status === $xB0 ? (                           // Control Changes
+    msg2 === 1    ? gModWhl = msg3 * (1/127)     // Modulation Wheel
+  : msg2 === 123  ? memset(gGate, 0, 128)        // All notes off
+  : msg2 === 120  ? memset(gGate, 0, 128)        // All sounds off
+  : sl_midiCtl === 1 ? (
+      msg2 ===  73  ? (slider31 = msg3 * (3/127)-3; update_sliders(); ) // A
+    : msg2 ===  75  ? (slider32 = msg3 * (4/127)-3; update_sliders(); ) // D
+    : msg2 ===  76  ? (slider33 = msg3 * (1/127);   update_sliders(); ) // S
+    : msg2 ===  72  ? (slider34 = msg3 * (4/127)-3; update_sliders(); ) // R
+    ;
+  )
+  ;
+  )
+: status === $xD0 ? gAftTch = msg2 * (1/127)    // After touch
+: status === $xE0 ? (                           // Pitch bend
+    gBend = (msg3 << 7 | msg2) - 8192;
+    gBend <= 0 ? gBend *= 1/8192 : gBend *= 1/8191;
+    gBendFactor = 2^gBend;
+  );  
+  midisend(offset, msg1, msg23);
+);
+(aplaystate == 5 || aplay_state==1) && (play_state != 5 && play_state != 1) ? memset(gGate, 0, 128);
+aplaystate == play_state;
+// midi }}}
+// synth _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _{{{
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+//                                                      Reset and gDpMod
+memset(SP0,     0, samplesblock);    
+memset(SP1,     0, samplesblock);    
+memset(SUMENV2, 0, samplesblock);
+para_blk();
+ v000.blk(gGate[  0]);v001.blk(gGate[  1]);v002.blk(gGate[  2]);v003.blk(gGate[  3]);v004.blk(gGate[  4]);v005.blk(gGate[  5]);v006.blk(gGate[  6]);v007.blk(gGate[  7]);v008.blk(gGate[  8]);v009.blk(gGate[  9]);v010.blk(gGate[ 10]);v011.blk(gGate[ 11]);
+ v012.blk(gGate[ 12]);v013.blk(gGate[ 13]);v014.blk(gGate[ 14]);v015.blk(gGate[ 15]);v016.blk(gGate[ 16]);v017.blk(gGate[ 17]);v018.blk(gGate[ 18]);v019.blk(gGate[ 19]);v020.blk(gGate[ 20]);v021.blk(gGate[ 21]);v022.blk(gGate[ 22]);v023.blk(gGate[ 23]);
+ v024.blk(gGate[ 24]);v025.blk(gGate[ 25]);v026.blk(gGate[ 26]);v027.blk(gGate[ 27]);v028.blk(gGate[ 28]);v029.blk(gGate[ 29]);v030.blk(gGate[ 30]);v031.blk(gGate[ 31]);v032.blk(gGate[ 32]);v033.blk(gGate[ 33]);v034.blk(gGate[ 34]);v035.blk(gGate[ 35]);
+ v036.blk(gGate[ 36]);v037.blk(gGate[ 37]);v038.blk(gGate[ 38]);v039.blk(gGate[ 39]);v040.blk(gGate[ 40]);v041.blk(gGate[ 41]);v042.blk(gGate[ 42]);v043.blk(gGate[ 43]);v044.blk(gGate[ 44]);v045.blk(gGate[ 45]);v046.blk(gGate[ 46]);v047.blk(gGate[ 47]);
+ v048.blk(gGate[ 48]);v049.blk(gGate[ 49]);v050.blk(gGate[ 50]);v051.blk(gGate[ 51]);v052.blk(gGate[ 52]);v053.blk(gGate[ 53]);v054.blk(gGate[ 54]);v055.blk(gGate[ 55]);v056.blk(gGate[ 56]);v057.blk(gGate[ 57]);v058.blk(gGate[ 58]);v059.blk(gGate[ 59]);
+ v060.blk(gGate[ 60]);v061.blk(gGate[ 61]);v062.blk(gGate[ 62]);v063.blk(gGate[ 63]);v064.blk(gGate[ 64]);v065.blk(gGate[ 65]);v066.blk(gGate[ 66]);v067.blk(gGate[ 67]);v068.blk(gGate[ 68]);v069.blk(gGate[ 69]);v070.blk(gGate[ 70]);v071.blk(gGate[ 71]);
+ v072.blk(gGate[ 72]);v073.blk(gGate[ 73]);v074.blk(gGate[ 74]);v075.blk(gGate[ 75]);v076.blk(gGate[ 76]);v077.blk(gGate[ 77]);v078.blk(gGate[ 78]);v079.blk(gGate[ 79]);v080.blk(gGate[ 80]);v081.blk(gGate[ 81]);v082.blk(gGate[ 82]);v083.blk(gGate[ 83]);
+ v084.blk(gGate[ 84]);v085.blk(gGate[ 85]);v086.blk(gGate[ 86]);v087.blk(gGate[ 87]);v088.blk(gGate[ 88]);v089.blk(gGate[ 89]);v090.blk(gGate[ 90]);v091.blk(gGate[ 91]);v092.blk(gGate[ 92]);v093.blk(gGate[ 93]);v094.blk(gGate[ 94]);v095.blk(gGate[ 95]);
+ v096.blk(gGate[ 96]);v097.blk(gGate[ 97]);v098.blk(gGate[ 98]);v099.blk(gGate[ 99]);v100.blk(gGate[100]);v101.blk(gGate[101]);v102.blk(gGate[102]);v103.blk(gGate[103]);v104.blk(gGate[104]);v105.blk(gGate[105]);v106.blk(gGate[106]);v107.blk(gGate[107]);
+ v108.blk(gGate[108]);v109.blk(gGate[109]);v110.blk(gGate[110]);v111.blk(gGate[111]);v112.blk(gGate[112]);v113.blk(gGate[113]);v114.blk(gGate[114]);v115.blk(gGate[115]);v116.blk(gGate[116]);v117.blk(gGate[117]);v118.blk(gGate[118]);v119.blk(gGate[119]);
+ v120.blk(gGate[120]);v121.blk(gGate[121]);v122.blk(gGate[122]);v123.blk(gGate[123]);v124.blk(gGate[124]);v125.blk(gGate[125]);v126.blk(gGate[126]);v127.blk(gGate[127]);
+
+// synth }}}
+// output compression and DC blocking  _  _  _  _  _  _  _  _  _  _  _{{{
+//                                                 output compression
+n = 0; loop(samplesblock,                       
+  coefComp =  0.45 * min(1, invsqrt(SUMENV2[n] + 0.0001));
+  
+  sp = mk0.makeUp(SP0[n]) * coefComp;
+  sp -= (dc0 += gCoefDC * (sp - dc0));  
+  SP0[n] = sp;
+  
+  sp = mk1.makeUp( SP1[n]) * coefComp;
+  sp -= (dc1 += gCoefDC * (sp - dc1));  
+  SP1[n] = sp;        
+  
+  n += 1;
+);
+// output compression }}}
+// _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+gSampleCounter = 0; // sample counter for @sample
+gSavedK = (gSavedK + samplesblock) % KRATE;  // saved control counter
+gSliderBeforeSample = 0;
+// }}} block
+// @slider ___________________________________________________________{{{
+@slider
+gSliderBeforeSample = 1;
+update_sliders();
+// slider }}}
+// @sample ___________________________________________________________{{{
+@sample
+spl0 += gGainLeft  * SP0[gSampleCounter];
+spl1 += gGainRight * SP1[gSampleCounter];
+gSampleCounter += 1;
+// @sample }}}
+// @gfx ______________________________________________________________{{{
+
+@gfx
+
+para_gfx_before();
+v000.gfx();v001.gfx();v002.gfx();v003.gfx();v004.gfx();v005.gfx();v006.gfx();v007.gfx();v008.gfx();v009.gfx();v010.gfx();v011.gfx();
+v012.gfx();v013.gfx();v014.gfx();v015.gfx();v016.gfx();v017.gfx();v018.gfx();v019.gfx();v020.gfx();v021.gfx();v022.gfx();v023.gfx();
+v024.gfx();v025.gfx();v026.gfx();v027.gfx();v028.gfx();v029.gfx();v030.gfx();v031.gfx();v032.gfx();v033.gfx();v034.gfx();v035.gfx();
+v036.gfx();v037.gfx();v038.gfx();v039.gfx();v040.gfx();v041.gfx();v042.gfx();v043.gfx();v044.gfx();v045.gfx();v046.gfx();v047.gfx();
+v048.gfx();v049.gfx();v050.gfx();v051.gfx();v052.gfx();v053.gfx();v054.gfx();v055.gfx();v056.gfx();v057.gfx();v058.gfx();v059.gfx();
+v060.gfx();v061.gfx();v062.gfx();v063.gfx();v064.gfx();v065.gfx();v066.gfx();v067.gfx();v068.gfx();v069.gfx();v070.gfx();v071.gfx();
+v072.gfx();v073.gfx();v074.gfx();v075.gfx();v076.gfx();v077.gfx();v078.gfx();v079.gfx();v080.gfx();v081.gfx();v082.gfx();v083.gfx();
+v084.gfx();v085.gfx();v086.gfx();v087.gfx();v088.gfx();v089.gfx();v090.gfx();v091.gfx();v092.gfx();v093.gfx();v094.gfx();v095.gfx();
+v096.gfx();v097.gfx();v098.gfx();v099.gfx();v100.gfx();v101.gfx();v102.gfx();v103.gfx();v104.gfx();v105.gfx();v106.gfx();v107.gfx();
+v108.gfx();v109.gfx();v110.gfx();v111.gfx();v112.gfx();v113.gfx();v114.gfx();v115.gfx();v116.gfx();v117.gfx();v118.gfx();v119.gfx();
+v120.gfx();v121.gfx();v122.gfx();v123.gfx();v124.gfx();v125.gfx();v126.gfx();v127.gfx();
+para_gfx_after();
+
+// @gfx }}}
+
