@@ -1,8 +1,16 @@
 desc:Ze Musette Organ
-version: 1.1
+version: 1.2
 author: T.Rochebois
 changelog:
-  # note off bug
+  version 1.2
+  # 4 New "Characters": Bell, Reed, Harmonica and Nasillard.
+  + Velocity sensitive atteck time
+  + MIDI control of A D S R Brilliance and Character (CC 73 75 76 72 74 and 71)
+  + All notes off on play_state != 1 && play_state != 5
+  + All notes off on "All Sounds Off" (CC 120)
+  version 1.1
+  # Off gate -20dB than before
+  version 1.02
   + ADSR enveloppe
   + Selectable velocity curve
   # Brilliance and Character
@@ -14,7 +22,7 @@ changelog:
   + Per note index limitation (anti aliasing)
 about:
   # Ze Musette Organ
-  An __easy to use__ jsfx instrument reminiscent of some italian electronic organs of the late 70s.
+An __easy to use__ jsfx instrument reminiscent of some italian electronic organs of the late 70s.
   ## Features
   * __Full polyphony__
   * Smooth sound
@@ -36,13 +44,21 @@ about:
     * Velocity sensitivity
     * Attack, Decay, Sustain and Release
     * Keyboard range (Low and High notes and transition zones).
+    * Optional Extension of MIDI control (since version 1.2):
+      * Attack is controlled by CC 73
+      * Decay is controlled by CC 75
+      * Sustain is controlled by CC 76
+      * Release is controlled by CC 72
+      * Brilliance is controlled by CC 74
+      * Character is controlled by CC 71
+    
     
 // sliders ________________________________________________________{{{
 slider1:0<-24,12,0.0001>Gain (dB)
 slider2:0.5<0,1,0.0001>Pan
 
 slider3:0.5<0,1,0.0001>Brilliance
-slider4:2<0,4,1{Brassy,Square Fishes,Deep Blue,Hollow,Heaven}>Character
+slider4:2<0,8,1{Brassy,Square Fishes,Deep Blue,Hollow,Heaven,Bell,Reed,Harmonica,Nasillard}>Character
 
 slider6:-3<-3,0,0.0001>Attack
 slider7:-1<-3,1,0.0001>Decay
@@ -52,6 +68,8 @@ slider9:-1<-3,1,0.0001>Release
 slider13:0.5<0,1>Vibrato depth
 
 slider41:sl_velCurve=3<0,3,1{linear,sensitive,sensitiver,hard>Velocity sensitivity
+slider42:sl_midiCtl=0<0,1,1{Off,A D S R Bril Char}>Slider Midi Control
+slider43:sl_attackVel=0<0,1,0.0001>Attack Vel Sensit
 
 slider59:sl_HighTrans=12<0,127,1>KB High Transition
 slider60:sl_HighNote=127<24,127,1>KB High Note
@@ -72,20 +90,20 @@ function gainKBrange(note)(
 : 0;
 );
 // ___________________________________________________________________
-function ADSR_kProc(gate trig)
+function ADSR_kProc(gate trig A D S R)
   instance(AttackSeg ASR ADSR) local() (
   gate === 0 ? AttackSeg = 0;
   trig ? AttackSeg = 1;
   ASR < gate ?
-    ASR += gA * (gate - ASR)
-  : ASR += gR * (gate + 0.00000001 - ASR);
+    ASR += A * (gate - ASR)
+  : ASR += R * (gate + 0.00000001 - ASR);
 // _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
   AttackSeg === 1 ? (
-    ADSR += gA * (1.5 - ADSR);
+    ADSR += A * (1.5 - ADSR);
     ADSR >= 1.0 ? ( ADSR = 1.0;  AttackSeg = 0;  );
   ):(
-    gate != 0 ? (    ADSR += gD * (gS - ADSR);           ) 
-              : (    ADSR += gR * (0.00000001 - ADSR);  );
+    gate != 0 ? (    ADSR += D * (S - ADSR);           ) 
+              : (    ADSR += R * (0.00000001 - ADSR);  );
   );
 // _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
   ASR * ADSR;
@@ -134,8 +152,41 @@ function para_sld()(
   gGain = 2^(sl_gain*(1/6));
   gGainLeft  = gGain * cos(sl_pan * 0.5 * $pi);
   gGainRight = gGain * sin(sl_pan * 0.5 * $pi);
+
   // modulation index for the PM synth
-  gIndex = 8192 * (0.1+slider3) / (slider4+1);
+  slider4 = min(8,max(0, slider4|0));
+  slider4 <= 4 ? (
+    gR1 = 1;
+    gR2 = slider4 + 1;
+    gR3 = slider4 + 1;
+    gI2_1 = 8192 * (0.1+slider3) / (gR2);
+    gI3_2 = 8192 * (0.1+slider3) / (gR3);
+  ) : slider4 == 5 ? (
+    gR1 = 1;
+    gR2 = 3.75;
+    gR3 = 3;
+    gI2_1 = 8192 * (0.1+slider3) / (gR2);
+    gI3_2 = 8192 * (0.1+slider3) / (gR3);
+  ) : slider4 == 6 ? (
+    gR1 = 2;
+    gR2 = 1.495;
+    gR3 = 3.501;
+    gI2_1 = 8192 * (0.1+slider3) / (gR2+gR3);
+    gI3_2 = 8192 * (0.1+slider3) / (gR3);
+  ) : slider4 == 7 ? (
+    gR1 = 1;
+    gR2 = 3.995;
+    gR3 = 3.001;
+    gI2_1 = 8192 * (0.1+slider3) / (gR2+gR3);
+    gI3_2 = 8192 * (0.1+slider3) / (gR3);
+  ) : slider4 == 8 ? (
+    gR1 = 5;
+    gR2 = 2;
+    gR3 = 1;
+    gI2_1 = 0.5*8192 * (0.1+slider3) / (gR2+gR3);
+    gI3_2 = 2*8192 * (0.1+slider3) / (gR3);
+  );
+
   // Attack and Release enveloppe rate
   gA = min(1 - exp(log(0.33) / ((10^slider6) * (srate*_KRATE))), 1);
   gD = min(1 - exp(log(0.10) / ((10^slider7) * (srate*_KRATE))), 1);
@@ -166,14 +217,19 @@ function para_sld()(
 // _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 //                                                       voice slider
 function sld()
-  instance(index dp note gain) local(f0 a)(
+  instance(i2_1 i3_2 dp note gain) local(f0 a)(
   gain = gainKBrange(note);
 
-  f0 = (slider4+1)* dp*gTransposeFactor / 8192; // [0 1]
+  f0 = (gR1+gR2+gR3)* dp*gTransposeFactor / 8192; // [0 1]
     // w = 2*$pi*f0*index; //  [0 1]
     // wMax = 1 => indexMax = 1/(2*$pi*f0);
-  index = min(0.05*8192/(2*$pi*f0), gIndex);
-  note+sl_Transpose >90 ? (a=max(0,128-note-sl_Transpose)/38; index*= a*a;);
+  i2_1 = min(0.1*8192/(2*$pi*f0), gI2_1);
+  i3_2 = min(0.1*8192/(2*$pi*f0), gI3_2);
+  note+sl_Transpose >90 ? (
+    a=max(0,128-note-sl_Transpose)/38; 
+    i2_1*= a*a; 
+    i3_2*= a*a;
+  );
   
 );
 // _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
@@ -201,19 +257,22 @@ function para_blk() local(n k newDpMod modDplfo)(
 // "sample" level stuff are calculated here too (trick to limit cpu)
 //                                outputs go into SP0 and SP1 tables
 function blk(gate)
-local(k n trig)
-instance(gain note agate env denv p1 p2 p3 dp modDp1 modDp2 modDp3 out tremul2 tremul3 index)(
+local(k n trig A)
+instance(y3 y2 y1 gain note agate env denv p1 p2 p3 dp modDp modDp1 modDp2 modDp3 out tremul2 tremul3 i3_2 i2_1)(
   trig = gate > 0 && agate <= 0;
-  gate != 0 || env > 0.005 ? (   // active ?
+  gate != 0 || env > 0.0005 ? (   // active ?
+   // A = gA + sl_attackVel * ( gA * (0.01+0.99*gVel[note]) - gA);
+    A = gA * ((1-sl_attackVel)+sl_attackVel*gVel[note]);
     k = gSavedK;  n = 0; loop(samplesblock,            // sample loop
 // _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
       k += 1; k >= KRATE ? ( k = 0;                   // control rate
         // we use gDpMod from para_blk to modulate 
         // the delta phase (frequency) -> vibrato
-        modDp1 = dp * gDpMod[n] ;
-        modDp2 = modDp1 * (slider4+1) + tremul2;
-        modDp3 = modDp1 * (slider4+1) - tremul3;
-        denv = _KRATE * (this.adsr.ADSR_kProc(gate, trig) - env);
+        modDp = dp * gDpMod[n] ;
+        modDp1 = modDp * gR1;
+        modDp2 = modDp * gR2 + tremul2;
+        modDp3 = modDp * gR3 - tremul3;
+        denv = _KRATE * (this.adsr.ADSR_kProc(gate, trig, A, gD, gS, gR) - env);
       );
 // _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
 //                                                         audio rate
@@ -221,7 +280,7 @@ instance(gain note agate env denv p1 p2 p3 dp modDp1 modDp2 modDp3 out tremul2 t
       p2 += modDp2; p2 -= 8192 * (p2 >= 8192);
       p3 += modDp3; p3 -= 8192 * (p3 >= 8192);
       env += denv;
-      out = gain* env * sin8192(p1 + index * sin8192(p2+ index * sin8192(p3)));
+      out = gain* env * sin8192(p1 + i2_1 * sin8192(p2 + i3_2 * sin8192(p3)));
       SP0[n] += out;
       SP1[n] += out;
       SUMENV2[n] += env * env; // used for output global "compression"
@@ -247,6 +306,20 @@ function gfx()(
 function para_gfx_after()(
   1;
 );
+function update_sliders()(
+para_sld();
+v000.sld();v001.sld();v002.sld();v003.sld();v004.sld();v005.sld();v006.sld();v007.sld();v008.sld();v009.sld();v010.sld();v011.sld();
+v012.sld();v013.sld();v014.sld();v015.sld();v016.sld();v017.sld();v018.sld();v019.sld();v020.sld();v021.sld();v022.sld();v023.sld();
+v024.sld();v025.sld();v026.sld();v027.sld();v028.sld();v029.sld();v030.sld();v031.sld();v032.sld();v033.sld();v034.sld();v035.sld();
+v036.sld();v037.sld();v038.sld();v039.sld();v040.sld();v041.sld();v042.sld();v043.sld();v044.sld();v045.sld();v046.sld();v047.sld();
+v048.sld();v049.sld();v050.sld();v051.sld();v052.sld();v053.sld();v054.sld();v055.sld();v056.sld();v057.sld();v058.sld();v059.sld();
+v060.sld();v061.sld();v062.sld();v063.sld();v064.sld();v065.sld();v066.sld();v067.sld();v068.sld();v069.sld();v070.sld();v071.sld();
+v072.sld();v073.sld();v074.sld();v075.sld();v076.sld();v077.sld();v078.sld();v079.sld();v080.sld();v081.sld();v082.sld();v083.sld();
+v084.sld();v085.sld();v086.sld();v087.sld();v088.sld();v089.sld();v090.sld();v091.sld();v092.sld();v093.sld();v094.sld();v095.sld();
+v096.sld();v097.sld();v098.sld();v099.sld();v100.sld();v101.sld();v102.sld();v103.sld();v104.sld();v105.sld();v106.sld();v107.sld();
+v108.sld();v109.sld();v110.sld();v111.sld();v112.sld();v113.sld();v114.sld();v115.sld();v116.sld();v117.sld();v118.sld();v119.sld();
+v120.sld();v121.sld();v122.sld();v123.sld();v124.sld();v125.sld();v126.sld();v127.sld();
+);
 // ===================================================================
 // @init _____________________________________________________________{{{
 _srate = 1 / srate;
@@ -258,6 +331,7 @@ SP0     = TABLE(2048);// sample buffer (gen at @block, copied at @sample)
 SP1     = TABLE(2048);// sample buffer (gen at @block, copied at @sample)
 SUMENV2 = TABLE(2048);  // sum of square ARenv. (for dyn compression)
 gGate   = TABLE(128);
+gVel    = TABLE(128);
 gBendFactor = 1;
 // ___________________________________________________________________
 para_ini();
@@ -283,11 +357,22 @@ while (midirecv(offset, msg1, msg23)) (
   status === $x90 ? (
     note = msg2;
     note >= gLowNote - gLowTrans && note <= gHighNote + gHighTrans ?
-      gGate[note] = (msg3*(1/127)) ^ gVelExponent;
+      gGate[note] = (gVel[note] = msg3*(1/127)) ^ gVelExponent;
   )
 : status === $xB0 ? (                           // Control Changes
     msg2 === 1    ? gModWhl = msg3 * (1/127)      // Moulation Wheel
-  : msg2 === 123  ? memset(gGate, 0, 128);        // All notes off
+  : msg2 === 123  ? memset(gGate, 0, 128)        // All notes off
+  : msg2 === 120  ? memset(gGate, 0, 128)        // All sounds off
+  : sl_midiCtl === 1 ? (
+      msg2 ===  73  ? (slider6 = msg3 * (3/127)-3; update_sliders(); ) // A
+    : msg2 ===  75  ? (slider7 = msg3 * (4/127)-3; update_sliders(); ) // D
+    : msg2 ===  76  ? (slider8 = msg3 * (1/127);   update_sliders(); ) // S
+    : msg2 ===  72  ? (slider9 = msg3 * (4/127)-3; update_sliders(); ) // R
+    : msg2 ===  74  ? (slider3 = msg3 * (1/127);   update_sliders(); ) // Brillance
+    : msg2 ===  71  ? (slider4 = msg3 / 12;        update_sliders(); ) // Character
+    ;
+  )
+  ;
   )
 : status === $xD0 ? gAftTch = msg2 * (1/127)    // After touch
 : status === $xE0 ? (                           // Pitch bend
@@ -297,6 +382,8 @@ while (midirecv(offset, msg1, msg23)) (
   );  
   midisend(offset, msg1, msg23);
 );
+(aplaystate == 5 || aplay_state==1) && (play_state != 5 && play_state != 1) ? memset(gGate, 0, 128);
+aplaystate == play_state;
 // midi }}}
 // synth _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _{{{
 // _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
@@ -340,18 +427,7 @@ gSavedK = (gSavedK + samplesblock) % KRATE;  // saved control counter
 // }}} block
 // @slider ___________________________________________________________{{{
 @slider
-para_sld();
-v000.sld();v001.sld();v002.sld();v003.sld();v004.sld();v005.sld();v006.sld();v007.sld();v008.sld();v009.sld();v010.sld();v011.sld();
-v012.sld();v013.sld();v014.sld();v015.sld();v016.sld();v017.sld();v018.sld();v019.sld();v020.sld();v021.sld();v022.sld();v023.sld();
-v024.sld();v025.sld();v026.sld();v027.sld();v028.sld();v029.sld();v030.sld();v031.sld();v032.sld();v033.sld();v034.sld();v035.sld();
-v036.sld();v037.sld();v038.sld();v039.sld();v040.sld();v041.sld();v042.sld();v043.sld();v044.sld();v045.sld();v046.sld();v047.sld();
-v048.sld();v049.sld();v050.sld();v051.sld();v052.sld();v053.sld();v054.sld();v055.sld();v056.sld();v057.sld();v058.sld();v059.sld();
-v060.sld();v061.sld();v062.sld();v063.sld();v064.sld();v065.sld();v066.sld();v067.sld();v068.sld();v069.sld();v070.sld();v071.sld();
-v072.sld();v073.sld();v074.sld();v075.sld();v076.sld();v077.sld();v078.sld();v079.sld();v080.sld();v081.sld();v082.sld();v083.sld();
-v084.sld();v085.sld();v086.sld();v087.sld();v088.sld();v089.sld();v090.sld();v091.sld();v092.sld();v093.sld();v094.sld();v095.sld();
-v096.sld();v097.sld();v098.sld();v099.sld();v100.sld();v101.sld();v102.sld();v103.sld();v104.sld();v105.sld();v106.sld();v107.sld();
-v108.sld();v109.sld();v110.sld();v111.sld();v112.sld();v113.sld();v114.sld();v115.sld();v116.sld();v117.sld();v118.sld();v119.sld();
-v120.sld();v121.sld();v122.sld();v123.sld();v124.sld();v125.sld();v126.sld();v127.sld();
+update_sliders();
 // slider }}}
 // @sample ___________________________________________________________{{{
 @sample
