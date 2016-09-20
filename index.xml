@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f66440945bb5726d469f050032c6d37bf9f7ab59">
+<index version="1" name="ReaTeam JSFX" commit="b9dc7ab99b783fe5366863def0a9ef6798e67c06">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -507,7 +507,14 @@
 {\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Vibrato depth\par}
 {\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Velocity sensitivity\par}
 {\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Attack, Decay, Sustain and Release\par}
-{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Keyboard range (Low and High notes and transition zones).\sa180\sa180\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Keyboard range (Low and High notes and transition zones).\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Optional Extension of MIDI control (since version 1.2):\par}
+{\pard \ql \f0 \sa0 \li1080 \fi-360 \bullet \tx360\tab Attack is controlled by CC 73\par}
+{\pard \ql \f0 \sa0 \li1080 \fi-360 \bullet \tx360\tab Decay is controlled by CC 75\par}
+{\pard \ql \f0 \sa0 \li1080 \fi-360 \bullet \tx360\tab Sustain is controlled by CC 76\par}
+{\pard \ql \f0 \sa0 \li1080 \fi-360 \bullet \tx360\tab Release is controlled by CC 72\par}
+{\pard \ql \f0 \sa0 \li1080 \fi-360 \bullet \tx360\tab Brilliance is controlled by CC 74\par}
+{\pard \ql \f0 \sa0 \li1080 \fi-360 \bullet \tx360\tab Character is controlled by CC 71\sa180\sa180\sa180\par}
 }
 ]]></description>
       </metadata>
@@ -535,6 +542,27 @@
 + phase modulation synthesis (3 operators per note) 
 + Per note index limitation (anti aliasing)]]></changelog>
         <source main="true">https://github.com/ReaTeam/JSFX/raw/86ab5336313da589bb54c8e2a42583fe827f1133/Synth/TiaR_Ze%20Musette%20Organ.jsfx</source>
+      </version>
+      <version name="1.2" author="T.Rochebois" time="2016-09-20T19:40:37Z">
+        <changelog><![CDATA[version 1.2
+# 4 New "Characters": Bell, Reed, Harmonica and Nasillard.
++ Velocity sensitive atteck time
++ MIDI control of A D S R Brilliance and Character (CC 73 75 76 72 74 and 71)
++ All notes off on play_state != 1 && play_state != 5
++ All notes off on "All Sounds Off" (CC 120)
+version 1.1
+# Off gate -20dB than before
+version 1.02
++ ADSR enveloppe
++ Selectable velocity curve
+# Brilliance and Character
++ modwheel Vibrato depth
++ After touch sensitive Vibrato speed
++ Pitch bend +-1 octave
++ Tremulant rate (detune between operators)
++ phase modulation synthesis (3 operators per note) 
++ Per note index limitation (anti aliasing)]]></changelog>
+        <source main="true">https://github.com/ReaTeam/JSFX/raw/b9dc7ab99b783fe5366863def0a9ef6798e67c06/Synth/TiaR_Ze%20Musette%20Organ.jsfx</source>
       </version>
     </reapack>
   </category>
