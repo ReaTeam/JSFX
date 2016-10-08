@@ -658,8 +658,8 @@ ReaPack
 Fork
 }}}
  this repository in your GitHub account\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 2.\tx360\tab Add your JS effect(s) as {\f1 .jsfx} files in an appropriate category (directory)\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 3.\tx360\tab Insert metadata at the top of the files (check out the {\field{\*\fldinst{HYPERLINK "https://github.com/cfillion/reapack-index/wiki/Examples"}}{\fldrslt{\ul
+{\pard \ql \f0 \sa0 \li360 \fi-360 2.\tx360\tab Add your JS effect(s) as {\f1 user_Name of the Effect.jsfx} in an appropriate category (directory)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 3.\tx360\tab Insert metadata at the top of the files (check out the {\field{\*\fldinst{HYPERLINK "https://github.com/cfillion/reapack-index/wiki/Examples#effect"}}{\fldrslt{\ul
 package examples
 }}}
  and reapack-index's {\field{\*\fldinst{HYPERLINK "https://github.com/cfillion/reapack-index/wiki/Packaging-Documentation"}}{\fldrslt{\ul
