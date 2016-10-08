@@ -29,8 +29,8 @@ https://github.com/ReaTeam/JSFX/raw/master/index.xml
 ## Contributing
 
 1. [Fork](https://github.com/ReaTeam/JSFX/fork) this repository in your GitHub account
-2. Add your JS effect(s) as `.jsfx` files in an appropriate category (directory)
+2. Add your JS effect(s) as `user_Name of the Effect.jsfx` in an appropriate category (directory)
 3. Insert metadata at the top of the files (check out the
-[package examples](https://github.com/cfillion/reapack-index/wiki/Examples) and
+[package examples](https://github.com/cfillion/reapack-index/wiki/Examples#effect) and
 reapack-index's [packaging documentation](https://github.com/cfillion/reapack-index/wiki/Packaging-Documentation))
 3. Send a pull request here, done!
