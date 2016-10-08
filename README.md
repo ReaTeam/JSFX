@@ -33,4 +33,4 @@ https://github.com/ReaTeam/JSFX/raw/master/index.xml
 3. Insert metadata at the top of the files (check out the
 [package examples](https://github.com/cfillion/reapack-index/wiki/Examples#effect) and
 reapack-index's [packaging documentation](https://github.com/cfillion/reapack-index/wiki/Packaging-Documentation))
-3. Send a pull request here, done!
+4. Send a [pull request](https://help.github.com/articles/creating-a-pull-request-from-a-fork/) here, done!
