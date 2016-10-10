@@ -656,7 +656,7 @@ version 1.02
 }}}
 \par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Contributors\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 The following genereous people share their JSFX scripts on this repository.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The JS effects in this repository were brought to you by these generous people:\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\field{\*\fldinst{HYPERLINK "http://forum.cockos.com/member.php?u=6341"}}{\fldrslt{\ul
 anomaly
 }}}
@@ -681,10 +681,10 @@ website
 )\sa180\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Installation\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 ReaPack Automatic Installation\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 This repository is natively included in {\field{\*\fldinst{HYPERLINK "http://www.reapack.com"}}{\fldrslt{\ul
+{\pard \ql \f0 \sa180 \li0 \fi0 This repository is natively included in the {\field{\*\fldinst{HYPERLINK "http://www.reapack.com"}}{\fldrslt{\ul
 ReaPack
 }}}
-. Just activate it, and you will be able to download the JSFX. See ReaPack website for more detailed instructions.\par}
+ extension. Just activate it to be able to download the effects. See the ReaPack website for more detailed instructions.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 ReaPack Manual Installation\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Copy and paste this URL in Extensions > ReaPack > Import a repository:\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \f1 https://github.com/ReaTeam/JSFX/raw/master/index.xml\par}
