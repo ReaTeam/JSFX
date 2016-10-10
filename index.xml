@@ -657,15 +657,25 @@ version 1.02
 \par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Contributors\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The following genereous people share their JSFX scripts on this repository.\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Smashed Transistors (TiaR) ({\field{\*\fldinst{HYPERLINK "http://forum.cockos.com/member.php?u=92538"}}{\fldrslt{\ul
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\field{\*\fldinst{HYPERLINK "http://forum.cockos.com/member.php?u=6341"}}{\fldrslt{\ul
+anomaly
+}}}
+ (Stige T) ({\field{\*\fldinst{HYPERLINK "http://jsplugins.supermaailma.net/plugins.php"}}{\fldrslt{\ul
 website
 }}}
 )\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The REAPER Blog (Jon Tidey) ({\field{\*\fldinst{HYPERLINK "http://reaperblog.net/"}}{\fldrslt{\ul
-website
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\field{\*\fldinst{HYPERLINK "http://forum.cockos.com/member.php?u=60721"}}{\fldrslt{\ul
+mschnell
 }}}
-)\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab anomaly (Stige T) ({\field{\*\fldinst{HYPERLINK "http://jsplugins.supermaailma.net/plugins.php"}}{\fldrslt{\ul
+ (Michael Schnell)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\field{\*\fldinst{HYPERLINK "http://forum.cockos.com/member.php?u=92538"}}{\fldrslt{\ul
+Smashed Transistors
+}}}
+ (TiaR)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\field{\*\fldinst{HYPERLINK "http://forum.cockos.com/member.php?u=15127"}}{\fldrslt{\ul
+EpicSounds
+}}}
+ (The REAPER Blog/Jon Tidey) ({\field{\*\fldinst{HYPERLINK "http://reaperblog.net/"}}{\fldrslt{\ul
 website
 }}}
 )\sa180\par}
