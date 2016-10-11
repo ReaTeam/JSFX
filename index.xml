@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="a74e232d798d5934c3dc7e50433d581b2692486d">
+<index version="1" name="ReaTeam JSFX" commit="c8ab3584eea4e9532c9aa37eab1cfc5a5f9406b7">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -609,7 +609,7 @@ version 1.02
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The midi CC values 0 ... 127 are mapped to an "amplifier" curve that consists of a linear and an exponential part in a way, that with CC = 0 the amplification is 0 (-inf dB) and with CC = 127 the amplification is 1 (0db).\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 A slider defines the amount (in dB), the amplification is reduced with each CC step.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 According to that, the breakpoint between the exponential and the linear part is set so that at this point the value and the slope of the curves match.\par}
@@ -618,14 +618,14 @@ version 1.02
 {\pard \ql \f0 \sa180 \li0 \fi0 Moreover the maximum speed used is reaching a new defined level in as many steps a samples in a block.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 A graph shows as well the curve (Amplification vs CC steps), as the dynamic movement of the amplification level.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Limitations\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 As due the the description above, the modulation speed is limited to reaching the target level in a timespan at least as the duration of a sample block, the current version of this plugin is not suitable for synth-like application that intend to implement a VCA,\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 As due the the description above, the modulation speed is limited to reaching the target level in a timespan at least as the duration of a sample block, the current version of this plugin is not suitable for synth-like application that intend to implement a VCA.\par}
 }
 ]]></description>
-        <link rel="donation">http://www.unfoundation.org/</link>
+        <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
       </metadata>
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2016-10-10T20:08:03Z">
         <changelog><![CDATA[initial release]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/a74e232d798d5934c3dc7e50433d581b2692486d/Utility/mschnell_MIDI%20Volume%20Control.jsfx</source>
+        <source>https://github.com/ReaTeam/JSFX/raw/c8ab3584eea4e9532c9aa37eab1cfc5a5f9406b7/Utility/mschnell_MIDI%20Volume%20Control.jsfx</source>
       </version>
     </reapack>
     <reapack name="ReaperBlog_-12dB Dim.jsfx" type="effect" desc="-12dB Dim">
