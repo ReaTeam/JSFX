@@ -2,9 +2,9 @@ desc:Midi Volume Control
 author: Michael Schnell (mschnell@bschnell.de)
 version: 1.0
 changelog: initial release
-donation: http://www.unfoundation.org/
+donation: United Nations Foundation http://www.unfoundation.org/
 about:
-  ## description
+  ## Description
 
   The midi CC values 0 ... 127 are mapped to an "amplifier" curve that consists of a linear and an exponential part
   in a way, that with CC = 0 the amplification is 0 (-inf dB) and with CC = 127 the amplification is 1 (0db).
@@ -26,7 +26,7 @@ about:
 
   As  due the the description above, the modulation speed is limited to reaching the target level in a timespan at least 
   as the duration of a sample block, the current version of this plugin is not suitable for synth-like application that
-  intend to implement a VCA,
+  intend to implement a VCA.
 
 
 
