@@ -1,5 +1,6 @@
 version: 1.0.1
 desc:ReaRack - LFO
+author: Malcom Smith
 changelog: Added counter to calculate block offset, for improved timing accuracy.
 
 /* 1.0.0 (2/9/2016) Initial Release.
