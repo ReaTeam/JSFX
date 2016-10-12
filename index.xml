@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="cbc0036a73d469d0508c0205c19912a7206b1a2e">
+<index version="1" name="ReaTeam JSFX" commit="12b3780fd706e71ffb1f223ec2b7156cd7c71ac0">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -618,14 +618,14 @@ version 1.02
       </version>
     </reapack>
     <reapack name="TimeWaster_ReaRack KeyFollower.jsfx" type="effect" desc="ReaRack - Key Follower">
-      <version name="1.0.0" time="2016-10-12T20:25:36Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/cbc0036a73d469d0508c0205c19912a7206b1a2e/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20KeyFollower.jsfx</source>
+      <version name="1.0.0" time="2016-10-12T20:25:36Z" author="Malcom Smith">
+        <source>https://github.com/ReaTeam/JSFX/raw/12b3780fd706e71ffb1f223ec2b7156cd7c71ac0/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20KeyFollower.jsfx</source>
       </version>
     </reapack>
     <reapack name="TimeWaster_ReaRack LFO.jsfx" type="effect" desc="ReaRack - LFO">
-      <version name="1.0.1" time="2016-10-12T20:25:36Z">
+      <version name="1.0.1" time="2016-10-12T20:25:36Z" author="Malcom Smith">
         <changelog><![CDATA[Added counter to calculate block offset, for improved timing accuracy.]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/cbc0036a73d469d0508c0205c19912a7206b1a2e/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20LFO.jsfx</source>
+        <source>https://github.com/ReaTeam/JSFX/raw/12b3780fd706e71ffb1f223ec2b7156cd7c71ac0/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20LFO.jsfx</source>
       </version>
     </reapack>
     <reapack name="TimeWaster_ReaRack Oscillator.jsfx" type="effect" desc="ReaRack - Oscillator">
@@ -644,8 +644,8 @@ version 1.02
       </version>
     </reapack>
     <reapack name="TimeWaster_ReaRack PolySplitter.jsfx" type="effect" desc="ReaRack - Poly Splitter">
-      <version name="1.0.0" time="2016-10-12T20:25:36Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/cbc0036a73d469d0508c0205c19912a7206b1a2e/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20PolySplitter.jsfx</source>
+      <version name="1.0.0" time="2016-10-12T20:25:36Z" author="Malcom Smith">
+        <source>https://github.com/ReaTeam/JSFX/raw/12b3780fd706e71ffb1f223ec2b7156cd7c71ac0/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20PolySplitter.jsfx</source>
       </version>
     </reapack>
     <reapack name="TimeWaster_ReaRack Trigger.jsfx" type="effect" desc="ReaRack - Trigger">
@@ -753,6 +753,13 @@ anomaly
 website
 }}}
 )\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\field{\*\fldinst{HYPERLINK "http://forum.cockos.com/member.php?u=15127"}}{\fldrslt{\ul
+EpicSounds
+}}}
+ (The REAPER Blog/Jon Tidey) ({\field{\*\fldinst{HYPERLINK "http://reaperblog.net/"}}{\fldrslt{\ul
+website
+}}}
+)\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\field{\*\fldinst{HYPERLINK "http://forum.cockos.com/member.php?u=60721"}}{\fldrslt{\ul
 mschnell
 }}}
@@ -761,13 +768,10 @@ mschnell
 Smashed Transistors
 }}}
  (TiaR)\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\field{\*\fldinst{HYPERLINK "http://forum.cockos.com/member.php?u=15127"}}{\fldrslt{\ul
-EpicSounds
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\field{\*\fldinst{HYPERLINK "http://forum.cockos.com/member.php?u=63705"}}{\fldrslt{\ul
+Time Waster
 }}}
- (The REAPER Blog/Jon Tidey) ({\field{\*\fldinst{HYPERLINK "http://reaperblog.net/"}}{\fldrslt{\ul
-website
-}}}
-)\sa180\par}
+ (Malcolm Smith)\sa180\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Installation\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 ReaPack Automatic Installation\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 This repository is natively included in the {\field{\*\fldinst{HYPERLINK "http://www.reapack.com"}}{\fldrslt{\ul
