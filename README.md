@@ -10,10 +10,11 @@ The JS effects in this repository were brought to you by these generous people:
 
 - [anomaly](http://forum.cockos.com/member.php?u=6341) (Stige T)
   ([website](http://jsplugins.supermaailma.net/plugins.php))
-- [mschnell](http://forum.cockos.com/member.php?u=60721) (Michael Schnell)
-- [Smashed Transistors](http://forum.cockos.com/member.php?u=92538) (TiaR)
 - [EpicSounds](http://forum.cockos.com/member.php?u=15127) (The REAPER Blog/Jon Tidey)
   ([website](http://reaperblog.net/))
+- [mschnell](http://forum.cockos.com/member.php?u=60721) (Michael Schnell)
+- [Smashed Transistors](http://forum.cockos.com/member.php?u=92538) (TiaR)
+- [Time Waster](http://forum.cockos.com/member.php?u=63705) (Malcolm Smith)
 
 ## Installation
 
