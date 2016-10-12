@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="c8ab3584eea4e9532c9aa37eab1cfc5a5f9406b7">
+<index version="1" name="ReaTeam JSFX" commit="cbc0036a73d469d0508c0205c19912a7206b1a2e">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -563,6 +563,95 @@ version 1.02
 + phase modulation synthesis (3 operators per note) 
 + Per note index limitation (anti aliasing)]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/b9dc7ab99b783fe5366863def0a9ef6798e67c06/Synth/TiaR_Ze%20Musette%20Organ.jsfx</source>
+      </version>
+    </reapack>
+  </category>
+  <category name="Synth/ReaRack Modular Synth">
+    <reapack name="TimeWaster_ReaRack Amplifier.jsfx" type="effect" desc="ReaRack - Amplifier">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Alplifier module for the ReaRack modular JSFX synth system.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0.0" author="Malcolm Smith" time="2016-10-12T20:25:36Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/cbc0036a73d469d0508c0205c19912a7206b1a2e/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Amplifier.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="TimeWaster_ReaRack CCmixer.jsfx" type="effect" desc="ReaRack - CC Mixer">
+      <version name="1.1.0" author="Malcolm Smith" time="2016-10-12T20:25:36Z">
+        <changelog><![CDATA[Added the Overlay operation option. Fixed a graphics bug.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/cbc0036a73d469d0508c0205c19912a7206b1a2e/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20CCmixer.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="TimeWaster_ReaRack EnvGen.jsfx" type="effect" desc="ReaRack - Envelope Generator">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 MIDI Envelope Generator module for the ReaRack modular JSFX synth system.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.1.0" author="Malcolm Smith" time="2016-10-12T20:25:36Z">
+        <changelog><![CDATA[Added MIDI CC modulation for DADSR envelope paramaeters. Added Hold function. Fixed an issue causing output values above 127 in some situations.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/cbc0036a73d469d0508c0205c19912a7206b1a2e/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20EnvGen.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="TimeWaster_ReaRack Filter.jsfx" type="effect" desc="ReaRack - Filter">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 HP/LP filter module for the ReaRack modular JSFX synth system.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.1.0" author="Malcolm Smith" time="2016-10-12T20:25:36Z">
+        <changelog><![CDATA[Added MIDI CC modulation for resonance. Changed UI for cutoff level modulation.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/cbc0036a73d469d0508c0205c19912a7206b1a2e/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Filter.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="TimeWaster_ReaRack KeyFollower.jsfx" type="effect" desc="ReaRack - Key Follower">
+      <version name="1.0.0" time="2016-10-12T20:25:36Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/cbc0036a73d469d0508c0205c19912a7206b1a2e/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20KeyFollower.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="TimeWaster_ReaRack LFO.jsfx" type="effect" desc="ReaRack - LFO">
+      <version name="1.0.1" time="2016-10-12T20:25:36Z">
+        <changelog><![CDATA[Added counter to calculate block offset, for improved timing accuracy.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/cbc0036a73d469d0508c0205c19912a7206b1a2e/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20LFO.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="TimeWaster_ReaRack Oscillator.jsfx" type="effect" desc="ReaRack - Oscillator">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Audio oscillator module for the ReaRack modular JSFX synth system.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.1.0" author="Malcolm Smith" time="2016-10-12T20:25:36Z">
+        <changelog><![CDATA[Changed the UI for shape modulation. Added an 'off' option for CC input. Fixed some graphics bugs.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/cbc0036a73d469d0508c0205c19912a7206b1a2e/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Oscillator.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="TimeWaster_ReaRack PolySplitter.jsfx" type="effect" desc="ReaRack - Poly Splitter">
+      <version name="1.0.0" time="2016-10-12T20:25:36Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/cbc0036a73d469d0508c0205c19912a7206b1a2e/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20PolySplitter.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="TimeWaster_ReaRack Trigger.jsfx" type="effect" desc="ReaRack - Trigger">
+      <version name="1.0.1" author="Malcolm Smith" time="2016-10-12T20:25:36Z">
+        <changelog><![CDATA[Fixed a timing bug at 0 and 127 cc values.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/cbc0036a73d469d0508c0205c19912a7206b1a2e/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Trigger.jsfx</source>
       </version>
     </reapack>
   </category>
