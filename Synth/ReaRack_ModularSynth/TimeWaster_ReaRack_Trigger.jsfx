@@ -1,6 +1,7 @@
 version: 1.0.1
 desc:ReaRack - Trigger
 author: Malcolm Smith
+about: Converts a MIDI CC message into a MIDI note. A comprehensive user manual can be found here - http://stash.reaper.fm/v/28621/ReaRack_Manual.pdf
 changelog: Fixed a timing bug at 0 and 127 cc values.
 
 /* 1.0.0 (2/9/2016) Initial Release.
