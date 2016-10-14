@@ -1,5 +1,7 @@
 version: 1.0.0
-desc:ReaRack - Poly Splitter
+desc: ReaRack - Poly Splitter
+author: Malcolm Smith
+about: used for splitting out overlapping midi note messages to separate channels. A comprehensive user manual can be found here - http://stash.reaper.fm/v/28621/ReaRack_Manual.pdf
 
 // Copyright(C) 2016 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
 // License: LGPL - http://www.gnu.org/licenses/lgpl.html
