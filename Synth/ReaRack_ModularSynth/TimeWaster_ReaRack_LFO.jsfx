@@ -1,5 +1,7 @@
 version: 1.0.1
-desc:ReaRack - LFO
+desc: ReaRack - LFO
+author: Malcolm Smith
+about: Low frequency oscillator MIDI control module. A comprehensive user manual can be found here - http://stash.reaper.fm/v/28621/ReaRack_Manual.pdf
 changelog: Added counter to calculate block offset, for improved timing accuracy.
 
 /* 1.0.0 (2/9/2016) Initial Release.
