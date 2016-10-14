@@ -1,7 +1,7 @@
 version: 1.1.0
 desc: ReaRack - Filter
 author: Malcolm Smith
-about: HP/LP filter module for the ReaRack modular JSFX synth system.
+about: HP/LP filter module for the ReaRack modular JSFX synth system. A comprehensive user manual can be found here - http://stash.reaper.fm/v/28621/ReaRack_Manual.pdf
 changelog: Added MIDI CC modulation for resonance. Changed UI for cutoff level modulation.
 
 /*Version 1.0.0 (2/9/2016) Initial release.
