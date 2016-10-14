@@ -1,5 +1,6 @@
 version: 1.0.0
-desc:ReaRack - Key Follower
+desc: ReaRack - Key Follower
+about: Key follower module for the ReaRack modular synth system. A comprehensive user manual can be found here - http://stash.reaper.fm/v/28621/ReaRack_Manual.pdf
 
 // Copyright(C) 2016 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
 // License: LGPL - http://www.gnu.org/licenses/lgpl.html
