@@ -1,7 +1,7 @@
 version: 1.1.0
 desc:ReaRack - Oscillator
 author: Malcolm Smith
-about: Audio oscillator module for the ReaRack modular JSFX synth system.
+about: Audio oscillator module for the ReaRack modular JSFX synth system. A comprehensive user manual can be found here - http://stash.reaper.fm/v/28621/ReaRack_Manual.pdf
 changelog: Changed the UI for shape modulation. Added an 'off' option for CC input. Fixed some graphics bugs.
 /*Version 1.0.0 (2/9/2016) Initial release.
   Version 1.1.0 (30/9/2016) Changed the UI for shape modulation. Added an 'off' option for CC input. Fixed some graphics bugs.
