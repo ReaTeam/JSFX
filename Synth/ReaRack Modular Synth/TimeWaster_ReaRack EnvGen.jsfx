@@ -1,5 +1,6 @@
 version: 1.1.0
 desc:ReaRack - Envelope Generator
+noindex: true
 author: Malcolm Smith
 about: MIDI Envelope Generator module for the ReaRack modular JSFX synth system.
 changelog: Added MIDI CC modulation for DADSR envelope paramaeters. Added Hold function. Fixed an issue causing output values above 127 in some situations.
