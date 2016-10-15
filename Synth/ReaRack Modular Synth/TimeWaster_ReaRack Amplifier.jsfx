@@ -1,5 +1,6 @@
 version: 1.0.0
 desc: ReaRack - Amplifier
+noindex: true
 author: Malcolm Smith
 about: Alplifier module for the ReaRack modular JSFX synth system.
 changelog:
