@@ -1,5 +1,6 @@
 version: 1.1.0
 desc:ReaRack - Oscillator
+noindex: true
 author: Malcolm Smith
 about: Audio oscillator module for the ReaRack modular JSFX synth system.
 changelog: Changed the UI for shape modulation. Added an 'off' option for CC input. Fixed some graphics bugs.
