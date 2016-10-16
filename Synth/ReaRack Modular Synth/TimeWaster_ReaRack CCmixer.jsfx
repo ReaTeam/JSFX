@@ -1,5 +1,6 @@
 version: 1.1.0
 desc:ReaRack - CC Mixer
+noindex: true
 author: Malcolm Smith
 changelog: Added the Overlay operation option. Fixed a graphics bug.
 

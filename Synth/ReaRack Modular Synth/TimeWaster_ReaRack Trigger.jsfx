@@ -1,5 +1,6 @@
 version: 1.0.1
 desc:ReaRack - Trigger
+noindex: true
 author: Malcolm Smith
 changelog: Fixed a timing bug at 0 and 127 cc values.
 

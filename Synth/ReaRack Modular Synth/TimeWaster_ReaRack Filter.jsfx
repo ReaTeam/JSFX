@@ -1,5 +1,6 @@
 version: 1.1.0
 desc: ReaRack - Filter
+noindex: true
 author: Malcolm Smith
 about: HP/LP filter module for the ReaRack modular JSFX synth system.
 changelog: Added MIDI CC modulation for resonance. Changed UI for cutoff level modulation.
