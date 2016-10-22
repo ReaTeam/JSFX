@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f8e23cbac381b5aa6a2b3f698f35915c852ffa01">
+<index version="1" name="ReaTeam JSFX" commit="443260518abe1e1e39db96b4f54d66cc90c2a0db">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -661,16 +661,20 @@ version 1.02
 \widowctrl\hyphauto
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 While the VST/Reaper-Plugin "MIDItoReaControlPath" can transfer live Midi data from a track to the "guts" of Reaper to be handled by Reaper Extensions and ReaScripts, Slider_to_Midi_PS is supposed to work the other way round and generate Midi messages in a track on request of Reaper Extensions (such as SWS "LiveConfigs" and ReaScripts. The Midi "Program Change" Messages can be used to switch the patch of appropriate plugins that internally hold a list of multiple patches (aka "programs", "sounds", ...) Whenever the "PS" slider is moved (manually or by a preset change) Slider to Midi PS ends out the appropriate Midi PS message exactly once. Slider to Midi PS passes through all midi messages it receives.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 While the VST/Reaper-Plugin "MIDItoReaControlPath" can transfer live Midi data from a track to the "guts" of Reaper to be handled by Reaper Extensions and ReaScripts, Slider_to_Midi_PS is supposed to work the other way round and generate Midi messages in a track on request of Reaper Extensions (such as SWS "LiveConfigs" and ReaScripts. The Midi "Program Change" Messages can be used to switch the patch of appropriate plugins that internally hold a list of multiple patches (aka "programs", "sounds", "instru...) Whenever the "PS" slider is moved (manually or by a preset change), Slider to Midi PS sends out the appropriate Midi PS message exactly once. Slider to Midi PS passes through all midi messages it receives.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Main Purpose\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 With many VSTs (e.g. Kontakt) switching patches is a lot faster than loading a new preset for the VST itself. Moreover it preserves internal states, that would be reloaded with a new preset.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Usage\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 The JSFX plugin "Slider to Midi PS" is placed in the track "above" plugin that is supposed to react on the program change request. Usually you statically set the Midi channel that the VST reacts to. Now (for each instance you created) you generate multiple presets, one for each program change (patch) number you want to send. With appropriate Reaper Actions / Scripts - or with SWS LiveConfigs - you can request a preset change for a Slider to Midi PS instance and hence a Midi PS Message will be generated in that track. #Possible Extension It would be rather easy to extend the plugin to optionally send out CC ore Note On messages.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The JSFX plugin "Slider to Midi PS" is placed in the track "above" plugin that is supposed to react on the program change request. Usually you statically set the Midi channel that the VST reacts to. Now (for each instance you created) you generate multiple presets, one for each program change (patch) number you want to send. With appropriate Reaper Actions / Scripts - or with SWS LiveConfigs - you can request a preset change for a Slider to Midi PS instance and hence a Midi PS Message will be generated in that track.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Possible Extension\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 It would be rather easy to extend the plugin to optionally send out CC ore Note On messages.\par}
 }
 ]]></description>
         <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
       </metadata>
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2016-10-21T17:50:51Z">
         <changelog><![CDATA[initial release]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/f8e23cbac381b5aa6a2b3f698f35915c852ffa01/Utility/mschnell_Slider%20to%20Midi%20PS.jsfx</source>
+        <source>https://github.com/ReaTeam/JSFX/raw/443260518abe1e1e39db96b4f54d66cc90c2a0db/Utility/mschnell_Slider%20to%20Midi%20PS.jsfx</source>
       </version>
     </reapack>
     <reapack name="ReaperBlog_-12dB Dim.jsfx" type="effect" desc="-12dB Dim">
