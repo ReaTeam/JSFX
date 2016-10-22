@@ -7,14 +7,16 @@ about:
   ## Description
   While the VST/Reaper-Plugin "MIDItoReaControlPath" can transfer live Midi data from a track to the "guts" of Reaper to be handled by Reaper Extensions and ReaScripts,
   Slider_to_Midi_PS is supposed to work the other way round and generate Midi messages in a track on request of Reaper Extensions (such as SWS "LiveConfigs" and ReaScripts.
-  The Midi "Program Change" Messages can be used to switch the patch of appropriate plugins that internally hold a list of multiple patches (aka "programs", "sounds", ...) 
-  Whenever the "PS" slider is moved (manually or by a preset change) Slider to Midi PS ends out the appropriate Midi PS message exactly once. 
+  The Midi "Program Change" Messages can be used to switch the patch of appropriate plugins that internally hold a list of multiple patches (aka "programs", "sounds", "instru...) 
+  Whenever the "PS" slider is moved (manually or by a preset change), Slider to Midi PS sends out the appropriate Midi PS message exactly once. 
   Slider to Midi PS passes through all midi messages it receives. 
+  ## Main Purpose
+  With many VSTs (e.g. Kontakt) switching patches is a lot faster than loading a new preset for the VST itself. Moreover it preserves internal states, that would be reloaded with a new preset. 
   ## Usage
   The JSFX plugin "Slider to Midi PS" is placed in the track "above" plugin that is supposed to react on the program change request. Usually you statically set the Midi channel that the VST reacts to.
   Now (for each instance you created) you generate multiple presets, one for each program change (patch) number you want to send.
   With appropriate Reaper Actions / Scripts - or with SWS LiveConfigs - you can request a preset change for a Slider to Midi PS instance and hence a Midi PS Message will be generated in that track.
-  #Possible Extension
+  ## Possible Extension
   It would be rather easy to extend the plugin to optionally send out CC ore Note On messages.
   
   
