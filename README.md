@@ -31,5 +31,5 @@ reapack-index's [packaging documentation](https://github.com/cfillion/reapack-in
 
 1. [Create](https://github.com/ReaTeam/JSFX/new/master) a file for your effect named `Category Name/username_Name of the Effect.jsfx`
 2. Click on "Propose new file" and create a Pull Request
-3. Wait for moderators validation (it should be quick)
+3. Wait for a team member to validate the request (it should be quick)
 4. If everything is ok... it's done!
