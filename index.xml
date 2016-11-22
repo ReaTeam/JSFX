@@ -733,31 +733,23 @@ Time Waster
 }}}
  (Malcolm Smith)\sa180\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Installation\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 ReaPack Automatic Installation\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 This repository is natively included in the {\field{\*\fldinst{HYPERLINK "http://www.reapack.com"}}{\fldrslt{\ul
-ReaPack
-}}}
- extension. Just activate it to be able to download the effects. See the ReaPack website for more detailed instructions.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 ReaPack Manual Installation\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Copy and paste this URL in Extensions > ReaPack > Import a repository:\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \f1 https://github.com/ReaTeam/JSFX/raw/master/index.xml\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Contributing\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 1.\tx360\tab {\field{\*\fldinst{HYPERLINK "https://github.com/ReaTeam/JSFX/fork"}}{\fldrslt{\ul
-Fork
-}}}
- this repository in your GitHub account\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 2.\tx360\tab Add your JS effect(s) as {\f1 user_Name of the Effect.jsfx} in an appropriate category (directory)\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 3.\tx360\tab Insert metadata at the top of the files (check out the {\field{\*\fldinst{HYPERLINK "https://github.com/cfillion/reapack-index/wiki/Examples"}}{\fldrslt{\ul
+{\pard \ql \f0 \sa180 \li0 \fi0 Check out the {\field{\*\fldinst{HYPERLINK "https://github.com/cfillion/reapack-index/wiki/Examples"}}{\fldrslt{\ul
 package examples
 }}}
  and reapack-index's {\field{\*\fldinst{HYPERLINK "https://github.com/cfillion/reapack-index/wiki/Packaging-Documentation"}}{\fldrslt{\ul
 packaging documentation
 }}}
-)\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 4.\tx360\tab Send a {\field{\*\fldinst{HYPERLINK "https://help.github.com/articles/creating-a-pull-request-from-a-fork/"}}{\fldrslt{\ul
-pull request
+.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 1.\tx360\tab {\field{\*\fldinst{HYPERLINK "https://github.com/ReaTeam/JSFX/new/master"}}{\fldrslt{\ul
+Create
 }}}
- here, done!\sa180\par}
+ a file for your effect named {\f1 Category Name/username_Name of the Effect.jsfx}\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 2.\tx360\tab Click on "Propose new file" and create a Pull Request\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 3.\tx360\tab Wait for moderators validation (it should be quick)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 4.\tx360\tab If everything is ok... it's done!\sa180\par}
 }
 ]]></description>
   </metadata>
