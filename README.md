@@ -18,14 +18,6 @@ The JS effects in this repository were brought to you by these generous people:
 
 ## Installation
 
-### ReaPack Automatic Installation
-
-This repository is natively included in the [ReaPack](http://www.reapack.com) extension.
-Just activate it to be able to download the effects.
-See the ReaPack website for more detailed instructions.
-
-### ReaPack Manual Installation
-
 Copy and paste this URL in Extensions > ReaPack > Import a repository:
 
 ```
@@ -34,9 +26,10 @@ https://github.com/ReaTeam/JSFX/raw/master/index.xml
 
 ## Contributing
 
-1. [Fork](https://github.com/ReaTeam/JSFX/fork) this repository in your GitHub account
-2. Add your JS effect(s) as `user_Name of the Effect.jsfx` in an appropriate category (directory)
-3. Insert metadata at the top of the files (check out the
-[package examples](https://github.com/cfillion/reapack-index/wiki/Examples) and
-reapack-index's [packaging documentation](https://github.com/cfillion/reapack-index/wiki/Packaging-Documentation))
-4. Send a [pull request](https://help.github.com/articles/creating-a-pull-request-from-a-fork/) here, done!
+Check out the [package examples](https://github.com/cfillion/reapack-index/wiki/Examples) and
+reapack-index's [packaging documentation](https://github.com/cfillion/reapack-index/wiki/Packaging-Documentation).
+
+1. [Create](https://github.com/ReaTeam/JSFX/new/master) a file for your effect named `Category Name/username_Name of the Effect.jsfx`
+2. Click on "Propose new file" and create a Pull Request
+3. Wait for moderators validation (it should be quick)
+4. If everything is ok... it's done!
