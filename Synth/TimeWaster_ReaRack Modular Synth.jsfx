@@ -1,11 +1,11 @@
 desc: ReaRack Modular Synth
 author: Malcolm Smith
-version: 1.1
+version: 1.2
 changelog:
   See separate changelogs in each module
 about:
   # ReaRack Modular Synth
-  ReaRack is a modular MIDI controlled digital synth system. There are currently nine modules-
+  ReaRack is a modular MIDI controlled digital synth system. There are currently eleven modules-
   Oscillator
   LFO
   Envelope Generator
@@ -15,6 +15,8 @@ about:
   Key Follower
   Trigger
   Poly Splitter
+  CC Sample and Hold
+  Karplus-Strong Delay
   ## User Guide
   http://stash.reaper.fm/28621/ReaRack_Manual.pdf
 provides: ReaRack Modular Synth/*.jsfx
