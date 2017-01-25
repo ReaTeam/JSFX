@@ -1,12 +1,13 @@
-version: 1.1.0
+version: 1.1.1
 desc: ReaRack - Filter
 noindex: true
 author: Malcolm Smith
 about: HP/LP filter module for the ReaRack modular JSFX synth system.
-changelog: Added MIDI CC modulation for resonance. Changed UI for cutoff level modulation.
+changelog: Fixed a bug which affected resonance modulation.
 
 /*Version 1.0.0 (2/9/2016) Initial release.
-  Version 1.1.0 (30/9/2016)Added MIDI CC modulation rfor resonance. Changed UI for cutoff level modulation.
+  Version 1.1.0 (30/9/2016)Added MIDI CC modulation for resonance. Changed UI for cutoff level modulation.
+  Version 1.1.1 (25/01/2017) Fixed a bug which affected resonance modulation.
 
 // Copyright(C) 2016 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
 // Filter coce based on 'Reasonant Lowpass Filter' - Copyright (C) 2004 and later Cockos Incorporated
@@ -38,18 +39,18 @@ slider8 == 1 ? (
   gmem[group+3] = slider3;
   gmem[group+4] = slider4;
   gmem[group+5] = slider5;
-  gmem[group+7] = slider6;
+  gmem[group+6] = slider6;
   gmem[group+7] = slider7;
   );
 
-ccIn1 = slider1-1;
+/*ccIn1 = slider1-1;
 ccIn2 = slider2-1;
 type = slider3;
 cutlev = slider4;
 cutrange = slider5;
 reslev = slider6;
 resrange = slider7;
-
+*/
 
 freq = (2^((cutlev^0.5)*14.28771));
 //cut = (freq*2) / (srate); 
@@ -68,6 +69,14 @@ slider8 == 2 ? (
   slider7 = gmem[group+7];
   sliderchange(sliderbits);
   );
+  
+ccIn1 = slider1-1;
+ccIn2 = slider2-1;
+type = slider3;
+cutlev = slider4;
+cutrange = slider5;
+reslev = slider6;
+resrange = slider7;
   
 cutcount = min(samplesblock,25);
 
