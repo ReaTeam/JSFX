@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="2e2341f8d03374a1b29eb2f12f25f751856266d0">
+<index version="1" name="ReaTeam JSFX" commit="88b8c57c37d9d0b7209c6137dc161f033e6e6ff9">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -572,7 +572,7 @@ version 1.02
 \widowctrl\hyphauto
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 ReaRack Modular Synth\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 ReaRack is a modular MIDI controlled digital synth system. There are currently nine modules- Oscillator LFO Envelope Generator Filter Amplifier CC Mixer Key Follower Trigger Poly Splitter\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 ReaRack is a modular MIDI controlled digital synth system. There are currently eleven modules- Oscillator LFO Envelope Generator Filter Amplifier CC Mixer Key Follower Trigger Poly Splitter CC Sample and Hold Karplus-Strong Delay\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 User Guide\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 http://stash.reaper.fm/28621/ReaRack_Manual.pdf\par}
 }
@@ -589,6 +589,20 @@ version 1.02
         <source file="ReaRack Modular Synth/TimeWaster_ReaRack Oscillator.jsfx">https://github.com/ReaTeam/JSFX/raw/db23b7f8a766f430c03420e485b1b34415e40cb1/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Oscillator.jsfx</source>
         <source file="ReaRack Modular Synth/TimeWaster_ReaRack PolySplitter.jsfx">https://github.com/ReaTeam/JSFX/raw/db23b7f8a766f430c03420e485b1b34415e40cb1/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20PolySplitter.jsfx</source>
         <source file="ReaRack Modular Synth/TimeWaster_ReaRack Trigger.jsfx">https://github.com/ReaTeam/JSFX/raw/db23b7f8a766f430c03420e485b1b34415e40cb1/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Trigger.jsfx</source>
+      </version>
+      <version name="1.2" author="Malcolm Smith" time="2017-01-25T14:43:29Z">
+        <changelog><![CDATA[See separate changelogs in each module]]></changelog>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack Amplifier.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Amplifier.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack CCmixer.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20CCmixer.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack EnvGen.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20EnvGen.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack Filter.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Filter.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack KSDelay.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20KSDelay.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack KeyFollower.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20KeyFollower.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack LFO.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20LFO.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack Oscillator.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Oscillator.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack PolySplitter.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20PolySplitter.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack Trigger.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Trigger.jsfx</source>
+        <source file="ReaRack Modular Synth/Timewaster_ReaRack SampleAndHold.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/Timewaster_ReaRack%20SampleAndHold.jsfx</source>
       </version>
     </reapack>
   </category>
