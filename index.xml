@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="88b8c57c37d9d0b7209c6137dc161f033e6e6ff9">
+<index version="1" name="ReaTeam JSFX" commit="f5af11d7b40782c8078ef8ba468732e8b1872dde">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -311,6 +311,23 @@
         <source file="anomaly_Bassprofessor/knob2.png">https://github.com/ReaTeam/JSFX/raw/5e2edee646a858d3c463ff7d707dcf3832095118/Guitar/anomaly_Bassprofessor/knob2.png</source>
         <source file="anomaly_Bassprofessor/knob3.png">https://github.com/ReaTeam/JSFX/raw/5e2edee646a858d3c463ff7d707dcf3832095118/Guitar/anomaly_Bassprofessor/knob3.png</source>
         <source file="anomaly_Bassprofessor/led.png">https://github.com/ReaTeam/JSFX/raw/5e2edee646a858d3c463ff7d707dcf3832095118/Guitar/anomaly_Bassprofessor/led.png</source>
+      </version>
+    </reapack>
+  </category>
+  <category name="MIDI">
+    <reapack name="cfillion_Note Duplicator.jsfx" type="effect" desc="Note Duplicator">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Note Duplicator\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This effect repeats the previous MIDI notes when they are released, preserving the original duration. Useful for playing 16th notes while actually only playing 8th on the keyboard.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="cfillion" time="2017-03-22T21:49:14Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/f5af11d7b40782c8078ef8ba468732e8b1872dde/MIDI/cfillion_Note%20Duplicator.jsfx</source>
       </version>
     </reapack>
   </category>
