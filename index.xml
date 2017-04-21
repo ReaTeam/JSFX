@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f5af11d7b40782c8078ef8ba468732e8b1872dde">
+<index version="1" name="ReaTeam JSFX" commit="b858e8ace51ac0be8d0cbb0d995ca8efa82175f4">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -315,6 +315,22 @@
     </reapack>
   </category>
   <category name="MIDI">
+    <reapack name="cfillion_MIDI Note Length Control.jsfx" type="effect" desc="MIDI Note Length Control">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MIDI Note Length Control\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Set a minimum length in beats and/or a maximum length to incoming MIDI notes. This plugin supports input channel selection and choosing a range of notes on which to apply the processing on.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Putting the minimum or maximum length sliders to 0 will disable that specific feature.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="cfillion" time="2017-04-21T19:20:48Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/b858e8ace51ac0be8d0cbb0d995ca8efa82175f4/MIDI/cfillion_MIDI%20Note%20Length%20Control.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="cfillion_Note Duplicator.jsfx" type="effect" desc="Note Duplicator">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
