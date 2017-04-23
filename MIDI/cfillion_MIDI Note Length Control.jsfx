@@ -1,9 +1,10 @@
 desc: MIDI Note Length Control
-version: 1.0
+version: 1.0.1
+changelog: Fix for subsequent notes being cut early.
 author: cfillion
 about:
   # MIDI Note Length Control
-  
+
   Set a minimum length in beats and/or a maximum length to incoming MIDI notes.
   This plugin supports input channel selection and choosing a
   range of notes on which to apply the processing on.
@@ -68,12 +69,12 @@ pos += samplesblock / srate;
 while(midirecv(offset, msg, note, vel)) (
   type = msg & 0xf0;
   chan = msg & 0x0f;
-  
+
   type == $x80 ? ( // note off
     type = $x90;
     vel = 0;
   );
-  
+
   passthrough = 1;
   capture = (!slider3 || (slider3-1) == chan) &&
     note >= slider4 && note <= slider5;
@@ -84,18 +85,17 @@ while(midirecv(offset, msg, note, vel)) (
       notebuf[note] ? releaseNote(note);
       notebuf[note] = pos;
       chanbuf[note] = chan;
-    ) : slider1 ? (
+    ) : slider1 && notebuf[note] ? (
       // note off
       passthrough = 0;
       offnbuf[note] = 1;
       isOverMinimum(note) ? releaseNote(note);
     );
   );
-  
+
   passthrough ? midisend(offset, msg, note, vel);
 );
 
-// process currently held or repeated notes
 i = 0;
 loop(BUFSIZE, (
   isOverMinimum(i) || isOverMaximum(i) ? releaseNote(i);
