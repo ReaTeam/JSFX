@@ -1,6 +1,9 @@
 version: 1.0
 desc: Learningbaby
 author: Matt Horn
+links:
+    Forum Thread http://forum.cockos.com/showthread.php?p=1845408
+    Video demonstration/tutorial https://youtu.be/dMTiWafJFmg
 about:
     # Learningbaby
     The Learningbaby is a Sequencer Baby v2 that learns.
