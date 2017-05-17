@@ -1,4 +1,4 @@
-version: 1.0.1
+version: 1.0
 desc: Learningbaby
 author: Matt Horn
 about:
@@ -13,7 +13,7 @@ about:
       (retriggering makes sense for drums, extending for everything else)
     - Clear current pattern by just moving a slider
 changelog:
-    - Added link to demonstration to package info
+    - Released Learningbaby
 
 slider1:0<0,15,1{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}>Pattern
 slider2:60<0,127,1>Note Start
