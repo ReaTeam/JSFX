@@ -1,13 +1,20 @@
 version: 1.0
 desc: Learningbaby
 author: Matt Horn
+links:
+    Forum Thread http://forum.cockos.com/showthread.php?p=1845408
+    Video demonstration/tutorial https://youtu.be/dMTiWafJFmg
 about:
     # Learningbaby
     The Learningbaby is a Sequencer Baby v2 that learns.
     It will add incoming MIDI notes to the pattern.
-    Changes to SeqBabyv2 I had to make for anything to make sense:
+    
+    Video demonstration/tutorial [here](https://youtu.be/dMTiWafJFmg).
+    
+    Features added to Sequencer Baby v2:
     - Select between retriggering notes if sequenced on adjacent ticks and extending
       (retriggering makes sense for drums, extending for everything else)
+    - Clear current pattern by just moving a slider
 changelog:
     - Released Learningbaby
 
