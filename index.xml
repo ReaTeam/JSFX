@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="b95520767d8de9aa7ae8b79a63e443a30f9e0ac9">
+<index version="1" name="ReaTeam JSFX" commit="3febaa4c9d6ae5eeab23af5b75f74152d6b75823">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -348,6 +348,23 @@
       </metadata>
       <version name="1.0" author="cfillion" time="2017-03-22T21:49:14Z">
         <source>https://github.com/ReaTeam/JSFX/raw/f5af11d7b40782c8078ef8ba468732e8b1872dde/MIDI/cfillion_Note%20Duplicator.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mathphreak_Learningbaby.jsfx" type="effect" desc="Learningbaby">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Learningbaby\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The Learningbaby is a Sequencer Baby v2 that learns. It will add incoming MIDI notes to the pattern. Changes to SeqBabyv2 I had to make for anything to make sense:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Select between retriggering notes if sequenced on adjacent ticks and extending (retriggering makes sense for drums, extending for everything else)\sa180\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Matt Horn" time="2017-05-17T06:09:39Z">
+        <changelog><![CDATA[- Released Learningbaby]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/3febaa4c9d6ae5eeab23af5b75f74152d6b75823/MIDI/mathphreak_Learningbaby.jsfx</source>
       </version>
     </reapack>
   </category>
