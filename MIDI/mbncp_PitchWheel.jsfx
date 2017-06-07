@@ -6,7 +6,7 @@ changelog:
   version 0.2 - May 02 2008
   + initial release
 about:
-	can convert pitch ranges (see linked forum thread)
+  can convert pitch ranges (see linked forum thread)
 
 //mbncp (c) 2008
 slider1:0<0,16,1>Input Channel ( 0 = Any )

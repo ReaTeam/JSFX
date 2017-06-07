@@ -6,12 +6,12 @@ changelog:
   version 0.3 - April 18 2008
   + initial release
 about:
-	- Holds each note until next note is pressed.  
-	  
-	Pressing the same note will turn it off  
-	Legato: Trigger the new one before turning off the previous one  
-	Note Holding can be turned off also via another CC  
-	In this case it still plays mono and legato can still be switched on or off  
+  - Holds each note until next note is pressed.  
+    
+  Pressing the same note will turn it off  
+  Legato: Trigger the new one before turning off the previous one  
+  Note Holding can be turned off also via another CC  
+  In this case it still plays mono and legato can still be switched on or off  
 	
 	
 slider1:0<0,16,1>Input Channel ( 0 = Any )
