@@ -1,9 +1,9 @@
-desc: PitchWheel Control Center v0.2(click edit for help)
+desc: PitchWheel Control Center
 version: 0.2
 author: mbncp
 link: http://forum.cockos.com/showthread.php?p=181581
 changelog:
-  version 0.2 - May 02 2008
+  May 02 2008
   + initial release
 about:
   can convert pitch ranges (see linked forum thread)
