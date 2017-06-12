@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="6fee80c6f700aac85ae85bbfb1fde81ee8b5d639">
+<index version="1" name="ReaTeam JSFX" commit="00242ec931900ddb5eb21c174dca5181b600b2b1">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -373,6 +373,21 @@ here
       <version name="1.0" author="Matt Horn" time="2017-05-17T06:09:39Z">
         <changelog><![CDATA[- Released Learningbaby]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/6fee80c6f700aac85ae85bbfb1fde81ee8b5d639/MIDI/mathphreak_Learningbaby.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mpl_Reaktor Blocks PitchGate to MIDI.jsfx" type="effect" desc="Reaktor Blocks PitchGate to MIDI">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 I wrote this JSFX for using Reaktor Blocks sequencers with regular VST plugins. It uses left and right audio inputs for pitch CV and gate impulses respectively. Thanks to Eugen27771 for help with MIDI timing issues!\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="MPL" time="2017-06-12T18:41:24Z">
+        <changelog><![CDATA[init]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/00242ec931900ddb5eb21c174dca5181b600b2b1/MIDI/mpl_Reaktor%20Blocks%20PitchGate%20to%20MIDI.jsfx</source>
       </version>
     </reapack>
   </category>
