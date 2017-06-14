@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="00242ec931900ddb5eb21c174dca5181b600b2b1">
+<index version="1" name="ReaTeam JSFX" commit="c007e71f7caeed0d85a3bb665fd092540e228798">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -362,9 +362,11 @@
 here
 }}}
 .\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 {\b NOTE:} If you use automation to change the selected pattern, you will get incorrect results. Change the "Next Pattern" during a loop and you'll get a correct transition.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Features added to Sequencer Baby v2:\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Select between retriggering notes if sequenced on adjacent ticks and extending (retriggering makes sense for drums, extending for everything else)\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Clear current pattern by just moving a slider\sa180\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Clear current pattern by just moving a slider\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Better automated pattern switching\sa180\par}
 }
 ]]></description>
         <link rel="website" href="http://forum.cockos.com/showthread.php?p=1845408">Forum Thread</link>
@@ -373,6 +375,10 @@ here
       <version name="1.0" author="Matt Horn" time="2017-05-17T06:09:39Z">
         <changelog><![CDATA[- Released Learningbaby]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/6fee80c6f700aac85ae85bbfb1fde81ee8b5d639/MIDI/mathphreak_Learningbaby.jsfx</source>
+      </version>
+      <version name="2.0" author="Matt Horn" time="2017-06-14T00:59:38Z">
+        <changelog><![CDATA[- Added "Next Pattern" for better automation of pattern switching]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/c007e71f7caeed0d85a3bb665fd092540e228798/MIDI/mathphreak_Learningbaby.jsfx</source>
       </version>
     </reapack>
     <reapack name="mpl_Reaktor Blocks PitchGate to MIDI.jsfx" type="effect" desc="Reaktor Blocks PitchGate to MIDI">
