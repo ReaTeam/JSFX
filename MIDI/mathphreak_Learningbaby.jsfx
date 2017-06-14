@@ -1,4 +1,4 @@
-version: 1.0
+version: 2.0
 desc: Learningbaby
 author: Matt Horn
 links:
@@ -11,20 +11,25 @@ about:
     
     Video demonstration/tutorial [here](https://youtu.be/dMTiWafJFmg).
     
+    **NOTE:** If you use automation to change the selected pattern, you will get incorrect results.
+    Change the "Next Pattern" during a loop and you'll get a correct transition.
+    
     Features added to Sequencer Baby v2:
     - Select between retriggering notes if sequenced on adjacent ticks and extending
       (retriggering makes sense for drums, extending for everything else)
     - Clear current pattern by just moving a slider
+    - Better automated pattern switching
 changelog:
-    - Released Learningbaby
+    - Added "Next Pattern" for better automation of pattern switching
 
 slider1:0<0,15,1{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}>Pattern
-slider2:60<0,127,1>Note Start
-slider3:16<4,128,1>Sequence Length
-slider4:16<1,32,1>Number Of Notes
-slider5:1<0.125,4.0,.125>Rate
-slider6:0<0,1,1{Retrigger,Extend}>Repeat Note Behavior
-slider7:0<0,100,1>Clear
+slider2:0<0,15,1{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}>Next Pattern
+slider3:60<0,127,1>Note Start
+slider4:16<4,128,1>Sequence Length
+slider5:16<1,32,1>Number Of Notes
+slider6:1<0.125,4.0,.125>Rate
+slider7:0<0,1,1{Retrigger,Extend}>Repeat Note Behavior
+slider8:0<0,100,1>Clear
 
 in_pin:none
 out_pin:none
@@ -57,21 +62,21 @@ want_previewoff=0;
 /** REACT TO INPUT **/
 @slider
 // # of sequencer ticks to play every beat (quarter note) in the project
-rateadj = 4 * slider5;
+rateadj = 4 * slider6;
 
-retrigger = !slider6;
+retrigger = !slider7;
 
 // Lowest MIDI note value
-basenote=slider2|0; 
+basenote=slider3|0; 
 // Selected pattern, limited to reasonable values
 p=slider1|0;
 p<0?p=0:p>=npatterns?p=npatterns-1;
 
 // # of notes that exist
-numnotes=slider4|0;
+numnotes=slider5|0;
 
 // # of ticks in sequence
-newsz=slider3|0;
+newsz=slider4|0;
 
 // If tick count changed, embiggen tick list
 newsz >= 1 && listlength != newsz ? (
@@ -97,17 +102,25 @@ newsz >= 1 && listlength != newsz ? (
     listlength = newsz;
 );
 
+// Is the next pattern going to be different?
+nextchg=slider1 != slider2;
+// Next pattern, limited to reasonable values
+np=slider2|0;
+np<0?np=0:np>=npatterns?np=npatterns-1;
+
 // Specified pattern's tick list
 notelist=listlength*p;
+// Next pattern's tick list
+nextlist=listlength*np;
 
 // If clearing, clear
-slider7 > 0 ? (
+slider8 > 0 ? (
     i = 0;
     loop(listlength,
         notelist[i] = 0;
         i += 1;
     );
-    slider7 = 0;
+    slider8 = 0;
 );
 
 /** DE/SERIALIZE CONFIG **/
@@ -160,6 +173,10 @@ while (
             bp = beat_position + (offs * dbeatpos * (play_state&1));
             bp = bp * rateadj;
             bp = floor(bp + 0.5);
+            rightlist = notelist;
+            nextchg && bp >= listlength ? (
+                rightlist = nextlist;
+            );
             bp = bp % listlength;
             // Find the note
             nt = m2 - basenote;
@@ -168,20 +185,20 @@ while (
                 // Make a mask
                 mask = 2^nt;
                 // Unless this is a note-off that would erase the note entirely...
-                (!(s == $x80 && (bp == 0 || !(notelist[bp - 1] & mask)))) ? (
+                (!(s == $x80 && (bp == 0 || !(rightlist[bp - 1] & mask)))) ? (
                     // Set the note once always
-                    nlm=(notelist[bp] & mask);
-                    s == $x80 && nlm ? notelist[bp]-=mask;
-                    s == $x90 && !nlm ? notelist[bp]+=mask;
+                    nlm=(rightlist[bp] & mask);
+                    s == $x80 && nlm ? rightlist[bp]-=mask;
+                    s == $x90 && !nlm ? rightlist[bp]+=mask;
                     bp += 1;
                     // Unless retriggering, set/clear the note forwards to the end of the pattern or the next note
                     while (!retrigger && bp < listlength &&
                         (bp == listlength - 1 || (s == $x80 ?
-                            notelist[bp] & mask :
-                            !(notelist[bp + 1] & mask)))) (
-                        nlm=(notelist[bp] & mask);
-                        s == $x80 && nlm ? notelist[bp]-=mask;
-                        s == $x90 && !nlm ? notelist[bp]+=mask;
+                            rightlist[bp] & mask :
+                            !(rightlist[bp + 1] & mask)))) (
+                        nlm=(rightlist[bp] & mask);
+                        s == $x80 && nlm ? rightlist[bp]-=mask;
+                        s == $x90 && !nlm ? rightlist[bp]+=mask;
                         bp += 1;
                     );
                 );
@@ -226,6 +243,14 @@ loop((play_state&1) ? samplesblock : 1,
     beatpos=(play_state&1) ? (curbeatpos * rateadj)%listlength : -100;
     // If we advanced to a new tick...
     beatpos != lbeatpos || !(play_state&1) ? (
+        // If this should be a transition between patterns...
+        nextchg && beatpos == 0 ? (
+            // Switch to the new pattern for playback
+            notelist = nextlist;
+            // Update the Pattern selection
+            slider1 = slider2;
+            sliderchange(slider1);
+        );
         // Current tick's note data, as a bitmask (which is smart)
         a = (play_state&1) ? notelist[beatpos] : 0;
         // MIDI note value matching least significant bit of a
@@ -361,7 +386,7 @@ loop(numnotes,
 
         gfx_r=use_r; gfx_g=use_g; gfx_b=use_b;  
 
-        !(xpos % (ts_denom * slider5)) ? ( gfx_g=gfx_r; gfx_r=gfx_b; gfx_b=use_g;);
+        !(xpos % (ts_denom * slider6)) ? ( gfx_g=gfx_r; gfx_r=gfx_b; gfx_b=use_g;);
 
         (lbeatpos == xpos || (play_state&2 && (beat_position * rateadj)%listlength == xpos)) ? ( gfx_r=gfx_g=gfx_b=sel?0.8:0.4; ) :
             !sel ? (gfx_r*=0.55; gfx_g*=0.55; gfx_b*=0.55; );
