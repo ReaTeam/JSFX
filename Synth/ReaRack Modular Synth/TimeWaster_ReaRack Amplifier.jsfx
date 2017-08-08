@@ -12,8 +12,8 @@ slider1:20<0,127,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,
 
 @init
 
-modval = 0;
-prelevel = 0;
+//modval = 0;
+//prelevel = 0;
 
 @slider
 
@@ -49,6 +49,7 @@ prelevel = modlevel;
 @sample
 count <= modcount? outlevel +=modstep;
 outlevel < 0.001 ? outlevel = 0;
+
 
 spl0 = spl0*outlevel;
 spl1 = spl1*outlevel;
