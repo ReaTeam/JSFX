@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="2e2341f8d03374a1b29eb2f12f25f751856266d0">
+<index version="1" name="ReaTeam JSFX" commit="c007e71f7caeed0d85a3bb665fd092540e228798">
   <category name="Analysis">
     <reapack name="anomaly_Skope.jsfx" type="effect" desc="Skope">
       <metadata>
@@ -314,6 +314,89 @@
       </version>
     </reapack>
   </category>
+  <category name="MIDI">
+    <reapack name="cfillion_MIDI Note Length Control.jsfx" type="effect" desc="MIDI Note Length Control">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MIDI Note Length Control\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Set a minimum length in beats and/or a maximum length to incoming MIDI notes. This plugin supports input channel selection and choosing a range of notes on which to apply the processing on.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Putting the minimum or maximum length sliders to 0 will disable that specific feature.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="cfillion" time="2017-04-21T19:20:48Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/b858e8ace51ac0be8d0cbb0d995ca8efa82175f4/MIDI/cfillion_MIDI%20Note%20Length%20Control.jsfx</source>
+      </version>
+      <version name="1.0.1" author="cfillion" time="2017-04-23T15:29:14Z">
+        <changelog><![CDATA[Fix for subsequent notes being cut early.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/b95520767d8de9aa7ae8b79a63e443a30f9e0ac9/MIDI/cfillion_MIDI%20Note%20Length%20Control.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="cfillion_Note Duplicator.jsfx" type="effect" desc="Note Duplicator">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Note Duplicator\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This effect repeats the previous MIDI notes when they are released, preserving the original duration. Useful for playing 16th notes while actually only playing 8th on the keyboard.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="cfillion" time="2017-03-22T21:49:14Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/f5af11d7b40782c8078ef8ba468732e8b1872dde/MIDI/cfillion_Note%20Duplicator.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mathphreak_Learningbaby.jsfx" type="effect" desc="Learningbaby">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Learningbaby\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The Learningbaby is a Sequencer Baby v2 that learns. It will add incoming MIDI notes to the pattern.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Video demonstration/tutorial {\field{\*\fldinst{HYPERLINK "https://youtu.be/dMTiWafJFmg"}}{\fldrslt{\ul
+here
+}}}
+.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 {\b NOTE:} If you use automation to change the selected pattern, you will get incorrect results. Change the "Next Pattern" during a loop and you'll get a correct transition.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Features added to Sequencer Baby v2:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Select between retriggering notes if sequenced on adjacent ticks and extending (retriggering makes sense for drums, extending for everything else)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Clear current pattern by just moving a slider\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Better automated pattern switching\sa180\par}
+}
+]]></description>
+        <link rel="website" href="http://forum.cockos.com/showthread.php?p=1845408">Forum Thread</link>
+        <link rel="website" href="https://youtu.be/dMTiWafJFmg">Video demonstration/tutorial</link>
+      </metadata>
+      <version name="1.0" author="Matt Horn" time="2017-05-17T06:09:39Z">
+        <changelog><![CDATA[- Released Learningbaby]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/6fee80c6f700aac85ae85bbfb1fde81ee8b5d639/MIDI/mathphreak_Learningbaby.jsfx</source>
+      </version>
+      <version name="2.0" author="Matt Horn" time="2017-06-14T00:59:38Z">
+        <changelog><![CDATA[- Added "Next Pattern" for better automation of pattern switching]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/c007e71f7caeed0d85a3bb665fd092540e228798/MIDI/mathphreak_Learningbaby.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mpl_Reaktor Blocks PitchGate to MIDI.jsfx" type="effect" desc="Reaktor Blocks PitchGate to MIDI">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 I wrote this JSFX for using Reaktor Blocks sequencers with regular VST plugins. It uses left and right audio inputs for pitch CV and gate impulses respectively. Thanks to Eugen27771 for help with MIDI timing issues!\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="MPL" time="2017-06-12T18:41:24Z">
+        <changelog><![CDATA[init]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/00242ec931900ddb5eb21c174dca5181b600b2b1/MIDI/mpl_Reaktor%20Blocks%20PitchGate%20to%20MIDI.jsfx</source>
+      </version>
+    </reapack>
+  </category>
   <category name="Misc">
     <reapack name="TiaR_PM_Resynth.jsfx" type="effect" desc="MIDI PM Resynth">
       <metadata>
@@ -572,7 +655,7 @@ version 1.02
 \widowctrl\hyphauto
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 ReaRack Modular Synth\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 ReaRack is a modular MIDI controlled digital synth system. There are currently nine modules- Oscillator LFO Envelope Generator Filter Amplifier CC Mixer Key Follower Trigger Poly Splitter\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 ReaRack is a modular MIDI controlled digital synth system. There are currently eleven modules- Oscillator LFO Envelope Generator Filter Amplifier CC Mixer Key Follower Trigger Poly Splitter CC Sample and Hold Karplus-Strong Delay\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 User Guide\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 http://stash.reaper.fm/28621/ReaRack_Manual.pdf\par}
 }
@@ -589,6 +672,20 @@ version 1.02
         <source file="ReaRack Modular Synth/TimeWaster_ReaRack Oscillator.jsfx">https://github.com/ReaTeam/JSFX/raw/db23b7f8a766f430c03420e485b1b34415e40cb1/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Oscillator.jsfx</source>
         <source file="ReaRack Modular Synth/TimeWaster_ReaRack PolySplitter.jsfx">https://github.com/ReaTeam/JSFX/raw/db23b7f8a766f430c03420e485b1b34415e40cb1/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20PolySplitter.jsfx</source>
         <source file="ReaRack Modular Synth/TimeWaster_ReaRack Trigger.jsfx">https://github.com/ReaTeam/JSFX/raw/db23b7f8a766f430c03420e485b1b34415e40cb1/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Trigger.jsfx</source>
+      </version>
+      <version name="1.2" author="Malcolm Smith" time="2017-01-25T14:43:29Z">
+        <changelog><![CDATA[See separate changelogs in each module]]></changelog>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack Amplifier.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Amplifier.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack CCmixer.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20CCmixer.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack EnvGen.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20EnvGen.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack Filter.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Filter.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack KSDelay.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20KSDelay.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack KeyFollower.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20KeyFollower.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack LFO.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20LFO.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack Oscillator.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Oscillator.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack PolySplitter.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20PolySplitter.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack Trigger.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack%20Trigger.jsfx</source>
+        <source file="ReaRack Modular Synth/Timewaster_ReaRack SampleAndHold.jsfx">https://github.com/ReaTeam/JSFX/raw/88b8c57c37d9d0b7209c6137dc161f033e6e6ff9/Synth/ReaRack%20Modular%20Synth/Timewaster_ReaRack%20SampleAndHold.jsfx</source>
       </version>
     </reapack>
   </category>

@@ -106,6 +106,7 @@ trig == 1? (
   
 spl0 = bpos[0] * velocity;
 spl1 = spl0;
+
 count+=1;
 count > looplen ? (
   count-=looplen;

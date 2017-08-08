@@ -1,0 +1,103 @@
+desc: MIDI Note Length Control
+version: 1.0.1
+changelog: Fix for subsequent notes being cut early.
+author: cfillion
+about:
+  # MIDI Note Length Control
+
+  Set a minimum length in beats and/or a maximum length to incoming MIDI notes.
+  This plugin supports input channel selection and choosing a
+  range of notes on which to apply the processing on.
+
+  Putting the minimum or maximum length sliders to 0 will disable that specific feature.
+
+slider1:0<0,255>Minimum Length (Beats)
+slider2:0<0,255>Maximum Length (Beats)
+slider3:0<0,16,1{Any,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Input Channel
+slider4:0<0,127>Lowest Key
+slider5:127<0,127>Highest Key
+
+@init
+BUFSIZE = 128;
+
+notebuf = 0;
+memset(notebuf, 0, BUFSIZE);
+
+chanbuf = notebuf + BUFSIZE;
+memset(chanbuf, 0, BUFSIZE);
+
+offnbuf = chanbuf + BUFSIZE;
+memset(offnbuf, 0, BUFSIZE);
+
+pos = 0;
+
+function releaseNote(note)
+(
+  midisend(offset, $x90 + chanbuf[note], note, 0);
+  notebuf[note] = 0;
+  chanbuf[note] = 0;
+  offnbuf[note] = 0;
+);
+
+function beats2time(val)
+(
+  val * (tempo / ts_denom / 60);
+);
+
+function isOverMinimum(note)
+(
+  slider1 && notebuf[note] && offnbuf[note] &&
+    pos >= notebuf[note] + beats2time(slider1);
+);
+
+function isOverMaximum(note)
+(
+  slider2 && notebuf[note] &&
+    pos >= notebuf[note] + beats2time(slider2);
+);
+
+@slider
+slider1 && slider2 ? (
+  slider1 = min(slider1, slider2);
+  slider2 = max(slider1, slider2);
+);
+
+@block
+pos += samplesblock / srate;
+
+// process new midi events
+while(midirecv(offset, msg, note, vel)) (
+  type = msg & 0xf0;
+  chan = msg & 0x0f;
+
+  type == $x80 ? ( // note off
+    type = $x90;
+    vel = 0;
+  );
+
+  passthrough = 1;
+  capture = (!slider3 || (slider3-1) == chan) &&
+    note >= slider4 && note <= slider5;
+
+  type == $x90 && capture ? ( // note message
+    vel > 0 ? (
+      // note on
+      notebuf[note] ? releaseNote(note);
+      notebuf[note] = pos;
+      chanbuf[note] = chan;
+    ) : slider1 && notebuf[note] ? (
+      // note off
+      passthrough = 0;
+      offnbuf[note] = 1;
+      isOverMinimum(note) ? releaseNote(note);
+    );
+  );
+
+  passthrough ? midisend(offset, msg, note, vel);
+);
+
+i = 0;
+loop(BUFSIZE, (
+  isOverMinimum(i) || isOverMaximum(i) ? releaseNote(i);
+  i += 1;
+));
