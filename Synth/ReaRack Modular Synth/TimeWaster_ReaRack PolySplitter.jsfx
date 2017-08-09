@@ -1,0 +1,90 @@
+version: 1.1.0
+desc:ReaRack - Poly Splitter
+noindex: true
+author: Malcom Smith
+
+changelog: Improved channel handling and graphics.
+   Version 1.0.0 (2/9/2016) Initial release.
+   Version 1.1.0 (4/8/2017) Improved channel handling and graphics.
+
+Copyright(C) 2016 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
+License: LGPL - http://www.gnu.org/licenses/lgpl.html
+
+slider1:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Lowest MIDI Output Channel
+
+in_pin:none
+out_pin:none
+
+@init
+vc = 1;
+loop(16,
+  vc[128] = -1;
+  vc+=1;
+  );
+  
+@slider
+mychan = slider1+1;
+mychaninc = 0;
+
+@block
+while (midirecv(offset, msg1, msg2, msg3))
+(
+ //Find next vacant channel
+ vchannel = mychan;
+ while (vchannel[128] >= 0)
+ (
+  vchannel += 1;
+  );
+  // Extract message type
+  status = msg1 & $xF0;
+    // Is it a note on event?
+    status == $x90 ?
+     (
+      // Pass through on vacant channel
+       vchannel <= 16 ?
+        (
+        msg2[0] = vchannel;
+        vchannel[128] = msg2;
+        midisend(offset, msg1+vchannel, msg2, msg3);
+        );
+      )
+      :
+      (
+      // Is it a note off event?
+       status == $x80 ?
+         (
+          // Pass through on apropriate channel
+           midisend(offset, msg1+msg2[0], msg2, msg3);
+           (msg2[0])[128] = -1;
+         );
+      );
+);
+
+@gfx 450 50
+
+gfx_r = 0;
+gfx_g = 1;
+gfx_b = 0;
+gfx_a = 1;
+gfx_x = 5;
+gfx_y = 10;
+
+gfx_drawstr("Channel:");
+
+achan = mychan;
+
+while(achan <= 16)
+  (
+  achan[128] < 0 ?
+    (
+    gfx_r = 1;
+    gfx_g = 0;
+    ):(
+    gfx_r = 0;
+    gfx_g = 1;
+    );
+  achan < 10 ? gfx_drawstr("  "):gfx_drawstr(" ");
+  gfx_drawnumber(achan,0);
+  achan +=1;
+  );
+ 
