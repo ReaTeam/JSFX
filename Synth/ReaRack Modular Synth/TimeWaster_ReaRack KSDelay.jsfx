@@ -100,13 +100,12 @@ looplen = looplen1*adj;
 bufflen = floor(looplen);
 trig == 1? (
   bpos<=bufflen ? (
-    bpos[0] = spl0;
-    bpos[1] = spl1;
+    bpos[0] = (spl0+spl1)/2;
     );
   );
   
-spl0 = bpos[0]* velocity;
-spl1 = bpos[1]* velocity;
+spl0 = bpos[0] * velocity;
+spl1 = spl0;
 count+=1;
 count > looplen ? (
   count-=looplen;
@@ -127,7 +126,7 @@ gfx_x = 25;
 gfx_y = 80+(((0[0]+0[1])/2)*40*velocity);
 
 while (gpos <= bufflen)(
-  gfx_lineto(25+(gpos*ginc),80+(velocity*((gpos[0]+gpos[1])/2)*40));
+  gfx_lineto(25+(gpos*ginc),80+(velocity*gpos[0]*40));
   gpos+=1;
  );
  
