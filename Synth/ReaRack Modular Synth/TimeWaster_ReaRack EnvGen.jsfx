@@ -1,0 +1,405 @@
+version: 1.2.0
+desc:ReaRack - Envelope Generator
+noindex: true
+author: Malcolm Smith
+about: MIDI Envelope Generator module for the ReaRack modular JSFX synth system.
+changelog: Added MIDI CC modulation for DADSR envelope paramaeters. Added Hold function. Fixed an issue causing output values above 127 in some situations.
+
+/*Version 1.0.0 (2/9/2016) Initial release.
+  Version 1.0.1 (17/9/2016) Fixed an issue with overlapping notes causing 'premature release'.
+                            This will still occur if the notes are of the same note value.
+                            Changed the default output channel to 1 (was All).
+  Version 1.1.0 (25/9/2016) Added MIDI CC modulation for DADSR envelope paramaeters.
+                            Added Hold function.
+                            Fixed an issue causing output values above 127 in some situations.
+  Version 1.2.0 (9/1/2017)  Added non linear option for envelope segments.
+                            Added sustain ramp up or ramp down option.
+
+  Copyright(C) 2016 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
+  License: LGPL - http://www.gnu.org/licenses/lgpl.html
+*/
+
+slider1:0<0,127,1{Off,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>CC Input (Delay)
+slider2:0<0,127,1{Off,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>CC Input (Attack)
+slider3:0<0,127,1{Off,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>CC Input (Decay)
+slider4:0<0,127,1{Off,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>CC Input (Sustain)
+slider5:0<0,127,1{Off,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>CC Input (Release)
+slider6:0<0,127,1{Off,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>CC Input (Hold)
+slider7:20<0,127,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>CC Output
+slider8:1<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Output Channel
+slider9:1<0.5,10,0.5> Envelope sliders range (sec)*
+slider10:0<0,1,0.001>DELAY time*
+slider11:1<0,1,0.001>Delay time modulation range*
+slider12:0<0,1,0.001>ATTACK time*
+slider13:1<0,1,0.001>Attack time modulation range*
+slider14:0<-1,1,0.1>Attack envelope shape*
+slider15:0.5<0,1,0.001>DECAY time*
+slider16:1.5<0,1,0.001>Decay time modulation range*
+slider17:0<-1,1,0.1>Decay envelope shape*
+slider18:63<0,127,1>SUSTAIN level*
+slider19:127<0,127,1>Sustain level modulation range*
+slider20:0<-1,1>Sustain level ramp rate*
+slider21:0.5<0,1,0.001>RELEASE time*
+slider22:1.5<0,1,0.001>Release time modulation range*
+slider23:0<-1,1,0.1>Release envelope shape*
+slider24:0<0,1,0.001>HOLD time*
+slider25:1<0,1,0.001>Hold time modulation range*
+slider26:1<0,1>Velocity Sensitivity*
+slider27:0<0,3,1{None,Master,Slave}>*Class
+slider28:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Class Group
+
+options:gmem=ReRackEG
+
+in_pin:none
+out_pin:none
+ 
+@init
+blknum = 0;
+envlev = 0;
+preenvlevV = 0;
+sliderbits = 2^9+2^10+2^11+2^12+2^13+2^14+2^15+2^16+2^17+1^18+2^19+2^20+2^21+2^22+2^23+2^24+2^25+2^26;
+@slider
+group = slider28*30;
+
+slider27 == 1 ? (
+  //gmem[group+1] = slider1;
+  //gmem[group+2] = slider2;
+  //gmem[group+3] = slider3;
+  //gmem[group+4] = slider4;
+  //gmem[group+5] = slider5;
+  //gmem[group+6] = slider6;
+  //gmem[group+7] = slider7;
+  //gmem[group+8] = slider8;
+  gmem[group+9] = slider9;
+  gmem[group+10] = slider10;
+  gmem[group+11] = slider11;
+  gmem[group+12] = slider12;
+  gmem[group+13] = slider13;
+  gmem[group+14] = slider14;
+  gmem[group+15] = slider15;
+  gmem[group+16] = slider16;
+  gmem[group+17] = slider17;
+  gmem[group+18] = slider18;
+  gmem[group+19] = slider19;
+  gmem[group+20] = slider20;
+  gmem[group+21] = slider21;
+  gmem[group+22] = slider22;
+  gmem[group+23] = slider23;
+  gmem[group+24] = slider24;
+  gmem[group+25] = slider25;
+  gmem[group+26] = slider26;
+  
+  );
+ 
+@block
+
+slider27 == 2 ? (
+  //slider1 = gmem[group+1];
+  //slider2 = gmem[group+2];
+  //slider3 = gmem[group+3];
+  //slider4 = gmem[group+4];
+  //slider5 = gmem[group+5];
+  //slider6 = gmem[group+6];
+  //slider7 = gmem[group+7];
+  //slider8 = gmem[group+8];
+  slider9 = gmem[group+9];
+  slider10 = gmem[group+10];
+  slider11 = gmem[group+11];
+  slider12 = gmem[group+12];
+  slider13 = gmem[group+13];
+  slider14 = gmem[group+14];
+  slider15 = gmem[group+15];
+  slider16 = gmem[group+16];
+  slider17 = gmem[group+17];
+  slider18 = gmem[group+18];
+  slider19 = gmem[group+19];
+  slider20 = gmem[group+20];
+  slider21 = gmem[group+21];
+  slider22 = gmem[group+22];
+  slider23 = gmem[group+23];
+  slider24 = gmem[group+24];
+  slider25 = gmem[group+25];
+  slider26 = gmem[group+26];
+    
+  sliderchange(sliderbits);
+  
+  );
+  
+ccIn1 = slider1-1;
+ccIn2 = slider2-1;
+ccIn3 = slider3-1;
+ccIn4 = slider4-1;
+ccIn5 = slider5-1;
+ccIn6 = slider6-1;
+mycc = slider7;
+chanout = slider8-1;
+delset = slider10*slider9;
+gdel = slider10;
+delrange = slider11*slider9;
+attset = slider12*slider9;
+gatt = slider12;
+attrange = slider13*slider9;
+aindex = slider14 < 0 ? ((slider14/2)+1)^2 : (slider14*2)+1^2;
+decset = slider15 < 0.001 ? 0.001*slider9 : slider15*slider9;
+gdec =   slider15 < 0.001 ? 0.001 : slider15;
+decrange = slider16*slider9;
+dindex = slider17 < 0 ? ((-slider17)+1)^2 : ((-slider17/2)+1)^2;
+susset = slider18;
+susrange = slider19;
+slope = ((srate/samplesblock)*((slider20)^3))/50;
+relset = slider21 < 0.001 ? 0.001*slider9 : slider21*slider9;
+grel = slider21 < 0.001 ? 0.001: slider21;
+relrange = slider22*slider9;
+rindex = slider23 < 0 ? ((-slider23)+1)^2 : ((-slider23/2)+1)^2;
+holdset = slider24*slider9;
+holdrange = slider25*slider9;
+velset = slider26;
+  
+dels = (srate/samplesblock)*delset;
+delr = (srate/samplesblock)*delrange;
+atts = (srate/samplesblock)*attset;
+attr = (srate/samplesblock)*attrange;
+decs = (srate/samplesblock)*decset;
+decr = (srate/samplesblock)*decrange;
+suss = susset;
+susr = susrange;
+rels = (srate/samplesblock)*relset;
+relr = (srate/samplesblock)*relrange;
+holds = (srate/samplesblock)*holdset;
+holdr = (srate/samplesblock)*holdrange;
+
+modstatus = $xB0+chanout;
+
+while (midirecv(offset, msg1, msg2, msg3))
+(  
+  // Extract message type
+  status = msg1 & $xF0;
+    // Is it a note on event?
+    status == $x90 ?
+     (
+      // Trigger Envelope
+      blknum = 0;   
+      envon = 1;
+      noteon = 1;
+      holdon = 1;
+      trig = 1;
+      ramp = 0;
+      // Get note
+      note = msg2;
+      // Get velocity
+      vel = msg3;
+      //End of Get note and velocity
+      )
+      :
+      (
+      // Is it a note off event for the same note?
+       status == $x80 ?
+          (
+          // Get note
+           msg2 == note ?
+            (
+             // Release Envelope    
+              noteon = 0;
+            )
+         )
+      );
+       // Is it a controller event?
+       // Is it the right CC for input 1? 
+       status == $xB0 &&  msg2 == ccIn1 ? 
+      (
+       delmod = msg3/127;
+      );
+       // Is it a controller event?
+       // Is it the right CC for input 2? 
+       status == $xB0 &&  msg2 == ccIn2 ? 
+      (
+       attmod = msg3/127;
+      );
+       // Is it a controller event?
+       // Is it the right CC for input 3?         
+       status == $xB0 &&  msg2 == ccIn3 ? 
+      (
+       decmod = msg3/127;
+      );
+       // Is it a controller event?
+       // Is it the right CC for input 4?         
+       status == $xB0 &&  msg2 == ccIn4 ? 
+      (
+       susmod = msg3/127;
+      );
+       // Is it a controller event?
+       // Is it the right CC for input 5?         
+       status == $xB0 &&  msg2 == ccIn5 ? 
+      (
+       relmod = msg3/127;
+      );
+      // Is it a controller event?
+      // Is it the right CC for input 6?         
+       status == $xB0 &&  msg2 == ccIn6 ? 
+      (
+      holdmod = msg3/127;
+      );
+    // Pass through
+    midisend(offset, msg1, msg2, msg3);
+);
+
+ccIn1 == -1 ? delmod = 0;
+ccIn2 == -1 ? attmod = 0;
+ccIn3 == -1 ? decmod = 0;
+ccIn4 == -1 ? susmod = 0;
+ccIn5 == -1 ? relmod = 0;
+ccIn6 == -1 ? holdmod = 0;
+del = dels + ((delr-dels) * delmod);
+att = atts + ((attr-atts) * attmod);
+dec = decs + ((decr-decs) * decmod);
+sus = floor(suss + ((susr-suss) * susmod));
+rel = ceil (rels + ((relr-rels) * relmod));
+holdpos = del + (holds + ((holdr-holds) * holdmod));
+attpos = del + att;
+decpos = attpos + dec;
+relpos = (decpos + rel)*1.333;
+
+blknum > holdpos  ? holdon = 0;
+
+noteon == 0 && holdon == 0 && envon == 1? (
+  envon = 0;
+  blkrel = blknum;
+  rellev = envlev;
+  rellevi = ((127-rellev)/127)^rindex;
+);
+
+envon == 1 ?
+(
+  blknum < del ? (
+  envlev = 0;
+  ):
+  blknum < attpos ? (
+  envlev = floor((((1-((att-(blknum - del))/att)^(1/aindex)))*127)+0.5);
+  ):
+  blknum < decpos ? (
+  envlev = floor(((1-(((blknum-attpos)*(((127-sus)/127)^dindex))/dec)^(1/dindex))*127)+0.5);
+  ):
+  blknum >= decpos ? (
+  trig == 1 ? (
+    envlev = sus;
+    trig = 0;
+    ramp = slope;
+    ):(
+    envlev = floor(sus + ramp + 0.5);
+    envlev < 0 ? envlev = 0;
+    envlev > 127 ? envlev = 127;  
+    ramp += slope;  
+    );
+  );
+);
+envon == 0 ?
+(
+  envlev > 0 ? (
+  //envlev = floor(((1-(rellevi+(((blknum - blkrel)/rel)*(1-rellevi)))^(1/rindex))*127)+0.5);
+  envlev = floor(((1-(((blknum - blkrel)/rel)^(1/rindex)))*rellev)+0.5);
+  );
+);
+  envlev < 0 ? envlev = 0;
+  envlev > 127 ? envlev = 127;
+
+envlevV = floor((envlev* ((127-(velset*(127-vel)))/127))+0.5);
+
+//Send CC message
+chanout == -1 ?
+(
+  envlevV != preenvlevV ?
+  (
+    n = 0;
+    loop(16,
+    midisend(offset,$xB0+n,mycc,envlevV);
+    n += 1;
+    );
+  );
+):(
+envlevV != preenvlevV ?
+midisend(offest,modstatus,mycc,envlevV);
+);
+preenvlevV = envlevV;
+blknum += 1;
+
+@gfx 450 175
+
+xscale = (400/(gdel+gatt+gdec+grel));
+gdelx = gdel*xscale;
+gattx = gatt*xscale;
+gdecx = gdec*xscale;
+grelx = grel*xscale;
+delpoint = gdelx;
+attpoint = delpoint+gattx;
+decpointx = attpoint+gdecx;
+decpointy = ((sus/127)*100);
+suspoint = (((sus+ramp)/127)*100);
+suspoint = min(suspoint,100);
+suspoint = max(suspoint,0);
+relpoint = decpointx+grelx;
+decpointyi = ((100-decpointy)/100)^rindex;
+
+gfx_r = 0;
+gfx_g = 1;
+gfx_b = 0;
+
+gfx_a = .5;
+gfx_x = 25;
+gfx_y = 125;
+
+// Static envelope shape
+gpos = 0;
+while (gpos <= relpoint)(
+  gpos < delpoint  ? gfx_lineto(25+gpos,125):
+  gpos < attpoint  ? gfx_lineto(25+gpos,125-(floor((((1-((gattx-(gpos - gdelx))/gattx)^(1/aindex)))*100)+0.5))):
+  gpos < decpointx ? gfx_lineto(25+gpos,125-(floor(((1-(((gpos-attpoint)*(((100-decpointy)/100)^dindex))/gdecx)^(1/dindex))*100)+0.5))):
+  gpos <= relpoint ? gfx_lineto(25+gpos,125-(floor(((1-(((gpos - decpointx)/grelx)^(1/rindex)))*decpointy)+0.5)));
+  gpos += 1;
+  );
+gfx_lineto(25+gpos,125);
+
+// Static sustain line
+gfx_x = 15+decpointx;
+gfx_y = 125-decpointy;
+gfx_lineto(425,125-decpointy);
+    
+gfx_a = 1;
+gfx_x = 25;
+gfx_y = 125;
+
+// Dynamic envelope shape
+gvel = 1-(velset*(1-(vel/127)));
+
+gpos = 0;
+while (gpos <= relpoint)(
+  gpos < delpoint  ? gfx_lineto(25+gpos,125):
+  gpos < attpoint  ? gfx_lineto(25+gpos,125-gvel*(floor((((1-((gattx-(gpos - gdelx))/gattx)^(1/aindex)))*100)+0.5))):
+  gpos < decpointx ? gfx_lineto(25+gpos,125-gvel*(floor(((1-(((gpos-attpoint)*(((100-decpointy)/100)^dindex))/gdecx)^(1/dindex))*100)+0.5))):
+  gpos <= relpoint ? gfx_lineto(25+gpos,125-gvel*(floor(((1-(((gpos - decpointx)/grelx)^(1/rindex)))*decpointy)+0.5)));
+  gpos += 1;
+  );
+gfx_lineto(25+gpos,125);
+
+// Dynamic sustain line
+gfx_x = 15+decpointx;
+gfx_y = 125-gvel*suspoint;
+gfx_lineto(425,125-gvel*suspoint);
+
+// Grid lines and text
+gfx_a = 0.5;
+gfx_r = 1;
+gfx_g = 0;
+gfx_x = 25;
+gfx_y = 25;
+gfx_lineto(25+relpoint,25);
+gfx_x = 25;
+gfx_y = 125;
+gfx_lineto(25+relpoint,125);
+gfx_a = 1;
+gfx_x = 1;
+gfx_y = 22;
+gfx_drawstr("127");
+gfx_x = 13;
+gfx_y = 22+100;
+gfx_drawstr("0");
+
