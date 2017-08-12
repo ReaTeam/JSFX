@@ -1,6 +1,6 @@
 desc: ReaRack Modular Synth
 author: Malcolm Smith
-version: 1.4
+version: 1.4.1
 changelog:
   See separate changelogs in each module
 about:
@@ -11,7 +11,9 @@ about:
   Oscillator - Twin-Saw
   Oscillator - Additive
   Oscillator - Noise
+  LFO
   LFO 2
+  Envelope Generator
   Envelope Generator 2
   Envelope Generator 2 Max
   Filter
