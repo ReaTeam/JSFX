@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="7d0a89d8b3573909b41fea096a0a2ed6810e971e">
+<index version="1" name="ReaTeam JSFX" commit="82ceb72da14753dcb3ce9be5722c07ff7a1aedad">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -93,6 +93,40 @@ here
       <version name="2.0" author="Matt Horn" time="2017-06-14T00:59:38Z">
         <changelog><![CDATA[- Added "Next Pattern" for better automation of pattern switching]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/c007e71f7caeed0d85a3bb665fd092540e228798/MIDI/mathphreak_Learningbaby.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mbncp_Legato Control.jsfx" type="effect" desc="Legato control">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Holds each note until next note is pressed.\sa180\par}
+}
+]]></description>
+        <link rel="website">http://forum.cockos.com/showthread.php?p=176566</link>
+      </metadata>
+      <version name="0.3" author="mbncp" time="2017-10-01T00:56:44Z">
+        <changelog><![CDATA[April 18 2008
++ initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/82ceb72da14753dcb3ce9be5722c07ff7a1aedad/MIDI/mbncp_Legato%20Control.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mbncp_PitchWheel.jsfx" type="effect" desc="PitchWheel Control Center">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 can convert pitch ranges (see linked forum thread)\par}
+}
+]]></description>
+        <link rel="website">http://forum.cockos.com/showthread.php?p=181581</link>
+      </metadata>
+      <version name="0.2" author="mbncp" time="2017-10-01T00:56:44Z">
+        <changelog><![CDATA[May 02 2008
++ initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/82ceb72da14753dcb3ce9be5722c07ff7a1aedad/MIDI/mbncp_PitchWheel.jsfx</source>
       </version>
     </reapack>
   </category>
