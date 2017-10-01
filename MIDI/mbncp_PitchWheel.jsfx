@@ -1,0 +1,188 @@
+desc: PitchWheel Control Center
+version: 0.2
+author: mbncp
+link: http://forum.cockos.com/showthread.php?p=181581
+changelog:
+  May 02 2008
+  + initial release
+about:
+  can convert pitch ranges (see linked forum thread)
+
+//mbncp (c) 2008
+slider1:0<0,16,1>Input Channel ( 0 = Any )
+slider2:2<0,131,1{LEARN..,OFF (bypass),Pitch Wheel,Channel Aftertouch,CC0,CC1,CC2,CC3,CC4,CC5,CC6,CC7,CC8,CC9,CC10,CC11,CC12,CC13,CC14,CC15,CC16,CC17,CC18,CC19,CC20,CC21,CC22,CC23,CC24,CC25,CC26,CC27,CC28,CC29,CC30,CC31,CC32,CC33,CC34,CC35,CC36,CC37,CC38,CC39,CC40,CC41,CC42,CC43,CC44,CC45,CC46,CC47,CC48,CC49,CC50,CC51,CC52,CC53,CC54,CC55,CC56,CC57,CC58,CC59,CC60,CC61,CC62,CC63,CC64,CC65,CC66,CC67,CC68,CC69,CC70,CC71,CC72,CC73,CC74,CC75,CC76,CC77,CC78,CC79,CC80,CC81,CC82,CC83,CC84,CC85,CC86,CC87,CC88,CC89,CC90,CC91,CC92,CC93,CC94,CC95,CC96,CC97,CC98,CC99,CC100,CC101,CC102,CC103,CC104,CC105,CC106,CC107,CC108,CC109,CC110,CC111,CC112,CC113,CC114,CC115,CC116,CC117,CC118,CC119,CC120,CC121,CC122,CC123,CC124,CC125,CC126,CC127}>Input Msg UP (Learn,PW,AFT,CC)
+slider3:2<0,131,1{LEARN..,OFF (bypass),Pitch Wheel,Channel Aftertouch,CC0,CC1,CC2,CC3,CC4,CC5,CC6,CC7,CC8,CC9,CC10,CC11,CC12,CC13,CC14,CC15,CC16,CC17,CC18,CC19,CC20,CC21,CC22,CC23,CC24,CC25,CC26,CC27,CC28,CC29,CC30,CC31,CC32,CC33,CC34,CC35,CC36,CC37,CC38,CC39,CC40,CC41,CC42,CC43,CC44,CC45,CC46,CC47,CC48,CC49,CC50,CC51,CC52,CC53,CC54,CC55,CC56,CC57,CC58,CC59,CC60,CC61,CC62,CC63,CC64,CC65,CC66,CC67,CC68,CC69,CC70,CC71,CC72,CC73,CC74,CC75,CC76,CC77,CC78,CC79,CC80,CC81,CC82,CC83,CC84,CC85,CC86,CC87,CC88,CC89,CC90,CC91,CC92,CC93,CC94,CC95,CC96,CC97,CC98,CC99,CC100,CC101,CC102,CC103,CC104,CC105,CC106,CC107,CC108,CC109,CC110,CC111,CC112,CC113,CC114,CC115,CC116,CC117,CC118,CC119,CC120,CC121,CC122,CC123,CC124,CC125,CC126,CC127}>Input Msg DN (Learn,PW,AFT,CC)
+slider4:0<0,1,0.1>Wheel Limiter UP MIN(def=0)
+slider5:1<0,1,0.1>Wheel Limiter UP MAX(def=1)
+slider6:0<0,1,0.1>Wheel Limiter DN MIN(def=0)
+slider7:1<0,1,0.1>Wheel Limiter DN MAX(def=1)
+//slider8:0<0,1,1{OFF, ON (requires a fixed input or output channel !)}>Send Synth Range (RPN 0)
+slider9:12<-36,36,0.1>* Synth Range UP (semi-tones)
+slider10:-12<-36,36,0.1>* Synth Range DN (semi-tones)
+slider11:2<-36,36,0.1>* Output Range UP (semi-tones)
+slider12:-2<-36,36,0.1>* Output Range DN (semi-tones)
+//slider13:0<0,36,0.1>Out Resolution UP (s-t, 0=no stepping)
+//slider14:0<0,36,0.1>Out Resolution DN (s-t, 0=no stepping)
+//slider15:0<0,30,0.1>Reset Time Out (seconds) 0=OFF
+slider16:0<0,16,1>Output Channel (0 = no change)
+//-------------------------
+@init
+lastwh = 33000;
+//-------------------------
+@slider
+slider1=floor(slider1);
+slider2=floor(slider2);
+slider3=floor(slider3);
+learn=0;
+slider2 == 0 ? learn|=1;
+slider3 == 0 ? learn|=2;
+lminup = floor(slider4*8191);
+lmindn = floor(slider6*-8192);
+slider5<slider4?slider5=slider4;
+slider7<slider6?slider7=slider6;
+lmaxup = floor(slider5*8191);
+lmaxdn = floor(slider7*-8192);
+abs(slider11)>abs(slider9)?
+slider11 >= 0 ? slider11 = abs(slider9) : slider11 = -abs(slider9);
+abs(slider12)>abs(slider10)?
+slider12 >= 0 ? slider12 = abs(slider10) : abs(slider10);
+slider16 = floor(slider16);
+
+//-------------------------
+@block
+midirecv(offset,msg1,msg23)?
+(
+	while
+	(
+		ms = 1;
+		chn = msg1 & $xF;
+		slider1 == 0 || slider1 == chn+1 ?
+		(
+			status =  ((msg1 & $xF0) / 16)-8;
+			dt1 = msg23 & $x7F;
+			dt2 = (msg23 / $x100) & $x7F;
+			//status == 1 && dt2 == 0 ? status = 0;
+			status == 3 ? // CC
+			(
+				learn ?
+				(
+					learn&1 ? slider2=dt1+4;
+					learn&2 ? slider3=dt1+4;
+					learn=0;ms = 0;
+				)
+				:
+				(
+					slider2 == (dt1+4)? ms=3;
+					slider3 == (dt1+4)? ms+=3;
+				);
+			)
+			:
+			(
+				status == 5 ? // chn aft
+				(
+					learn ?
+					(
+						learn&1 ? slider2=3;
+						learn&2 ? slider3=3;
+						learn=0;ms = 0;
+					)
+					:
+					(
+						slider2 == 3 ? ms = 3;
+						slider3 == 3 ? ms+=3;
+						ms > 1 ? dt2=dt1;
+					);
+				)
+				:
+				(
+					status == 6 ? // pitchwheel
+					(
+						learn ?
+						(
+							learn&1 ? slider2=2;
+							learn&2 ? slider3=2;
+							learn=0;ms = 0;
+						)
+						:
+						(
+							dt2 == 64 && dt1 == 0 ?
+							(
+								slider2 == 2 || slider3 == 2 ? 
+								(	
+									ms=2; wh=0;
+								);
+							)
+							:
+							(
+								dt2 >= 64 && slider2 == 2 ? ms = 2;
+								dt2 < 64 && slider3 == 2 ? ms = 2;
+								ms==2 ? wh = dt1+(dt2*$x80)-$x2000;
+							);
+						); //learn
+					); //6
+				); // 5
+			); // 3
+		); //slider1
+		ms > 2 ?
+		(
+			ms == 3 ? //cc aft up
+			(
+				dt2 = dt2 + (dt2/$x80);
+				wh = floor(dt2*$x40);
+			)
+			:
+			(
+				ms == 4 ? // cc aft dn
+				(
+					dt2 = dt2 + (dt2/$x80);
+					wh = -floor(dt2*$x40+.5);
+				)
+				: // cc aft full up+dn
+				(
+					dt2 > 64 ? dt2 = dt2 + (dt2/$x80);
+					wh = floor(dt2*$x80)-8192;
+				);
+			);
+			ms = 2;
+		);
+		ms == 2 ?
+		(
+			wh >= 0 ?
+			(
+				wh <= lminup ? wh = lminup;
+				(
+					wh > lmaxup ? wh = lmaxup;
+					wh = (wh-lminup)*8191;
+					wh/=(lmaxup-lminup);
+					wh*=(slider11/slider9);
+					wh=floor(wh);
+				);
+			)
+			:
+			(
+				wh >= lmindn ? wh = lmindn;
+				(
+					wh < lmaxdn ? wh = lmaxdn;
+					wh = (wh-lmindn)*-8192;
+					wh/=(lmaxdn-lmindn);
+					wh=floor(wh);
+					wh*=(slider12/slider10);
+					wh=floor(wh);
+				);
+			);
+			wh+=$x2000;
+			wh>16383 ? wh = 16383;
+			wh<0 ? wh=0;
+			wh != lastwh?
+			(
+				dt1 = (wh%$x80)&$x7F;
+				dt2 = (wh/$x80)&$x7F;
+				msg1 = slider16 > 0 ? $xE0|(slider16-1) : $xE0|chn;
+				msg23 = dt1+dt2*$x100;
+				ms=1; lastwh = wh;
+			): ms=0;
+		);
+		ms ? midisend(offset,msg1,msg23);
+		midirecv(offset,msg1,msg23);
+	); //while
+);
