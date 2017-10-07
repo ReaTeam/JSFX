@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="82ceb72da14753dcb3ce9be5722c07ff7a1aedad">
+<index version="1" name="ReaTeam JSFX" commit="e7ed9a1ccc661d901153d5e07d8357142d864a4b">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -127,6 +127,21 @@ here
         <changelog><![CDATA[May 02 2008
 + initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/82ceb72da14753dcb3ce9be5722c07ff7a1aedad/MIDI/mbncp_PitchWheel.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Mono/poly MIDI chromatic glissando FX with adjustable note delay\par}
+}
+]]></description>
+      </metadata>
+      <version name="0.1" author="urtzurd (Urtzi Urdapilleta Roy)" time="2017-10-07T23:49:35Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/e7ed9a1ccc661d901153d5e07d8357142d864a4b/MIDI/urtzurd_MIDI%20Glissando.jsfx</source>
       </version>
     </reapack>
   </category>
