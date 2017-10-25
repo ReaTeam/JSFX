@@ -1,6 +1,6 @@
 desc:DoubleMidSide to 5.1
 author: Michael Fewkes
-version 1.0
+version: 1.0
 changelog: Initial release
 about: Decodes double mid side recodrings into 5.1 surround recordings
 

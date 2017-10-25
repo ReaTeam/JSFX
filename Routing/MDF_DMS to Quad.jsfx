@@ -1,6 +1,6 @@
 desc:DoubleMidSide to Quadraphonic
 author: Michael Fewkes
-version 1.0
+version: 1.0
 changelog: Initial release
 about: Decodes double mid side recodrings into quadraphonic surround recordings
 
