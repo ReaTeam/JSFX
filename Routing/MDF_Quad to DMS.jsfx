@@ -1,0 +1,27 @@
+desc:Quadraphonic to DoubleMidSide
+author: Michael Fewkes
+version: 1.0
+changelog: Initial release
+about: Encodes quadraphonic recodrings into double mid side recordings
+
+slider1:0<0,1,1{Front Side Rear,Front Rear Side}>Output Order
+
+@init
+
+@slider
+
+@sample
+
+chanL = spl0;
+chanR = spl1;
+chanLs = spl2;
+chanRs = spl3;
+
+front = (chanL + chanR)/2;
+side = (chanL - chanR)/2 + (chanLs - chanRs)/2;
+rear = (chanLs + chanRs)/2;
+
+spl0 = front;
+slider2 == 0 ? spl1 = side : spl1 = rear;
+slider2 == 0 ? spl2 = rear : spl2 = side;
+spl3 = 0;

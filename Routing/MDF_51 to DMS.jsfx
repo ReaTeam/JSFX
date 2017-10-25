@@ -1,0 +1,38 @@
+desc:5.1 to DoubleMidSide
+author: Michael Fewkes
+version: 1.0
+changelog: Initial release
+about: ENcodes 5.1 surround recodrings into double mid side recordings
+
+slider1:0<0,1,1{L R C Lfe Ls Rs,L C R Ls Rs Lfe}>Input Order
+slider2:0<0,1,1{Front Side Rear,Front Rear Side}>Output Order
+slider3:0<-60,24,1>Center Channel Level (dB)
+
+@init
+
+@slider
+volC = 2^(slider3/6);
+
+@sample
+
+chanL = spl0;
+slider1 == 0 ? chanR = spl1 : chanC = spl1;
+slider1 == 0 ? chanC = spl2 : chanR = spl2;
+slider1 == 1 ? chanLs = spl3;
+slider1 == 0 ? chanLs = spl4 : chanRs = spl4;
+slider1 == 0 ? chanRs = spl5;
+
+chanC *= volC;
+chanL += chanC;
+chanR += chanC;
+
+front = (chanL + chanR)/2;
+side = (chanL - chanR)/2 + (chanLs - chanRs)/2;
+rear = (chanLs + chanRs)/2;
+
+spl0 = front;
+slider2 == 0 ? spl1 = side : spl1 = rear;
+slider2 == 0 ? spl2 = rear : spl2 = side;
+spl3 = 0;
+spl4 = 0;
+spl5 = 0;
