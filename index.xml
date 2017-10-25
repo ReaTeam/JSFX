@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="e7ed9a1ccc661d901153d5e07d8357142d864a4b">
+<index version="1" name="ReaTeam JSFX" commit="f68071f3067f41a55c6400965b171e64a5d1f7d2">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -202,6 +202,113 @@ here
         <source>https://github.com/ReaTeam/JSFX/raw/4a33bbe6110bf1c5f37430bf245bbd058512148e/Reverb/TiaR_HadamVerb.jsfx</source>
         <source file="TiaR_HadamVerb/HadamVerb.RPL">https://github.com/ReaTeam/JSFX/raw/4a33bbe6110bf1c5f37430bf245bbd058512148e/Reverb/TiaR_HadamVerb/HadamVerb.RPL</source>
         <source file="TiaR_HadamVerb/TiaR_HAD_00.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/4a33bbe6110bf1c5f37430bf245bbd058512148e/Reverb/TiaR_HadamVerb/TiaR_HAD_00.jsfx-inc</source>
+      </version>
+    </reapack>
+  </category>
+  <category name="Routing">
+    <reapack name="MDF_51 to DMS.jsfx" type="effect" desc="5.1 to DoubleMidSide">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 ENcodes 5.1 surround recodrings into double mid side recordings\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Fewkes" time="2017-10-25T09:40:53Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/f68071f3067f41a55c6400965b171e64a5d1f7d2/Routing/MDF_51%20to%20DMS.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="MDF_DMS to 51.jsfx" type="effect" desc="DoubleMidSide to 5.1">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Decodes double mid side recodrings into 5.1 surround recordings\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Fewkes" time="2017-10-25T09:40:53Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/f68071f3067f41a55c6400965b171e64a5d1f7d2/Routing/MDF_DMS%20to%2051.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="MDF_DMS to FOA.jsfx" type="effect" desc="DoubleMidSide to FOA">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Decodes double mid sidefirst order ambisonic recodrings into first order ambisonic recordings (no vertical)\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Fewkes" time="2017-10-25T09:40:53Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/f68071f3067f41a55c6400965b171e64a5d1f7d2/Routing/MDF_DMS%20to%20FOA.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="MDF_DMS to Quad.jsfx" type="effect" desc="DoubleMidSide to Quadraphonic">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Decodes double mid side recodrings into quadraphonic surround recordings\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Fewkes" time="2017-10-25T09:40:53Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/f68071f3067f41a55c6400965b171e64a5d1f7d2/Routing/MDF_DMS%20to%20Quad.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="MDF_DMS to Stereo.jsfx" type="effect" desc="DoubleMidSide to Stereo">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Decodes double mid side recodrings into stereo recordings\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Fewkes" time="2017-10-25T09:40:53Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/f68071f3067f41a55c6400965b171e64a5d1f7d2/Routing/MDF_DMS%20to%20Stereo.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="MDF_FOA to DMS.jsfx" type="effect" desc="FOA to DoubleMidSide">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Decodes first order ambisonic recodrings into double mid side recordings (loose vertical)\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Fewkes" time="2017-10-25T09:40:53Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/f68071f3067f41a55c6400965b171e64a5d1f7d2/Routing/MDF_FOA%20to%20DMS.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="MDF_Quad to DMS.jsfx" type="effect" desc="Quadraphonic to DoubleMidSide">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Encodes quadraphonic recodrings into double mid side recordings\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Fewkes" time="2017-10-25T09:40:53Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/f68071f3067f41a55c6400965b171e64a5d1f7d2/Routing/MDF_Quad%20to%20DMS.jsfx</source>
       </version>
     </reapack>
   </category>
