@@ -1,0 +1,107 @@
+// (C) 2007, Michael Gruhn, 2017, Michael Schnell
+
+// NO WARRANTY IS GRANTED. THIS PLUG-IN IS PROVIDED ON AN "AS IS" BASIS, WITHOUT
+// WARRANTY OF ANY KIND. NO LIABILITY IS GRANTED, INCLUDING, BUT NOT LIMITED TO,
+// ANY DIRECT OR INDIRECT,  SPECIAL,  INCIDENTAL OR CONSEQUENTIAL DAMAGE ARISING
+// OUT OF  THE  USE  OR INABILITY  TO  USE  THIS PLUG-IN,  COMPUTER FAILTURE  OF
+// MALFUNCTION INCLUDED.  THE USE OF THE SOURCE CODE,  EITHER  PARTIALLY  OR  IN
+// TOTAL, IS ONLY GRANTED,  IF USED IN THE SENSE OF THE AUTHOR'S INTENTION,  AND
+// USED WITH ACKNOWLEDGEMENT OF THE AUTHOR. FURTHERMORE IS THIS PLUG-IN A  THIRD
+// PARTY CONTRIBUTION,  EVEN IF INCLUDED IN REAPER(TM),  COCKOS INCORPORATED  OR
+// ITS AFFILIATES HAVE NOTHING TO DO WITH IT.  LAST BUT NOT LEAST, BY USING THIS
+// PLUG-IN YOU RELINQUISH YOUR CLAIM TO SUE IT'S AUTHOR, AS WELL AS THE CLAIM TO
+// ENTRUST SOMEBODY ELSE WITH DOING SO.
+
+desc:Dual Time adjustment +/- Delay
+//desc:Channel Time Delayer [LOSER]
+//tags: stereo delay
+
+author: Michael Schnell (mschnell@bschnell.de)
+version: 1.0
+changelog: initial release
+donation: United Nations Foundation http://www.unfoundation.org/
+about:
+  ## Description
+  Apply a positive or negative delay to up tp two channel in a track
+  modes: 
+   - Stereo: All Sliders ar coupled
+   - Dual: Two channels with two coupled sliders each 
+  ## Acknowlages: 
+  Based on "Channel Time Delayer [LOSER]" by Michael Gruhn, 2007
+  
+slider1:0<-100,100,0.01>Delay L (ms)
+slider2:0<-100,100,0.01>Delay R (ms)
+slider3:0<-1000,1000,1>Delay L (spls)
+slider4:0<-1000,1000,1>Delay R (spls)
+slider5: 0<0,1,1{,Stereo,Dual}>Mode
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+s1 = 0;
+s2 = 0;
+s3 = 0;
+s4 = 0;
+
+@slider
+!slider5 ? (
+  slider1 != s1 ? (
+    slider2 = slider1;
+   ) :  slider2 != s2 ? (
+    slider1 = slider2;
+   ) :  slider3 != s3 ? (
+    slider4 = slider3;
+   ) :  slider4 != s4 ? (
+    slider3 = slider4;
+  );
+);
+slider1 != s1 ? (
+  s =  floor(slider1 / 1000 * srate+0.5);
+  slider3 = s;
+ ) : slider3 != s3 ? (
+  s = floor((slider3 * 100000 / srate)+0.5)/100;
+  slider1 = s;
+);  
+slider2 != s2 ? (
+  s =  floor(slider2 / 1000 * srate+0.5);
+  slider4 = s;
+ ) : slider4 != s4 ? (
+  s = floor((slider4 * 100000 / srate)+0.5)/100;
+  slider2 = s;
+);  
+s1 = slider1;
+s2 = slider2;
+s3 = slider3;
+s4 = slider4;
+
+s3 >= 0 && s4 >= 0 ? (
+  buflL = s2;
+  buflR = s4;
+ ):(
+  s3 <= s4 ?  (
+    buflL = 0 ;
+    buflR = (s4-s3) + buflL+1;
+   ):(
+    buflL = (s3-s4);
+    buflR = buflL+1;
+  );
+//pdc_delay = floor(min( -min(slider1,slider2)/1000 * srate,500000));
+  pdc_delay = min(-min(s3,s4),50000);
+  pdc_bot_ch=0;
+  pdc_top_ch=2;
+);
+
+@sample
+bufLpos[0] = spl0 ;
+bufLpos = bufLpos + 1 ;
+bufLpos >= buflL ? bufLpos = 0;
+
+bufRpos[0] = spl1 ;
+bufRpos = bufRpos + 1 ;
+bufRpos >= buflR ? bufRpos = buflL+1;
+
+spl0 = bufLpos[0] ; 
+spl1 = bufRpos[0] ;
