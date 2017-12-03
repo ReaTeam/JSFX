@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f68071f3067f41a55c6400965b171e64a5d1f7d2">
+<index version="1" name="ReaTeam JSFX" commit="279ccf5f5eab5f1cbd31068c5d6483964206131a">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -653,6 +653,27 @@ version 1.02
     </reapack>
   </category>
   <category name="Utility">
+    <reapack name="mschnell_Dual Time adjustment.jsfx" type="effect" desc="Dual Time adjustment +/- Delay">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Apply a positive or negative delay to up tp two channel in a track modes:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Stereo: All Sliders ar coupled\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Dual: Two channels with two coupled sliders each\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Acknowlages:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Based on "Channel Time Delayer [LOSER]" by Michael Gruhn, 2007\par}
+}
+]]></description>
+        <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2017-12-03T07:54:52Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/279ccf5f5eab5f1cbd31068c5d6483964206131a/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="mschnell_MIDI Volume Control.jsfx" type="effect" desc="Midi Volume Control">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
