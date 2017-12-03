@@ -1,4 +1,24 @@
+desc: Dual Time adjustment +/- Delay
+tags: stereo delay
+author: Michael Schnell (mschnell@bschnell.de)
+version: 1.0
+changelog: initial release
+donation: United Nations Foundation http://www.unfoundation.org/
+about:
+  ## Description
+
+  Apply a positive or negative delay to up tp two channel in a track
+  modes:
+
+   - Stereo: All Sliders ar coupled
+   - Dual: Two channels with two coupled sliders each 
+
+  ## Acknowlages: 
+
+  Based on "Channel Time Delayer [LOSER]" by Michael Gruhn, 2007
+
 // (C) 2007, Michael Gruhn, 2017, Michael Schnell
+
 // NO WARRANTY IS GRANTED. THIS PLUG-IN IS PROVIDED ON AN "AS IS" BASIS, WITHOUT
 // WARRANTY OF ANY KIND. NO LIABILITY IS GRANTED, INCLUDING, BUT NOT LIMITED TO,
 // ANY DIRECT OR INDIRECT,  SPECIAL,  INCIDENTAL OR CONSEQUENTIAL DAMAGE ARISING
@@ -10,22 +30,7 @@
 // ITS AFFILIATES HAVE NOTHING TO DO WITH IT.  LAST BUT NOT LEAST, BY USING THIS
 // PLUG-IN YOU RELINQUISH YOUR CLAIM TO SUE IT'S AUTHOR, AS WELL AS THE CLAIM TO
 // ENTRUST SOMEBODY ELSE WITH DOING SO.
-desc:Dual Time adjustment +/- Delay
-//desc:Channel Time Delayer [LOSER]
-//tags: stereo delay
-author: Michael Schnell (mschnell@bschnell.de)
-version: 1.0
-changelog: initial release
-donation: United Nations Foundation http://www.unfoundation.org/
-about:
-  ## Description
-  Apply a positive or negative delay to up tp two channel in a track
-  modes: 
-   - Stereo: All Sliders ar coupled
-   - Dual: Two channels with two coupled sliders each 
-  ## Acknowlages: 
-  Based on "Channel Time Delayer [LOSER]" by Michael Gruhn, 2007
-  
+
 slider1:0<-100,100,0.01>Delay L (ms)
 slider2:0<-100,100,0.01>Delay R (ms)
 slider3:0<-1000,1000,1>Delay L (spls)
