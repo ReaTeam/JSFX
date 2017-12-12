@@ -1,0 +1,110 @@
+version: 2.0.0
+desc:ReaRack2 - Oscillator-Noise
+noindex:   true
+author:    Malcolm Smith
+           Copyright(C) 2017 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
+           
+license:   LGPL - http://www.gnu.org/licenses/lgpl.html
+
+about:     Audio oscillator module for the ReaRack modular JSFX synth system.
+           Creates pseudo random samples (white noise).
+           
+changelog: Version 2.0.0 (10/12/2017) Initial version 2 release.
+
+slider1:mix=0<0,1>Stereo Width
+slider2:vol=1<0,1>Output Level
+slider4:sclass=0<0,3,1{None,Master,Slave}>Class
+slider5:sgroup=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Group
+
+options:gmem=ReaRack
+
+@init
+fxn = 90;
+x=0;
+
+@slider
+////////////////////////////Store slider values/////////////////
+group = sgroup+fxn*1000;
+sclass == 1 ? (
+  gmem[group+fxn+0] = mix;
+  gmem[group+fxn+1] = vol;
+);
+
+@block
+///////////////////////set slider values (slave mode)/////////////////////
+sclass == 2 ? ( 
+  mix  = gmem[group+fxn+0];
+  vol  = gmem[group+fxn+1];
+);
+
+@sample
+// White noise
+y = 1-rand(2);
+count >1 ? count = 0;
+y0 = (count == 0 ? y:0)*vol;
+y1 = (count == 1 ? y:0)*vol;
+spl0=spl0+y0+y1*(1-mix);
+spl1=spl1+y1+y0*(1-mix);
+count +=1;
+//////////Buffer results for graphics////////
+bl=500;
+  bpos<=bl ? (
+    bpos[0] = x;
+    (bpos+bl)[0] = y;
+    );
+  
+buffcount+=1;
+buffcount > bl ? (
+  buffcount-=bl;
+  );
+bpos=floor(buffcount);
+
+x += .01;
+x >= 5? x-= 5;
+
+/////////////////////////////////graphics//////////////////////////////////////
+@gfx 500 150
+
+xscl = 38;
+yscl = 60;
+ox = 25;
+oy = 25;
+
+gfx_r = 0;
+gfx_g = 1;
+gfx_b = 0;
+gfx_a = 1; 
+
+//Draw waveform
+gx = 1;
+while (gx <= bl)(
+  gfx_x = ox+xscl*gx[0];
+  gfx_y = oy+yscl-yscl*(gx+bl)[0];
+  gxm=gx;
+  gxm%2 > 0 ? gfx_setpixel(1-mix,1,1-mix):gfx_setpixel(1,1-mix,1);
+  gx+=1;
+);
+
+gfx_r = 1;
+gfx_g = 0;
+gfx_a = 0.5;
+gfx_x = ox;
+gfx_y = oy;
+gfx_lineto(ox+(xscl*5),oy);
+gfx_x = ox;
+gfx_y = oy+yscl;
+gfx_lineto(ox+(xscl*5),oy+yscl);
+gfx_x = ox;
+gfx_y = oy+yscl+yscl;
+gfx_lineto(ox+(xscl*5),oy+yscl+yscl);
+gfx_a =1;
+gfx_x = ox-12;
+gfx_y = oy-5;
+gfx_drawstr("1");
+gfx_x = ox-12;
+gfx_y = oy-5+yscl;
+gfx_drawstr("0");
+gfx_x = ox-20;
+gfx_y = oy-5+yscl+yscl;
+gfx_drawstr("-1");
+
