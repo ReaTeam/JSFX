@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f74027d1e393e61f3687aae209014342bf727c2a">
+<index version="1" name="ReaTeam JSFX" commit="292c9214c8891815c5abfd50b51580226f8886f8">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -174,9 +174,16 @@ here
 \widowctrl\hyphauto
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 The plugin introduces a delay that can be set by the "Center Delay" sliders either in Milliseconds or in Samples. The other slider always moves appropriately. (Remember that you also can type in values outside the regular range of the sliders.) This delay will be set as "pdc-delay" and hence automatically be compensated by the Reaper. The center delay can be modulated between 0 and twice the "Center" value. Requesting a greater modulation results in clipping the modulation amount appropriately. The amount of modulation can be set between 0 and 100 % (100 % = maximum possible modulation with the sum of the side chain inputs = 0 db) "Dry" and "wet" sliders are provide the obvious functionality and can be set between 0 and 100 %\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The plugin introduces a delay that can be set by the "Center Delay" sliders either in Milliseconds or in Samples.\line The other slider always moves appropriately. (Remember that you also can type in values outside the regular range of the sliders.) This delay will be set as "pdc-delay" and hence automatically be compensated by the Reaper.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The center delay can be modulated between 0 and twice the "Center" value. Requesting a greater modulation results in clipping the modulation amount appropriately. The amount of modulation can be set between 0 and 100 % (100 % = maximum possible modulation with the sum of the side chain inputs = 0 db)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The Modulation Type selection allows for using either the straight side chain signals to modulate the delay, resulting in a kind of Phase Modulation or to use the interal of the site chain signal resulting in a kind of Frequency Modulation.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Dry" and "wet" sliders are provide the obvious functionality and can be set between 0 and 100 %\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 A graphic shows the delay from left to right and the amplitude of the carrier upwards. The original (red), dry (blue) and wet (green) signals connected by white lines.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 usage\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 The plugin can be used as a very versatile vibrato when recording a low frequency wave form and providing same as the side chain input. In the same way a creative Flanger can be done by mixing the dry and wet signals. Vice versa, a versatile kind of Tremolo can be done by using the side chain input for the audio and sending a low frequency value to the input 1 or 2. Very creative effects can be accomplished by sending different audio streams to the input and to the site chain (beware that the "carrier" input (1+2) is stereo, while the side chain input (3+4) is mixed to a single mono signal.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The plugin can be used as a very versatile vibrato when recording a low frequency wave form and providing same as the side chain input.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 In the same way a creative Flanger can be done by mixing the dry and wet signals.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Vice versa, a versatile kind of Tremolo can be done by using the side chain input for the audio and sending a low frequency value to the input 1 or 2.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Very creative effects can be accomplished by sending different audio streams to the input and to the site chain (beware that the "carrier" input (1+2) is stereo, while the side chain input (3+4) is mixed to a single mono signal.\par}
 }
 ]]></description>
         <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
@@ -184,6 +191,10 @@ here
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2017-12-20T00:02:53Z">
         <changelog><![CDATA[initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/f74027d1e393e61f3687aae209014342bf727c2a/Modulation/mschnell_Delay_Modulator.jsfx</source>
+      </version>
+      <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2017-12-20T23:54:09Z">
+        <changelog><![CDATA[bug fixes, added graphics for fun and to start to gain compatibility with ReaRack]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/292c9214c8891815c5abfd50b51580226f8886f8/Modulation/mschnell_Delay_Modulator.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_ChopChop.jsfx" type="effect" desc="Stereo Chop chop">
