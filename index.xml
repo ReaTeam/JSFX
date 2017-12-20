@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="dce7e605f690d487da4bc983d07fd157098ff214">
+<index version="1" name="ReaTeam JSFX" commit="f74027d1e393e61f3687aae209014342bf727c2a">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -167,6 +167,25 @@ here
     </reapack>
   </category>
   <category name="Modulation">
+    <reapack name="mschnell_Delay_Modulator.jsfx" type="effect" desc="Delay Modulator">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The plugin introduces a delay that can be set by the "Center Delay" sliders either in Milliseconds or in Samples. The other slider always moves appropriately. (Remember that you also can type in values outside the regular range of the sliders.) This delay will be set as "pdc-delay" and hence automatically be compensated by the Reaper. The center delay can be modulated between 0 and twice the "Center" value. Requesting a greater modulation results in clipping the modulation amount appropriately. The amount of modulation can be set between 0 and 100 % (100 % = maximum possible modulation with the sum of the side chain inputs = 0 db) "Dry" and "wet" sliders are provide the obvious functionality and can be set between 0 and 100 %\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 usage\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The plugin can be used as a very versatile vibrato when recording a low frequency wave form and providing same as the side chain input. In the same way a creative Flanger can be done by mixing the dry and wet signals. Vice versa, a versatile kind of Tremolo can be done by using the side chain input for the audio and sending a low frequency value to the input 1 or 2. Very creative effects can be accomplished by sending different audio streams to the input and to the site chain (beware that the "carrier" input (1+2) is stereo, while the side chain input (3+4) is mixed to a single mono signal.\par}
+}
+]]></description>
+        <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2017-12-20T00:02:53Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/f74027d1e393e61f3687aae209014342bf727c2a/Modulation/mschnell_Delay_Modulator.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="TiaR_ChopChop.jsfx" type="effect" desc="Stereo Chop chop">
       <metadata>
         <link rel="website">https://www.youtube.com/watch?v=LHbSUXsJ82M</link>
