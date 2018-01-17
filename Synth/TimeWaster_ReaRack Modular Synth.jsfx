@@ -1,7 +1,8 @@
 desc: ReaRack Modular Synth
 author: Malcolm Smith
-version: 2.0.1
+version: 2.0.2
 changelog:
+  Version 2.0.2 - 17/01/2018 Moog Filter module zipper noised fixed.
   Version 2.0.1 - 16/01/2018 Added Moog Filter  module.
   Version 2.0.0 - 12/12/2017 All modules updated to version 2.0.0.
 about:
