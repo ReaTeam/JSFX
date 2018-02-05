@@ -2,9 +2,7 @@ desc: Dual Time adjustment +/- Delay
 tags: stereo delay
 author: Michael Schnell (mschnell@bschnell.de)
 version: 1.1
-changelog:
-  * v1.1: fix positive delays - Paweł Łyżwa (palyzwa@gmail.com)
-  * v1.0: initial release
+changelog: fix positive delays - Paweł Łyżwa (palyzwa@gmail.com)
 donation: United Nations Foundation http://www.unfoundation.org/
 about:
   ## Description
