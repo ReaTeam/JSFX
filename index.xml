@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="6ad76fa04939c5a2c70ab03b67b86960436472b6">
+<index version="1" name="ReaTeam JSFX" commit="c94c4a8bda06b37541da6cb151674fb446413947">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -767,6 +767,10 @@ Version 2.0.0 - 12/12/2017 All modules updated to version 2.0.0.]]></changelog>
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2017-12-03T07:54:52Z">
         <changelog><![CDATA[initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/279ccf5f5eab5f1cbd31068c5d6483964206131a/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
+      </version>
+      <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-02-05T16:08:54Z">
+        <changelog><![CDATA[fix positive delays - Paweł Łyżwa (palyzwa@gmail.com)]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/c94c4a8bda06b37541da6cb151674fb446413947/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI Volume Control.jsfx" type="effect" desc="Midi Volume Control">
