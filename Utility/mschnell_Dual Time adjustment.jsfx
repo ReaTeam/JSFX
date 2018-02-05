@@ -1,8 +1,8 @@
 desc: Dual Time adjustment +/- Delay
 tags: stereo delay
 author: Michael Schnell (mschnell@bschnell.de)
-version: 1.0
-changelog: initial release
+version: 1.1
+changelog: fix positive delays - Paweł Łyżwa (palyzwa@gmail.com)
 donation: United Nations Foundation http://www.unfoundation.org/
 about:
   ## Description
@@ -17,7 +17,7 @@ about:
 
   Based on "Channel Time Delayer [LOSER]" by Michael Gruhn, 2007
 
-// (C) 2007, Michael Gruhn, 2017, Michael Schnell
+// (C) 2007, Michael Gruhn, 2017, Michael Schnell, 2018, Paweł Łyżwa
 
 // NO WARRANTY IS GRANTED. THIS PLUG-IN IS PROVIDED ON AN "AS IS" BASIS, WITHOUT
 // WARRANTY OF ANY KIND. NO LIABILITY IS GRANTED, INCLUDING, BUT NOT LIMITED TO,
@@ -80,8 +80,8 @@ s3 = slider3;
 s4 = slider4;
 
 s3 >= 0 && s4 >= 0 ? (
-  buflL = s2;
-  buflR = s4;
+  buflL = s3;
+  buflR = s4 + buflL+1;
  ):(
   s3 <= s4 ?  (
     buflL = 0 ;
