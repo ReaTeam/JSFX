@@ -1,0 +1,688 @@
+version: 2.1.0
+desc:ReaRack2 - Envelope Generator
+noindex:   true
+author:    Malcolm Smith
+           Copyright(C) 2017 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
+           
+license:   LGPL - http://www.gnu.org/licenses/lgpl.html
+         
+about:     MIDI Envelope Generator module for the ReaRack modular JSFX synth system.
+
+changelog: Version 2.1.0 (09/02/2018) Added Latch trigger mode. Fixed legato bug.
+                                      Some output CC values were > 127, fixed.
+           Version 2.0.0 (10/12/2017) Initial version 2 release.
+
+slider1:smodp=0<0,5,1{Delay,Attack,Decay,Sustain,Release,Hold}>Modulation Target
+slider2:sccIn=0<0,64,1{Off,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv}>CC Input
+slider3:mrange=1<0,1,0.001>Modulation Range
+slider6:smycc=20<0,63,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv}>CC Output
+slider7:schanout=1<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Output Channel
+slider9:trigmode=0<0,4,1{Re-trigger from zero,Re-trigger from last value,Legato - re-trigger from zero,Legato - re-trigger from last value,Latch}>Trigger mode
+slider10:stbase=0<0,1,1{Seconds,Beats}>Timebase
+slider12:delunit=4<0,9,1{1/16,1/8,1/4,1/2,1,2,4,8,16,32> DELAY time --------- Coarse
+slider13:delt=0<0,1,0.001>DELAY time ------------- Fine
+slider15:attunit=4<0,9,1{1/16,1/8,1/4,1/2,1,2,4,8,16,32> ATTACK time ------- Coarse
+slider16:attt=0<0,1,0.001>ATTACK time ----------- Fine
+slider17:attss=0<-1,1,0.1>Attack envelope shape
+slider19:plat=0.25<0,5,0.001>PLATEAU -- (milliseconds)
+slider21:decunit=4<0,9,1{1/16,1/8,1/4,1/2,1,2,4,8,16,32> DECAY time --------- Coarse
+slider22:dect=1<0,1,0.001>DECAY time ------------- Fine
+slider23:decss=0<-1,1,0.1>Decay envelope shape
+slider25:ssusset=0.5<0,1,0.001>SUSTAIN level ----------------
+slider26:susrr=0<-1,1>Sustain level ramp rate
+slider29:relunit=4<0,9,1{1/16,1/8,1/4,1/2,1,2,4,8,16,32> RELEASE time ---- Coarse
+slider30:relt=1<0,1,0.001>RELEASE time -------- Fine
+slider31:relss=0<-1,1,0.1>Release envelope shape
+slider34:holdunit=4<0,9,1{1/16,1/8,1/4,1/2,1,2,4,8,16,32> HOLD time --------- Coarse
+slider35:holdt=0<0,1,0.001>HOLD time ------------- Fine
+slider37:svelset=1<0,1>Velocity Sensitivity
+slider39:sclass=0<0,3,1{None,Master,Slave}>Class
+slider40:sgroup=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Group
+// Hidden sliders
+slider41:ccIn1msb=-1<-1,63,1>-
+slider42:ccIn2msb=-1<-1,63,1>-
+slider43:ccIn3msb=-1<-1,63,1>-
+slider44:ccIn4msb=-1<-1,63,1>-
+slider45:ccIn5msb=-1<-1,63,1>-
+slider46:ccIn6msb=-1<-1,63,1>-
+slider47:delm=1<0,1,0.001>-
+slider48:attm=1<0,1,0.001>-
+slider49:decm=1<0,1,0.001>-
+slider50:susm=1<0,1,0.001>-
+slider51:relm=1<0,1,0.001>-
+slider52:holdm=1<0,1,0.001>-
+
+options:gmem=ReaRack
+
+in_pin:none
+out_pin:none
+ 
+@init
+fxn = 160;
+ccIn1lsb = ccIn1msb+32;
+ccIn2lsb = ccIn2msb+32;
+ccIn3lsb = ccIn3msb+32;
+ccIn4lsb = ccIn4msb+32;
+ccIn5lsb = ccIn5msb+32;
+ccIn6lsb = ccIn6msb+32;
+
+
+blknum = 0;
+envlev = 0;
+vel = 1;
+// Set modulation inputs to -1 on initial load.
+preenvlevV = 0;
+
+@slider
+
+slidermove = 1;
+
+@block
+
+sclass == 2 ? slidermove  = gmem[group+fxn+36];
+
+slidermove == 1 ?
+(
+// Update modulation input slider to previously set input CC value on target selection.
+smodp == 0 && ccInnum != 0 ? (         //Delay
+sccIn = ccIn1msb <= 31 ? ccIn1msb+1:ccIn1msb - 31; 
+mrange = delm;
+);
+smodp == 1 && ccInnum != 1 ? (         //Attack
+sccIn = ccIn2msb <= 31 ? ccIn2msb+1:ccIn2msb - 31; 
+mrange = attm;
+);
+smodp == 2 && ccInnum != 2 ? (         //Decay
+sccIn = ccIn3msb <= 31 ? ccIn3msb+1:ccIn3msb - 31; 
+mrange = decm;
+);
+smodp == 3 && ccInnum != 3 ? (         //Sustain
+sccIn = ccIn4msb <= 31 ? ccIn4msb+1:ccIn4msb - 31; 
+mrange = susm;
+);
+smodp == 4 && ccInnum != 4 ? (         //release
+sccIn = ccIn5msb <= 31 ? ccIn5msb+1:ccIn5msb - 31; 
+mrange = relm;
+);
+smodp == 5 && ccInnum != 5 ? (         //Hold
+sccIn = ccIn6msb <= 31 ? ccIn6msb+1:ccIn6msb - 31;
+mrange = holdm;
+);
+
+// Get slider values
+smodp == 0 ? (         //Delay
+ccIn1msb = sccIn <= 32 ? sccIn-1:sccIn+31;
+ccIn1lsb = ccIn1msb+32;
+delm = mrange;
+ccInnum = 0;
+);
+smodp == 1 ? (         //Attack
+ccIn2msb = sccIn <= 32 ? sccIn-1:sccIn+31;
+ccIn2lsb = ccIn2msb+32;
+attm = mrange;
+ccInnum = 1;
+);
+smodp == 2 ? (         //Decay
+ccIn3msb = sccIn <= 32 ? sccIn-1:sccIn+31;
+ccIn3lsb = ccIn3msb+32;
+decm = mrange;
+ccInnum = 2;
+);
+smodp == 3 ? (         //Sustain
+ccIn4msb = sccIn <= 32 ? sccIn-1:sccIn+31;
+ccIn4lsb = ccIn4msb+32;
+susm = mrange;
+ccInnum = 3;
+);
+smodp == 4 ? (         //Release
+ccIn5msb = sccIn <= 32 ? sccIn-1:sccIn+31;
+ccIn5lsb = ccIn5msb+32;
+relm = mrange;
+ccInnum = 4;
+);
+smodp == 5 ? (         //Hold
+ccIn6msb = sccIn <= 32 ? sccIn-1:sccIn+31;
+ccIn6lsb = ccIn6msb+32;
+holdm = mrange;
+ccInnum = 5;
+);
+
+//Store slider values
+group = sgroup*1000;
+sclass == 1 ? (
+  gmem[group+fxn+0] = trigmode;
+  gmem[group+fxn+1] = stbase;
+  gmem[group+fxn+2] = delunit;
+  gmem[group+fxn+3] = delt;
+  gmem[group+fxn+5] = attunit;
+  gmem[group+fxn+6] = attt;
+  gmem[group+fxn+7] = attss;
+  gmem[group+fxn+8] = decunit;
+  gmem[group+fxn+9] = dect;
+  gmem[group+fxn+11] = decss;
+  gmem[group+fxn+12] = ssusset;
+  gmem[group+fxn+14] = susrr;
+  gmem[group+fxn+15] = relunit;
+  gmem[group+fxn+16] = relt;
+  gmem[group+fxn+18] = relss;
+  gmem[group+fxn+19] = holdunit;
+  gmem[group+fxn+20] = holdt;
+  gmem[group+fxn+22] = svelset;
+  gmem[group+fxn+23] = delm;
+  gmem[group+fxn+24] = attm;
+  gmem[group+fxn+25] = decm;
+  gmem[group+fxn+26] = susm;
+  gmem[group+fxn+27] = relm;
+  gmem[group+fxn+28] = holdm;
+  gmem[group+fxn+29] = smodp;
+  gmem[group+fxn+30] = sccIn;
+  gmem[group+fxn+31] = mrange;
+  gmem[group+fxn+32] = smycc;
+  gmem[group+fxn+33] = schanout;
+  gmem[group+fxn+34] = plat;
+  // gmem[group+fxn+35] is used by Poly Splitter module to set release time.
+  gmem[group+fxn+36] = slidermove;
+);
+
+// Retrieve slider values
+sclass == 2 ? (
+  trigmode = gmem[group+fxn+0];
+  stbase   = gmem[group+fxn+1];
+  delunit  = gmem[group+fxn+2];
+  delt     = gmem[group+fxn+3];
+  attunit  = gmem[group+fxn+5];
+  attt     = gmem[group+fxn+6];
+  attss    = gmem[group+fxn+7];
+  decunit  = gmem[group+fxn+8];
+  dect     = gmem[group+fxn+9];
+  decss    = gmem[group+fxn+11];
+  ssusset  = gmem[group+fxn+12];
+  susrr    = gmem[group+fxn+14];
+  relunit  = gmem[group+fxn+15];
+  relt     = gmem[group+fxn+16];
+  relss    = gmem[group+fxn+18];
+  holdunit = gmem[group+fxn+19];
+  holdt    = gmem[group+fxn+20];
+  svelset  = gmem[group+fxn+22];
+  delm     = gmem[group+fxn+23];
+  attm     = gmem[group+fxn+24];
+  decm     = gmem[group+fxn+25];
+  susm     = gmem[group+fxn+26];
+  relm     = gmem[group+fxn+27];
+  holdm    = gmem[group+fxn+28];
+  smodp    = gmem[group+fxn+29];
+  sccIn    = gmem[group+fxn+30];
+  mrange   = gmem[group+fxn+31];
+  smycc    = gmem[group+fxn+32];
+  schanout = gmem[group+fxn+33];
+  plat     = gmem[group+fxn+34];
+  );
+
+stbase == 0 ? tbase = 1 : tbase = 60/tempo;
+
+myccmsb = smycc <= 31 ? smycc:smycc+32;
+mycclsb = myccmsb+32;
+chanout = schanout-1;
+
+delset = delt*(2^(delunit-4))*tbase;
+gdel = delt*(2^(delunit-4));
+delrange = delm*(2^(delunit-4))*tbase;
+gdelr = delm*(2^(delunit-4));
+
+attset = attt*(2^(attunit-4))*tbase;
+gatt = attt*(2^(attunit-4));
+attrange = attm*(2^(attunit-4))*tbase;
+aindex = attss < 0 ? ((attss/2)+1)^2 : (attss*2)+1^2;
+gattr = attm*(2^(attunit-4));
+
+dect < 0.001 ? decT = 0.001;
+decset = dect*(2^(decunit-4))*tbase;
+gdec =  dect*(2^(decunit-4));
+decrange = decm*(2^(decunit-4))*tbase;
+dindex = decss < 0 ? ((-decss)+1)^2 : ((-decss/2)+1)^2;
+gdecr = decm*(2^(decunit-4));
+
+susset = ssusset;
+susrange = susm;
+slope = susrr^3/(srate/100);
+
+relt < 0.001 ? relt = 0.001;
+relset = relt*(2^(relunit-4))*tbase;
+grel = relt*(2^(relunit-4));
+relrange = relm*(2^(relunit-4))*tbase;
+rindex = relss < 0 ? ((-relss)+1)^2 : ((-relss/2)+1)^2;
+grelr = relm*(2^(relunit-4));
+
+holdset = holdt*(2^(holdunit-4))*tbase;
+holdrange = holdm*(2^(holdunit-4))*tbase;
+velset = svelset;
+  
+dels = srate*delset;
+delr = srate*delrange;
+atts = srate*attset;
+attr = srate*attrange;
+decs = srate*decset;
+decr = srate*decrange;
+suss = susset;
+susr = susrange;
+rels = srate*relset;
+relr = srate*relrange;
+holds = srate*holdset;
+holdr = srate*holdrange;
+
+
+modstatus = $xB0+chanout;
+
+slidermove = 0;
+); // end if slidermove
+
+memset(0,-1,samplesblock*6);
+
+while (midirecv(offsetin, msg1, msg2, msg3))
+(  
+  // Extract message type
+  status = msg1 & $xF0;
+  // Is it a note on event?
+  status == $x90 ?
+  (
+  trigmode == 4 && noteon == 2 && note == msg2 ? noteon = 0 :
+    (
+    trigmode >= 2 && trigmode != 4 && enlevV > 0 && noteon >= 1 ? 
+      (
+      noteon += 1;
+      note = msg2;
+      ):
+      (
+      // Trigger Envelope
+      blknum = 0;
+      count  = 0;
+      envon  = 1;
+      noteon = 1;
+      holdon = 1;
+      trig   = 1;
+      ramp   = 0;
+      // Get note
+      note = msg2;
+      // Get velocity
+      vel = msg3/127;
+      //End of Get note and velocity
+      );
+    );
+    
+  ):
+    (
+    // Is it a note off event?
+      status == $x80 ?
+      (
+      trigmode >= 2 && trigmode != 4 && enlevV > 0 ? noteon -= 1 :
+        // Is it the same note ?
+          msg2 == note ?
+          (
+          // Release Envelope 
+          trigmode == 4 && noteon > 0 ?
+           (
+            noteon == 1 ? noteon = 2:noteon == 2 ? noteon = 0
+            ):
+            noteon = 0;
+          );
+       );
+    );
+    // Is it a controller event?
+    status == $xB0 ? (
+      // Is it the right CC for input 1?
+      msg2 == ccIn1msb || msg2 == ccIn1lsb ?
+       (
+       msg2 == ccIn1msb ? delmodmsb = msg3;
+       msg2 == ccIn1lsb ? delmodlsb = msg3;
+       offsetin[0] = (delmodmsb/127.9921875)+(delmodlsb/16384);
+       );
+
+      // Is it the right CC for input 2?
+      msg2 == ccIn2msb || msg2 == ccIn2lsb ?
+       ( 
+       msg2 == ccIn2msb ? attmodmsb = msg3;
+       msg2 == ccIn2lsb ? attmodlsb = msg3;
+       offsetin[samplesblock] = (attmodmsb/127.9921875)+(attmodlsb/16384);
+       );
+
+      // Is it the right CC for input 3?
+      msg2 == ccIn3msb || msg2 == ccIn3lsb ?
+       (                
+       msg2 == ccIn3msb ? decmodmsb = msg3;
+       msg2 == ccIn3lsb ? decmodlsb = msg3;
+       offsetin[samplesblock*2] = (decmodmsb/127.9921875)+(decmodlsb/16384);
+       );
+
+      // Is it the right CC for input 4?
+      msg2 == ccIn4msb || msg2 == ccIn4lsb ?
+       (                
+       msg2 == ccIn4msb ? susmodmsb = msg3;
+       msg2 == ccIn4lsb ? susmodlsb = msg3;
+       offsetin[samplesblock*3] = (susmodmsb/127.9921875)+(susmodlsb/16384);
+       );
+
+      // Is it the right CC for input 5?
+      msg2 == ccIn5msb || msg2 == ccIn5lsb ?
+       (                
+       msg2 == ccIn5msb ? relmodmsb = msg3;
+       msg2 == ccIn5lsb ? relmodlsb = msg3;
+       offsetin[samplesblock*4] = (relmodmsb/127.9921875)+(relmodlsb/16384);
+       );
+
+      // Is it the right CC for input 6?
+      msg2 == ccIn6msb || msg2 == ccIn6lsb ?
+       (               
+       msg2 == ccIn6msb ? holdmodmsb = msg3;
+       msg2 == ccIn6lsb ? holdmodlsb = msg3;
+       offsetin[samplesblock*5] = (holdmodmsb/127.9921875)+(holdmodlsb/16384);
+       ); 
+    );
+    // Pass through
+    midisend(offsetin, msg1, msg2, msg3);
+);
+
+// Set counters for output loop
+blkcount = count;
+offset = 0;
+
+// Start output loop
+while (count < blkcount+samplesblock) (
+offset[0]              > -1 ? mod1 = offset[0];
+offset[samplesblock]   > -1 ? mod2 = offset[samplesblock];
+offset[samplesblock*2] > -1 ? mod3 = offset[samplesblock*2];
+offset[samplesblock*3] > -1 ? mod4 = offset[samplesblock*3];
+offset[samplesblock*4] > -1 ? mod5 = offset[samplesblock*4];
+offset[samplesblock*5] > -1 ? mod6 = offset[samplesblock*5];
+
+del = dels + ((delr-dels) * (ccIn1msb == -1 ? 0:mod1););
+att = atts + ((attr-atts) * (ccIn2msb == -1 ? 0:mod2););
+plt = (srate*(plat/1000));
+dec = decs + ((decr-decs) * (ccIn3msb == -1 ? 0:mod3););
+sus = suss + ((susr-suss) * (ccIn4msb == -1 ? 0:mod4););
+rel = rels + ((relr-rels) * (ccIn5msb == -1 ? 0:mod5););
+holdpos = del + (holds + ((holdr-holds) * (ccIn6msb == -1 ? 0:mod6)););
+
+attpos = del + att;
+pltpos = attpos + plt;
+decpos = pltpos + dec;
+sclass == 1 ? gmem[group+fxn+35] = rel/srate; // Used by Poly Splitter module to set release time
+
+count > holdpos  ? holdon = 0;
+
+noteon == 0 && holdon == 0 && envon == 1? (
+  envon = 0;
+  blkrel = count;
+  rellev = envlev;
+  rellevi = (1-rellev)^rindex;
+);
+
+trigmode == 1 || trigmode == 3? (
+  count <= del ? envlevi = envlev;
+  ):
+  envlevi = 0;
+  
+envon == 1 ?
+(
+  count < del ? (
+  envlev = 0;
+  ):
+  count < attpos ? (
+  envlev = (((1-((att-(count - del))/att)^(1/aindex)))*(1-envlevi))+envlevi;
+  ):
+  count < pltpos ? (
+  envlev = envlev;
+  ):
+  count < decpos ? (
+  envlev = ((1-(((count-pltpos)*((1-sus)^dindex))/dec)^(1/dindex)));
+  ):
+  count >= decpos ? (
+  trig == 1 ? (
+    envlev = sus;
+    trig = 0;
+    ramp = slope;
+    ):(
+    envlev = sus + ramp;
+    envlev < 0 ? envlev = 0;
+    envlev > 1 ? envlev = 1;  
+    ramp += slope;  
+    );
+  );
+);
+envon == 0 ?
+(
+  envlev > 0 ?
+  (
+  envlev = ((1-(((count - blkrel)/rel)^(1/rindex)))*rellev);
+  );
+); 
+  envlev < 0 ? envlev = 0;
+  envlev > 1 ? envlev = 1;
+
+enlevV = (envlev* (1-(velset*(1-vel)))) * 127.9921875;
+
+//Send CC message
+
+enlevVmsb = floor(enlevV);
+enlevVlsb = floor((enlevV-enlevVmsb)*128);
+
+chanout == -1 ?
+  (
+    n = 0;
+    loop(16,
+    preenlevVmsb!= enlevVmsb ? midisend(offset,$xB0+n,myccmsb,enlevVmsb);
+    preenlevVlsb!= enlevVlsb ? midisend(offset,$xB0+n,mycclsb,enlevVlsb);
+    n += 1;
+    );
+):(
+  preenlevVmsb!= enlevVmsb ? midisend(offest,modstatus,myccmsb,enlevVmsb);
+  preenlevVlsb!= enlevVlsb ? midisend(offest,modstatus,mycclsb,enlevVlsb);
+);
+
+// Store previous values and update counters ////////////
+preenlevVmsb = enlevVmsb;
+preenlevVlsb = enlevVlsb;
+count += 1;
+offset += 1;
+); //End output loop
+
+blknum =+1
+
+// Graphics //////////////////////////////////////////////
+@gfx 400 125
+
+xmin = 75;
+ox = xmin;
+rx = 200;
+xmax = ox+rx;
+ymin = 25;
+ry = 80;
+oy = ymin+ry;
+ymax = oy;
+mxmin = xmax+150;
+
+gfx_r=1;
+gfx_g=1;
+gfx_b=1;
+gfx_a=0.7;
+gfx_x=130;
+gfx_y=8;
+gfx_drawstr("Envelope");
+gfx_x=mxmin-110;
+gfx_y=8;
+gfx_drawstr("   Modulation");
+gfx_x=mxmin-110;
+gfx_y=23;
+gfx_drawstr("   Target  CC");
+gfx_x=110;
+gfx_y=ymax+10;
+stbase == 0 ? gfx_drawstr("Timebase = Seconds"):gfx_drawstr("Timebase = Beats");
+
+gdel = del;
+gatt = att;
+gplt = plt;
+gdec = dec;
+grel = rel;
+
+xscale = (rx/(gdel+gatt+gplt+gdec+grel));
+
+gdelx = gdel*xscale;
+gattx = gatt*xscale;
+gpltx = gplt*xscale;
+gdecx = gdec*xscale;
+grelx = grel*xscale;
+
+delpoint = gdelx;
+attpoint = delpoint+gattx;
+pltpoint = attpoint+gpltx;
+decpointx = pltpoint+gdecx;
+decpointy = (sus*ry);
+suspoint = ((sus+ramp)*ry);
+suspoint = min(suspoint,ry);
+suspoint = max(suspoint,0);
+relpoint = decpointx+grelx;
+
+gfx_r = 1;
+gfx_g = 1;
+gfx_b = 1;
+
+gfx_a = .3;
+gfx_x = ox;
+gfx_y = oy;
+
+// Static envelope shape
+gpos = 0;
+while (gpos <= relpoint)(
+  gpos < delpoint  ? gfx_lineto(ox+gpos,oy):
+  gpos < attpoint  ? gfx_lineto(ox+gpos,oy-((((1-((gattx-(gpos - gdelx))/gattx)^(1/aindex)))*ry))):
+  gpos < pltpoint  ? gfx_lineto(ox+gpos,ymin):
+  gpos < decpointx ? gfx_lineto(ox+gpos,oy-(((1-(((gpos-pltpoint)*(((ry-decpointy)/ry)^dindex))/gdecx)^(1/dindex))*ry))):
+  gpos <= relpoint ? gfx_lineto(ox+gpos,oy-(((1-(((gpos - decpointx)/grelx)^(1/rindex)))*decpointy)));
+  gpos += 1;
+  );
+gfx_lineto(ox+gpos,oy);
+
+// Static sustain point
+gfx_circle(ox+decpointx,oy-decpointy,5);
+
+// Dynamic envelope shape   
+gfx_a = 1;
+gfx_r = 0;
+gfx_g = 1;
+gfx_b = 0;
+gfx_x = ox;
+gfx_y = oy;
+
+gvel = 1-(velset*(1-vel));
+
+gpos = 0;
+while (gpos <= relpoint)(
+  gpos < delpoint  ? gfx_lineto(ox+gpos,oy):
+  gpos < attpoint  ? gfx_lineto(ox+gpos,oy-gvel*((((1-((gattx-(gpos - gdelx))/gattx)^(1/aindex)))*ry))):
+  gpos < pltpoint  ? gfx_lineto(ox+gpos,oy-gvel*ry):
+  gpos < decpointx ? gfx_lineto(ox+gpos,oy-gvel*(((1-(((gpos-pltpoint)*(((ry-decpointy)/ry)^dindex))/gdecx)^(1/dindex))*ry))):
+  gpos <= relpoint ? gfx_lineto(ox+gpos,oy-gvel*(((1-(((gpos - decpointx)/grelx)^(1/rindex)))*(suspoint))));
+  gpos += 1;
+  );
+gfx_lineto(ox+gpos,oy);
+
+// Dynamic sustain point
+gfx_r = 1;
+gfx_g = 0;
+gfx_circle(ox+decpointx,oy-gvel*suspoint,5);
+gfx_x = (ox+decpointx)-65;
+gfx_y = (oy-gvel*suspoint);
+gfx_drawstr("Sustain");
+gfx_x = (ox+decpointx)+8;
+gfx_y = (oy-gvel*suspoint)-8;
+rampnum = (gvel*(suss+ramp));
+rampnum < 0 ? rampnum = 0;
+rampnum > 1 ? rampnum = 1;
+gfx_drawnumber(rampnum,2);
+
+// Grid lines and text
+gfx_a = 0.5;
+gfx_r = 1;
+gfx_g = 0;
+gfx_x = ox;
+gfx_y = oy-ry;
+gfx_lineto(ox+relpoint,oy-ry);
+gfx_x = ox;
+gfx_y = oy;
+gfx_lineto(ox+relpoint,oy);
+gfx_a = 1;
+gfx_x = ox-16;
+gfx_y = oy-ry-3;
+gfx_drawstr("1");
+gfx_x = ox-16;
+gfx_y = oy-3;
+gfx_drawstr("0");
+
+//Bouncing Ball
+gblknum = (
+  count*xscale < decpointx && noteon >= 1 ? count*xscale:
+  envon == 1 ? decpointx:
+  enlevV > 0 ? decpointx + (count-blkrel)*xscale:
+  0;
+  );
+gfx_r = 1;
+gfx_g = 1;
+gfx_b = 0;
+gfx_circle(ox+(gblknum),oy-((enlevV/128)*ry),4);
+
+// Modulation Indicators
+gfx_r = 1;
+gfx_g = 0;
+// Delay
+smodp == 0 ? gfx_a = 1: gfx_a = 0.5;
+gfx_x = mxmin-110;
+gfx_y = 40;
+gfx_drawstr("    Delay  ");
+ccIn1msb <  0 ? gfx_drawstr("--"):
+ccIn1msb < 10 ? (gfx_drawstr("0");
+gfx_drawnumber(ccIn1msb,0)):
+gfx_drawnumber(ccIn1msb,0);
+// Attack
+smodp == 1 ? gfx_a = 1: gfx_a = 0.5;
+gfx_x = mxmin-110;
+gfx_y = 55;
+gfx_drawstr("   Attack  ");
+ccIn2msb <  0 ? gfx_drawstr("--"):
+ccIn2msb < 10 ? (gfx_drawstr("0");
+gfx_drawnumber(ccIn2msb,0)):
+gfx_drawnumber(ccIn2msb,0);
+// Decay
+smodp == 2 ? gfx_a = 1: gfx_a = 0.5;
+gfx_x = mxmin-110;
+gfx_y = 70;
+gfx_drawstr("    Decay  ");
+ccIn3msb <  0 ? gfx_drawstr("--"):
+ccIn3msb < 10 ? (gfx_drawstr("0");
+gfx_drawnumber(ccIn3msb,0)):
+gfx_drawnumber(ccIn3msb,0);
+// Sustain
+smodp == 3 ? gfx_a = 1: gfx_a = 0.5;
+gfx_x = mxmin-110;
+gfx_y = 85;
+gfx_drawstr("  Sustain  ");
+ccIn4msb <  0 ? gfx_drawstr("--"):
+ccIn4msb < 10 ? (gfx_drawstr("0");
+gfx_drawnumber(ccIn4msb,0)):
+gfx_drawnumber(ccIn4msb,0);
+// Release
+smodp == 4 ? gfx_a = 1: gfx_a = 0.5;
+gfx_x = mxmin-110;
+gfx_y = 100;
+gfx_drawstr("  Release  ");
+ccIn5msb <  0 ? gfx_drawstr("--"):
+ccIn5msb < 10 ? (gfx_drawstr("0");
+gfx_drawnumber(ccIn5msb,0)):
+gfx_drawnumber(ccIn5msb,0);
+// Hold
+smodp == 5 ? gfx_a = 1: gfx_a = 0.5;
+gfx_x = mxmin-110;
+gfx_y = 115;
+gfx_drawstr("     Hold  ");
+ccIn6msb <  0 ? gfx_drawstr("--"):
+ccIn6msb < 10 ? (gfx_drawstr("0");
+gfx_drawnumber(ccIn6msb,0)):
+gfx_drawnumber(ccIn6msb,0);
