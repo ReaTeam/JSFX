@@ -1,10 +1,12 @@
 desc: ReaRack Modular Synth
 author: Malcolm Smith
-version: 2.0.2
+version: 2.1.0
 changelog:
-  Version 2.0.2 - 17/01/2018 Moog Filter module zipper noised fixed.
-  Version 2.0.1 - 16/01/2018 Added Moog Filter  module.
-  Version 2.0.0 - 12/12/2017 All modules updated to version 2.0.0.
+  Version 2.1.0 - 14/02/2018 Added MIDI Nonlinearizer module. Added latch trigger mode
+  to envelope generator. Fixed a bug in envelope generator which prevented legato trigger
+  modes from working. 15 modules updated to improve CC encoding/decoding accuracy (bug led
+  to CC vales of 128 being output occasionally). Fixed a bug in CC Mixer module (wrong output
+  channel).
 about:
   # ReaRack Modular Synth
   ReaRack is a modular MIDI controlled digital synth system. There are currently 17 modules-
@@ -22,6 +24,7 @@ about:
   Key Follower
   Poly Splitter
   Sample and Hold
+  MIDI Nonlinerizer
   Karplus-Strong Delay
   Note Filter
   Audio-MIDI converter
