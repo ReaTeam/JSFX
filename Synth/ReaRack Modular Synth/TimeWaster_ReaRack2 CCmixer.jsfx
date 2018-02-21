@@ -1,11 +1,12 @@
-version: 2.0.1
+version: 2.0.2
 desc:ReaRack2 - CC Mixer
 noindex:   true
 author:    Malcolm Smith
            Copyright(C) 2017 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
            License: LGPL - http://www.gnu.org/licenses/lgpl.html
 
-changelog: Version 2.0.1 (10/02/2018) Fixed a bug which caused messages to be sent out on the wrong channel.
+changelog: Version 2.0.2 (21/02/2018) Fixed a bug which caused messages not to be sent out.
+           Version 2.0.1 (10/02/2018) Fixed a bug which caused messages to be sent out on the wrong channel.
                                       Some output CC values were > 127, fixed.
            Version 2.0.0 (10/12/2017) Initial version 2 release.
          
@@ -176,6 +177,19 @@ while (offsetout < samplesblock)
   val3lsb = floor((val3-val3msb)*128);
 
   //Send new CC message
+chanout == -1 ?
+  (
+   n = 0;
+   loop(16,
+     preval3msb != val3msb ? midisend(offsetout,$xB0+n,ccoutmsb,val3msb); // Only send messages if values have changed
+     preval3lsb != val3lsb ? midisend(offsetout,$xB0+n,ccoutlsb,val3lsb);
+     n += 1;
+     );
+  ):
+  (
+   preval3msb != val3msb ? midisend(offsetout,$xB0+chanout,ccoutmsb,val3msb);
+   preval3lsb != val3lsb ? midisend(offsetout,$xB0+chanout,ccoutlsb,val3lsb);
+  );
   // Store previous values   
   preval3msb = val3msb;
   preval3lsb = val3lsb;  
