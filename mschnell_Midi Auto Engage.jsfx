@@ -1,0 +1,187 @@
+desc:Midi Auto Engage
+author: Michael Schnell (mschnell@bschnell.de)
+version: 3.2
+changelog: initial release1
+donation: United Nations Foundation http://www.unfoundation.org/
+about:
+  ## Description
+   Primary use: control on/off function of plugins that are controlled by a midi controller according to the value of the modulation CC that is sent to it.
+
+   The "Midi Channel" and "CC input" select the  CC No to be adhered to.
+
+   The "CC Output" selects the CC No the on/off switch is to be accessed on. Only the values 0 and 127 will be sent out.
+
+   The "Threshold" and "Hysteresis" slider define the switching point and the dead zone that allows for safely switching. The "on" and "off dwell time" inhibit the appropriate switching to enhance the safety. 
+
+   The "Output" selection allows for inverting the output. (This influences the selection of the dwell times.)
+
+   The "original CC" allows for stretching the selected range of the input CC before propagating it to a full range of 0 ... 127 when the input is within the zone to be selected. 
+
+   A graph is displayed that shows lines for the input CC value (yellow) and the lower and upper switching limits (red). A green rectangle shows the current on/off state. If appropriate the stretching slope and the output CC value is shown.
+  
+
+// Author: Michael Schnell, 
+// License: LGPL - http://www.gnu.org/licenses/lgpl.html
+//
+
+
+
+slider1:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Channel
+slider2:1<0,127,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>CC Input
+slider3:2<1,127,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>CC Output
+slider4:10<0,127,1>Threshold
+slider5:5<0,64,1>Hysteresis
+slider6:0<0,500,10>on dwell time (msek)
+slider7:0<0,500,10>off dwell time (msek)
+slider8:0<0,1,1{straight,invert}>Output
+slider9:0<0,4,1{straight,stretch low limit to 127,stretch high limit to 127,stretch 0 to low limit,stretch 0 to high limit}>original CC
+
+in_pin:  none
+out_pin: none
+
+@init
+  out  = 0;
+  outo = 0;
+  in   = 0;
+  delay = 0;
+
+  
+@slider
+  inChannel   = slider1;
+  inCC        = slider2; 
+  outCC       = slider3;
+  thh         = slider4;
+  thl         = thh - slider5;
+  dton        = slider6;         
+  dtoff       = slider7;         
+  invert      = slider8;
+  enhance     = slider9;
+  thl < 1 ? thl = 1;
+  invert ? (
+    outh      = 0;
+    outl      = 127;
+   ) : ( 
+    outh      = 127;
+    outl      = 0;
+  );  
+  msg1o       = $xB0 + inChannel;
+  
+@block
+  while (midirecv(offset, msg1, msg2, msg3)) (
+    status = msg1 & $xF0;      // Extract message type
+    channel = msg1 & $x0F;
+    channel == inChannel ? (   // Is it on our channel?
+      status == $xB0 ? (       // Is it a controller event?
+        msg2 == inCC ? (       // Is it the right CC?
+          in = msg3;
+          in > thh ? (
+            out = outh;
+           ) :  msg3 < thl ? (
+            out = outl; 
+          );  
+          out != outo ? (
+            outo = out;            
+            f = srate / samplesblock;   // calls per second
+            outo > 64 ? (
+              f = f * dton / 1000;      // minimum calls        
+             ) : ( 
+              f = f * dtoff / 1000;     // minimum calls        
+            );  
+            f = 0 | f;
+            delay = f+1;
+          );
+          enhance == 1 ?  (
+            msg3 -= thl;
+            msg3 /= 127-thl; // 0...1)
+            msg3 *= 127; 
+            msg3 < 0 ? msg3 = 0;
+            mm = msg3;
+           ) : enhance == 2 ? (
+            msg3 -= thh;
+            msg3 /= 127-thh; // 0...1)
+            msg3 *= 127; 
+            msg3 < 0 ? msg3 = 0;
+            mm = msg3;          
+           ) : enhance == 3 ? (
+            msg3 /= thl; // 0...1)
+            msg3 *= 127; 
+            msg3 > 127 ? msg3 = 127;
+            mm = msg3;
+           ) : enhance == 4 ? (
+            msg3 /= thh; // 0...1)
+            msg3 *= 127; 
+            msg3 > 127 ? msg3 = 127;
+            mm = msg3;
+          );  
+        );
+      );
+    );
+    midisend(offset, msg1, msg2, msg3); // pass through
+  );    
+  delay ? (
+    delay -= 1;
+    !delay ? (
+      outv !=  outo ? (
+        outv = outo;
+        midisend(offset, msg1o, outCC, outo); // pass through            
+      );  
+    );   
+  );
+  
+  
+@gfx 640 400
+
+gfx_r=gfx_g=gfx_b=0; gfx_a=1;
+gfx_x=gfx_y=0;
+gfx_rectto(gfx_w,gfx_h);
+
+q1 = (gfx_w-3) / 127;
+
+outv>64 ? (
+  gfx_r = 0; gfx_g = 0.5; gfx_b = 0;
+  gfx_x = 0;
+  gfx_y = 0;
+  gfx_rectto(gfx_w, gfx_h/2);
+);  
+
+gfx_r=gfx_g=gfx_b=1;
+
+gfx_r = 1; gfx_g = 0; gfx_b = 0;
+gfx_x = thh*q1;
+gfx_y = 0;
+gfx_lineto(gfx_x, gfx_h);
+
+gfx_x = thl*q1;
+gfx_y = 0;
+gfx_lineto(gfx_x, gfx_h);
+
+gfx_r = 1; gfx_g = 1; gfx_b = 0;
+gfx_y = 0;
+gfx_x = 1+in*q1;
+gfx_rectto(gfx_x+3, gfx_h);
+
+enhance ? (
+  gfx_r = 1; gfx_g = 1; gfx_b = 1;
+  enhance == 1 ? (
+    gfx_y = gfx_h-1;
+    gfx_x = thl / 127 * gfx_w;
+    gfx_lineto(gfx_w, 0);
+   ) : enhance == 2 ? (
+    gfx_y = gfx_h-1;
+    gfx_x = thh / 127 * gfx_w;
+    gfx_lineto(gfx_w, 0);
+   ) : enhance == 3 ? (
+    gfx_y = 0;
+    gfx_x = thl / 127 * gfx_w;
+    gfx_lineto(0,  gfx_h-1);
+   ) : enhance == 4 ? (
+    gfx_y = 0;
+    gfx_x = thh / 127 * gfx_w;
+    gfx_lineto(0, gfx_h-1);
+  );  
+//  gfx_lineto(x, gfx_y);
+  gfx_r = 1; gfx_g = 1; gfx_b = 0;
+  gfx_y = gfx_h-3 - (mm / 127 * (gfx_h-3));
+  gfx_x = 0;
+  gfx_rectto(gfx_w, gfx_y+3);
+)
