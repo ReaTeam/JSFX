@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="3f54bb063e39deb63f28a22a0fffc69cf090e82f">
+<index version="1" name="ReaTeam JSFX" commit="3595ffcaf00633ec9cdd314e78a7fcd23e00f6ad">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -825,6 +825,58 @@ channel).]]></changelog>
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-02-05T16:08:54Z">
         <changelog><![CDATA[fix positive delays - Paweł Łyżwa (palyzwa@gmail.com)]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/c94c4a8bda06b37541da6cb151674fb446413947/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_Midi Auto Engage.jsfx" type="effect" desc="Midi Auto Engage">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Primary use: control on/off function of plugins that are controlled by a midi controller according to the value of the modulation CC that is sent to it.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The "Midi Channel" and "CC input" select the CC No to be adhered to.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The "CC Output" selects the CC No the on/off switch is to be accessed on. Only the values 0 and 127 will be sent out.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The "Threshold" and "Hysteresis" slider define the switching point and the dead zone that allows for safely switching. The "on" and "off dwell time" inhibit the appropriate switching to enhance the safety.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The "Output" selection allows for inverting the output. (This influences the selection of the dwell times.)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The "original CC" allows for stretching the selected range of the input CC before propagating it to a full range of 0 ... 127 when the input is within the zone to be selected.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 A graph is displayed that shows lines for the input CC value (yellow) and the lower and upper switching limits (red). A green rectangle shows the current on/off state. If appropriate the stretching slope and the output CC value is shown.\par}
+}
+]]></description>
+        <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
+      </metadata>
+      <version name="3.2" author="Michael Schnell (mschnell@bschnell.de)" time="2018-02-24T17:28:37Z">
+        <changelog><![CDATA[initial release1]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/3595ffcaf00633ec9cdd314e78a7fcd23e00f6ad/Utility/mschnell_Midi%20Auto%20Engage.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_Midi Fade.jsfx" type="effect" desc="Midi Fade X">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The midi CC values 0 ... 127 are mapped to an "amplifier" curve that consists of a linear and an exponential part in a way, that with CC = 0 the amplification is 0 (-inf dB) and with CC = 127 the amplification is 1 (0db).\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 A slider defines the amount (in dB), the amplification is reduced with each CC step.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 According to that, the breakpoint between the exponential and the linear part is set so that at this point the value and the slope of the curves match.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Below the breakpoint, a linear curve is used so that with CC = 0 the amplification is Zero (-infinity dB).\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Two sliders defines the maximum fade-in (up) and fade-out (down) speed the amplification is modulated. This is set in dB per modulation step. Moreover the maximum speed used is reaching a new defined level in as many steps a samples in a block.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "start fade in" defines the starting point of the upwards move of the amplification. Same is given as the equivalent of an input CC value (1 ... 31)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The "Muting Notification" sets a CC # which is sent out with value 0, when the amplification drops below the mute level (equivalent to an input CC value of one tenth of that defined for "start fade in").\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The "send CC = 127" setting defines whether this CC is sent with value 127, when the amplification rises above the mute level or when it reaches 0 dB.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 A graph shows as well the curve (linear, Amplification vs. CC steps), as the dynamic movement of the input CC and the amplification level.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Moreover, the fade in start and - if appropriate - the mute level is shown.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 If the "Muting Notification CC" is set, the mute state is visualized by a green rectangle.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Limitations\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 As due the the description above, the modulation speed is limited to reaching the target level in a timespan at least as the duration of a sample block, the current version of this plugin is not suitable for synth-like application that intend to implement a VCA.\par}
+}
+]]></description>
+        <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
+      </metadata>
+      <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-02-24T17:27:59Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/64f6efb468c4fe4f1c0478d6d42be89fb9fa345d/Utility/mschnell_Midi%20Fade.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI Volume Control.jsfx" type="effect" desc="Midi Volume Control">
