@@ -1,4 +1,4 @@
-version: 2.0.0
+version: 2.1.0
 desc:ReaRack2 - Poly Splitter
 noindex:   true
 author:    Malcom Smith
@@ -9,7 +9,9 @@ License:   LGPL - http://www.gnu.org/licenses/lgpl.html
 about:     Poly splitter module for the ReaRack modular JSFX synth system.
            Splits out overlapping notes onto sequential MIDI channels for polyphonic voicing.
 
-changelog: Version 2.0.0 (10/12/2017) Initial version 2 release.
+changelog: Version 2.1.0 (25/02/2018) Updated to accept note-on with velocity = 0 as note off.
+                                      Thanks to Robert Randolf for this update.
+           Version 2.0.0 (10/12/2017) Initial version 2 release.
 
 slider1:mychan=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Lowest MIDI Output Channel
 slider2:voices=15<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Number of Voices
@@ -64,7 +66,7 @@ loop(16,
   // Extract message type
   status = msg1 & $xF0;
   // Is it a note on event?
-  status == $x90 ?
+  (status == $x90 && msg3 > 0)?
   (
   // Is the note currently playing in release mode?
   msg2[128] > time_precise() ?
@@ -92,7 +94,7 @@ loop(16,
   :
   (
   // Is it a note off event?
-  status == $x80 ?
+  (status == $x80 || (status == $x90 && msg3 == 0))?
     (
     // Pass through on apropriate channel
      sendchannel = msg2[0];

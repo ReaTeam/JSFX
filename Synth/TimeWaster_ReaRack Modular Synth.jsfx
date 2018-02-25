@@ -1,12 +1,8 @@
 desc: ReaRack Modular Synth
 author: Malcolm Smith
-version: 2.2.0
+version: 2.2.1
 changelog:
-  Version 2.2.0 - 21/02/2018 Important - Fixed a bug in CC Mixer module (no output).
-                             Features added - Oscillators (except Noise) and KS Delay now
-                             respond to MIDI pitch bend messages for pitch control. Pitch bend
-                             and pitch modulation by CC can be summed together. Oscillators have
-                             an additional 'Master pitch modulation range' slider.
+  Version 2.2.1 - 25/02/2018 Updated the Poly Splitter module to accept note-on with velocity = 0 as note-off.
 about:
   # ReaRack Modular Synth
   ReaRack is a modular MIDI controlled digital synth system. There are currently 18 modules-
