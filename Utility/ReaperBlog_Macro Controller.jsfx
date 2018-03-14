@@ -1,0 +1,25 @@
+/**
+ * JSFX Name: Macro controller
+ * About:
+ *  Dummy controls to use with Parameter link/modulation
+ * Author: The REAPER Blog
+ * Licence: GPL v3
+ * REAPER: 5.0
+ * Version: 1.0
+ */
+
+/**
+ * Changelog:
+ * v1.0 (2018-03-14)
+  + Initial Release
+ */
+ 
+ desc:Macro Controller
+
+
+slider1:50<0, 100, 1>Macro 1
+slider3:50<0, 100, 1>Macro 2
+slider5:50<0, 100, 1>Macro 3
+slider7:50<0, 100, 1>Macro 4
+slider9:50<0, 100, 1>Macro 5
+
