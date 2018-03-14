@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="7e29ae8f8114202f71fd742a502cedd8d5585f89">
+<index version="1" name="ReaTeam JSFX" commit="82faf67f48b2c7cac642ae097688e970d6e35bd8">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -982,6 +982,21 @@ channel).]]></changelog>
       <version name="1.0" author="The REAPER Blog" time="2016-08-08T14:07:30Z">
         <changelog><![CDATA[Initial Release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/4a33bbe6110bf1c5f37430bf245bbd058512148e/Utility/ReaperBlog_-12dB%20Dim.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="ReaperBlog_Macro Controller.jsfx" type="effect" desc="Macro controller">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Dummy controls to use with Parameter link/modulation\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="The REAPER Blog" time="2018-03-14T19:36:01Z">
+        <changelog><![CDATA[+ Initial Release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/82faf67f48b2c7cac642ae097688e970d6e35bd8/Utility/ReaperBlog_Macro%20Controller.jsfx</source>
       </version>
     </reapack>
   </category>
