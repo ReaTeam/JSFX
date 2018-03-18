@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="34da721ca0ae840d760e2518e84c88c5273490ab">
+<index version="1" name="ReaTeam JSFX" commit="6c28b721dcd622b0aa7421dfc18678b9392c51bd">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -55,14 +55,14 @@
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MIDI Slapback Delay\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Repeat MIDI notes n times after a delay set in beats while the note is being played.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MIDI Taps Repeater\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Repeat MIDI notes {\i n} times after a delay set in beats until released.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 If the "Taps" parameter is set to 0 the note is repeated forever (or until velocity reaches zero).\par}
 }
 ]]></description>
       </metadata>
       <version name="1.0" author="cfillion" time="2018-03-18T17:04:24Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/34da721ca0ae840d760e2518e84c88c5273490ab/MIDI/cfillion_MIDI%20Taps%20Repeater.jsfx</source>
+        <source>https://github.com/ReaTeam/JSFX/raw/6c28b721dcd622b0aa7421dfc18678b9392c51bd/MIDI/cfillion_MIDI%20Taps%20Repeater.jsfx</source>
       </version>
     </reapack>
     <reapack name="cfillion_Note Duplicator.jsfx" type="effect" desc="Note Duplicator">
