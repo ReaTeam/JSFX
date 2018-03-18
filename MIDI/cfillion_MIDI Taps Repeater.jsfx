@@ -2,9 +2,9 @@ desc: MIDI Taps Repeater
 version: 1.0
 author: cfillion
 about:
-  # MIDI Slapback Delay
+  # MIDI Taps Repeater
 
-  Repeat MIDI notes n times after a delay set in beats while the note is being played.
+  Repeat MIDI notes *n* times after a delay set in beats until released.
 
   If the "Taps" parameter is set to 0 the note is repeated forever (or until velocity reaches zero).
 
