@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="82faf67f48b2c7cac642ae097688e970d6e35bd8">
+<index version="1" name="ReaTeam JSFX" commit="34da721ca0ae840d760e2518e84c88c5273490ab">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -47,6 +47,22 @@
       <version name="1.0.1" author="cfillion" time="2017-04-23T15:29:14Z">
         <changelog><![CDATA[Fix for subsequent notes being cut early.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/b95520767d8de9aa7ae8b79a63e443a30f9e0ac9/MIDI/cfillion_MIDI%20Note%20Length%20Control.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="cfillion_MIDI Taps Repeater.jsfx" type="effect" desc="MIDI Taps Repeater">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MIDI Slapback Delay\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Repeat MIDI notes n times after a delay set in beats while the note is being played.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 If the "Taps" parameter is set to 0 the note is repeated forever (or until velocity reaches zero).\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="cfillion" time="2018-03-18T17:04:24Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/34da721ca0ae840d760e2518e84c88c5273490ab/MIDI/cfillion_MIDI%20Taps%20Repeater.jsfx</source>
       </version>
     </reapack>
     <reapack name="cfillion_Note Duplicator.jsfx" type="effect" desc="Note Duplicator">
