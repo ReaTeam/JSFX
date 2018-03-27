@@ -1,7 +1,7 @@
 desc:Midi Fade X
 author: Michael Schnell (mschnell@bschnell.de)
-version: 1.1
-changelog: initial release
+version: 2.1
+changelog: Added Muting Notification CC value slider
 donation: United Nations Foundation http://www.unfoundation.org/
 about:
   ## Description
@@ -20,7 +20,7 @@ about:
   
   The slider "start fade in" defines the starting point of the upwards move of the amplification. Same is given as the equivalent of an input CC value (1 ... 31)
   
-  The "Muting Notification" sets a CC # which is sent out with value 0, when the amplification drops below the mute level (equivalent to an input CC value of one tenth of that defined for "start fade in").
+  The "Muting Notification" sets a CC # which is sent out with a value of "Muting Notification CC value", when the amplification drops below the mute level (equivalent to an input CC value of one tenth of that defined for "start fade in").
   
   The "send CC = 127" setting defines whether this CC is sent with value 127, when the amplification rises above the mute level or when it reaches 0 dB.
   
@@ -45,8 +45,9 @@ slider4:0.003<0.0005, 0.01, 0.0001>max step fade in(dB)
 slider5:0.003<0.0005, 0.01, 0.0001>max step fade out(dB)
 slider6:1<1,31,1>start fade-in (CC Value)
 //slider7:0<0,1,0.01>Factor (Test)
-slider8:0<0,127,1{None,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>Muting Notification CC
-slider9:0<0,2,1{Never,-inf db,0 dB}>send CC = 127
+slider8:0<0,127,1{None,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>Muting Notification CC #
+slider9:0<0,127,1)>Muting Notification CC value
+slider10:0<0,2,1{Never,-inf db,0 dB}>send CC = 127
 
 @init
   modval      = 0;
@@ -83,7 +84,8 @@ slider9:0<0,2,1{Never,-inf db,0 dB}>send CC = 127
   f1          = f(finstart);
   f01         = f(finstart/10);
   outcc       = slider8-1;
-  sendcc      = slider9;
+  outccval    = slider9;
+  sendcc      = slider10;
   
   str1  = sprintf(#, "fade in start -> %.0f dB", log(f1)/r4);;
   str01 = sprintf(#, "mute level    -> %.0f dB", log(f01)/r4);;
@@ -138,13 +140,13 @@ slider9:0<0,2,1{Never,-inf db,0 dB}>send CC = 127
     outlevel <= f01 ? (
       outval ? (
         outval = 0;
-        midisend(offset, inChannel+$xB0, outcc, outval); // pass through
+        midisend(offset, inChannel+$xB0, outcc, outccval); 
       );  
      ) : outlevel == 1 ? ( 
       !outval ? (
         sendcc == 2 ? (
           outval = 127;
-          midisend(offset, inChannel+$xB0, outcc, outval); // pass through      
+          midisend(offset, inChannel+$xB0, outcc, outval);
         );  
       )  
      ) : (
@@ -152,7 +154,7 @@ slider9:0<0,2,1{Never,-inf db,0 dB}>send CC = 127
         sendcc != 2 ? (
           outval = 127;
           sendcc ? (
-            midisend(offset, inChannel+$xB0, outcc, outval); // pass through
+            midisend(offset, inChannel+$xB0, outcc, outval);
           );  
         );  
       );  
