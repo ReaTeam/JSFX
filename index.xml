@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="6c28b721dcd622b0aa7421dfc18678b9392c51bd">
+<index version="1" name="ReaTeam JSFX" commit="98c128b768bb1c8ed1dbed002f441414b6813e5c">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -902,7 +902,7 @@ channel).]]></changelog>
 {\pard \ql \f0 \sa180 \li0 \fi0 Below the breakpoint, a linear curve is used so that with CC = 0 the amplification is Zero (-infinity dB).\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Two sliders defines the maximum fade-in (up) and fade-out (down) speed the amplification is modulated. This is set in dB per modulation step. Moreover the maximum speed used is reaching a new defined level in as many steps a samples in a block.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "start fade in" defines the starting point of the upwards move of the amplification. Same is given as the equivalent of an input CC value (1 ... 31)\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 The "Muting Notification" sets a CC # which is sent out with value 0, when the amplification drops below the mute level (equivalent to an input CC value of one tenth of that defined for "start fade in").\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The "Muting Notification" sets a CC # which is sent out with a value of "Muting Notification CC value", when the amplification drops below the mute level (equivalent to an input CC value of one tenth of that defined for "start fade in").\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The "send CC = 127" setting defines whether this CC is sent with value 127, when the amplification rises above the mute level or when it reaches 0 dB.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 A graph shows as well the curve (linear, Amplification vs. CC steps), as the dynamic movement of the input CC and the amplification level.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Moreover, the fade in start and - if appropriate - the mute level is shown.\par}
@@ -916,6 +916,10 @@ channel).]]></changelog>
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-02-24T17:27:59Z">
         <changelog><![CDATA[initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/64f6efb468c4fe4f1c0478d6d42be89fb9fa345d/Utility/mschnell_Midi%20Fade.jsfx</source>
+      </version>
+      <version name="2.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-03-28T00:34:03Z">
+        <changelog><![CDATA[Added Muting Notification CC value slider]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/98c128b768bb1c8ed1dbed002f441414b6813e5c/Utility/mschnell_Midi%20Fade.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI Volume Control.jsfx" type="effect" desc="Midi Volume Control">
