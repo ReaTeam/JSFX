@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="98c128b768bb1c8ed1dbed002f441414b6813e5c">
+<index version="1" name="ReaTeam JSFX" commit="fb32cf664c09c8d6f58ab8a4beefc512bd23d333">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -887,6 +887,44 @@ channel).]]></changelog>
       <version name="3.2" author="Michael Schnell (mschnell@bschnell.de)" time="2018-02-24T17:28:37Z">
         <changelog><![CDATA[initial release1]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/3595ffcaf00633ec9cdd314e78a7fcd23e00f6ad/Utility/mschnell_Midi%20Auto%20Engage.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_Midi CC Table.jsfx" type="effect" desc="Midi CC Table">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The JSFX receives Midi CC messages with a Midi channel and CC # defined by the sliders in the GUI. The value of this message selects a row in the active configuration file and according to this, up to 32 Midi CC message with channel, CC # and CC value as defined in that row are sent.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 In "Map" mode, the messages defined in the appropriate row are sent whenever a fitting message is received. In "Configs" mode a row is selected according to the received message. Messages are only sent when the selection is changed. Now the "deselect" messages of the previously selected row are sent and after that the "select" messages of the newly selected row are sent.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 You can define a "Delay" and a "No Delay" channel to send out messages in in sequenced way: Id delay is not zero, the messages to the "No Delay" channel are sent at once, the other messages are sent after the delay time has passed. The main purpose of the Delay feature is using this plugin for configuration of plugins in a channel: the channel needs to be unmuted (by an appropriate ReaSctipt) before the plugins in that channel arfe ready to accept Midi Messages.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "CC Table" selects the configuration file to be used. Same needs to be located in Reaper's "Data" folder (right besides "Effects") in a sub-folder "cc table", and needs to have the extension ".txt".\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "Function" selects the function mode to be "Map" or "Configs"\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "Input Channel" defines the Channel the messages to be adhered to are expected in.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "CC Input" defines the message # of the messages to be adhered to.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "No Delay Channel" defines the channel to vbe sent out without delay. (All other channels 2will be delayed)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "Delay" defines the send delay in milliseconds.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 File format\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Each line of the files defines a row in the mapping table. The first row will be accessed by a message with Value 0, the second row will be accessed by a message with Value 1, ...\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Each line can define messages to be sent when the row is accessed, and optionally messages that will be sent when the row is deseected. The "select" messages are defined first, and after a "<" character the "deselect" messages are defined.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Each message is defined by a block of characters, containing two or three decimal numbers). The message definitions aer separated by (one or more) blanks.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The message definitions start with the Midi channel followed by a colon (":"). The number after the colon defines the CC #. After the CC number optionally a "=" and a value definition can be set. if the "=" is missing, the value Zero is assumed.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Any character after (and including) a "/" in a line will be ignored as a comment.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Example:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 1:1=1 1:1=2 // CC value 0 2:2=2 // CC value 2 -> empty // CC value 3 3:3=1 3:3=2 3:3=3 3:3=4<10:11 15:127=127 7:7=2 7:7=3 7:7=4 7:7=5 7:7=6 7:7=7 7:7=8<16:124=125 9:9=9 15:127=127 7:7=2 7:7=3 7:7=4 7:7=5 7:7=6 7:7=7 7:7=8 < 16:124=125 9:9=9 <15:15=15 // CC value 7\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Graphics\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The graphics will show as many of the rows in the mapping table as possible. Empty rows are not shown.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 If "deselect" messages are defined the fields for that row will contain two lines.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The first column shows the CC to be received to select the row. The other columns how the messages to be sent.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 in "Configs" mode, the currently selected row is highlighted in yellow.\par}
+}
+]]></description>
+        <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2018-03-29T05:47:14Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/fb32cf664c09c8d6f58ab8a4beefc512bd23d333/Utility/mschnell_Midi%20CC%20Table.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Midi Fade.jsfx" type="effect" desc="Midi Fade X">
