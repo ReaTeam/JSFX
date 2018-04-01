@@ -1,4 +1,4 @@
-desc: Trigger CC
+desc: MIDI Trigger CC
 author: Michael Schnell (mschnell@bschnell.de)
 version: 1.0
 changelog: Added Muting Notification CC value slider
