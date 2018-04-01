@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="fb32cf664c09c8d6f58ab8a4beefc512bd23d333">
+<index version="1" name="ReaTeam JSFX" commit="966e57c82d5d555d55880143ac1114611df30dbd">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -927,6 +927,33 @@ channel).]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/fb32cf664c09c8d6f58ab8a4beefc512bd23d333/Utility/mschnell_Midi%20CC%20Table.jsfx</source>
       </version>
     </reapack>
+    <reapack name="mschnell_MIDI Convert to CC.jsfx" type="effect" desc="MIDI convert to CC">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Midi CC, PS, Note On or Note Off messages are converted to Midi CC messages with a predefined Channel and CC #. The CC value is calculated from the incoming value.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 All midi messages that don't fit the "In" specifications are passed through.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "In Channel" defines the channel the messages to be converted are expected in.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "Midi Message" selects if CC, PS, Note on or Note Off messages are converted.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "In CC" is only used when "CC" is selected and defines the CC# of the eligible input messages.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The sliders "Min Input Value" and "Max Input Value" d3efine the range of the eligible input values.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "Out Channel" defines the Channel the converted messages are sent in.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "Out CC" defines the Midi CC message # to be sent\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "Min CC Value" defines the value to be sent when the Min Input Value is received. Hence there will be an offset of Min_Input_Value - Min_Outout_Value.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Limitation\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 With this version, no linear function (using min and max output value) is calculated. This feature might be added with a future version.\par}
+}
+]]></description>
+        <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2018-04-01T05:37:58Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/b921919e9511e043edb5aa43e108307b217ccf19/Utility/mschnell_MIDI%20Convert%20to%20CC.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="mschnell_Midi Fade.jsfx" type="effect" desc="Midi Fade X">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
@@ -958,6 +985,24 @@ channel).]]></changelog>
       <version name="2.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-03-28T00:34:03Z">
         <changelog><![CDATA[Added Muting Notification CC value slider]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/98c128b768bb1c8ed1dbed002f441414b6813e5c/Utility/mschnell_Midi%20Fade.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_MIDI Trigger CC.jsfx" type="effect" desc="MIDI Trigger CC">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 A Midi function testing utility. Usable e.g. as a "virtual Pedal Bar".\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Pushing one of the buttons 0 ... 9 will send a CC value as set in the "CC Val x" sliders with the Midi channel and CC # as set in the appropriate sliders\par}
+}
+]]></description>
+        <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2018-04-01T05:39:31Z">
+        <changelog><![CDATA[Added Muting Notification CC value slider]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/966e57c82d5d555d55880143ac1114611df30dbd/Utility/mschnell_MIDI%20Trigger%20CC.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI Volume Control.jsfx" type="effect" desc="Midi Volume Control">
