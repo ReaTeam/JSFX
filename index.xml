@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="966e57c82d5d555d55880143ac1114611df30dbd">
+<index version="1" name="ReaTeam JSFX" commit="4d2c42a984bd4d4ee5aadf068b643041b2868855">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1100,6 +1100,24 @@ channel).]]></changelog>
       <version name="1.0" author="The REAPER Blog" time="2018-03-14T19:36:01Z">
         <changelog><![CDATA[+ Initial Release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/82faf67f48b2c7cac642ae097688e970d6e35bd8/Utility/ReaperBlog_Macro%20Controller.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="ReaperBlog_Multichannel Volume Trim 2.jsfx" type="effect" desc="single fader to trim 32-channels by same amount">
+      <metadata>
+        <link rel="website">https://forum.cockos.com/showthread.php?t=205533</link>
+        <link rel="website">https://reaperblog.net/2018/04/multichannel-volume-trimming/ ‎</link>
+      </metadata>
+      <version name="1.0" author="REAPER Blog" time="2018-04-27T16:20:04Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/4d2c42a984bd4d4ee5aadf068b643041b2868855/Utility/ReaperBlog_Multichannel%20Volume%20Trim%202.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="ReaperBlog_Multichannel Volume Trim.jsfx" type="effect" desc="Faders to trim 32-channels by same amount in stereo pairs">
+      <metadata>
+        <link rel="website">https://forum.cockos.com/showthread.php?t=205533</link>
+        <link rel="website">https://reaperblog.net/2018/04/multichannel-volume-trimming/ ‎</link>
+      </metadata>
+      <version name="1.0" author="REAPER Blog" time="2018-04-27T16:20:04Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/4d2c42a984bd4d4ee5aadf068b643041b2868855/Utility/ReaperBlog_Multichannel%20Volume%20Trim.jsfx</source>
       </version>
     </reapack>
   </category>
