@@ -1,0 +1,122 @@
+desc:AutoMixer
+author: Corey Scogin
+version: 1.1
+tags: volume, attenuation, automation
+donation: BTC 3JSqBVB1wQeyGHP8ktHuefQMzPdHKhLYQY
+  ETH 0x1a753E71D4C9473c2FEb1946CBc6b32CE853c189
+about: 
+  # AutoMixer
+  ## Description
+  Based on the gain sharing automatic microphone mixing algorithm created by [Dan Dugan](https://www.dandugan.com), 
+  this plugin attenuates channels that are not in use helping to smoothly cut background noise and bleed.
+  Useful for spoken word content. 
+  ## Instructions
+  Drop this plugin on each channel in the group. 
+  - Inactive channels will be attenuated helping to decrease background noise.
+  - Multiple active channels will be attenuated according to the sum of all channels helping to keep the overall volume under control.
+  See [Wikipedia](https://en.wikipedia.org/wiki/Automixer) for a more thorough description.
+changelog:
+2016-02-26 | Corey Scogin 
+  -Removed the linear to dB conversions. All attenuation values calculated directly now.
+  -Clear the buffer when the window changes. Keeping old buffer values would result in unexpected behavior.
+  -Added the freembuf call to indicate how much memory is used.
+
+// Known Bugs:
+//  -If an instance of a plugin is removed or bypassed, the others do not know and it throws off the mix calculations.
+//  You may have to close and reopen the project in order to reset the instance count and restore functionality.
+//  Is there a better way to keep track of the number of plugin instances?
+
+options:gmem=AutoMixer
+
+slider2:300<1,10000,10>RMS Window Length (ms)
+slider3:0<0,1,1{Rectangular,Efficient}>RMS Window Type
+
+@init
+ 
+  minRmsValue = 10^(-144/20) ; // Minimum RMS value (-144) in linear representation
+  
+  // Options      
+  ext_noinit = 1;   // Do not call @init on play else the instance ID gets reset.    
+  
+  // Variables/Properties
+  gmem[0] += 1;     // Create an id for each instance. 
+                    // Is there a better way to determine how many instances are running?
+  thisID = gmem[0]; // note local ID for debug display. 
+                    // Global Memory storage descriptions:
+                    //  gmem[0] stores how many instances of this plugin exist
+                    //  gmem[n] stores the current rms value for each of the n instances of the plugin
+
+@slider 
+  // Recalculate constants
+  
+  // Sample window
+  window = slider2 * .001 * srate; // number of samples in selected time frame (ms)
+  
+  // Constants for efficient moving average approximation
+  b1 = exp(-1 / window); 
+  a0 = 1 - b1; 
+  
+  // reset persisted values to ensure new calculations are clean
+  buf = 0;                  // Reset buffer position in case the window gets smaller
+  memset( buf, 0, window ); // Clear the entire new buffer memory space
+  rmsSum = 0;               // Clear the rmsSum because old buffer values are no longer valid
+
+  freembuf(window + 1);     // Tell the memory manager how much memory we need or don't need
+
+@sample
+  
+  // Average all channels in this track (typically 2)
+  i=0;
+  trkSum=0;
+  loop(num_ch,                // For each channel
+        trkSum += spl(i);     // Add the sample values
+        i += 1;
+       ); 
+  trkAvg = trkSum / num_ch;   // Calculate the average
+  
+  
+  // Calculate the new rms value
+  slider3 == 0 ? (      // Window Type == Rectangular
+                        // Less efficient true rectangular window moving average 
+    splSq = trkAvg ^ 2; // Sample (or average of channel samples) squared for moving average sum.
+    rmsSum -= buf[0];   // Subtract the oldest value square from the sum
+    rmsSum += splSq;    // add the newest value square to the sum
+    buf[0] = splSq;     // add the newest value square to the buffer
+  
+    (buf+=1) >= window ? buf=0;   // increment buffer position
+  
+    rms = sqrt( rmsSum / window ) ; // Calculate the new RMS value
+    
+  ):( // Window Type == efficient approximation 
+      // Efficient moving average approximation
+    fout = a0 * (trkAvg ^ 2) + b1 * fout;
+    rms = sqrt(fout);
+  );
+  
+  // Store current RMS value in shared memory for comparison by other instances of this plugin
+  gmem[thisID] = rms;
+  
+  // Calculate total RMS level of all plugin instances
+  i = 0;
+  sum = 0;
+  loop(gmem[0], 
+           i += 1;
+           sum += gmem[i];
+       );     
+
+  // Put a minimum limit on the RMS value...effectively zero
+  rms < minSplValue ? rms = minSplValue; // -144 dB
+  
+  // The AutoMixer Algorithm
+  attSpl = rms / sum; // For reference: subtraction in dB corresponds to division in linear
+    
+  // Attenuate each channel sample value
+  i = 0;
+  loop(num_ch,
+        spl(i) = spl(i) * attspl;
+        i += 1;
+        );       
+
+// Possible future modifications:
+//    -Instance grouping
+//    -Better ID management
