@@ -2,6 +2,7 @@ desc:AutoMixer
 author: Corey Scogin
 version: 1.1
 tags: volume, attenuation, automation
+link: Forum Thread https://forum.cockos.com/showthread.php?t=173289
 about: 
   # AutoMixer
   ## Description
@@ -13,11 +14,10 @@ about:
   - Inactive channels will be attenuated helping to decrease background noise.
   - Multiple active channels will be attenuated according to the sum of all channels helping to keep the overall volume under control.
   See [Wikipedia](https://en.wikipedia.org/wiki/Automixer) for a more thorough description.
-changelog:
-2016-02-26 | Corey Scogin 
-  -Removed the linear to dB conversions. All attenuation values calculated directly now.
-  -Clear the buffer when the window changes. Keeping old buffer values would result in unexpected behavior.
-  -Added the freembuf call to indicate how much memory is used.
+changelog: 
+  Removed the linear to dB conversions. All attenuation values calculated directly now. 
+  Clear the buffer when the window changes. Keeping old buffer values would result in unexpected behavior. 
+  Added the freembuf call to indicate how much memory is used.
 
 // Known Bugs:
 //  -If an instance of a plugin is removed or bypassed, the others do not know and it throws off the mix calculations.
