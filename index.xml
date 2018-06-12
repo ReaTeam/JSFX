@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="4d2c42a984bd4d4ee5aadf068b643041b2868855">
+<index version="1" name="ReaTeam JSFX" commit="247f64ccae7c8d62f184ae6d4a515dda661cd406">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -841,6 +841,36 @@ channel).]]></changelog>
     </reapack>
   </category>
   <category name="Utility">
+    <reapack name="CoreyScogin_AutoMixer.jsfx" type="effect" desc="AutoMixer">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 AutoMixer\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Based on the gain sharing automatic microphone mixing algorithm created by {\field{\*\fldinst{HYPERLINK "https://www.dandugan.com"}}{\fldrslt{\ul
+Dan Dugan
+}}}
+, this plugin attenuates channels that are not in use helping to smoothly cut background noise and bleed. Useful for spoken word content.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Instructions\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Drop this plugin on each channel in the group.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Inactive channels will be attenuated helping to decrease background noise.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Multiple active channels will be attenuated according to the sum of all channels helping to keep the overall volume under control. See {\field{\*\fldinst{HYPERLINK "https://en.wikipedia.org/wiki/Automixer"}}{\fldrslt{\ul
+Wikipedia
+}}}
+ for a more thorough description.\sa180\par}
+}
+]]></description>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?t=173289">Forum Thread</link>
+      </metadata>
+      <version name="1.1" author="Corey Scogin" time="2018-06-12T21:40:12Z">
+        <changelog><![CDATA[Removed the linear to dB conversions. All attenuation values calculated directly now. 
+Clear the buffer when the window changes. Keeping old buffer values would result in unexpected behavior. 
+Added the freembuf call to indicate how much memory is used.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/247f64ccae7c8d62f184ae6d4a515dda661cd406/Utility/CoreyScogin_AutoMixer.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="mschnell_Dual Time adjustment.jsfx" type="effect" desc="Dual Time adjustment +/- Delay">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
