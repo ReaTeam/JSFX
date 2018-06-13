@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="247f64ccae7c8d62f184ae6d4a515dda661cd406">
+<index version="1" name="ReaTeam JSFX" commit="7f2f0c085b27393a6c642f3f6cffd8197aa4f262">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -869,6 +869,27 @@ Wikipedia
 Clear the buffer when the window changes. Keeping old buffer values would result in unexpected behavior. 
 Added the freembuf call to indicate how much memory is used.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/247f64ccae7c8d62f184ae6d4a515dda661cd406/Utility/CoreyScogin_AutoMixer.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="CoreyScogin_TimeDelayByDistance.jsfx" type="effect" desc="Time Delay by Distance">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Time Delay by Distance\par}
+{\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Delays a stereo or mono track by distance based on the approximate speed of sound through air at room temperature. This is a rough approximation of the speed of sound and should be pretty close enough for normal recording conditions.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Instructions\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Select your preferred units.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Set the distance to delay the audio.\sa180\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Corey Scogin" time="2018-06-13T05:09:19Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/7f2f0c085b27393a6c642f3f6cffd8197aa4f262/Utility/CoreyScogin_TimeDelayByDistance.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Dual Time adjustment.jsfx" type="effect" desc="Dual Time adjustment +/- Delay">
