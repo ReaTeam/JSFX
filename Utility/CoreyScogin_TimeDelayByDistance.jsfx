@@ -4,15 +4,16 @@ version: 1.0
 tags: utility, time, adjustment
 author: Corey Scogin
 about:
-    # Time Delay by Distance
-    ## Description
-        Delays a stereo or mono track by distance based on the approximate speed of sound through air at room temperature.
-        This is a rough approximation of the speed of sound and should be pretty close enough for normal recording conditions.
-    ## Instructions
-        Select your preferred units.
-        Set the distance to delay the audio.
+  # Time Delay by Distance
+  ---
+  ## Description
+  Delays a stereo or mono track by distance based on the approximate speed of sound through air at room temperature.
+  This is a rough approximation of the speed of sound and should be pretty close enough for normal recording conditions.
+  ## Instructions
+  - Select your preferred units.
+  - Set the distance to delay the audio.
 changelog:
-    initial release
+  initial release
 
 // UI Controls
 slider1:units=0<0,3,1{inches,feet,centimeters,meters}>Units
