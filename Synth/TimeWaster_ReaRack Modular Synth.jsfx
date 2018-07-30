@@ -1,8 +1,8 @@
 desc: ReaRack Modular Synth
 author: Malcolm Smith
-version: 2.3.0
+version: 2.3.1
 changelog:
-  Version 2.3.0 - 25/07/2018 Added Envelope Multi-Tool & MIDI Mixer. Updated Non Lineraizer and Amplifier. Deleted CC Mixer.
+  Version 2.3.1 - 30/07/2018 Bug fix for Envelope Multi-Tool, sustain point was incorrectly resetting on slider change.
 about:
   # ReaRack Modular Synth
   ReaRack is a modular MIDI controlled digital synth system. There are currently 20 modules-
