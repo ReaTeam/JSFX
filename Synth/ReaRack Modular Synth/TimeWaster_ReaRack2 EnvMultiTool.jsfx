@@ -1,11 +1,14 @@
-version: 0.90
+
+version: 1.00
+
 desc:ReaRack2 - Envelope Multi-Tool
 noindex:   true
 author:    Malcolm Smith
            Copyright(C) 2018 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
            License: LGPL - http://www.gnu.org/licenses/lgpl.html
 
-changelog: Version 0.90 (13/07/2018) Beta release.
+changelog: Version 1.00 (30/07/2018) Initial working release.
+           Version 0.90 (13/07/2018) Beta release.
 
 about:     The Envelope Multi-Tool is a 1 to 16 stage envelope generator/LFO/step sequencer.
            Output can be either MIDI CC or MIDI Note on/off messages.
@@ -432,6 +435,7 @@ i=1;
 loop(16,
   i == stg ? i[mstglst] = new_stglen:
   i[mstglst] *= stg_ratio;
+  i[mstglst] < 1  ? i[mstglst] = 1 ;
   i += 1;
   );
 update_param = 1;
@@ -459,6 +463,7 @@ e_end_stat = new_e_end;
 i=1;
 loop(16,
   i[mstglst] *= env_ratio;
+  i[mstglst] < 1 ? i[mstglst] = 1 ;
   i += 1;
   );
 update_param = 1;
@@ -1358,7 +1363,7 @@ mouse_target.dbl_clk == 1 ?
 // If double click, make this the sustain point.
 (
 sus = stg-1;
-suslev = stg[-1];
+suslev = suslevst = stg[-1];
 suslev_r_on = 1;
 p0_on = 0;
 ):
@@ -1375,7 +1380,7 @@ sp0y -= pdy;
 sp0y < 0 ? sp0y = 0;
 sp0y > 1 ? sp0y = 1;
 stg[-1] = sp0y;
-stg-1 == sus ? suslev = stg[-1];
+stg-1 == sus ? suslev = suslevst = stg[-1];
 stg[mcurve] == 1 ? stg[mpy] = sp0y;
 trigmode >= tlm && stg == 1 ? 0[stages] = sp0y;
 suslev_r_on = 1;
@@ -1400,7 +1405,7 @@ mouse_target.dbl_clk == 1 ?
 // If double click, make this the sustain point.
 (
 sus = stg;
-suslev = stg[0];
+suslev = suslevst = stg[0];
 suslev_r_on = 1;
 p2_on = 0;
 );
@@ -1419,7 +1424,7 @@ sp2y -= pdy;
 sp2y < 0 ? sp2y = 0;
 sp2y > 1 ? sp2y = 1;
 stg[0] = sp2y;
-stg == sus ? suslev = stg[0];
+stg == sus ? suslev = suslevst = stg[0];
 trigmode >= tlm && stg == stages ? 0[0] = sp2y;
 );
 suslev_r_on = 1;
