@@ -1,8 +1,8 @@
 desc: ReaRack Modular Synth
 author: Malcolm Smith
-version: 2.3.1
+version: 2.3.2
 changelog:
-  Version 2.3.1 - 31/07/2018 Envelope Multi-Tool bug fix.
+  Version 2.3.2 - 05/08/2018 Envelope Multi-Tool, changed Sustain Level control to Stage End Point Level control.
 about:
   # ReaRack Modular Synth
   ReaRack is a modular MIDI controlled digital synth system. There are currently 20 modules-

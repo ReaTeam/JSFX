@@ -1,4 +1,4 @@
-version: 1.00
+version: 1.10
 desc:ReaRack2 - Envelope Multi-Tool
 noindex:   true
 author:    Malcolm Smith
@@ -37,7 +37,7 @@ slider3:schanout=1<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Outpu
 slider5:vsens=1<0,1,0.001>Velocity Sensitivity
 slider9:stbase=0<0,1,1{Seconds,Beats}>Time Unit
 slider7:trigmode=0<0,7,1{Re-trigger from start value,Re-trigger from last value,Legato - Re-trigger from start value,Legato - Re-trigger from last value,Latch trigger,Triggered single pass - no sustain,Loop - Triggered,Loop - Latch triggered,Loop - Continuous}>Trigger Mode
-slider11:stglen=0<0,11,1{Stage Length - active stage,Stage Lengths - all equal,Stage Length - active stage proportional,Envelope Length,Note Length - active stage,Note Lengths - all equal,Note Lengths - all proportional,Velocity - active stage,Velocity - all equal,Sustain Level,Root Note,Minimum Stage Length all stages}>Control
+slider11:stglen=0<0,11,1{Stage Length - active stage,Stage Lengths - all equal,Stage Length - active stage proportional,Envelope Length,Note Length - active stage,Note Lengths - all equal,Note Lengths - all proportional,Velocity - active stage,Velocity - all equal,Stage End Point Level,Root Note,Minimum Stage Length all stages}>Control
 slider12:stglc=4<0,19,1{1/16 time units,1/8 time units,1/4 time units,1/2 time units,1 time unit,2 time units,4 time units,8 time units,16 time units,32 time units,64 time units,128 time units,256 time units,512 time units,active stage length,minimum stage length,127,1,12 (chromatic note number),1 millisecond>Control Unit
 slider13:stglf=1<0,1,0.001>Control Multiplier
 slider14:mrange=0<0,1,0.001>Control Modulation Range
@@ -66,18 +66,21 @@ mp12x = mp01y+16;        // Second intermediate control point x values.
 mp12y = mp12x+16;        // Second intermediate control point y values.
 mcurve = mp12y+16;       // Curve type for each stage.
 mcc = mcurve+16;         // Modulating CC number for each control.
-mcci = mcc+70;           // Modulation CC recieved values.
-mmod = mcci+128;         // Moduation multipliers.
-mstat = mmod+128;        // Control slider raw vaules.
-mrng = mstat+70;         // Modulation range slider vaules.
-mstglst = mrng+70;       // Static stage length values, in samples.
+mcci = mcc+90;          // Modulation CC recieved values.
+mmod = mcci+130;         // Moduation multipliers.
+mstat = mmod+130;        // Control slider raw vaules.
+mrng = mstat+90;        // Modulation range slider vaules.
+mstglst = mrng+90;      // Static stage length values, in samples.
 mstgl = mstglst+20;      // Modulated stage length values, in samples.
 mstgstrt = mstgl+20;     // Modulated stage start points. Incudes end point, so 17 points in total.
 mnotelst = mstgstrt+20;  // Static stage note lengths.
 mnotel = mnotelst+20;    // Modulated stage note lengths.
 mvelst = mnotel+20;      // Static stage velocity values.
 mvel = mvelst+20;        // Modulated stage velocity values.
-mbezx = mvel+20;         // Bezier x points for graphics.
+mr0 = mvel+20;           // Bezier mid point level ratio for active stage.
+mr1 = mr0+20;            // Bezier mid point level ratio for active stage + 1.
+myst = mr1+20;           // Modulated end point (p2) values.
+mbezx = myst+20;         // Bezier x points for graphics.
 mbezy = mbezx+17*pts;    // Bezier y points for graphics.
 mbezox = mbezy+17*pts;   // Bezier x points for calculation of output.
 mbezoy = mbezox+17*pts;  // Bezier y points for calculation of output.
@@ -128,7 +131,7 @@ ct[5] = 1;
 ct[6] = 1;
 ct[7] = 0;
 ct[8] = 1;
-ct[9] = 1;
+ct[9] = 0;
 
 file_var(0,used) == 0? // If a new instance, set defaults.
 (
@@ -136,15 +139,18 @@ stages = 3;
 stg = 2;
 sus = 2;
 root = 1;
+
 // Set stage start and end point y values for first three stages.
-0[0] = 0;
-0[1] = 1;
-0[2] = 0.5;
-0[3] = 0;
+0[0] = myst[0] = 0;
+0[1] = myst[1] = 1;
+0[2] = myst[2] = 0.5;
+0[3] = myst[3] = 0;
+
 // Set curve mid point y values for first three stages.
 0[33] = 1;
 0[34] = 0.6;
 0[35] = 0.1;
+
 // Set curve mid point x values for all stages.
 i = 17;
 while(i <= 32)
@@ -152,30 +158,32 @@ while(i <= 32)
 0[i] = 0.5;
 i += 1;
 );
+
 i = 1;
 loop(16,
 i[mvelst] = 96; // Set initial velocity value.
 i[mnotelst] = 0.75; // Set initial note length value.
 i += 1;
 );
+
 i = 1;
-loop(70,
-i[mcc] = -1; // Set the initial modulation CCs to 'off'
+loop(89,
+i[mcc] = -1; // Set the initial modulation CCs to 'Off'
 i += 1;
 );
-suslevst = 0.5; // Set the sustain level values.
-suslev_r0 = (sus[mpy]-sus[-1])/(sus[0]-sus[-1]);
-suslev_r1 = (sus[mpy+1]-sus[1])/(sus[0]-sus[1]);
+
+i = 1;
+loop(16, // Set the p1 ratio values.
+i[mr0] = (i[mpy]-i[-1])/(i[0]-i[-1]);
+i[mr1] = (i[mpy+1]-i[1])/(i[0]-i[1]);
+i += 1;
+);
+
 stglf = 0.75;
 stgl_min_sec = 0.00025; // Minimun stage length in seconds.
 stgl_min = ceil(srate*stgl_min_sec); // Minimun stage length in samples.
 e_end = 1.5*srate;
-i=1;
-while(i<=72) // Set modulation inputs to 'Off'.
-  (
-  i[mcc] = -1;
-  i+=1;
-  );
+
 1[mcurve] = 1; // Set the first stage to a step curve.
 ): // If an existing instance, read saved values.
 (
@@ -222,7 +230,7 @@ used == 1 ?
 stg[mcurve] = scurve; // Curve type for active stage
 
 // Read control slider values when control target changes.............
-
+//.......................................................................
 pre_stglen_slider >= 3 && stglen < 3 ? // Get stage length slider values
 (
 stglc = 0;
@@ -235,7 +243,7 @@ while(stglf > 1)
 );
 pre_stglen_slider < 3 && stglen < 3 ? // Limit control unit slider
 stglc > 9 ? stglc = 9;
-
+//.......................................................................
 pre_stglen_slider != 3 && stglen == 3 ? // Get envelope length slider values
 (
 stglc = 0;
@@ -251,89 +259,83 @@ while(stglf > 1)
 );
 pre_stglen_slider == 3 && stglen == 3 ? // Limit control unit slider
 stglc > 13 ? stglc = 13;
-
+//.......................................................................
 pre_stglen_slider != 4 && stglen == 4 ? // Get note length slider values
 (
 stglc = 14;
 stglf = stg[mnotelst];
 );
-pre_stglen_slider == 4 && stglen == 4 ? // Limit control unit slider
-stglc != 14 ? stglc = 14;
+stglen == 4 && stglc != 14 ? stglc = 14;
 
 pre_stglen_slider != 5 && stglen == 5 ? // Get note length slider values
 (
 stglc = 15;
 stglf = stg[mnotelst];
 );
-pre_stglen_slider == 5 && stglen == 5 ? // Limit control unit slider
-stglc != 15 ? stglc = 15;
+stglen == 5 && stglc != 15 ? stglc = 15;
 
 pre_stglen_slider != 6 && stglen == 6 ? // Get note length slider values
 (
 stglc = 14;
 stglf = stg[mnotelst];
 );
-pre_stglen_slider == 6 && stglen == 6 ? // Limit control unit slider
-stglc != 14 ? stglc = 14;
+stglen == 6 && stglc != 14 ? stglc = 14;
 
 pre_stglen_slider != 7 && stglen == 7 ? // Get velocity slider values
 (
 stglc = 16;
 stglf = stg[mvelst]/127;
 );
-pre_stglen_slider == 7 && stglen == 7 ? // Limit control unit slider
-stglc != 16 ? stglc = 16;
+stglen == 7 && stglc != 16 ? stglc = 16;
 
 pre_stglen_slider != 8 && stglen == 8 ? // Get velocity slider values
 (
 stglc = 16;
 stglf = stg[mvelst]/127;
 );
-pre_stglen_slider == 8 && stglen == 8 ? // Limit control unit slider
-stglc != 16 ? stglc = 16;
+stglen == 8 && stglc != 16 ? stglc = 16;
 
-pre_stglen_slider != 9 && stglen == 9 ? // Get sustain level value
+pre_stglen_slider != 9 && stglen == 9 ? // Get stage end point values
 (
 soutput < 2 ? stglc = 16:stglc = 17;
-stglf = suslevst;
+stglf = stg[myst];
 );
-pre_stglen_slider == 9 && stglen == 9 ? // Limit control unit slider
-soutput < 2 ? stglc = 16:stglc = 17;
+stglen == 9 && soutput < 2 && stglc != 16 ? stglc = 16;
+stglen == 9 && soutput >= 2 && stglc != 17 ? stglc = 17;
 
 pre_stglen_slider != 10 && stglen == 10 ? // Get Root note value
 (
 stglc = 18;
 stglf = (root-1)/11;
 );
-pre_stglen_slider == 10 && stglen == 10 ? // Limit control unit slider
-stglc != 18 ? stglc = 18;
+stglen == 10 && stglc != 18 ? stglc = 18;
 
 pre_stglen_slider != 11 && stglen == 11 ? // Get min stage length value
 (
 stglc = 19;
 stglf = stgl_min_sec*1000;
 );
-pre_stglen_slider == 11 && stglen == 1 ? // Limit control unit slider
-stglc != 19 ? stglc = 19;
+stglen == 11 && stglc != 19 ? stglc = 19;
 
+//.......................................................................
 cix = ci[stglen]+(ct[stglen] == 0 ? stg:1); // Calculate the index to the control value slot.
 cix[mstat] = stglf;
 
 // Update modulation range sliders.
-// Test conditions..................................................
+// Test conditions.......................................................
 stglen > 9 ? mrange = 0:
 (
 mrange_pre = cix[mrng];
 pre_stglen_slider !=  stglen ? mrange = cix[mrng];
 mrange != mrange_pre ?
-// Change modulation range slider..................................................
+// Change modulation range slider........................................
 (
 cix[mrng] = mrange; // Store the modulation value.
 );
 );
 
 // Update modulation CC input sliders.
-// Test conditions..................................................
+// Test conditions.......................................................
 stglen > 9 ? sinput = 0:
 (
 sinput_pre = cix[mcc] <= 31 ? cix[mcc]+1:cix[mcc]-31;
@@ -344,7 +346,6 @@ sinput = cix[mcc] <= 31 ? cix[mcc]+1:cix[mcc]-31;
 sinput != sinput_pre ?
 // Change Input CC slider..................................................
 (
-//cix = ci[stglen]+(ct[stglen] == 0 ? stg:1); // Calculate the index to the control value slot.
 cix[mcc] = sinput <= 32 ? sinput-1:sinput+31; // Store the CC value.
 cix < 17 ? 17[mcc] = (cix+17)[mcc] = 34[mcc] = -1; // If stage length independant...
 cix == 17 ? // If stage length all equal...
@@ -398,7 +399,7 @@ while(i <= 68)
   );
 );
 
-sinput = cix[mcc] <= 31 ? cix[mcc]+1:cix[mcc]-31;
+sinput = cix[mcc] <= 31 ? cix[mcc]+1:cix[mcc]-31; // Set the modulation slider for the current stage and control.
 );
 );
 
@@ -464,22 +465,19 @@ loop(16,
   i[mstglst] < 1 ? i[mstglst] = 1 ;
   i += 1;
   );
-update_param = 1;
-);
-
-stglen == 3?
-(
 i=2;
 loop(16,
   i[mstgstrt] = i[mstgstrt-1] + i[mstglst-1]; // Update start offset, in samples, for each stage
   i += 1;
   );
+update_param = 1;
 );
 
 stglen == 4 ? // Note length - Individual
 notel != stglf ?
 (
 stg[mnotelst] = stglf;
+update_param = 1;
 );
 
 stglen == 5 ? // Note length - Equal
@@ -496,6 +494,7 @@ loop(stages,
   i[mnotelst] = (min_stgl/i[mstglst])*stglf;
   i+=1;
   );
+update_param = 1;
 );
 
 stglen == 6 ? // Note length - Proportional
@@ -507,12 +506,14 @@ loop(16,
   i[mnotelst] = notel;
   i+=1;
   );
+update_param = 1;
 );
 
 stglen == 7 ? // Velocity - Individual
 (
 stg[mvelst] != stglf*127 ?
 stg[mvelst] = floor(stglf*127);
+update_param = 1;
 );
 
 stglen == 8 ? // Velocity - All stages
@@ -523,11 +524,13 @@ loop(16,
   i[mvelst] = glovel;
   i+=1;
   );
+update_param = 1;
 );
 
-stglen == 9 ? // Sustain level
+stglen == 9 ? // Stage end point (p2) level
 (
-suslevst = stglf;
+stg[myst] = stglf;
+update_param = 1;
 );
 
 stglen == 10 ? // Root note
@@ -623,7 +626,7 @@ while(midirecv(offsetin, msg1, msg2, msg3))
     msg2-31;
     );
     ii = 1;
-  loop(70,
+  loop(96,
     ii[mcc] == cci-1 ? update_param = 1;
     ii += 1;
     );
@@ -643,7 +646,7 @@ while(midirecv(offsetin, msg1, msg2, msg3))
 //End MIDI message detection
 );
 
-// Update paramrters slider change or modulation input.
+// Update paramrters on slider change or modulation input.
 update_param == 1 ?
 (
 1[mstgstrt] = 0;
@@ -652,6 +655,7 @@ loop(17,
   lset = 0;
   nset = 0;
   vset = 0;
+  pset = 0;
   // Stage Lengths...
   i[mcc] > -1 ? // If a stage length independant modulator has been set...
   (
@@ -679,6 +683,7 @@ loop(17,
   );
   lset == 0 ? i[mstgl] = max(stgl_min,i[mstglst]); // If no modulation, set the stage lengths to the slider values.
   i > 1 ? i[mstgstrt] = i[mstgstrt-1] + i[mstgl-1]; // Update start offset, in samples, for each stage.
+  
   //Note lengths...
   (i+34)[mcc] > -1 && i < 17 ? // If a note length independant modulator has been set...
   (
@@ -696,29 +701,35 @@ loop(17,
   nset = 1;
   );
   nset == 0 ? i[mnotel] = i[mnotelst]; // If no modulation, set the note lengths to the slider values.
+  
   // Note velocity...
   (i+52)[mcc] > -1 && i < 17 ? // If a velocity independant modulator has been set...
   (
-  i[mvel] = i[mvelst]*((i+52)[mstat]-((i+52)[mcc]+1)[mmod]*((i+52)[mstat]-(i+52)[mrng]))/(i+52)[mstat];
+  //i[mvel] = i[mvelst]*((i+52)[mstat]-((i+52)[mcc]+1)[mmod]*((i+52)[mstat]-(i+52)[mrng]))/(i+52)[mstat];
+  i[mvel] = i[mvelst]+((((i+52)[mcc]+1)[mmod]*((i+52)[mrng]-(i+52)[mstat]))*127);
   vset = 1;
   );
   69[mcc] > -1 && i < 17 ? // If the all velocities equal modulator has been set...
   (
-  i[mvel] = i[mvelst]*(69[mstat]-(69[mcc]+1)[mmod]*(69[mstat]-69[mrng]))/69[mstat];
+  //i[mvel] = i[mvelst]*(69[mstat]-(69[mcc]+1)[mmod]*(69[mstat]-69[mrng]))/69[mstat];
+  i[mvel] = i[mvelst]+(((69[mcc]+1)[mmod]*(69[mrng]-69[mstat]))*127);
   vset = 1;
   );
   vset == 0 ? i[mvel] = i[mvelst]; // If no modulation, set the velocities to the slider values.
+  
+  // Stage end point (p2) level...
+  (i+69)[mcc] > -1 ? // If the a stage end point modulator has been set...
+  (
+  //i[0] = i[myst]*((i+69)[mstat]-((i+69)[mcc]+1)[mmod]*((i+69)[mstat]-(i+69)[mrng]))/(i+69)[mstat];
+  i[0] = i[myst]+(((i+69)[mcc]+1)[mmod]*((i+69)[mrng]-(i+69)[mstat]));
+  i[mpy] = i[-1]+(i[0]-i[-1])*i[mr0];
+  i[mpy+1] = i[1]+(i[0]-i[1])*i[mr1];
+  pset = 1;
+  );
+  pset == 0 ? i[0] = i[myst];
   i += 1;
 );
 e_end = stages[mstgstrt+1]; // Set envelope end sample number.
-// Sustain level...
-70[mcc] > -1 ? 
-(
-sus[0] = suslev = suslevst*(70[mstat]-(70[mcc]+1)[mmod]*(70[mstat]-70[mrng]))/70[mstat];
-sus[mpy] = sus[-1]+(sus[0]-sus[-1])*suslev_r0;
-sus[mpy+1] = sus[1]+(sus[0]-sus[1])*suslev_r1;
-):
-sus[0] = suslev = suslevst;
 
 update_param = 0;
 update = 1;
@@ -786,11 +797,10 @@ sclass == 1 ? (
   gmem[group+fxn+22] = p2x;
   gmem[group+fxn+23] = p2y;
 //gmem[fxn+24] = Follower trigger, stored elsewhere
-  gmem[group+fxn+25] = suslev;
   i = 0;
   while(i <= mbezx)
    (
-   gmem[group+fxn+26+i] = 0[i];
+   gmem[group+fxn+25+i] = 0[i];
    i+=1;
    );
 );
@@ -822,11 +832,10 @@ sclass == 2 ? (
   p2x          = gmem[group+fxn+22];
   p2y          = gmem[group+fxn+23];
   // Follower trigger = gmem[fxn+24], read elswhere
-  suslev       = gmem[group+fxn+25];
   i = 0;
   while(i <= mbezx)
    (
-   0[i] = gmem[group+fxn+26+i];
+   0[i] = gmem[group+fxn+25+i];
    i+=1;
    );
 );
@@ -1086,6 +1095,9 @@ while(stglf > 1)
   stglf = stg[mstglst]/(2^(stglc-4)*splbase);
   );
 );
+stglen >= 4 && stglen <= 6 ? stglf = stg[mnotelst];
+stglen >= 7 && stglen <= 8 ? stglf = stg[mvelst]/127;
+stglen == 9 ? stglf = stg[myst];
 sinput = mcc[ci[stglen]+(ct[stglen] == 0 ? stg:1)] <= 31 ?
 mcc[ci[stglen]+(ct[stglen] == 0 ? stg:1)]+1:
 mcc[ci[stglen]+(ct[stglen] == 0 ? stg:1)]-31;
@@ -1334,7 +1346,7 @@ stg[0] = sp1yy;
 ):
 stg[mpx] = sp1xx;
 stg[mpy] = sp1yy;
-suslev_r_on = 1;
+lev_r_on = 1;
 update = 1;
 );
 mouse_cap != 1 && mouse_cap != 5 && mouse_cap != 9 ?
@@ -1361,8 +1373,8 @@ mouse_target.dbl_clk == 1 ?
 // If double click, make this the sustain point.
 (
 sus = stg-1;
-suslev = suslevst = stg[-1];
-suslev_r_on = 1;
+//suslev = suslevst = stg[-1];
+lev_r_on = 1;
 p0_on = 0;
 ):
 // If not a double-click, move limit point 0.
@@ -1377,11 +1389,11 @@ sp0y -= pdy;
 );
 sp0y < 0 ? sp0y = 0;
 sp0y > 1 ? sp0y = 1;
-stg[-1] = sp0y;
-stg-1 == sus ? suslev = suslevst = stg[-1];
+stg[-1] = stg[myst-1] = sp0y;
+//stg-1 == sus ? suslev = suslevst = stg[-1];
 stg[mcurve] == 1 ? stg[mpy] = sp0y;
 trigmode >= tlm && stg == 1 ? 0[stages] = sp0y;
-suslev_r_on = 1;
+lev_r_on = 1;
 update = 1;
 mouse_cap != 1 && mouse_cap != 5 && mouse_cap != 9 ?
   (
@@ -1403,13 +1415,13 @@ mouse_target.dbl_clk == 1 ?
 // If double click, make this the sustain point.
 (
 sus = stg;
-suslev = suslevst = stg[0];
-suslev_r_on = 1;
+//suslev = suslevst = stg[0];
+lev_r_on = 1;
 p2_on = 0;
-);
+):
 // If not a double-click, move  point 2.
-stg[mcurve] == 0 ?
-(
+//stg[mcurve] == 0 ?
+//(
 mouse_cap == 5 ?
 (
 fine2 = 1;
@@ -1421,11 +1433,11 @@ sp2y -= pdy;
 );
 sp2y < 0 ? sp2y = 0;
 sp2y > 1 ? sp2y = 1;
-stg[0] = sp2y;
-stg == sus ? suslev = suslevst = stg[0];
+stg[0] = stg[myst] = sp2y;
+//stg == sus ? suslev = suslevst = stg[0];
 trigmode >= tlm && stg == stages ? 0[0] = sp2y;
-);
-suslev_r_on = 1;
+//);
+lev_r_on = 1;
 update = 1;
 mouse_cap != 1 && mouse_cap != 5 && mouse_cap != 9 ?
   (
@@ -1459,7 +1471,7 @@ sp010y < 0 ? (sp010y = 0 );
 sp011y -= dp01y;
 sp011y > 1 ? sp011y = 1;
 sp011y < 0 ? sp011y = 0;
-stg[-1] =sp010y;
+stg[-1] = stg[myst-1] = sp010y;
 stg[mpy] = sp011y;
 stg[mp01y] = (sp010y+sp011y)/2;
 
@@ -1468,7 +1480,7 @@ stg[mcurve] == 1 ?
 stg[mpy] = stg[mp01y];
 stg[-1] = stg[mp01y];
 );
-suslev_r_on = 1;
+lev_r_on = 1;
 update = 1;
 mouse_cap != 1 && mouse_cap != 5 && mouse_cap != 9 ?
   (
@@ -1504,10 +1516,10 @@ sp122y < 0 ? (sp122y = 0 );
 sp121y -= dp12y;
 sp121y > 1 ? sp121y = 1;
 sp121y < 0 ? sp121y = 0;
-stg[0] = sp122y;
+stg[0] = stg[myst] = sp122y;
 stg[mpy] = sp121y;
 stg[mp12y] = (sp122y+sp121y)/2;
-suslev_r_on = 1;
+lev_r_on = 1;
 update = 1;
 mouse_cap != 1 &&  mouse_cap != 5 && mouse_cap != 9 ?
   (
@@ -1687,12 +1699,14 @@ update = 0;
 recalc = 0;
 ); // End Recalc.
 
-suslev_r_on == 1 ? //calculate sustain level ratios for modulation
+lev_r_on == 1 ? //calculate end point (p2) level ratios for modulation
 (
-suslev_r0 = (sus[mpy]-sus[-1])/(sus[0]-sus[-1]);
-suslev_r1 = (sus[mpy+1]-sus[1])/(sus[0]-sus[1]);
-stglen == 9 ? stglf = sus[0];
-suslev_r_on = 0;
+stg[mr0] = (stg[mpy]-stg[-1])/(stg[0]-stg[-1]);
+stg[mr1] = (stg[mpy+1]-stg[1])/(stg[0]-stg[1]);
+stg[mr0-1] = (stg[mpy-1]-stg[-2])/(stg[-1]-stg[-2]);
+stg[mr1-1] = (stg[mpy]-stg[0])/(stg[-1]-stg[-2]);
+stglen == 9 ? stglf = stg[0];
+lev_r_on = 0;
 );
 
 // Draw active stage definition area..................
