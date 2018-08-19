@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="eb173d02c6007e832f745ce16d56ce765c29bad7">
+<index version="1" name="ReaTeam JSFX" commit="32e3bc0d501d17e459536e90aca5caacd6731016">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1063,8 +1063,7 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "Out Channel" defines the Channel the converted messages are sent in.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "Out CC" defines the Midi CC message # to be sent\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "Min CC Value" defines the value to be sent when the Min Input Value is received. Hence there will be an offset of Min_Input_Value - Min_Outout_Value.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Limitation\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 With this version, no linear function (using min and max output value) is calculated. This feature might be added with a future version.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "Max CC Value" defines the value to be sent when the Max Input Value is received. Hence there will be an appropriate stretching of the input range.\par}
 }
 ]]></description>
         <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
@@ -1072,6 +1071,10 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2018-04-01T05:37:58Z">
         <changelog><![CDATA[initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/b921919e9511e043edb5aa43e108307b217ccf19/Utility/mschnell_MIDI%20Convert%20to%20CC.jsfx</source>
+      </version>
+      <version name="2.0" author="Michael Schnell (mschnell@bschnell.de)" time="2018-08-19T21:57:33Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/32e3bc0d501d17e459536e90aca5caacd6731016/Utility/mschnell_MIDI%20Convert%20to%20CC.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Midi Fade.jsfx" type="effect" desc="Midi Fade X">
