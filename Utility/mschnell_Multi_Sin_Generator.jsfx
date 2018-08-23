@@ -1,11 +1,11 @@
-desc:Multi Sin Generator
+desc:Multi Sine Generator
 author: Michael Schnell (mschnell@bschnell.de)
-version: 1.0
-changelog: initial release
+version: 1.1
+changelog: workaround for freezing when Reaper looses the GUI focus, deterministic volume normalizing 
 donation: United Nations Foundation http://www.unfoundation.org/
 about:
   ## Description
-  Multi Sin Generator generates multiple sine waves with a definable low and high frequency limit and density. 
+  Multi Sine Generator generates multiple sine waves with a definable low and high frequency limit and density. 
   
   To analyze the frequency response of a hardware or software device, you usually use white or pink noise. 
   
@@ -34,6 +34,175 @@ slider5:1<0,2,1{White,Equal Amplitudes,Pink}>Spectrum
 slider6:100<0,100,1>Volume % 
 
 @init
+
+  function kgv(r, n, buf) local(kgv, pk, pj, pb, pd, pot ) (
+    pk = 0;
+    memset (buf, 0, 64);
+    loop (n,
+      pb = r[pk];
+      pb > 1 ? (
+        pot = 0;
+        pj = 0;
+        while(pb >= 1) (
+          pd = pb / prime[pj];
+          pd == pd | 0 ? (
+            pot += 1;
+            pb = pd;
+           ) : (
+            buf[pj] < pot ? buf[pj] = pot;
+            pot = 0;
+            pj += 1;
+          );  
+        );
+        pk+= 1;
+      );
+    );     
+/*    
+    ___0 = pbuf[0];
+    ___1 = pbuf[1];
+    ___2 = pbuf[2];
+    ___3 = pbuf[3];
+    ___4 = pbuf[4];
+*/    
+
+    pk = 0;
+    kgv = 1;
+    while (pk < 64) ( 
+      buf[pk] ? (
+        kgv *= prime[pk];
+        buf[pk] -= 1;
+       ) : (  
+        pk+=1;
+      );  
+    );
+    kgv;
+  );
+
+function doslider(force) (   // why is this necessary ?!?!?!?
+
+//  srate_ = srate;
+
+  force            |
+  (sl1 != slider1) |  
+  (sl2 != slider2) |
+  (sl3 != slider3) |
+  (sl4 != slider4) |
+  (sl5 != slider5) |
+  (sl6 != slider6) ? (
+    sl1 = slider1;
+    sl2 = slider2;
+    sl3 = slider3;
+    sl4 = slider4;
+    sl5 = slider5;
+    sl6 = slider6;
+  
+    fmin = srate_ / slider3;
+    nmax = fmin | 0;  
+    nmax != fmin ? (
+      fmin = nmax;
+      slider3 =  srate / fmin;
+    );
+  
+    fmin /= pi2;
+
+    fmax = srate / slider4;  
+    fmax /= pi2;
+
+  
+    ffmax = slider4 / slider3;
+    ffmax < 1 ? (
+      ffmax = 1;
+      slider4 = slider3;
+      sl4 = slider4;
+    );  
+  
+  
+    vol = slider6 / 100;
+//  vol0 = 100;
+    !slider5 ? (
+      vmax = 0;
+     ) : ( 
+      vmax = ffmax;
+    );  
+  
+    pink = slider5;
+
+  
+//  ffmax /= (2*pi);
+  
+    memset(nmaxi, 0 , 32);
+    memset(ffi,  0, 32);
+    memset(ni,   0, 32);
+    i = 0;
+    slider1 > 32 ? slider1 = 32;
+    loop(slider1, 
+      f       = exp(-log2*(i/slider1));
+//    ff[i]   = f;                                   // ___ debug
+      nmaxi[i] = nmax * f; 
+      x = nmaxi[i];
+//     = (nmaxi[i] + 0.5) | 0;                 // round()
+      x /= pr;
+      x += 0.5;
+      x |= 0;
+      x *= pr; 
+      nmaxi[i] = x; 
+      xfi[i]   = pi2 / nmaxi[i];
+      ffi[i]   = nmaxi[i] / nmax;
+      i += 1;
+    );  
+
+/*  
+    ____i = i;
+    ____x = x;
+    ____f = f;
+   
+    ___i0 = ffi[0];
+    ___i1 = ffi[1];
+    ___i2 = ffi[2];
+    ___i3 = ffi[3];
+    ___i4 = ffi[4];
+
+    ___n0 = nmaxi[0];
+    ___n1 = nmaxi[1];
+    ___n2 = nmaxi[2];
+    ___n3 = nmaxi[3];
+    ___n4 = nmaxi[4];
+*/    
+  
+    kgv = kgv(nmaxi, slider1, pbuf);
+  
+    pr= 1;
+    loop(slider2, 
+      pr *= 2;  
+    );  
+    
+    sins  = 0;
+    i = 0;
+    loop (slider1, 
+      f  = 1;
+      while (f <= ffmax) (    
+        ffn = ffi[i];
+        ffn ? ( 
+          fff = f/ffn;
+          fff <= ffmax ? (
+            sins+=1;
+          );  
+        );    
+        f = f * 2;
+      );  
+      i += 1;
+    );
+
+/*  
+    ____sliders+=1;
+    ____sliders_samples = ____samples;    
+    _____i = i;
+    _____x = x;
+    _____f = f;    
+*/
+  );  
+);
+
   pi = 3.1415926535897932384626433832795;
   pi2 = 2* pi;
   log2 = log(2);
@@ -109,135 +278,33 @@ slider6:100<0,100,1>Volume %
   prime[62] = 307;   
   prime[63] = 311;
   
-
-
-@slider
-
-
-  function kgv(r, n, buf) local(kgv, pk, pj, pb, pd, pot ) (
-    pk = 0;
-    memset (buf, 0, 64);
-    loop (n,
-      pb = r[pk];
-      pb > 1 ? (
-        pot = 0;
-        pj = 0;
-        while(pb >= 1) (
-          pd = pb / prime[pj];
-          pd == pd | 0 ? (
-            pot += 1;
-            pb = pd;
-           ) : (
-            buf[pj] < pot ? buf[pj] = pot;
-            pot = 0;
-            pj += 1;
-          );  
-        );
-        pk+= 1;
-      );
-    );     
-/*    
-    ___0 = pbuf[0];
-    ___1 = pbuf[1];
-    ___2 = pbuf[2];
-    ___3 = pbuf[3];
-    ___4 = pbuf[4];
-*/    
-    pk = 0;
-    kgv = 1;
-    while (pk < 64) ( 
-      buf[pk] ? (
-        kgv *= prime[pk];
-        buf[pk] -= 1;
-       ) : (  
-        pk+=1;
-      );  
-    );
-    kgv;
-  );
-
-  fmin = srate / slider3;
-  nmax = fmin | 0;  
-  nmax != fmin ? (
-    fmin = nmax;
-    slider3 =  srate / fmin;
-  );
+  sl1=0;
+  srate_ = 0;
   
-  fmin /= pi2;
-
-  fmax = srate / slider4;  
-  fmax /= pi2;
-
-  
-  ffmax = slider4 / slider3;
-  ffmax < 1 ? (
-    ffmax = 1;
-    slider4 = slider3;
-  );  
-  
-  
-  vol = slider6 / 100;
-  vol0 = 100;
-  !slider5 ? (
-    vmax = 0;
-   ) : ( 
-    vmax = ffmax;
-  );  
-  
-  pink = slider5;
-
-  
-//  ffmax /= (2*pi);
-  
-  memset(nmaxi, 0 , 32);
-  memset(ffi,  0, 32);
-  memset(ni,   0, 32);
-  i = 0;
-  slider1 > 32 ? slider1 = 32;
-  loop(slider1, 
-    f       = exp(-log2*(i/slider1));
-//    ff[i]   = f;                                   // ___ debug
-    nmaxi[i] = nmax * f; 
-    x = nmaxi[i];
-//     = (nmaxi[i] + 0.5) | 0;                 // round()
-    x /= pr;
-    x += 0.5;
-    x |= 0;
-    x *= pr; 
-    nmaxi[i] = x; 
-    xfi[i]   = pi2 / nmaxi[i];
-    ffi[i]   = nmaxi[i] / nmax;
-    i += 1;
-  );  
-   
 /*  
-  ___i0 = ffi[0];
-  ___i1 = ffi[1];
-  ___i2 = ffi[2];
-  ___i3 = ffi[3];
-  ___i4 = ffi[4];
-
-  ___n0 = nmaxi[0];
-  ___n1 = nmaxi[1];
-  ___n2 = nmaxi[2];
-  ___n3 = nmaxi[3];
-  ___n4 = nmaxi[4];
-*/    
+  ____inits += 1;
+*/  
   
-   kgv = kgv(nmaxi, slider1, pbuf);
-  
-  pr= 1;
-  loop(slider2, 
-    pr *= 2;  
+@slider
+  srate_ ? ( 
+    doslider (0);  
+   ) ? ( 
+    srate_ = srate;
+    srate_ ? doslider(0);
   );  
   
-  
-//@block
 
 @sample
+  srate_ = srate;
+  !ffi[0] ? (
+//    sl1 > 0 ? (
+      doslider(1);   // why is this necessary ?!?!?!?
+//    );  
+  );  
+
   y  = 0;
   i = 0;
-  loop (slider1, 
+  loop (sl1, 
     f  = 1;
     while (f <= ffmax) (    
       ffn = ffi[i];
@@ -264,17 +331,46 @@ slider6:100<0,100,1>Volume %
     i += 1;
   );
   
-
+/*
   y *= vol0;
   abs(y) > 1 ? (
     vol0 /= abs(y);
     y = y > 0 ? 1 : -1;
   );
-  y *= vol;
+*/  
+  y *= vol/sins;
   spl0=y;
   spl1=y;
+  
+/*  
+  ____samples += 1;
+  ____samples_inits = ____inits;
+  ____samples_sliders = ____sliders;
+  
+  ___0 = ni[0];
+  ___1 = ni[1];
+  ___2 = ni[2];
+  ___3 = ni[3];
+  ___4 = ni[4];
+  ___5 = ni[5];
+  ___6 = ni[6];
+
+  ___i0 = ffi[0];
+  ___i1 = ffi[1];
+  ___i2 = ffi[2];
+  ___i3 = ffi[3];
+  ___i4 = ffi[4];
+
+  ___n0 = nmaxi[0];
+  ___n1 = nmaxi[1];
+  ___n2 = nmaxi[2];
+  ___n3 = nmaxi[3];
+  ___n4 = nmaxi[4];
+
+*/
 
 @gfx 640 40
+
   gfx_r=gfx_g=gfx_b=gfx_g= 1;
   gfx_y = 10;
   gx = gfx_w / 2 - 60;
@@ -291,3 +387,4 @@ slider6:100<0,100,1>Volume %
     gfx_drawnumber(1 / gr, 2);
     gfx_drawstr(" Hz");
  ); 
+
