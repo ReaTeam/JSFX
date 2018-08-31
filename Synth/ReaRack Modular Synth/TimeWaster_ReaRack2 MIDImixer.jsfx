@@ -1,0 +1,515 @@
+version: 2.11
+desc:ReaRack2 - MIDI Mixer
+noindex:   true
+author:    Malcolm Smith
+           Copyright(C) 2018 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
+           License: LGPL - http://www.gnu.org/licenses/lgpl.html
+
+changelog: Version 2.11 (18/07/2018) Graphics bug fix, input 2 L1 level line.
+           Version 2.10 (18/07/2018) Added ability to block messages. Input and Output labels were CC Input and CC Output.
+           Version 2.0.2 (09/05/2018) fxn number updated.
+           Version 2.0.1 (30/04/2018) many bugs fixed.
+           Version 2.0.0 (10/12/2017) Initial version 2 release.
+         
+slider1:in1=0<0,64,1{Off,Note-on Velocity,Note-off Velocity,Pitch Bend,Aftertouch,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv}>Input 1
+slider2:in2=0<0,64,1{Off,Note-on Velocity,Note-off Velocity,Pitch Bend,Aftertouch,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv}>Input 2
+slider3:out=27<0,64,1{Off,Note-on Velocity,Note-off Velocity,Pitch Bend,Polyphonic Aftertouch,Channel Aftertouch,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv}>Output
+slider4:schanout=1<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Output Channel
+slider5:sop=0<0,2,1{Multiply,Maximum,Minimum}>Operation
+slider7:i1lev1=1<0,1>Input 1 Limit 1
+slider8:i1lev2=0<0,1>Input 1 Limit 2
+slider10:i2lev1=1<0,1>Input 2 Limit 1
+slider11:i2lev2=0<0,1>Input 2 Limit 2
+slider13:lev1=1<0,1>Output Limit 1
+slider14:lev2=0<0,1>Output Limit 2
+slider16:sclass=0<0,3,1{None,Master,Slave}>Class
+slider17:sgroup=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Class Group
+
+options:gmem=ReaRack
+
+in_pin:none
+out_pin:none
+
+@init
+fxn = 340;
+
+@slider
+
+slidermove = 1;
+
+@block
+
+sclass == 2 ? slidermove  = gmem[group+fxn+13];
+
+slidermove == 1 ?
+(
+ccIn1msb = in1-5 <= 31 ? in1-5:in1+32-5;
+ccIn1lsb = ccIn1msb + 32;
+ccIn2msb = in2-5 <= 31 ? in2-5:in2+32-5;
+ccIn2lsb = ccIn2msb + 32;
+ccoutmsb = out-6 <= 31 ? out-6:out+32-6;
+ccoutlsb = ccoutmsb+32;
+chanout = schanout-1;
+
+//Store slider values
+group = sgroup*1000;
+sclass == 1 ? (
+  gmem[group+fxn+0] = sop;
+  gmem[group+fxn+3] = i1lev1;
+  gmem[group+fxn+4] = i1lev2;
+  gmem[group+fxn+5] = i2lev1;
+  gmem[group+fxn+6] = i2lev2;
+  gmem[group+fxn+7] = lev1;
+  gmem[group+fxn+8] = lev2;
+  gmem[group+fxn+9] = in1;
+  gmem[group+fxn+10] = in2;
+  gmem[group+fxn+11] = out;
+  gmem[group+fxn+12] = schanout;
+  gmem[group+fxn+13] = slidermove;
+);
+
+//Retrieve slider values (slave mode)
+sclass == 2 ? ( 
+  sop     = gmem[group+fxn+0];
+  i1lev1  = gmem[group+fxn+3];
+  i1lev2  = gmem[group+fxn+4];
+  i2lev1  = gmem[group+fxn+5];
+  i2lev2  = gmem[group+fxn+6];
+  lev1    = gmem[group+fxn+7];
+  lev2    = gmem[group+fxn+8];
+  in1     = gmem[group+fxn+9];
+  in2     = gmem[group+fxn+10];
+  out     = gmem[group+fxn+11];
+  schanout= gmem[group+fxn+12];
+);
+
+op = sop;
+ccIn1msb == -1 || ccIn2msb == -1 ?
+(
+sop = 1;
+inputs = 1;
+);
+ccIn1msb == -1 && ccIn2msb == -1 ? inputs = 0;
+ccIn1msb > -1 && ccIn2msb > -1 ? inputs = 2;
+
+slidermove = 0;
+); // end if slidermove
+
+// Reset buffers
+memset(0,-1,4*samplesblock);
+
+while (midirecv(offsetin, msg1, msg2, msg3))
+(
+pass_thru = 0; // set the pass through flag to false.
+  // Extract message type
+  modstatus = msg1;
+  status = msg1 & $xF0;
+  
+  //Is it a controller event?
+  status == $xB0 ?
+  (
+  msg2 == ccIn1msb || msg2 == ccIn1lsb || msg2 == ccIn2msb || msg2 == ccIn2lsb ?
+    (
+    // Is it the right CC for input 1?
+    msg2 == ccIn1msb || msg2 == ccIn1lsb ?
+      (
+      msg2 == ccIn1msb ? val1msb = msg3;
+      msg2 == ccIn1lsb ? val1lsb = msg3;
+      offsetin[0] = (val1msb/127.9921875)+(val1lsb/16384);
+      ccIn1msb != ccoutmsb && out != 0 ? midisend(offsetin, msg1, msg2, msg3);
+      pass_thru = 0;           
+      );           
+    // Is it the right CC for input 2?
+    msg2 == ccIn2msb || msg2 == ccIn2lsb ?
+      (
+      msg2 == ccIn2msb ? val2msb = msg3;
+      msg2 == ccIn2lsb ? val2lsb = msg3; 
+      offsetin[samplesblock] = (val2msb/127.9921875)+(val2lsb/16384);
+      ccIn2msb != ccoutmsb && out != 0 ? midisend(offsetin, msg1, msg2, msg3);
+      pass_thru = 0;
+      );            
+    ):
+    pass_thru = 1;
+  );
+  
+  //Is it a note-on event?
+  status == $x90 ?
+  (
+  offsetin[2*samplesblock] = msg2; // Store note
+  in1 == 1 ?
+    (
+    offsetin[0] = msg3/127; // Store velocity
+    in1 != out && out != 0 ? midisend(offsetin, msg1, msg2, msg3);
+    pass_thru = 0;
+    ):
+    pass_thru = 1;
+  in2 == 1 ?
+    (
+    offsetin[samplesblock] = msg3/127; // Store velocity
+    in2 != out && out != 0 ? midisend(offsetin, msg1, msg2, msg3);
+    pass_thru = 0;
+    ):
+    pass_thru = 1;
+  );
+
+  //Is it a note-off event?
+  status == $x80 ?
+  (
+  offsetin[3*samplesblock] = msg2; // Store note
+  in1 == 2 ?
+    (
+    offsetin[0] = msg3/127; // Store velocity
+    in1 != out && out != 0 ? midisend(offsetin, msg1, msg2, msg3);
+    pass_thru = 0;
+    ):
+    pass_thru = 1;
+  in2 == 2 ?
+    (
+    offsetin[samplesblock] = msg3/127; // Store velocity
+    in2 != out && out != 0 ? midisend(offsetin, msg1, msg2, msg3);
+    pass_thru = 0;
+    ):
+    pass_thru = 1;
+  );
+  
+  //Is it a Pitch Bend event?
+  status == $xE0 ?
+  (
+  in1 == 3 ?
+    (
+    offsetin[0] = (msg3/127.9921875)+(msg2/16384);
+    in1 != out && out != 0 ? midisend(offsetin, msg1, msg2, msg3);
+    pass_thru = 0;
+    ):
+    pass_thru = 1;
+  in2 == 3 ?
+    (
+    offsetin[samplesblock] = (msg3/127.9921875)+(msg2/16384);
+    in2 != out && out != 0 ? midisend(offsetin, msg1, msg2, msg3);
+    pass_thru = 0;
+    ):
+    pass_thru = 1;
+  );
+  
+  //Is it an Aftertouch event?
+  status == $xA0 || status == $xD0 ?
+  (
+  in1 == 4 ?
+    (
+    status == $xA0 ?
+      (
+      offsetin[0] = (msg3/127); // Store Poly Pressure
+      offsetin[2*samplesblock] = msg2; // Store note
+      ):
+      (
+      offsetin[0] = (msg2/127); // Store Channel Pressure
+      );
+      in1 != out && out != 0 ? midisend(offsetin, msg1, msg2, msg3);
+    ):
+    pass_thru = 1;
+  in2 == 4 ?
+    (
+    status == $xA0 ?
+      (
+      offsetin[samplesblock] = (msg3/127); // Store Poly Pressure
+      offsetin[2*samplesblock] = msg2; // Store note
+      ):
+      (
+      offsetin[samplesblock] = (msg2/127); // Store Channel Pressure
+      );
+      in2 != out && out != 0 ? midisend(offsetin, msg1, msg2, msg3);
+    ):
+    pass_thru = 1;
+  );
+ pass_thru == 1?  midisend(offsetin, msg1, msg2, msg3);
+);
+
+// Set counters for output loop
+offsetout = 0;
+
+// Start output loop
+while (offsetout < samplesblock)
+(
+// Get current Note-on value
+offsetout[2*samplesblock] >= 0 ? note = offsetout[2*samplesblock];
+// Get current Note-off value
+offsetout[2*samplesblock] >= 0 ? noteoff = offsetout[3*samplesblock];
+// Scale Inputs
+offsetout[0] >= 0 ?
+   (
+   val1 = offsetout[0];
+   val1 *= (i1lev1-i1lev2);
+   val1 += i1lev2;
+   );
+In1 == 0 ? val1 = 0;
+ 
+offsetout[samplesblock] >= 0 ?
+   (
+   val2 = offsetout[samplesblock];
+   val2 *= (i2lev1-i2lev2);
+   val2 += i2lev2;
+   );
+In2 == 0 ? val2 = 0;
+ 
+// Perform operations
+op == 0 ?
+    (
+    // Multiply values together
+    val3 = val1*val2;
+    );
+op == 1 ?    
+    (
+    // Maximum values
+    val3 = max(val1,val2);
+    );
+op == 2 ?
+    (
+    // Minimum values
+    val3 = min(val1,val2);  
+    );
+
+//Scale output
+val3 *= (lev1-lev2);
+val3 += lev2;
+val3va = floor(val3 * 127 + 0.5);
+val3 *= 127.9921875;
+val3msb = floor(val3);
+val3lsb = floor((val3-val3msb)*128);
+
+//Send CC message
+out > 5 ?
+  (
+  chanout == -1 ?
+    (
+    n = 0;
+    loop(16,
+      preval3msb != val3msb ? midisend(offsetout,$xB0+n,ccoutmsb,val3msb); // Only send messages if values have changed
+      preval3lsb != val3lsb ? midisend(offsetout,$xB0+n,ccoutlsb,val3lsb);
+      n += 1;
+      );
+    ):
+    (
+    preval3msb != val3msb ? midisend(offsetout,$xB0+chanout,ccoutmsb,val3msb);
+    preval3lsb != val3lsb ? midisend(offsetout,$xB0+chanout,ccoutlsb,val3lsb);
+    );
+  );
+
+// Send note-on with modified Velocity
+out == 1 ?
+  (
+  chanout == -1 ?
+    (
+    n = 0;
+    loop(16,
+      preval3va != val3va ? midisend(offsetout,$x90+n,note,val3va); // Only send messages if values have changed
+      n += 1;
+      );
+    ):
+    (
+    preval3va != val3va ? midisend(offsetout,$x90+chanout,note,val3va);
+    );
+  );
+
+// Send note-off with modified Velocity
+out == 2 ?
+  (
+  chanout == -1 ?
+    (
+    n = 0;
+    loop(16,
+      preval3va != val3va ? midisend(offsetout,$x80+n,noteoff,val3va); // Only send messages if values have changed
+      n += 1;
+      );
+    ):
+    (
+    preval3va != val3va ? midisend(offsetout,$x80+chanout,noteoff,val3va);
+    );
+  );
+
+// Send Pitch Bend
+out == 3 ?
+  (
+  chanout == -1 ?
+    (
+    n = 0;
+    loop(16,
+      preval3msb != val3msb || preval3lsb != val3lsb ? midisend(offsetout,$xE0+n,val3lsb,val3msb); // Only send messages if values have changed
+      n += 1;
+      );
+    ):
+    (
+    preval3msb != val3msb || preval3lsb != val3lsb ? midisend(offsetout,$xE0+chanout,val3lsb,val3msb);
+    );
+  );
+
+// Send Polyphonic Aftertouch
+out == 4 ?
+  (
+  chanout == -1 ?
+    (
+    n = 0;
+    loop(16,
+      preval3va != val3va ? midisend(offsetout,$xA0+n,note,val3va); // Only send messages if values have changed
+      n += 1;
+      );
+    ):
+    (
+    preval3va != val3va ? midisend(offsetout,$xA0+chanout,note,val3va);
+    );
+  );
+
+// Send Channel Aftertouch
+out == 5 ?
+  (
+  chanout == -1 ?
+    (
+    n = 0;
+    loop(16,
+      preval3va != val3va ? midisend(offsetout,$xA0+n,val3va); // Only send messages if values have changed
+      n += 1;
+      );
+    ):
+    (
+    preval3va != val3va ? midisend(offsetout,$xA0+chanout,val3va);
+    );
+  );
+// Store previous values
+preval3msb = val3msb;
+preval3lsb = val3lsb;
+preval3va = val3va; 
+offsetout += 1;
+);// End output loop.
+
+@gfx 400 180
+gval1 = val1;
+gval2 = val2;
+gval3 = val3;
+
+yrng = 100;
+gfx_r = 0;
+gfx_g = 1;
+gfx_b = 0;
+gfx_a = 1;
+// Input 1 meter
+gfx_x=50;
+gfx_y=25+yrng;
+gfx_lineto(50,(25+yrng)-(gval1*yrng));
+gfx_lineto(60,(25+yrng)-(gval1*yrng));
+gfx_lineto(60,(25+yrng));
+
+// Input 2 meter
+gfx_x=150;
+gfx_y=25+yrng;
+gfx_lineto(150,(25+yrng)-(gval2*yrng));
+gfx_lineto(160,(25+yrng)-(gval2*yrng));
+gfx_lineto(160,(25+yrng));
+
+// Output meter
+out > 0 ?
+(
+gfx_x=250;
+gfx_y=25+yrng;
+gfx_lineto(250,(25+yrng)-((gval3/128)*yrng));
+gfx_lineto(260,(25+yrng)-((gval3/128)*yrng));
+gfx_lineto(260,(25+yrng));
+);
+
+// Level lines
+gfx_r = 1;
+gfx_g = 0;
+gfx_a = 0.5;
+gfx_x = 25;
+gfx_y = 25;
+gfx_lineto(25+(260),25);
+gfx_x = 25;
+gfx_y = 25+yrng;
+gfx_lineto(25+(260),25+yrng);
+gfx_a = 1;
+// Input1
+gfx_x=30;
+gfx_y=25+yrng-(i1lev1*yrng);
+gfx_lineto(60,25+yrng-(i1lev1*yrng));
+gfx_x=50;
+gfx_y=25+yrng-(i1lev2*yrng);
+gfx_lineto(80,25+yrng-(i1lev2*yrng));
+// Input2
+gfx_x=130;
+gfx_y=25+yrng-(i2lev1*yrng);
+gfx_lineto(160,25+yrng-(i2lev1*yrng));
+gfx_x=150;
+gfx_y=25+yrng-(i2lev2*yrng);
+gfx_lineto(180,25+yrng-(i2lev2*yrng));
+// Output
+gfx_x=230;
+gfx_y=25+yrng-(lev1*yrng);
+gfx_lineto(260,25+yrng-(lev1*yrng));
+gfx_x=250;
+gfx_y=25+yrng-(lev2*yrng);
+gfx_lineto(280,25+yrng-(lev2*yrng));
+
+// Text
+// Frame
+gfx_a = 1;
+gfx_x = 13;
+gfx_y = 20;
+gfx_drawstr("1");
+gfx_x = 13;
+gfx_y = 20+yrng;
+gfx_drawstr("0");
+gfx_r = 1;
+gfx_g = 1;
+gfx_b = 1;
+gfx_a = 0.7;
+gfx_x = 35;
+gfx_y = 30+yrng;
+gfx_drawstr("Input 1      Input 2     Output");
+gfx_r = 1;
+gfx_g = 0;
+gfx_b = 0;
+gfx_a = 1;
+// Input 1
+gfx_x=30;
+gfx_y=15+yrng-((i1lev1*yrng));
+gfx_drawstr("L1");
+gfx_x=65;
+gfx_y=15+yrng-((i1lev2*yrng));
+gfx_drawstr("L2");
+// Input 2
+gfx_x=130;
+gfx_y=15+yrng-((i2lev1*yrng));
+gfx_drawstr("L1");
+gfx_x=165;
+gfx_y=15+yrng-((i2lev2*yrng));
+gfx_drawstr("L2");
+// Output
+gfx_x=230;
+gfx_y=15+yrng-((lev1*yrng));
+gfx_drawstr("L1");
+gfx_x=265;
+gfx_y=15+yrng-((lev2*yrng));
+gfx_drawstr("L2");
+
+inputs == 0 ?
+(
+gfx_r = 1;
+gfx_g = 1;
+gfx_b = 1;
+gfx_a = 0.5;
+gfx_x=35;
+gfx_y=45+yrng;
+gfx_drawstr("No inputs, no output");
+);
+
+inputs == 1 ?
+(
+gfx_r = 1;
+gfx_g = 1;
+gfx_b = 1;
+gfx_a = 0.5;
+gfx_x=35;
+gfx_y=45+yrng;
+gfx_drawstr("One input, only the Maximum ");
+gfx_x=35;
+gfx_y=60+yrng;
+gfx_drawstr("operation is available.");
+);
