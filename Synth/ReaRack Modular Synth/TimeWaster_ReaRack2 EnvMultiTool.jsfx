@@ -1,11 +1,12 @@
-version: 1.10
+version: 1.11
 desc:ReaRack2 - Envelope Multi-Tool
 noindex:   true
 author:    Malcolm Smith
            Copyright(C) 2018 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
            License: LGPL - http://www.gnu.org/licenses/lgpl.html
 
-changelog: Version 1.00 (30/07/2018) Initial working release.
+changelog: Version 1.01 (1/09/2018) Fixed a bug causing stage Bezier curve to function incorrectly.
+           Version 1.00 (30/07/2018) Initial working release.
            Version 0.90 (13/07/2018) Beta release.
 
 about:     The Envelope Multi-Tool is a 1 to 16 stage envelope generator/LFO/step sequencer.
@@ -57,8 +58,8 @@ tlm = 5;        // Start point for 'trigmode' loop options,
 pts = 50;       // Number of points on Bezier curve.
 gmem[fxn+24] = -1;  // Set the follower trigger value.
 // Local Memory indices..............
-// Stage start/end control point y values stored in slots 0 to 16.
-mpx = 16;                // Mid control point x values.
+// Stage start/end control point y values stored in slots 0 to 17.
+mpx = 17;                // Mid control point x values.
 mpy = mpx+16;            // Mid control point y values.
 mp01x = mpy+16;          // First intermediate control point x values.
 mp01y = mp01x+16;        // First intermediate control point y values.
