@@ -1,4 +1,4 @@
-version: 2.02
+version: 2.03
 desc: ReaRack2 - Amplifier
 noindex: true
 author:    Malcolm Smith
@@ -8,7 +8,8 @@ license:   LGPL - http://www.gnu.org/licenses/lgpl.html
 
 about:     Amplifier module for the ReaRack2 modular JSFX synth system.
 
-changelog: Version 2.02 (24/07/2018) Added - get attack rate from Envelope Multi-Tool.
+changelog: Version 2.03 (24/07/2018) Improved passing of data from @block to @sample for smoother volume curves.
+           Version 2.02 (24/07/2018) Added - get attack rate from Envelope Multi-Tool.
            Version 2.0.1 (10/02/2018) Improved accuracy of input CC decoding.
            Version 2.0.0 (10/12/2017) Initial version 2 release.
 
@@ -83,10 +84,8 @@ while (midirecv(offset, msg1, msg2, msg3))
     msg2 == modccmsb ? modvalmsb = msg3;
     msg2 == modcclsb ? modvallsb = msg3;
     modval = (modvalmsb/127.9921875)+(modvallsb/16384);
-    (
-     modval < 0.001 ? outlevel = 0:
-     outlevel = 2^(((modval-1)*60)/6);
-    );
+    modval < 0.001 ? outlevel = 0:
+    0[bufflen+offset] = 2^(((modval-1)*60)/6);
   );
   // Pass thru
   midisend(offset, msg1, msg2, msg3); 
@@ -94,6 +93,7 @@ while (midirecv(offset, msg1, msg2, msg3))
 
  
 @sample
+0[bufflen+scount] != outlevel ? outlevel = 0[bufflen+scount];
 
 midor == 0 ?
 (

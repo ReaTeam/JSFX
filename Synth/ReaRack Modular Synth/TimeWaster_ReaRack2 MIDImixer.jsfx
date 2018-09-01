@@ -1,11 +1,12 @@
-version: 2.10
+version: 2.11
 desc:ReaRack2 - MIDI Mixer
 noindex:   true
 author:    Malcolm Smith
            Copyright(C) 2018 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
            License: LGPL - http://www.gnu.org/licenses/lgpl.html
 
-changelog: Version 2.10 (18/07/2018) Added ability to block messages. Input and Output labels were CC Input and CC Output.
+changelog: Version 2.11 (18/07/2018) Graphics bug fix, input 2 L1 level line.
+           Version 2.10 (18/07/2018) Added ability to block messages. Input and Output labels were CC Input and CC Output.
            Version 2.0.2 (09/05/2018) fxn number updated.
            Version 2.0.1 (30/04/2018) many bugs fixed.
            Version 2.0.0 (10/12/2017) Initial version 2 release.
@@ -433,8 +434,8 @@ gfx_y=25+yrng-(i1lev2*yrng);
 gfx_lineto(80,25+yrng-(i1lev2*yrng));
 // Input2
 gfx_x=130;
-gfx_y=25+ymax-(i2lev1*ymax);
-gfx_lineto(160,25+ymax-(i2lev1*ymax));
+gfx_y=25+yrng-(i2lev1*yrng);
+gfx_lineto(160,25+yrng-(i2lev1*yrng));
 gfx_x=150;
 gfx_y=25+yrng-(i2lev2*yrng);
 gfx_lineto(180,25+yrng-(i2lev2*yrng));
