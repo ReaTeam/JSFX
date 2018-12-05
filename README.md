@@ -14,6 +14,6 @@ https://github.com/ReaTeam/JSFX/raw/master/index.xml
 
 ## Contributing
 
-Use <https://reapack.com/upload/jsfx> to publish your JS effects on this repository.
+Use <https://reapack.com/upload/jsfx> to upload your JS effects on this repository.
 
 Have a question? Come discuss in the [development thread](https://forum.cockos.com/showthread.php?t=169127).
