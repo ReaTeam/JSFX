@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="20f372998e85e03c3c76909a4d4dbdaf84269bb0">
+<index version="1" name="ReaTeam JSFX" commit="25e68b184909f2b84453f7a0c08c0efbc0196156">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -143,6 +143,26 @@ here
         <changelog><![CDATA[May 02 2008
 + initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/82ceb72da14753dcb3ce9be5722c07ff7a1aedad/MIDI/mbncp_PitchWheel.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_MIDI MPE to single channel.jsfx" type="effect" desc="MIDI MPE to single channel">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 This plugin combines the multiple channels in an MPE Midi stream to a single channel to allow for feeding a single polyphonic or monophonic instrument.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 All incoming midi messages are routed to a single channel.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Up to three three realtime control messages are modified on the fly. All other messages are not modified. Each of the three message types can be chosen to be either of a CC message with a defined number, Pitch Wheel, or Channel Pressure. For each of the three, the incoming values are monitored and the current state is stored according to the input channel, i.e. for any keys simultaneously pressed on an MPE aware keyboard. In order to create a consistent value for the non-MPE-aware instrument to be played, appropriate modified messages for these control values are generated any time either such a control value change message is received or a Note-On or Note-Off message is received. This message will denote either the last received value ("latest", which in effect provides no change to that value), or a combination of the just received message and current values of all channels that currently hold a running sound, according to the previous Note-On and Note-Off messages.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 In "Polyphonic" mode, this combination will be computed as either of the minimum, the average, or the maximum. Hence the played polyphonic sound will be provided with more reasonable control values than just adhering to the latest value present on any of the MPE channels.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 In "Monophonic" mode, the three selected realtime control messages are never modified, but blocked while two or more channels provide a running sound. This allows for rather normal behavior of instruments that detect legato note transitions and trills.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 A graphic shows the currently "running" channels and the saved values of the three managed realtime controls. The last line shows the last value sent out. Moreover the first number in the last line denotes that one of the following states has been encountered since the last start: 1: a Note On has been detected on an already running channel. 2: a Note Off has been detected on a not running channel. 4: two running channel at the same time in "Monophonic" mode, resulting in blocking realtime messages. The second number shows the number of currently "running" channels.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2018-12-06T23:08:44Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/25e68b184909f2b84453f7a0c08c0efbc0196156/MIDI/mschnell_MIDI%20MPE%20to%20single%20channel.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
