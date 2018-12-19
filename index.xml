@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="34bd46882c95dda1ac35e39b4885d585689e5711">
+<index version="1" name="ReaTeam JSFX" commit="9d0d9992ad3360336e0b297a79c4a8c209023445">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1120,7 +1120,7 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
 \widowctrl\hyphauto
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Midi CC, PC, Note On or Note Off messages are converted to Midi CC messages with a predefined Channel and CC #. The CC value is calculated from the incoming value.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Midi CC, PC, Note On, Note Off, Pitch Bend or After Touch messages are converted to Midi CC messages with a predefined Channel and CC #. The CC value is calculated from the incoming value.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 All midi messages that don't fit the "In" specifications are passed through.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "In Channel" defines the channel the messages to be converted are expected in. "all" accepts any channel.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "Midi Message" selects if CC, PC, Note on or Note Off (Note number), Note on or Note Off (velocity), or Pitch bend are to be converted. With Note off, also note on messages with velocity 0 are used. With "Note On Velocity" beware that some keyboards send Note On with velocity 0 as Note Off message, so set the Min Input Value to 1.\par}
@@ -1147,6 +1147,10 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       <version name="3.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-10-24T10:21:11Z">
         <changelog><![CDATA[added "all" input channel and "same as received" output channel setting, added Note On/Off Velocity and Pitch Bend as input source, pass through now optional, bugfixes]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/20f372998e85e03c3c76909a4d4dbdaf84269bb0/Utility/mschnell_MIDI%20Convert%20to%20CC.jsfx</source>
+      </version>
+      <version name="4.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-12-19T23:09:36Z">
+        <changelog><![CDATA[added After Touch]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/9d0d9992ad3360336e0b297a79c4a8c209023445/Utility/mschnell_MIDI%20Convert%20to%20CC.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Midi Fade.jsfx" type="effect" desc="Midi Fade X">
