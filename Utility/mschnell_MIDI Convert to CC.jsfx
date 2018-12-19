@@ -2,7 +2,6 @@ desc: MIDI convert to CC
 author: Michael Schnell (mschnell@bschnell.de)
 version: 4.1
 changelog: added After Touch
-
 donation: United Nations Foundation http://www.unfoundation.org/
 about:
   ## Description
