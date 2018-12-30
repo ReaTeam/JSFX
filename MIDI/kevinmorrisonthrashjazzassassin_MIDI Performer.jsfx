@@ -1,0 +1,330 @@
+desc: MIDI Performer
+author: Kevin Morrison (ThrashJazzAssassin)
+version: 0.1
+provides: . > MIDI Performer TJA
+screenshot: https://stash.reaper.fm/35134/performer.PNG
+about:
+  8 x Router/Filter/Transposer/Bank+Program
+ 
+  Features hanging note prevention so holding a note or sustain pedal while changing 
+  any of the output parameters is unlikely to leave notes hanging when they are released.
+ 
+  Hold CTRL/Command to mousewheel shift by 12 - but only if the fx window is focused
+
+
+slider1:    thru=0<0, 1,1{OFF,ON>                                     -Thru
+slider2:    chIn=0<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>-MIDI Channel In
+slider3: ccRoute=1<0, 9,1{Block,All,1,2,3,4,5,6,7,8}>                 -CC Routing 
+slider4: pwRoute=1<0, 9,1{Block,All,1,2,3,4,5,6,7,8}>                 -Pitch Wheel Routing
+slider5:PCenable=1<0, 1,1{Off,On}>                                    -PC enable
+
+slider10:  1<  0, 16,1{OFF,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}> -1-Output MIDI Bus
+slider11:  1<  1, 16,1> -1-Ouput MIDI Channel
+slider12:  0<  0,127,1> -1-Minimum Note
+slider13:127<  1,127,1> -1-Maximum Note
+slider14:  0<-48, 48,1> -1-Transpose
+slider15:  0<  0,127,1> -1-Bank MSB
+slider16:  0<  0,127,1> -1-Bank LSB
+slider17:  0<  0,127,1> -1-Program
+
+slider20:  0<  0, 16,1{OFF,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}> -2-Output MIDI Bus
+slider21:  1<  1, 16,1> -2-Ouput MIDI Channel
+slider22:  0<  0,127,1> -2-Minimum Note
+slider23:127<  1,127,1> -2-Maximum Note
+slider24:  0<-48, 48,1> -2-Transpose
+slider25:  0<  0,127,1> -2-Bank MSB
+slider26:  0<  0,127,1> -2-Bank LSB
+slider27:  0<  0,127,1> -2-Program
+
+slider30:  0<  0, 16,1{OFF,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}> -3-Output MIDI Bus
+slider31:  1<  1, 16,1> -3-Ouput MIDI Channel
+slider32:  0<  0,127,1> -3-Minimum Note
+slider33:127<  0,127,1> -3-Maximum Note
+slider34:  0<-48, 48,1> -3-Transpose
+slider35:  0<  0,127,1> -3-Bank MSB
+slider36:  0<  0,127,1> -3-Bank LSB
+slider37:  0<  0,127,1> -3-Program
+
+slider40:  0<  0, 16,1{OFF,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}> -4-Output MIDI Bus
+slider41:  1<  1, 16,1> -4-Ouput MIDI Dhannel
+slider42:  0<  0,127,1> -4-Minimum Note
+slider43:127<  0,127,1> -4-Maximum Note
+slider44:  0<-48, 48,1> -4-Transpose
+slider45:  0<  0,127,1> -4-Bank MSB
+slider46:  0<  0,127,1> -4-Bank LSB
+slider47:  0<  0,127,1> -4-Program
+
+@init
+ext_midi_bus = 1;
+ext_noinit   = 1;
+
+noOfOuts = 8;
+
+// statusbytes
+statNoteOn  = $x90;
+statNoteOff = $x80;
+statCC      = $xB0;
+statPitchW  = $xE0;
+statProgram = $xC0;
+
+function isNoteOn  ()(noteStatus==statNoteOn && msg3);
+function isNoteOff ()(noteStatus==statNoteOff || (noteStatus==statNoteOn && msg3==0));
+function isSusPedal()(noteStatus==statCC && msg2==64);
+function isCC      ()(noteStatus==statCC);
+function isPitchW  ()(noteStatus==statPitchW);
+
+//arrays
+  //sliders
+  outBus  = 0;
+  outChan = noOfOuts*1;
+  minNote = noOfOuts*2;
+  maxNote = noOfOuts*3;
+  trans   = noOfOuts*4;
+  bankMSB = noOfOuts*5;
+  _bankMSB= noOfOuts*6;
+  bankLSB = noOfOuts*7;
+  _bankLSB= noOfOuts*8;
+  prog    = noOfOuts*9;
+  _prog   = noOfOuts*10;
+
+  //Output states
+  note     = noOfOuts*11;
+  susPedal = noOfOuts*12;
+  noteInfo = noOfOuts*13;
+
+  //noteInfo Offsets
+  offsetNoteBus  = $x80;
+  offsetNoteChan = $x80*2;
+  offsetTrans    = $x80*3;
+
+  memset(1,        0, noOfOuts-1);
+  memset(outChan,  0, noOfOuts);
+  memset(minNote,  0, noOfOuts);
+  memset(maxNote,127, noOfOuts);
+  memset(trans,    0, noOfOuts);
+  memset(bankMSB,  0, noOfOuts);
+  memset(bankLSB,  0, noOfOuts);
+  memset(prog,     0, noOfOuts);
+
+@slider
+s = 0; loop(4,
+  outBus [s] = slider((s*10)+10);
+  outChan[s] = slider((s*10)+11);
+  minNote[s] = slider((s*10)+12);
+  maxNote[s] = slider((s*10)+13);
+  trans  [s] = slider((s*10)+14);
+  bankMSB[s] = slider((s*10)+15);
+  bankLSB[s] = slider((s*10)+16);
+  prog   [s] = slider((s*10)+17);
+  s+=1;
+);
+
+@serialize
+file_mem(0,  outBus, noOfOuts);
+file_mem(0, outChan, noOfOuts);
+file_mem(0, minNote, noOfOuts);
+file_mem(0, maxNote, noOfOuts);
+file_mem(0,   trans, noOfOuts);
+file_mem(0, bankMSB, noOfOuts);
+file_mem(0, bankLSB, noOfOuts);
+file_mem(0,    prog, noOfOuts);
+
+@block
+while (midirecv(offset,msg1,msg2,msg3)) (
+  noteStatus = msg1&$xF0;
+  channel    = msg1&$x0F;
+  thru ? midisend(offset,msg1,msg2,msg3);
+  channel==chIn-1 || chIn==0 ? (
+    i = j = 0;
+    loop(noOfOuts,
+      midi_bus = outBus[i]-1;
+      isNoteOn() ? (
+        input = 1;
+        msg2>=minNote[i] && msg2<=maxNote[i] && outBus[i]-1>= 0 ? (
+          noteInfo[j+msg2] += 1;                          //Store note-on
+          noteInfo[j+offsetNoteBus+msg2]  = outBus [i]-1; //Store note Bus
+          noteInfo[j+offsetNoteChan+msg2] = outChan[i]-1; //Store note Chan
+          noteInfo[j+offsetTrans+msg2]    = trans  [i];   //Store note Trans
+          note[i] = msg2 + trans[i];                      //Transpose note
+          note[i]<0?note[i]=0:note[i]>127?note[i]=127;    //Constrain note
+          midisend(offset,noteStatus+outChan[i]-1,note[i],msg3);
+        );
+
+      ):isNoteOff() ? (
+        noteInfo[j+msg2]>0 ? (                          //Has note-on been stored?
+          midi_bus = noteInfo[j+offsetNoteBus+msg2];    //Restore note bus
+          note[i]  = msg2+noteInfo[j+offsetTrans+msg2]; //Restore note transpose
+          note[i]<0?note[i]=0:note[i]>127?note[i]=127;  //Constrain note
+          noteInfo[j+msg2] -= 1;                        //remove record of note-on
+          midisend(offset,noteStatus+noteInfo[j+offsetNoteChan+msg2],note[i],msg3);
+        );
+
+      ):isSusPedal() ? (
+      input = 1;
+        msg3 ? (                         //Sustain pedal depressed?
+          susPedal[i]    = outChan[i]-1; //Store Channel
+          susPedal[i+10] = outBus[i]-1;  //Store Bus
+          outBus[i]-1>=0 ? midisend(offset,noteStatus+susPedal[i],msg2,msg3);
+
+        ):!msg3 && susPedal[i+10]>-1 ? ( //Sustain pedal raised?
+          midi_bus = susPedal[i+10];     //Restore MIDI bus
+          midisend(offset,noteStatus+susPedal[i],msg2,msg3);
+        );
+
+      ):isCC() && outBus[i]>0 ? (    input = 1;
+        (ccRoute==1 || ccRoute==i+2 ? midisend(offset,noteStatus+outChan[i]-1,msg2,msg3););
+
+      ):isPitchW() && outBus[i]>0 ? (    input = 1;
+        (pwRoute==1 || pwRoute==i+2 ? midisend(offset,noteStatus+outChan[i]-1,msg2,msg3););
+      );
+
+    i+=1;
+    j+=$x200;
+    );
+  );
+);
+
+i = 0;
+loop (noOfOuts,
+  midi_bus  = outBus[i]-1;
+  bankMSB[i]!=_bankMSB[i] || bankLSB[i]!=_bankLSB[i] || prog[i]!=_prog[i] ? (
+    _bankMSB[i] = bankMSB[i];
+    _bankLSB[i] = bankLSB[i];
+    _prog   [i] = prog   [i];
+    outBus[i]-1>=0 && PCenable ? (
+      midisend(0,statCC+outChan[i]-1,   0,bankMSB[i]);
+      midisend(0,statCC+outChan[i]-1,  32,bankLSB[i]);
+      midisend(0,statProgram+outChan[i]-1,prog[i]);
+    );
+  );
+  i += 1;
+);
+
+@gfx 400 330
+gfx_getchar();
+gfx_setfont(1,"Tahoma Bold",18);
+
+function isOver(x,y,w,h) (
+  mouse_x>=x && mouse_x<=x+w && mouse_y>=y && mouse_y<=y+h
+);
+
+function isOver2(_x, _y, x, y, w, h) (
+  _x>=x && _x<=x+w && _y>=y && _y<=y+h
+);
+
+function button(name, x, y, w, h, clicked) (
+  gfx_set(1); gfx_x=x; gfx_y=y-21; gfx_drawstr(name);
+  gfx_set(0.4);
+
+  !mouse_cap ? allow=1;
+
+  isOver(x,y,w,h) && !dragMode ? gfx_set(0.3,0.5,0.5);
+
+  clicked ? gfx_set(0.4,0.8,0.8);
+  allow && mouse_cap==1 && isOver(x,y,w,h) && !dragMode? (
+    allow=0;
+    !clicked?clicked=1:clicked?clicked =0;
+  );
+  gfx_rect(x,y,w,h);
+  clicked;
+);
+
+function numSlide(label, zeroStr, oneStr, num, x, y, w, h, mini, maxi, numOffset) (
+  gfx_set(0.6);
+
+  isOver(x,y,w,h) ? hover = 1;
+
+  mouse_cap == 0 ? dragMode = 0;
+
+  dragMode && isOver2(_x,_y,x,y,w,h) ? (
+    gfx_set(0.6,0.8,0.9);
+    mouse_y!=_mouse_y ? (
+      Mchng = _mouse_y-mouse_y;
+      abs(Mchng) > 10 ? (
+        num += floor((Mchng/10)+0.5);
+        _mouse_y = mouse_y;
+      );
+    );
+
+  ):isOver(x,y,w,h) && mouse_cap==1 && !dragMode ? (
+    gfx_set(0.7);
+    _mouse_y = mouse_y;
+    _x = mouse_x;
+    _y = mouse_y;
+    dragMode = 1;
+
+  ):isOver(x,y,w,h) && !dragMode ? (
+    gfx_set(0.7);
+    _mouse_wheel != mouse_wheel ? (
+      diff = (mouse_wheel-_mouse_wheel)/120;
+      mouse_cap == 4 ? diff*=12;
+      num += diff;
+      _mouse_wheel = mouse_wheel = 0;
+    );
+  );
+
+  gfx_x=x+5; gfx_y=y; gfx_rect(x,y,w,h);
+  num<mini?num=mini:num>maxi?num=maxi;
+  gfx_set(0,0,0);
+  num==0?gfx_drawstr(zeroStr) :num==1?gfx_drawstr(oneStr) :gfx_drawnumber(num+numOffset,0);
+
+  //Draw parameter label
+  gfx_x=x; gfx_y=y-21; gfx_set(1); drawLabel?gfx_drawstr(label);
+  num;
+);
+
+gfx_set(0.16); gfx_rect(0,0,gfx_w,gfx_h);
+gfx_set(0.1); gfx_rect(0,0,gfx_w,55);
+x=20; y=25; w=56; h=20; xgap=85;
+drawLabel = 1;
+
+//Draw Input parameters at top
+thru    =   button("THRU",x,y,45,h,thru); x+=xgap;
+chIn    = numSlide("Chan In", "All",    "1",    chIn, x, y, w, h, 0, 16 ,0); x+=xgap;
+input?l=0.5:l>0.3?(l-=0.01); gfx_set(0.3,l,l); gfx_circle(x,y,10,1); x+=xgap-30;//Input Monitor
+ccRoute = numSlide("CC to", "Block",  "All", ccRoute, x, y, w, h, 0, 9 ,-1); x+=xgap;
+pwRoute = numSlide("PW to", "Block",  "All", pwRoute, x, y, w, h, 0, 9 ,-1); x+=xgap+15;
+PCenable=   button("PC",x,y,40,h,PCenable);
+
+//Draw outs
+hover = 0;
+g=0; loop(8,
+  x=0;
+  y=80+g*30;
+  x+=40; w=40; h=20; xgap=50;
+  g%2?(gfx_set(1,1,1,0.07);gfx_rect(0,y-5,gfx_w,h+10));
+  gfx_x=10; gfx_y=y; gfx_set(1); gfx_drawnumber(g+1,0);
+
+  gfx_set(1); gfx_roundrect(0,-1,gfx_w-1,gfx_h-1,0); //White Border
+
+  //Draw parameters
+   outBus[g] = numSlide("Bus","OFF",  "1",  outBus[g], x, y, w, h,  0,  16 ,0); x+= xgap;
+  outChan[g] = numSlide("Chan", "0",  "1", outChan[g], x, y, w, h,  1,  16 ,0); x+= xgap+20;
+  minNote[g] = numSlide("Min",  "0",  "1", minNote[g], x, y, w, h,  0, 127 ,0); x+= xgap;
+  maxNote[g] = numSlide("Max",  "0",  "1", maxNote[g], x, y, w, h,  0, 127 ,0); x+= xgap;
+    trans[g] = numSlide("Trans","0",  "1",   trans[g], x, y, w, h,-48,  48 ,0); x+= xgap+20;
+  PCenable ? (
+    bankMSB[g] = numSlide("MSB",  "0",  "1", bankMSB[g], x, y, w, h,  0, 127 ,0); x+= xgap;
+    bankLSB[g] = numSlide("LSB",  "0",  "1", bankLSB[g], x, y, w, h,  0, 127 ,0); x+= xgap;
+       prog[g] = numSlide("Prog", "0",  "1",    prog[g], x, y, w, h,  0, 127 ,0); x+= xgap;
+  ):(numSlide("MSB",  "0",  "1", bankMSB[g], x, y, w, h,  0, 127 ,0); x+= xgap;
+     numSlide("LSB",  "0",  "1", bankLSB[g], x, y, w, h,  0, 127 ,0); x+= xgap;
+     numSlide("Prog", "0",  "1",    prog[g], x, y, w, h,  0, 127 ,0); x+= xgap;
+  );
+
+  drawLabel = 0;
+  slider((g*10)+10) =  outBus[g];
+  slider((g*10)+11) = outChan[g];
+  slider((g*10)+12) = minNote[g];
+  slider((g*10)+13) = maxNote[g];
+  slider((g*10)+14) =   trans[g];
+  slider((g*10)+15) = bankMSB[g];
+  slider((g*10)+16) = bankLSB[g];
+  slider((g*10)+17) =    prog[g];
+  g+=1;
+);
+
+!hover ? _mouse_wheel = mouse_wheel = 0;
+!PCenable?(gfx_set(0,0,0,0.5); gfx_rect(315,50,gfx_w,gfx_h));
+gfx_set(1); gfx_x=gfx_w-30; gfx_y=gfx_h-14; gfx_setfont(1,"Verdana",12); gfx_drawstr("TJA");
+input = 0;
