@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="b4935af4f6750ba784142a254add4d1990b7e648">
+<index version="1" name="ReaTeam JSFX" commit="1aa90ec2481a93ad11f1f9a409a1b9b70718b306">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1067,6 +1067,10 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-02-05T16:08:54Z">
         <changelog><![CDATA[fix positive delays - Paweł Łyżwa (palyzwa@gmail.com)]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/c94c4a8bda06b37541da6cb151674fb446413947/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
+      </version>
+      <version name="1.2" author="Michael Schnell (mschnell@bschnell.de)" time="2019-01-02T12:22:02Z">
+        <changelog><![CDATA[add temperature slider and display in cm]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/1aa90ec2481a93ad11f1f9a409a1b9b70718b306/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Midi Auto Engage.jsfx" type="effect" desc="Midi Auto Engage">
