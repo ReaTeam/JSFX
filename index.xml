@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="1aa90ec2481a93ad11f1f9a409a1b9b70718b306">
+<index version="1" name="ReaTeam JSFX" commit="92a49eb8985a295979dd35947fc24f7a440cec2b">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1146,12 +1146,12 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "In Channel" defines the channel the messages to be converted are expected in. "all" accepts any channel.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "Midi Message" selects if CC, PC, Note on or Note Off (Note number), Note on or Note Off (velocity), or Pitch bend are to be converted. With Note off, also note on messages with velocity 0 are used. With "Note On Velocity" beware that some keyboards send Note On with velocity 0 as Note Off message, so set the Min Input Value to 1.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "In CC" is only used when "CC" is selected and defines the CC# of the eligible input messages.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 The sliders "Min Input Value" and "Max Input Value" d3efine the range of the eligible input values. When using Pitch Bend as an input, 0 .. 127 is converted to 0 ... 127.9921875 is converted (and 127 exactly is converted to 127.9921875 for convenience), and it might make sense to tyoe in an exact value.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 The slider "Out Channel" defines the channel the converted messages are sent in. "same as received" reproduces ses the channel as received, as well dedicated in channel mode as when setting the in channel to "all" .\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The sliders "Min Input Value" and "Max Input Value" define the range of the eligible input values. When using Pitch Bend as an input, the full input rage is 0 .. 16383. This is shown as to 0 ... 127.9921875 (and 127 exactly is used as 127.9921875 for convenience), and it might make sense to type in an exact value.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "Out Channel" defines the channel the converted messages are sent in. "same as received" reproduces the channel as received, as well dedicated in channel mode as when setting the in channel to "all" .\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "Out CC" defines the Midi CC message # to be sent\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "Min CC Value" defines the value to be sent when the Min Input Value is received. Hence there will be an offset of Min_Input_Value - Min_Outout_Value.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "Max CC Value" defines the value to be sent when the Max Input Value is received. Hence there will be an appropriate stretching of the input range.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 TODO: hysteresis with Pitch Bend input.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 TODO: hysteresis with Pitch Bend input; high resolution CC\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 (When testing beware that the JS: Midi Pitch Wheel LFO erroneously outputs Databyte 1 values > 127 ! )\par}
 }
 ]]></description>
@@ -1172,6 +1172,10 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       <version name="4.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-12-19T23:09:36Z">
         <changelog><![CDATA[added After Touch]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/9d0d9992ad3360336e0b297a79c4a8c209023445/Utility/mschnell_MIDI%20Convert%20to%20CC.jsfx</source>
+      </version>
+      <version name="4.2" author="Michael Schnell (mschnell@bschnell.de)" time="2019-01-12T04:38:07Z">
+        <changelog><![CDATA[Small Fixes]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/92a49eb8985a295979dd35947fc24f7a440cec2b/Utility/mschnell_MIDI%20Convert%20to%20CC.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Midi Fade.jsfx" type="effect" desc="Midi Fade X">
