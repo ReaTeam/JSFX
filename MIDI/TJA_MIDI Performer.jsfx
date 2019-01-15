@@ -1,18 +1,15 @@
 desc: MIDI Performer
 author: Kevin Morrison (ThrashJazzAssassin)
 version: 0.1
-provides: . > MIDI Performer TJA
 screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
   8 x Router/Filter/Transposer/Bank+Program
- 
+
   Features hanging note prevention so holding a note or sustain pedal while changing 
   any of the output parameters is unlikely to leave notes hanging when they are released.
- 
+
   Hold CTRL/Command to mousewheel shift by 12 - but only if the fx window is focused
 
-
-slider1:    thru=0<0, 1,1{OFF,ON>                                     -Thru
 slider2:    chIn=0<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>-MIDI Channel In
 slider3: ccRoute=1<0, 9,1{Block,All,1,2,3,4,5,6,7,8}>                 -CC Routing 
 slider4: pwRoute=1<0, 9,1{Block,All,1,2,3,4,5,6,7,8}>                 -Pitch Wheel Routing
