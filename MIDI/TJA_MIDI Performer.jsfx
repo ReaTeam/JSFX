@@ -10,6 +10,7 @@ about:
 
   Hold CTRL/Command to mousewheel shift by 12 - but only if the fx window is focused
 
+slider1:    thru=0<0, 1,1{OFF,ON>                                     -Thru
 slider2:    chIn=0<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>-MIDI Channel In
 slider3: ccRoute=1<0, 9,1{Block,All,1,2,3,4,5,6,7,8}>                 -CC Routing 
 slider4: pwRoute=1<0, 9,1{Block,All,1,2,3,4,5,6,7,8}>                 -Pitch Wheel Routing
