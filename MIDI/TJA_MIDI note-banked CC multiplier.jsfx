@@ -1,7 +1,6 @@
-desc: MIDI note-banked CC multiplier TJA
+desc: MIDI note-banked CC multiplier
 author: Kevin Morrison (ThrashJazzAssassin)
 version: 0.1
-provides: . > MIDI note-banked CC multiplier TJA.jsfx
 about:
   Modifies control change (CC) inputs depending on which MIDI note has been pressed. 
   MIDI notes switch between banks and each bank outputs a unique set of CCs.
