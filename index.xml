@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="92a49eb8985a295979dd35947fc24f7a440cec2b">
+<index version="1" name="ReaTeam JSFX" commit="9d3ea500df460ad7f495a5bbf9277701c9f63e7f">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -78,23 +78,6 @@
       </metadata>
       <version name="1.0" author="cfillion" time="2017-03-22T21:49:14Z">
         <source>https://github.com/ReaTeam/JSFX/raw/f5af11d7b40782c8078ef8ba468732e8b1872dde/MIDI/cfillion_Note%20Duplicator.jsfx</source>
-      </version>
-    </reapack>
-    <reapack name="kevinmorrisonthrashjazzassassin_MIDI Performer.jsfx" type="effect" desc="MIDI Performer">
-      <metadata>
-        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
-{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
-\widowctrl\hyphauto
-
-{\pard \ql \f0 \sa180 \li0 \fi0 8 x Router/Filter/Transposer/Bank+Program\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Features hanging note prevention so holding a note or sustain pedal while changing any of the output parameters is unlikely to leave notes hanging when they are released.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Hold CTRL/Command to mousewheel shift by 12 - but only if the fx window is focused\par}
-}
-]]></description>
-        <link rel="screenshot">https://stash.reaper.fm/35134/performer.PNG</link>
-      </metadata>
-      <version name="0.1" author="Kevin Morrison (ThrashJazzAssassin)" time="2018-12-31T02:27:46Z">
-        <source file="MIDI Performer TJA">https://github.com/ReaTeam/JSFX/raw/b4935af4f6750ba784142a254add4d1990b7e648/MIDI/kevinmorrisonthrashjazzassassin_MIDI%20Performer.jsfx</source>
       </version>
     </reapack>
     <reapack name="mathphreak_Learningbaby.jsfx" type="effect" desc="Learningbaby">
@@ -180,6 +163,23 @@ here
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2018-12-06T23:08:44Z">
         <changelog><![CDATA[Initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/25e68b184909f2b84453f7a0c08c0efbc0196156/MIDI/mschnell_MIDI%20MPE%20to%20single%20channel.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="TJA_MIDI Performer.jsfx" type="effect" desc="MIDI Performer">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 8 x Router/Filter/Transposer/Bank+Program\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Features hanging note prevention so holding a note or sustain pedal while changing any of the output parameters is unlikely to leave notes hanging when they are released.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Hold CTRL/Command to mousewheel shift by 12 - but only if the fx window is focused\par}
+}
+]]></description>
+        <link rel="screenshot">https://stash.reaper.fm/35134/performer.PNG</link>
+      </metadata>
+      <version name="0.1" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-01-15T11:32:09Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/9d3ea500df460ad7f495a5bbf9277701c9f63e7f/MIDI/TJA_MIDI%20Performer.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
