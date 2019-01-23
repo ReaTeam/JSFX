@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="546028c3f511a5673ec0a59c163343632e34aa10">
+<index version="1" name="ReaTeam JSFX" commit="b8648ffe3bb379ca435a51ffe7506d0504c840d9">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1146,6 +1146,34 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2018-03-29T05:47:14Z">
         <changelog><![CDATA[initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/fb32cf664c09c8d6f58ab8a4beefc512bd23d333/Utility/mschnell_Midi%20CC%20Table.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_MIDI CC2SYSEX.jsfx" type="effect" desc="MIDI CC to SysEx">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Up to three CC messages are converted to SysEx messages.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "CC SysEx" selects the file that is to contain the the definition of the SysEx messages. The file needs to be located in the Reaper folder "Data/cc sysex" and be named with a .txt extension. (File format see below)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "MIDI Input Channel" selects the channel on which all converted CCs are received.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The sliders "CC Input 1", "CC Input 2", and "CC Input 3" define the up to three messages to be converted.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Slider "All Messages": "Pass Through" -> all but the converted CC messages are passed through. "Block" -> only the SysEx Messages generated are sent.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 A Graphic shows the op to three complete resulting SysEyx messages including header and trailer and the last inserted CC value.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 File format\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The configuration file can feature one, two or three lines. Accordingly there are one, two or three different CC messages to be converted to SysEx.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Each line consists of a series of up to 100 byte definitions, each of which is given by two hexadecimal digits and are separated by a space. A single of these definitions can optionally be be "XX" as a placeholder for the CC value to be transferred. The leading "F0" and trailing "F7" bytes necessary to form a SysEx message are not given, as the software inserts these automatically. (The bytes transferred in a SysEx message need to be lower or equal to 7f). Example : 00 21 10 78 3d 17 XX 7F\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Limitations\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The current version directly inserts the 7 bit CC value in the SysEx message. So higher resolution values are not supported.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Sometimes switching between different files does not work correctly. Pleas ctr-Click the enable box in the track's FX chain twice to see the correct new file.\par}
+}
+]]></description>
+        <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2019-01-23T08:15:29Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/b8648ffe3bb379ca435a51ffe7506d0504c840d9/Utility/mschnell_MIDI%20CC2SYSEX.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI Convert to CC.jsfx" type="effect" desc="MIDI convert to CC">
