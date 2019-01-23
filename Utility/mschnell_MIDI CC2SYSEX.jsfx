@@ -1,4 +1,4 @@
-desc: Midi CC to SysEx
+desc: MIDI CC to SysEx
 author: Michael Schnell (mschnell@bschnell.de)
 version: 1.0
 changelog: initial release
@@ -29,11 +29,7 @@ about:
     The current version directly inserts the 7 bit CC value in the SysEx message. So higher resolution values are not supported. 
   
     Sometimes switching between different files does not work correctly. Pleas ctr-Click the enable box in the track's FX chain twice to see the correct new file.
-
-
 donation: United Nations Foundation http://www.unfoundation.org/
-
- 
 
 slider1:/cc sysex:none:CC SysEx
 slider2:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Input Channel
