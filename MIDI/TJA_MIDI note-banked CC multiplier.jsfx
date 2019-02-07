@@ -1,6 +1,7 @@
 desc: MIDI note-banked CC multiplier
 author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.11
+version: 0.1.1
+changelog: Stops latch mode sending unnecessary note-ons
 about:
   Modifies control change (CC) inputs depending on which MIDI note has been pressed. 
   MIDI notes switch between banks and each bank outputs a unique set of CCs.
