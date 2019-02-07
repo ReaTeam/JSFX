@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="b8648ffe3bb379ca435a51ffe7506d0504c840d9">
+<index version="1" name="ReaTeam JSFX" commit="da50c468ef9e62d19973fd55abf8959c77248482">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -177,6 +177,10 @@ here
       </metadata>
       <version name="0.1" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-01-15T11:39:46Z">
         <source>https://github.com/ReaTeam/JSFX/raw/546028c3f511a5673ec0a59c163343632e34aa10/MIDI/TJA_MIDI%20note-banked%20CC%20multiplier.jsfx</source>
+      </version>
+      <version name="0.1.1" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-02-07T22:42:41Z">
+        <changelog><![CDATA[Stops latch mode sending unnecessary note-ons]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/da50c468ef9e62d19973fd55abf8959c77248482/MIDI/TJA_MIDI%20note-banked%20CC%20multiplier.jsfx</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI Performer.jsfx" type="effect" desc="MIDI Performer">
