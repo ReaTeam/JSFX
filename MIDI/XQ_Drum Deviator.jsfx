@@ -1,14 +1,10 @@
-desc: XQ Drum Deviator
+desc: Drum Deviator
 author: Xeewaj Q.
 version: 1.1
-changelog: 1.1 (Feb-08-2019): Fixed audio delay when rendering.
-link: Forum https://forum.cockos.com/showthread.php?t=216953
+changelog: Fixed audio delay when rendering.
+link: Forum thread https://forum.cockos.com/showthread.php?t=216953
 about:
-  XQ Drum Deviator
-  Author: Xeewaj Q.
-  Version: R1A (Feb-08-2019)
-  License: BSD-2-Clause
-  Requires: REAPER 5.0+
+  # XQ Drum Deviator
 
   This plugin is designed to reduce the pain of tweaking MIDI drums
   (velocity/timing randomizing, filtering etc). It supports various
@@ -17,115 +13,102 @@ about:
   randomizing styles (random, precise & sloppy) and can be used as
   non-drum randomizer too.
 
-  **** Parameters ****
+  ## Parameters
 
-  // Square brackets mean that this slider/droplist is read-only.
-  // After each trim and/or randomizing velocity is clamped to
-  // the standard range of 1-127.
+  Square brackets mean that this slider/droplist is read-only.
+  After each trim and/or randomizing velocity is clamped to
+  the standard range of 1-127.
 
-  Input Channel: self-explanatory.
+  - **Input Channel:** self-explanatory.
 
-  [Channel]: displays last event's channel.
+  - **[Channel]:** displays last event's channel.
 
-  Drum Map: select your drum map or "None" for processing all notes (ignoring
+  - **Drum Map:** select your drum map or "None" for processing all notes (ignoring
   subset).
 
-  Subset: select set of drums you want to modify (or "Everything" for all drums
+  - **Subset:** select set of drums you want to modify (or "Everything" for all drums
   in the map).
 
-  [Note]: displays last event's note.
+  - **[Note]:** displays last event's note.
 
-  Action:
-          Preview: process & visualize all sliders, but send out original values.
-  	Process: process selected notes and pass through others;
-  	Filter: process selected notes and kill others;
-  	Ignore: do nothing (pass through);
-  	Kill: delete selected notes.
+  - **Action:**
+    - Preview: process & visualize all sliders, but send out original values.
+    - Process: process selected notes and pass through others;
+    - Filter: process selected notes and kill others;
+    - Ignore: do nothing (pass through);
+    - Kill: delete selected notes.
 
-  Filter:
-  	Normal: affect only notes;
-  	Strict: affect all events.
+  - **Filter:**
+    - Normal: affect only notes;
+    - Strict: affect all events.
 
-  Choke: how we process (cymbal) chokes.
-  	Ignore: pass through;
-  	Set To 1: set velocity to 1 (for aesthetic purposes?);
-  	Set To 0: set velocity to 0 (you know what you're doing, right?);
-  	Kill: delete chokes.
+  - **Choke:** how we process (cymbal) chokes.
+    - Ignore: pass through;
+    - Set To 1: set velocity to 1 (for aesthetic purposes?);
+    - Set To 0: set velocity to 0 (you know what you're doing, right?);
+    - Kill: delete chokes.
 
-  Zero Velocity: how we process zero velocity notes.
-  	Ignore: pass through;
-  	Set To 1: set velocity to 1 and process as a normal note;
-  	Kill: delete zero notes.
+  - **Zero Velocity:** how we process zero velocity notes.
+    - Ignore: pass through;
+    - Set To 1: set velocity to 1 and process as a normal note;
+    - Kill: delete zero notes.
 
-  [Input Velocity]: displays last event's raw velocity (possibly affected by
+  - **[Input Velocity]:** displays last event's raw velocity (possibly affected by
   choke/zero options).
 
-  [Input Velocity Min]: displays lowest input velocity.
+  - **[Input Velocity Min]:** displays lowest input velocity.
 
-  [Input Velocity Max]: displays highest input velocity.
+  - **[Input Velocity Max]:** displays highest input velocity.
 
-  Reset Velocity To: if not zero, resets all notes velocity to a fixed value.
+  - **Reset Velocity To:** if not zero, resets all notes velocity to a fixed value.
 
-  Trim Input: adds (removes) some fixed value to note velocity.
+  - **Trim Input:** adds (removes) some fixed value to note velocity.
 
-  Velocity Deviation Type:
-  	Random: even distribution;
-  	Precise: strives to smaller values;
-  	Sloppy: strives to bigger values.
+  - **Velocity Deviation Type:**
+    - Random: even distribution;
+    - Precise: strives to smaller values;
+    - Sloppy: strives to bigger values.
 
-  Velocity Deviation Tendency: a chance that velocity deviation will occur
+  - **Velocity Deviation Tendency:** a chance that velocity deviation will occur
   (0-100%).
 
-  Max Velocity Deviation: self-explanatory.
+  - **Max Velocity Deviation:** self-explanatory.
 
-  Stronger Beats: if Yes, notes at beats (quarters) will get only positive 
+  - **Stronger Beats:** if Yes, notes at beats (quarters) will get only positive 
   deviations.
 
-  [Velocity Deviation]: displays last event's velocity deviation.
+  - **[Velocity Deviation]:** displays last event's velocity deviation.
 
-  Timing Deviation Type: same as velocity one.
+  - **Timing Deviation Type:** same as velocity one.
 
-  Timing Deviation Tendency: same as velocity one.
+  - **Timing Deviation Tendency:** same as velocity one.
 
-  Max Timing Deviation: self-explanatory, in milliseconds.
+  - **Max Timing Deviation:** self-explanatory, in milliseconds.
 
-  [Timing Deviation]: displays last event's timing deviation.
+  - **[Timing Deviation]:** displays last event's timing deviation.
 
-  Min Clamp Velocity: lowest possible velocity, lower values will be adjusted.
+  - **Min Clamp Velocity:** lowest possible velocity, lower values will be adjusted.
 
-  Max Clamp Velocity: highest possible velocity, higher values will be adjusted.
+  - **Max Clamp Velocity:** highest possible velocity, higher values will be adjusted.
 
-  Clamp Variation Range: if not zero, adds variation up to specified value to
+  - **Clamp Variation Range:** if not zero, adds variation up to specified value to
   clamp edges (output can't be out of the clamp range).
 
-  Trim Output: adds (removes) some fixed value to note velocity.
+  - **Trim Output:** adds (removes) some fixed value to note velocity.
 
-  [Output Velocity]: displays last event's actual velocity after processing.
+  - **[Output Velocity]:** displays last event's actual velocity after processing.
 
-  [Output Velocity Min]: displays lowest output velocity.
+  - **[Output Velocity Min]:** displays lowest output velocity.
 
-  [Output Velocity Max]: displays highest output velocity.
+  - **[Output Velocity Max]:** displays highest output velocity.
 
-  Output Channel: self-explanatory.
-
-
-  **** Installation ****
-
-  Copy "XQ Drum Deviator.jsfx" to your Reaper "Effects" directory.
-
-
-  **** Changes ****
-
-  R1  (Feb-06-2019): Initial version.
-  R1A (Feb-08-2019): Fixed audio delay when rendering.
+  - **Output Channel:** self-explanatory.
 
 // XQ Drum Deviator
 // Author: Xeewaj Q.
 // Version: R1A (Feb-08-2019)
 // License: BSD-2-Clause
 // Requires: REAPER 5.0+
-
-desc:XQ Drum Deviator
 
 slider1:sl_input_channel=0<0,16,1{Omni,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Input Channel
 slider2:sl_input_channel_display=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>[Channel]
