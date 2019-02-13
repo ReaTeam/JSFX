@@ -1,6 +1,7 @@
 desc: MIDI Performer
 author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.1
+version: 0.1.1
+changelog: Stops sending bank & program changes on project load
 screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
   8 x Router/Filter/Transposer/Bank+Program
@@ -126,6 +127,9 @@ file_mem(0,   trans, noOfOuts);
 file_mem(0, bankMSB, noOfOuts);
 file_mem(0, bankLSB, noOfOuts);
 file_mem(0,    prog, noOfOuts);
+file_mem(0,_bankMSB, noOfOuts);
+file_mem(0,_bankLSB, noOfOuts);
+file_mem(0,   _prog, noOfOuts);
 
 @block
 while (midirecv(offset,msg1,msg2,msg3)) (
