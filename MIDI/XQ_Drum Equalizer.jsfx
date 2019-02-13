@@ -1,58 +1,42 @@
-desc: XQ Drum Equalizer
+desc: Drum Equalizer
 author: Xeewaj Q.
 version: 1.1
-changelog: 1.1 (Feb-08-2019): Fixed duplicate notes under some circumstances.
+changelog: Fixed duplicate notes under some circumstances.
 about:
-  XQ Drum Equalizer
-  Author: Xeewaj Q.
-  Version: R1A (Feb-08-2019)
-  License: BSD-2-Clause
-  Requires: REAPER 5.0+
+  # XQ Drum Equalizer
 
   This plugin is designed to adjust (trim/clamp) different MIDI drums
   separately. It supports GM, Addictive Drums, BFD, Superior Drummer
   drum maps and 8 bands (kick, snare, hat, toms, rides, cymbals, brushes,
   misc).
 
+  ## Parameters
 
-  **** Parameters ****
+  Square brackets mean that this slider/droplist is read-only.
+  After each trim velocity is clamped to the standard range.
 
-  // Square brackets mean that this slider/droplist is read-only.
-  // After each trim velocity is clamped to the standard range.
+  - **Drum Map:** select your drum map.
 
-  Drum Map: select your drum map.
+  - **Wrong Notes:** how to process notes outside the map.
+    - Kill: kill.
+    - Pass: passthrough.
 
-  Wrong Notes: how to process notes outside the map.
-  	Kill: kill.
-  	Pass: passthrough.
+  **Chokes:** how to process choke notes.
+    - Pass: passthrough.
+    - Process: process (cymbals band).
 
-  Chokes: how to process choke notes.
-  	Pass: passthrough.
-  	Process: process (cymbals band).
+  There are 8 bands and 1 master section with 4 controls each:
 
-  There are 8 bands and 1 master section with 4 controls each.
-  	X Clamp Min: lowest possible velocity, lower values will be adjusted.
-  	X Clamp Max: highest possible velocity, higher values will be adjusted.
-  	X Trin: adds (removes) some fixed value to note velocity.
-  	[X]: displays last event's actual velocity after processing.
-
-  **** Installation ****
-
-  Copy "XQ Drum Equalizer.jsfx" to your Reaper "Effects" directory.
-
-
-  **** Changes ****
-
-  R1  (Feb-06-2019): Initial version.
-  R1A (Feb-08-2019): Fixed duplicate notes under some circumstances.
+  - **X Clamp Min:** lowest possible velocity, lower values will be adjusted.
+  - **X Clamp Max:** highest possible velocity, higher values will be adjusted.
+  - **X Trim:** adds (removes) some fixed value to note velocity.
+  - **[X]:** displays last event's actual velocity after processing.
 
 // XQ Drum Equalizer
 // Author: Xeewaj Q.
 // Version: R1A (Feb-08-2019)
 // License: BSD-2-Clause
 // Requires: REAPER 5.0+
-
-desc:XQ Drum Equalizer
 
 slider1:sl_drum_map=0<0,3,1{General MIDI,Addictive Drums,BFD,Superior Drummer}>Drum Map
 slider2:sl_wrong=0<0,1,1{Kill,Pass}>Wrong Notes
