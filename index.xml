@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="da50c468ef9e62d19973fd55abf8959c77248482">
+<index version="1" name="ReaTeam JSFX" commit="1714dc8b03443be9d56102323cea9550c256a603">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -213,6 +213,131 @@ here
       <version name="0.1" author="urtzurd (Urtzi Urdapilleta Roy)" time="2017-10-07T23:49:35Z">
         <changelog><![CDATA[Initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/e7ed9a1ccc661d901153d5e07d8357142d864a4b/MIDI/urtzurd_MIDI%20Glissando.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="XQ_Drum Converter.jsfx" type="effect" desc="Drum Converter">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 XQ Drum Converter\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This plugin is designed to convert MIDI drums from one map to another. Currently it converts from GM to Addictive Drums, BFD and Superior Drummer.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Parameters\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Square brackets mean that this slider/droplist is read-only.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Input Channel:} self-explanatory.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Input Note]:} displays last input note.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b From:} select a map to convert from.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Orphan Notes:} how to process inconvertable notes.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Kill: default.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Remap: change to Flexi 1 for AD, Perc 1 for BFD and #0 for SD.\sa180\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b To:} select a map to convert to.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Output Note]:} displays last converted note.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Output Channel:} self-explanatory.\sa180\par}
+}
+]]></description>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?p=2091997">Forum thread</link>
+      </metadata>
+      <version name="1.1" author="Xeewaj Q." time="2019-02-13T13:27:37Z">
+        <changelog><![CDATA[Notes are displayed only for "note on" events.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/81ba14a83f1e6f88882ee5a704b724689dcfbd61/MIDI/XQ_Drum%20Converter.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="XQ_Drum Deviator.jsfx" type="effect" desc="Drum Deviator">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 XQ Drum Deviator\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This plugin is designed to reduce the pain of tweaking MIDI drums (velocity/timing randomizing, filtering etc). It supports various (GM, Addictive Drums, BFD, Superior Drummer) drum maps and can process subsets (i.e. hats, toms etc) separately. It supports three randomizing styles (random, precise & sloppy) and can be used as non-drum randomizer too.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Parameters\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Square brackets mean that this slider/droplist is read-only. After each trim and/or randomizing velocity is clamped to the standard range of 1-127.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Input Channel:} self-explanatory.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Channel]:} displays last event's channel.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Drum Map:} select your drum map or "None" for processing all notes (ignoring subset).\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Subset:} select set of drums you want to modify (or "Everything" for all drums in the map).\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Note]:} displays last event's note.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Action:}\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Preview: process & visualize all sliders, but send out original values.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Process: process selected notes and pass through others;\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Filter: process selected notes and kill others;\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Ignore: do nothing (pass through);\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Kill: delete selected notes.\sa180\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Filter:}\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Normal: affect only notes;\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Strict: affect all events.\sa180\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Choke:} how we process (cymbal) chokes.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Ignore: pass through;\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Set To 1: set velocity to 1 (for aesthetic purposes?);\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Set To 0: set velocity to 0 (you know what you're doing, right?);\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Kill: delete chokes.\sa180\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Zero Velocity:} how we process zero velocity notes.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Ignore: pass through;\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Set To 1: set velocity to 1 and process as a normal note;\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Kill: delete zero notes.\sa180\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Input Velocity]:} displays last event's raw velocity (possibly affected by choke/zero options).\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Input Velocity Min]:} displays lowest input velocity.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Input Velocity Max]:} displays highest input velocity.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Reset Velocity To:} if not zero, resets all notes velocity to a fixed value.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Trim Input:} adds (removes) some fixed value to note velocity.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Velocity Deviation Type:}\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Random: even distribution;\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Precise: strives to smaller values;\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Sloppy: strives to bigger values.\sa180\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Velocity Deviation Tendency:} a chance that velocity deviation will occur (0-100%).\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Max Velocity Deviation:} self-explanatory.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Stronger Beats:} if Yes, notes at beats (quarters) will get only positive deviations.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Velocity Deviation]:} displays last event's velocity deviation.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Timing Deviation Type:} same as velocity one.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Timing Deviation Tendency:} same as velocity one.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Max Timing Deviation:} self-explanatory, in milliseconds.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Timing Deviation]:} displays last event's timing deviation.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Min Clamp Velocity:} lowest possible velocity, lower values will be adjusted.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Max Clamp Velocity:} highest possible velocity, higher values will be adjusted.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Clamp Variation Range:} if not zero, adds variation up to specified value to clamp edges (output can't be out of the clamp range).\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Trim Output:} adds (removes) some fixed value to note velocity.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Output Velocity]:} displays last event's actual velocity after processing.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Output Velocity Min]:} displays lowest output velocity.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Output Velocity Max]:} displays highest output velocity.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Output Channel:} self-explanatory.\sa180\par}
+}
+]]></description>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?t=216953">Forum thread</link>
+      </metadata>
+      <version name="1.1" author="Xeewaj Q." time="2019-02-13T13:27:27Z">
+        <changelog><![CDATA[Fixed audio delay when rendering.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/0fa95de26016fafa4d4ea34d0dbd53fec0b15e38/MIDI/XQ_Drum%20Deviator.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="XQ_Drum Equalizer.jsfx" type="effect" desc="Drum Equalizer">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 XQ Drum Equalizer\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This plugin is designed to adjust (trim/clamp) different MIDI drums separately. It supports GM, Addictive Drums, BFD, Superior Drummer drum maps and 8 bands (kick, snare, hat, toms, rides, cymbals, brushes, misc).\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Parameters\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Square brackets mean that this slider/droplist is read-only. After each trim velocity is clamped to the standard range.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Drum Map:} select your drum map.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Wrong Notes:} how to process notes outside the map.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Kill: kill.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Pass: passthrough.\sa180\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 {\b Chokes:} how to process choke notes.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Pass: passthrough.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Process: process (cymbals band).\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 There are 8 bands and 1 master section with 4 controls each:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\b X Clamp Min:} lowest possible velocity, lower values will be adjusted.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\b X Clamp Max:} highest possible velocity, higher values will be adjusted.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\b X Trim:} adds (removes) some fixed value to note velocity.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab {\b [X]:} displays last event's actual velocity after processing.\sa180\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.1" author="Xeewaj Q." time="2019-02-13T13:27:47Z">
+        <changelog><![CDATA[Fixed duplicate notes under some circumstances.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/1714dc8b03443be9d56102323cea9550c256a603/MIDI/XQ_Drum%20Equalizer.jsfx</source>
       </version>
     </reapack>
   </category>
