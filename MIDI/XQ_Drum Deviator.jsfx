@@ -1,7 +1,7 @@
 desc: Drum Deviator
 author: Xeewaj Q.
-version: 1.1
-changelog: Fixed audio delay when rendering.
+version: 3.0
+changelog: New options: time shift, velocity/timing deviation direction.
 link: Forum thread https://forum.cockos.com/showthread.php?t=216953
 about:
   # XQ Drum Deviator
@@ -74,16 +74,28 @@ about:
 
   - **Max Velocity Deviation:** self-explanatory.
 
+  - **Velocity Deviation Direction:** how velocity can be changed.
+    - Up: up.
+    - Both: up/down.
+    - Down: down.
+
   - **Stronger Beats:** if Yes, notes at beats (quarters) will get only positive 
   deviations.
 
   - **[Velocity Deviation]:** displays last event's velocity deviation.
+
+  - **Time Shift:** constant time shift to all notes, in ms.
 
   - **Timing Deviation Type:** same as velocity one.
 
   - **Timing Deviation Tendency:** same as velocity one.
 
   - **Max Timing Deviation:** self-explanatory, in milliseconds.
+
+  - **Timing Deviation Direction:** how timing can be changed.
+    - Lag: up.
+    - Both: up/down.
+    - Haste: down.
 
   - **[Timing Deviation]:** displays last event's timing deviation.
 
@@ -106,13 +118,13 @@ about:
 
 // XQ Drum Deviator
 // Author: Xeewaj Q.
-// Version: R1A (Feb-08-2019)
+// Version: R3 (Feb-13-2019)
 // License: BSD-2-Clause
 // Requires: REAPER 5.0+
 
 slider1:sl_input_channel=0<0,16,1{Omni,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Input Channel
 slider2:sl_input_channel_display=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>[Channel]
-slider3:sl_drum_map=1<0,4,1{None,General MIDI,Addictive Drums,BFD,Superior Drummer}>Drum Map
+slider3:sl_drum_map=1<0,3,1{None,General MIDI,Addictive Drums,BFD,Superior Drummer}>Drum Map
 slider4:sl_drum_set=1<0,8,1{Everything,Kick,Snare,Hat,Toms,Rides,Cymbals,Brushes,Misc}>Subset
 slider5:sl_input_note=0<0,127,1{0 : C0,1 : C#0,2 : D0,3 : D#0,4 : E0,5 : F0,6 : F#0,7 : G0,8 : G#0,9 : A0,10 : A#0,11 : B0,12 : C1,13 : C#1,14 : D1,15 : D#1,16 : E1,17 : F1,18 : F#1,19 : G1,20 : G#1,21 : A1,22 : A#1,23 : B1,24 : C2,25 : C#2,26 : D2,27 : D#2,28 : E2,29 : F2,30 : F#2,31 : G2,32 : G#2,33 : A2,34 : A#2,35 : B2,36 : C3,37 : C#3,38 : D3,39 : D#3,40 : E3,41 : F3,42 : F#3,43 : G3,44 : G#3,45 : A3,46 : A#3,47 : B3,48 : C4,49 : C#4,50 : D4,51 : D#4,52 : E4,53 : F4,54 : F#4,55 : G4,56 : G#4,57 : A4,58 : A#4,59 : B4,60 : C5,61 : C#5,62 : D5,63 : D#5,64 : E5,65 : F5,66 : F#5,67 : G5,68 : G#5,69 : A5,70 : A#5,71 : B5,72 : C6,73 : C#6,74 : D6,75 : D#6,76 : E6,77 : F6,78 : F#6,79 : G6,80 : G#6,81 : A6,82 : A#6,83 : B6,84 : C7,85 : C#7,86 : D7,87 : D#7,88 : E7,89 : F7,90 : F#7,91 : G7,92 : G#7,93 : A7,94 : A#7,95 : B7,96 : C8,97 : C#8,98 : D8,99 : D#8,100 : E8,101 : F8,102 : F#8,103 : G8,104 : G#8,105 : A8,106 : A#8,107 : B8,108 : C9,109 : C#9,110 : D9,111 : D#9,112 : E9,113 : F9,114 : F#9,115 : G9,116 : G#9,117 : A9,118 : A#9,119 : B9,120 : C10,121 : C#10,122 : D10,123 : D#10,124 : E10,125 : F10,126 : F#10,127 : G10}>[Note]
 slider6:sl_action=1<0,4,1{Preview,Process,Filter,Ignore,Kill}>Action
@@ -127,21 +139,24 @@ slider14:sl_trim_input=0<-127,127,1>Trim Input
 slider15:sl_vel_dev_type=0<0,2,1{Random,Precise,Sloppy}>Velocity Deviation Type
 slider16:sl_vel_dev_tend=0<0,100,1>Velocity Deviation Tendency, %
 slider17:sl_vel_dev_max=0<0,127,1>Max Velocity Deviation
-slider18:sl_stronger_beats=0<0,1,1{No,Yes}>Stronger Beats
-slider19:sl_vel_dev=0<-127,127,1>[Velocity Deviation]
-slider20:sl_time_dev_type=0<0,1,1{Random,Precise,Sloppy}>Timing Deviation Type
-slider21:sl_time_dev_tend=0<0,100,1>Timing Deviation Tendency, %
-slider22:sl_time_dev_max=0<0,50,0.1>Max Timing Deviation, ms
-slider23:sl_time_dev=0<-50,50,0.1>[Timing Deviation]
-slider24:sl_min_clamp_vel=1<1,127,1>Min Clamp Velocity
-slider25:sl_max_clamp_vel=127<1,127,1>Max Clamp Velocity
-slider26:sl_clamp_var_range=0<0,16,1>Clamp Variation Range
-slider27:sl_clamp_var=0<-16,16,1>[Clamp Variation]
-slider28:sl_trim_output=0<-127,127,1>Trim Output
-slider29:sl_output=0<0,127,1>[Output Velocity]
-slider30:sl_output_min=127<0,127,1>[Min Output Velocity]
-slider31:sl_output_max=0<0,127,1>[Max Output Velocity]
-slider32:sl_output_channel=0<0,16,1{As Is,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Output Channel
+slider18:sl_vel_direction=1<0,2,1{Up,Both,Down}>Velocity Deviation Direction
+slider19:sl_stronger_beats=0<0,1,1{No,Yes}>Stronger Beats
+slider20:sl_vel_dev=0<-127,127,1>[Velocity Deviation]
+slider21:sl_time_shift=0<-25,25,0.1>Time Shift, ms
+slider22:sl_time_dev_type=0<0,1,1{Random,Precise,Sloppy}>Timing Deviation Type
+slider23:sl_time_dev_tend=0<0,100,1>Timing Deviation Tendency, %
+slider24:sl_time_dev_max=0<0,50,0.1>Max Timing Deviation, ms
+slider25:sl_time_direction=1<0,2,1{Lag,Both,Haste}>Timing Deviation Direction
+slider26:sl_time_dev=0<-50,50,0.1>[Timing Deviation]
+slider27:sl_min_clamp_vel=1<1,127,1>Min Clamp Velocity
+slider28:sl_max_clamp_vel=127<1,127,1>Max Clamp Velocity
+slider29:sl_clamp_var_range=0<0,16,1>Clamp Variation Range
+slider30:sl_clamp_var=0<-16,16,1>[Clamp Variation]
+slider31:sl_trim_output=0<-127,127,1>Trim Output
+slider32:sl_output=0<0,127,1>[Output Velocity]
+slider33:sl_output_min=127<0,127,1>[Min Output Velocity]
+slider34:sl_output_max=0<0,127,1>[Max Output Velocity]
+slider35:sl_output_channel=0<0,16,1{As Is,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Output Channel
 
 in_pin:none
 out_pin:none
@@ -185,6 +200,14 @@ ZERO_KILL=0x02;
 DEV_LINEAR=0x00;
 DEV_ZERO=0x01;
 DEV_MAX=0x02;
+DIR_VEL_UP=0x00;
+DIR_BOTH=0x01;
+DIR_VEL_DN=0x02;
+DIR_TIME_LAG=0x00;
+DIR_BOTH=0x01;
+DIR_TIME_HASTE=0x02;
+last_note=0;
+last_velocity=0;
 
 @slider
 
@@ -734,22 +757,33 @@ function deviation(dmax,dtype,dtend)
         dtype==DEV_ZERO ? r=1-log10(rand(9)+1);
         dtype==DEV_MAX ? r=log10(rand(9)+1);
     );
-    r*dmax*rand_sign();
+    r*dmax;
 );
 
 function is_beat() (
     abs(1-frac(beat_position)) < 0.05 ? 1 : 0;
 );
 
-function deviate_velocity(v)
-    local(d)
+function deviate_velocity(v,n)
+    local(d,out)
 (
     d=floor(deviation(sl_vel_dev_max,sl_vel_dev_type,sl_vel_dev_tend));
+    sl_vel_direction==DIR_VEL_UP ? d=abs(d) :
+    sl_vel_direction==DIR_BOTH ? d*=rand_sign() :
+    sl_vel_direction==DIR_VEL_DN ? d=-d;
     sl_stronger_beats && is_beat() ? (
-        d=abs(d);
+        sl_vel_direction==DIR_VEL_DN ? d=0 ? d=abs(d);
     );
     sl_vel_dev=d;
-    v+d;
+    out=v+d;
+    (out==last_velocity) && (n==last_note) ? (
+        sl_vel_direction==DIR_VEL_UP ? out+=1 :
+        sl_vel_direction==DIR_BOTH ? out+=rand_sign() :
+        sl_vel_direction==DIR_VEL_DN ? out-=1;
+    );
+    last_velocity=out;
+    last_note=n;
+    out;
 );
 
 function ms_to_samples(ms)
@@ -761,9 +795,14 @@ function deviate_timing()
     local(d)
 (
     d=deviation(sl_time_dev_max,sl_time_dev_type,sl_time_dev_tend);
-    d=floor(d*10)/10;
+    sl_time_direction==DIR_TIME_LAG ? d=abs(d) :
+    sl_time_direction==DIR_BOTH ? d*=rand_sign() :
+    sl_time_direction==DIR_TIME_HASTE ? d=-d;
+    d=(floor(d*10)/10);
     sl_time_dev=d;
-    (play_position+(d/1000)) < 0 ? d=abs(d);
+    (play_position+(d/1000)) < 0 ? (
+        sl_time_direction==DIR_DN_LAG ? d=0 : d=abs(d);
+    );
     ms_to_samples(d);
 );
 
@@ -818,11 +857,11 @@ while (midirecv(offset,msg1,msg2,msg3)) (
             velocity+=sl_trim_input;
             velocity=clampx(velocity);
             sl_vel_dev_tend>0 ? (
-                velocity=deviate_velocity(velocity);
+                velocity=deviate_velocity(velocity,note);
                 velocity=clampx(velocity);
             );
             sl_time_dev_tend>0 ? (
-                time_dev=deviate_timing(offset);
+                time_dev=deviate_timing();
             ) : time_dev=0;
             velocity=clamp_out(velocity);
             velocity+=sl_trim_output;
@@ -840,7 +879,7 @@ while (midirecv(offset,msg1,msg2,msg3)) (
                 velocity=msg3;
                 time_dev=0;
             );
-            midisend(offset+time_dev,NOTE_ON+channel,note,velocity);
+            midisend(offset+time_dev+ms_to_samples(sl_time_shift),NOTE_ON+channel,note,velocity);
         );
     ) : (
         pass=0;
@@ -852,4 +891,3 @@ while (midirecv(offset,msg1,msg2,msg3)) (
         pass ? midisend(offset,msg1,msg2,msg3);
     )
 );
-
