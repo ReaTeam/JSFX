@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="c2a1d58984d075ee30175dcde6b3db99a8c90d53">
+<index version="1" name="ReaTeam JSFX" commit="858b3b70502684f778b4f1df7fbe698706704fdb">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -291,11 +291,20 @@ here
 {\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Sloppy: strives to bigger values.\sa180\par}
 {\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Velocity Deviation Tendency:} a chance that velocity deviation will occur (0-100%).\par}
 {\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Max Velocity Deviation:} self-explanatory.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Velocity Deviation Direction:} how velocity can be changed.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Up: up.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Both: up/down.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Down: down.\sa180\par}
 {\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Stronger Beats:} if Yes, notes at beats (quarters) will get only positive deviations.\par}
 {\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Velocity Deviation]:} displays last event's velocity deviation.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Time Shift:} constant time shift to all notes, in ms.\par}
 {\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Timing Deviation Type:} same as velocity one.\par}
 {\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Timing Deviation Tendency:} same as velocity one.\par}
 {\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Max Timing Deviation:} self-explanatory, in milliseconds.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Timing Deviation Direction:} how timing can be changed.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Lag: up.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Both: up/down.\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Haste: down.\sa180\par}
 {\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b [Timing Deviation]:} displays last event's timing deviation.\par}
 {\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Min Clamp Velocity:} lowest possible velocity, lower values will be adjusted.\par}
 {\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab {\b Max Clamp Velocity:} highest possible velocity, higher values will be adjusted.\par}
@@ -312,6 +321,10 @@ here
       <version name="1.1" author="Xeewaj Q." time="2019-02-13T13:27:27Z">
         <changelog><![CDATA[Fixed audio delay when rendering.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/0fa95de26016fafa4d4ea34d0dbd53fec0b15e38/MIDI/XQ_Drum%20Deviator.jsfx</source>
+      </version>
+      <version name="3.0" author="Xeewaj Q." time="2019-02-18T04:44:55Z">
+        <changelog><![CDATA[New options: time shift, velocity/timing deviation direction.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/858b3b70502684f778b4f1df7fbe698706704fdb/MIDI/XQ_Drum%20Deviator.jsfx</source>
       </version>
     </reapack>
     <reapack name="XQ_Drum Equalizer.jsfx" type="effect" desc="Drum Equalizer">
