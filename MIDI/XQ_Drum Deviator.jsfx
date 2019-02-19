@@ -1,7 +1,7 @@
 desc: Drum Deviator
 author: Xeewaj Q.
-version: 3.0
-changelog: New options: time shift, velocity/timing deviation direction.
+version: 4.0
+changelog: Precise beats option, beat detection corrections.
 link: Forum thread https://forum.cockos.com/showthread.php?t=216953
 about:
   # XQ Drum Deviator
@@ -97,6 +97,8 @@ about:
     - Both: up/down.
     - Haste: down.
 
+  - **Precise Beats:** if Yes, deviation will not apply to notes at beats.
+
   - **[Timing Deviation]:** displays last event's timing deviation.
 
   - **Min Clamp Velocity:** lowest possible velocity, lower values will be adjusted.
@@ -118,7 +120,7 @@ about:
 
 // XQ Drum Deviator
 // Author: Xeewaj Q.
-// Version: R3 (Feb-13-2019)
+// Version: R4 (Feb-18-2019)
 // License: BSD-2-Clause
 // Requires: REAPER 5.0+
 
@@ -147,16 +149,17 @@ slider22:sl_time_dev_type=0<0,1,1{Random,Precise,Sloppy}>Timing Deviation Type
 slider23:sl_time_dev_tend=0<0,100,1>Timing Deviation Tendency, %
 slider24:sl_time_dev_max=0<0,50,0.1>Max Timing Deviation, ms
 slider25:sl_time_direction=1<0,2,1{Lag,Both,Haste}>Timing Deviation Direction
-slider26:sl_time_dev=0<-50,50,0.1>[Timing Deviation]
-slider27:sl_min_clamp_vel=1<1,127,1>Min Clamp Velocity
-slider28:sl_max_clamp_vel=127<1,127,1>Max Clamp Velocity
-slider29:sl_clamp_var_range=0<0,16,1>Clamp Variation Range
-slider30:sl_clamp_var=0<-16,16,1>[Clamp Variation]
-slider31:sl_trim_output=0<-127,127,1>Trim Output
-slider32:sl_output=0<0,127,1>[Output Velocity]
-slider33:sl_output_min=127<0,127,1>[Min Output Velocity]
-slider34:sl_output_max=0<0,127,1>[Max Output Velocity]
-slider35:sl_output_channel=0<0,16,1{As Is,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Output Channel
+slider26:sl_precise_beats=0<0,1,1{No,Yes}>Precise Beats
+slider27:sl_time_dev=0<-50,50,0.1>[Timing Deviation]
+slider28:sl_min_clamp_vel=1<1,127,1>Min Clamp Velocity
+slider29:sl_max_clamp_vel=127<1,127,1>Max Clamp Velocity
+slider30:sl_clamp_var_range=0<0,16,1>Clamp Variation Range
+slider31:sl_clamp_var=0<-16,16,1>[Clamp Variation]
+slider32:sl_trim_output=0<-127,127,1>Trim Output
+slider33:sl_output=0<0,127,1>[Output Velocity]
+slider34:sl_output_min=127<0,127,1>[Min Output Velocity]
+slider35:sl_output_max=0<0,127,1>[Max Output Velocity]
+slider36:sl_output_channel=0<0,16,1{As Is,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Output Channel
 
 in_pin:none
 out_pin:none
@@ -760,8 +763,12 @@ function deviation(dmax,dtype,dtend)
     r*dmax;
 );
 
-function is_beat() (
-    abs(1-frac(beat_position)) < 0.05 ? 1 : 0;
+function is_beat()
+    local(x)
+(
+    x=abs(1-frac(beat_position*2));
+    x==1 ? x=0;
+    x < 0.1 ? 1 : 0;
 );
 
 function deviate_velocity(v,n)
@@ -772,7 +779,7 @@ function deviate_velocity(v,n)
     sl_vel_direction==DIR_BOTH ? d*=rand_sign() :
     sl_vel_direction==DIR_VEL_DN ? d=-d;
     sl_stronger_beats && is_beat() ? (
-        sl_vel_direction==DIR_VEL_DN ? d=0 ? d=abs(d);
+        sl_vel_direction==DIR_VEL_DN ? d=0 : d=abs(d);
     );
     sl_vel_dev=d;
     out=v+d;
@@ -799,6 +806,7 @@ function deviate_timing()
     sl_time_direction==DIR_BOTH ? d*=rand_sign() :
     sl_time_direction==DIR_TIME_HASTE ? d=-d;
     d=(floor(d*10)/10);
+    sl_precise_beats && is_beat() ? d=0;
     sl_time_dev=d;
     (play_position+(d/1000)) < 0 ? (
         sl_time_direction==DIR_DN_LAG ? d=0 : d=abs(d);
