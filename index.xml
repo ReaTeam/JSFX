@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="707be260145b60b03feb5e122dfd3ce9237c1cd6">
+<index version="1" name="ReaTeam JSFX" commit="34d9abe37f1d0187a5c0fba74ea17e3a416957de">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -190,7 +190,7 @@ here
 \widowctrl\hyphauto
 
 {\pard \ql \f0 \sa180 \li0 \fi0 8 x Router/Filter/Transposer/Bank+Program\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Features hanging note prevention so holding a note or sustain pedal while changing any of the output parameters is unlikely to leave notes hanging when they are released.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Features hanging note prevention so holding a note or sustain pedal while changing output routing, note filter or transpose is unlikely to leave notes hanging when they are released.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Hold CTRL/Command to mousewheel shift by 12 - but only if the fx window is focused\par}
 }
 ]]></description>
@@ -202,6 +202,11 @@ here
       <version name="0.1.1" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-02-13T23:01:23Z">
         <changelog><![CDATA[Stops sending bank & program changes on project load]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/c2a1d58984d075ee30175dcde6b3db99a8c90d53/MIDI/TJA_MIDI%20Performer.jsfx</source>
+      </version>
+      <version name="0.2" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-02-26T14:36:13Z">
+        <changelog><![CDATA[-Scale with window resize
+-Add bus + channel input for all rows - defaults to global buss + channel]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/34d9abe37f1d0187a5c0fba74ea17e3a416957de/MIDI/TJA_MIDI%20Performer.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
