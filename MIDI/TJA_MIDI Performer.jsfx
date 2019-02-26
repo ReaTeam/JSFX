@@ -8,21 +8,8 @@ screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
   8 x Router/Filter/Transposer/Bank+Program
 
-  Features hanging note prevention so holding a note or sustain pedal while changing 
-  output routing, note filter or transpose is unlikely to leave notes hanging when they are released.
-
-  Hold CTRL/Command to mousewheel shift by 12 - but only if the fx window is focused
-
-desc: MIDI Performer
-author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.1.1
-changelog: Stops sending bank & program changes on project load
-screenshot: https://stash.reaper.fm/35134/performer.PNG
-about:
-  8 x Router/Filter/Transposer/Bank+Program
-
   Features hanging note prevention so holding a note or sustain pedal while changing
-  any of the output parameters is unlikely to leave notes hanging when they are released.
+  output routing, note filter or transpose is unlikely to leave notes hanging when they are released.
 
   Hold CTRL/Command to mousewheel shift by 12 - but only if the fx window is focused
 
