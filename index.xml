@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="34d9abe37f1d0187a5c0fba74ea17e3a416957de">
+<index version="1" name="ReaTeam JSFX" commit="fb029b2799bcafae5397b4342760cf4de366f5a1">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -207,6 +207,10 @@ here
         <changelog><![CDATA[-Scale with window resize
 -Add bus + channel input for all rows - defaults to global buss + channel]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/34d9abe37f1d0187a5c0fba74ea17e3a416957de/MIDI/TJA_MIDI%20Performer.jsfx</source>
+      </version>
+      <version name="0.2.1" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-02-27T04:56:49Z">
+        <changelog><![CDATA[Fix for broken presets created with v1]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/fb029b2799bcafae5397b4342760cf4de366f5a1/MIDI/TJA_MIDI%20Performer.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
