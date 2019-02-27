@@ -1,9 +1,7 @@
 desc: MIDI Performer
 author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.2
-changelog:
-  -Scale with window resize
-  -Add bus + channel input for all rows - defaults to global buss + channel
+version: 0.2.1
+changelog: Fix for broken presets created with v1
 screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
   8 x Router/Filter/Transposer/Bank+Program
@@ -141,8 +139,6 @@ s = 0; loop(4,
 );
 
 @serialize
-file_mem(0,   inBus, noOfOuts);
-file_mem(0,  inChan, noOfOuts);
 file_mem(0,  outBus, noOfOuts);
 file_mem(0, outChan, noOfOuts);
 file_mem(0, minNote, noOfOuts);
@@ -154,6 +150,8 @@ file_mem(0,    prog, noOfOuts);
 file_mem(0,_bankMSB, noOfOuts);
 file_mem(0,_bankLSB, noOfOuts);
 file_mem(0,   _prog, noOfOuts);
+file_mem(0,   inBus, noOfOuts);
+file_mem(0,  inChan, noOfOuts);
 
 @block
 while (midirecv(offset,msg1,msg2,msg3)) (
