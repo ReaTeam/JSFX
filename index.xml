@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="fb029b2799bcafae5397b4342760cf4de366f5a1">
+<index version="1" name="ReaTeam JSFX" commit="7619ef24c53218875baaf2213727a77be7b1f4fd">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -78,6 +78,21 @@
       </metadata>
       <version name="1.0" author="cfillion" time="2017-03-22T21:49:14Z">
         <source>https://github.com/ReaTeam/JSFX/raw/f5af11d7b40782c8078ef8ba468732e8b1872dde/MIDI/cfillion_Note%20Duplicator.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="cfillion_Sustain pedal to note length.jsfx" type="effect" desc="Sustain pedal to note length">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 This effect delays note off message when a pedal is down until it is released. The (customizable) pedal CC events can either be eaten or let through the MIDI stream.\par}
+}
+]]></description>
+        <link rel="screenshot">https://i.imgur.com/nzzbF20.gif</link>
+      </metadata>
+      <version name="1.0" author="cfillion" time="2019-03-01T14:57:23Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/7619ef24c53218875baaf2213727a77be7b1f4fd/MIDI/cfillion_Sustain%20pedal%20to%20note%20length.jsfx</source>
       </version>
     </reapack>
     <reapack name="mathphreak_Learningbaby.jsfx" type="effect" desc="Learningbaby">
