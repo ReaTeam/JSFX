@@ -1,8 +1,8 @@
 desc: ReaRack Modular Synth
 author: Malcolm Smith
-version: 2.3.4
+version: 2.3.5
 changelog:
-  Version 2.3.4 - 01/09/2018 Envelope Multi-Tool bug fix, stage 1 bezier curve was functioning incorrectly.
+  Version 2.3.5 - 09/03/2019 Bug Fixes in Envelope Multi-Tool and Additive and Trapezoidal oscilators.
 about:
   # ReaRack Modular Synth
   ReaRack is a modular MIDI controlled digital synth system. There are currently 20 modules-
