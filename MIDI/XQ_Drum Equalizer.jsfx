@@ -1,0 +1,740 @@
+desc: Drum Equalizer
+author: Xeewaj Q.
+version: 1.1
+changelog: Fixed duplicate notes under some circumstances.
+about:
+  # XQ Drum Equalizer
+
+  This plugin is designed to adjust (trim/clamp) different MIDI drums
+  separately. It supports GM, Addictive Drums, BFD, Superior Drummer
+  drum maps and 8 bands (kick, snare, hat, toms, rides, cymbals, brushes,
+  misc).
+
+  ## Parameters
+
+  Square brackets mean that this slider/droplist is read-only.
+  After each trim velocity is clamped to the standard range.
+
+  - **Drum Map:** select your drum map.
+
+  - **Wrong Notes:** how to process notes outside the map.
+    - Kill: kill.
+    - Pass: passthrough.
+
+  **Chokes:** how to process choke notes.
+    - Pass: passthrough.
+    - Process: process (cymbals band).
+
+  There are 8 bands and 1 master section with 4 controls each:
+
+  - **X Clamp Min:** lowest possible velocity, lower values will be adjusted.
+  - **X Clamp Max:** highest possible velocity, higher values will be adjusted.
+  - **X Trim:** adds (removes) some fixed value to note velocity.
+  - **[X]:** displays last event's actual velocity after processing.
+
+// XQ Drum Equalizer
+// Author: Xeewaj Q.
+// Version: R1A (Feb-08-2019)
+// License: BSD-2-Clause
+// Requires: REAPER 5.0+
+
+slider1:sl_drum_map=0<0,3,1{General MIDI,Addictive Drums,BFD,Superior Drummer}>Drum Map
+slider2:sl_wrong=0<0,1,1{Kill,Pass}>Wrong Notes
+slider3:sl_choke=0<0,1,1{Pass,Process}>Chokes
+slider4:sl_kick_min=0<0,127,1>Kick Clamp Min
+slider5:sl_kick_max=127<0,127,1>Kick Clamp Max
+slider6:sl_kick=0<-127,127,1>Kick Trim
+slider7:sl_kick_vel=0<0,127,1>[Kick]
+slider8:sl_snare_min=0<0,127,1>Snare Clamp Min
+slider9:sl_snare_max=127<0,127,1>Snare Clamp Max
+slider10:sl_snare=0<-127,127,1>Snare Trim
+slider11:sl_snare_vel=0<0,127,1>[Snare]
+slider12:sl_hat_min=0<0,127,1>Hat Clamp Min
+slider13:sl_hat_max=127<0,127,1>Hat Clamp Max
+slider14:sl_hat=0<-127,127,1>Hat Trim
+slider15:sl_hat_vel=0<0,127,1>[Hat]
+slider16:sl_toms_min=0<0,127,1>Toms Clamp Min
+slider17:sl_toms_max=127<0,127,1>Toms Clamp Max
+slider18:sl_toms=0<-127,127,1>Toms Trim
+slider19:sl_toms_vel=0<0,127,1>[Toms]
+slider20:sl_rides_min=0<0,127,1>Rides Clamp Min
+slider21:sl_rides_max=127<0,127,1>Rides Clamp Max
+slider22:sl_rides=0<-127,127,1>Rides Trim
+slider23:sl_rides_vel=0<0,127,1>[Rides]
+slider24:sl_cyms_min=0<0,127,1>Cyms Clamp Min
+slider25:sl_cyms_max=127<0,127,1>Cyms Clamp Max
+slider26:sl_cyms=0<-127,127,1>Cymbals Trim
+slider27:sl_cyms_vel=0<0,127,1>[Cymbals]
+slider28:sl_brush_min=0<0,127,1>Brushes Clamp Min
+slider29:sl_brush_max=127<0,127,1>Brushes Clamp Max
+slider30:sl_brush=0<-127,127,1>Brushes Trim
+slider31:sl_brush_vel=0<0,127,1>[Brushes]
+slider32:sl_misc_min=0<0,127,1>Misc Clamp Min
+slider33:sl_misc_max=127<0,127,1>Misc Clamp Max
+slider34:sl_misc=0<-127,127,1>Misc Trim
+slider35:sl_misc_vel=0<0,127,1>[Misc]
+slider36:sl_clamp_min=0<0,127,1>Master Clamp Min
+slider37:sl_clamp_max=127<0,127,1>Master Clamp Max
+slider38:sl_trim_output=0<-127,127,1>Master Trim
+slider39:sl_output=0<0,127,1>[Output Velocity]
+
+in_pin:none
+out_pin:none
+
+@init
+
+TYPE_MASK=0xF0;
+CHANNEL_MASK=0x0F;
+NOTE_ON=0x90;
+DRUMS_GM=0x00;
+DRUMS_AD=0x01;
+DRUMS_BFD=0x02;
+DRUMS_SD=0x03;
+WRONG_KILL=0x00;
+WRONG_PASS=0x01;
+CHOKE_PASS=0x00;
+CHOKE_PROCESS=0x01;
+ACTION_PROCESS=0x00;
+ACTION_PASS=0x01;
+ACTION_KILL=0x02;
+
+@slider
+
+sl_snare_min>sl_snare_max || sl_snare_max<sl_snare_min ? sl_snare_max=sl_snare_min;
+sl_kick_min>sl_kick_max || sl_kick_max<sl_kick_min ? sl_kick_max=sl_kick_min;
+sl_snare_min>sl_snare_max || sl_snare_max<sl_snare_min ? sl_snare_max=sl_snare_min;
+sl_hat_min>sl_hat_max || sl_hat_max<sl_hat_min ? sl_hat_max=sl_hat_min;
+sl_toms_min>sl_toms_max || sl_toms_max<sl_toms_min ? sl_toms_max=sl_toms_min;
+sl_rides_min>sl_rides_max || sl_rides_max<sl_rides_min ? sl_rides_max=sl_rides_min;
+sl_cyms_min>sl_cyms_max || sl_cyms_max<sl_cyms_min ? sl_cyms_max=sl_cyms_min;
+sl_brush_min>sl_brush_max || sl_brush_max<sl_brush_min ? sl_brush_max=sl_brush_min;
+sl_misc_min>sl_misc_max || sl_misc_max<sl_misc_min ? sl_misc_max=sl_misc_min;
+
+@block
+
+function gm_drum_note(n)
+    local(r)
+(
+    n>=35 && n<=81 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_drum_note(n)
+    local(r)
+(
+    n>=26 && n<=103 ? (
+        r=1;
+        n==27 || n==64 || n==83 || n==88 || n==95 ? (
+            r=0;
+        );
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_drum_note(n)
+    local(r)
+(
+    n>=24 && n<=94 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_drum_note(n)
+    local(r)
+(
+    n>=6 && n<=127 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_kick(n)
+    local(r)
+(
+    n==35 || n==36 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_kick(n)
+    local(r)
+(
+    n==36 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_kick(n)
+    local(r)
+(
+    n==24 || n==84  ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_kick(n)
+    local(r)
+(
+    n>=34 && n<=36  ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_snare(n)
+    local(r)
+(
+    n==38 || n==40 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_snare(n)
+    local(r)
+(
+    n>=37 && n<=44 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_snare(n)
+    local(r)
+(
+    (n>=25 && n<=29) || n==86 || n==88 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_snare(n)
+    local(r)
+(
+    n==6 || (n>=28 && n<=33) || (n>=37 && n<=40) || (n>=69 && n<=71) || n==76 || n==125 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_hat(n)
+    local(r)
+(
+    n==42 || n==44 || n==46 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_hat(n)
+    local(r)
+(
+    n>=48 && n<=59 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_hat(n)
+    local(r)
+(
+    n==30 || n==32 || n==34 || n==37 || n==39 || n==42 || n==44 || n==46 || n==49 || n==51 || n==54 || n==56 || n==58 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_hat(n)
+    local(r)
+(
+    (n>=7 && n<=26) || n==42 || n==44 || n==46 || (n>=60 && n<=65) || (n>=119 && n<=124) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_tom(n)
+    local(r)
+(
+    n==41 || n==43 || n==45 || n==47 || n==48 || n==50 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_tom(n)
+    local(r)
+(
+    n>=65 && n<=72 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_tom(n)
+    local(r)
+(
+    n==31 || n==33 || n==35 || n==36 || n==38 || n==40 || n==61 || n==63 || n==66 || n==68 || n==70 || n==73 || (n>=89 && n<=94) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_tom(n)
+    local(r)
+(
+    n==41 || n==43 || n==45 || n==47 || n==48 || (n>=72 && n<=75) || (n>=77 && n<=82) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_ride(n)
+    local(r)
+(
+    n==51 || n==53 | n==59 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_ride(n)
+    local(r)
+(
+    n==45 || (n>=60 && n<=63) || (n>=84 && n<=87) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_ride(n)
+    local(r)
+(
+    n==50 || n==60 || n==71 || n==81 || n==87 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_ride(n)
+    local(r)
+(
+    n==51 || n==53 || n==59 || (n>=113 && n<=118) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_cymbal(n)
+    local(r)
+(
+    n==49 || n==52 || n=55 || n==57 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_cymbal(n)
+    local(r)
+(
+    n==46 || (n>=77 && n<=82) || (n>=89 && n<=94) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_cymbal(n)
+    local(r)
+(
+    n==41 || n==43 || n==45 || n==47 || n==48 || n==52 || n==53 || n==55 || n==57 || n==59 || n==62 || n==64 || n==65 || n==67 || n==69 || n==72 || n==82 || n==85 || (n>=74 && n<=80) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_cymbal(n)
+    local(r)
+(
+    n==27 || n==49 || n==50 || n==52 || (n>=54 && n<=58) || (n>=83 && n<=112) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_brush(n)
+(
+    0;
+);
+
+function ad_brush(n)
+    local(r)
+(
+    n==26 || (n>=28 && n<=35) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_brush(n)
+(
+    0;
+);
+
+function sd_brush(n)
+    local(r)
+(
+    (n>=66 && n<=68) || n==126 || n==127 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+function gm_misc(n)
+    local(r)
+(
+    n==37 || n==39 || n==54 ||  n==56 || n==58 || (n>=60 && n<=81) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_misc(n)
+    local(r)
+(
+    n==47 || (n>=73 && n<=76) || (n>=96 && n<=103) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_misc(n)
+    local(r)
+(
+    n==83 || n==95 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_misc(n)
+(
+    0;
+);
+
+function gm_choke(n)
+(
+    0;
+);
+
+function ad_choke(n)
+    local(r)
+(
+    n==63 || n==78 || n==80 || n==82 || n==87 || n==90 || n==92 || n==94 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_choke(n)
+    local(r)
+(
+    n==75 || n==78 || n==80 || n==82 || n==85 || n==87 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_choke(n)
+    local(r)
+(
+    n==50 || n==54 || n==56 || n==58 || n==83 || n==118 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function is_choke(n)
+    local(r)
+(
+    r=0;
+    (sl_drum_map==DRUMS_GM && gm_choke(n))
+    || (sl_drum_map==DRUMS_AD && ad_choke(n))
+    || (sl_drum_map==DRUMS_BFD && bfd_choke(n))
+    || (sl_drum_map==DRUMS_SD && sd_choke(n)) ? (
+        r=1;
+    );
+    r;
+);
+
+function clamp(v n x) (
+    v<n ? v=n;
+    v>x ? v=x;
+    v;
+);
+
+function clampx(v) (
+    clamp(v,1,127);
+);
+
+function is_note(t) (
+    t==NOTE_ON || t==NOTE_OFF ? 1 : 0;
+);
+
+function valid_note(n)
+    local(r)
+(
+    r=0;
+    sl_drum_map==DRUMS_GM && gm_drum_note(n) ? r=1;
+    sl_drum_map==DRUMS_AD && ad_drum_note(n) ? r=1;
+    sl_drum_map==DRUMS_BFD && bfd_drum_note(n) ? r=1;
+    sl_drum_map==DRUMS_SD && sd_drum_note(n) ? r=1;
+    r;
+);
+
+function is_kick(n)
+    local(r)
+(
+    r=0;
+    sl_drum_map==DRUMS_GM && gm_kick(n) ? r=1;
+    sl_drum_map==DRUMS_AD && ad_kick(n) ? r=1;
+    sl_drum_map==DRUMS_BFD && bfd_kick(n) ? r=1;
+    sl_drum_map==DRUMS_SD && sd_kick(n) ? r=1;
+    r;
+);
+
+function is_snare(n)
+    local(r)
+(
+    r=0;
+    sl_drum_map==DRUMS_GM && gm_snare(n) ? r=1;
+    sl_drum_map==DRUMS_AD && ad_snare(n) ? r=1;
+    sl_drum_map==DRUMS_BFD && bfd_snare(n) ? r=1;
+    sl_drum_map==DRUMS_SD && sd_snare(n) ? r=1;
+    r;
+);
+
+function is_hat(n)
+    local(r)
+(
+    r=0;
+    sl_drum_map==DRUMS_GM && gm_hat(n) ? r=1;
+    sl_drum_map==DRUMS_AD && ad_hat(n) ? r=1;
+    sl_drum_map==DRUMS_BFD && bfd_hat(n) ? r=1;
+    sl_drum_map==DRUMS_SD && sd_hat(n) ? r=1;
+    r;
+);
+
+function is_tom(n)
+    local(r)
+(
+    r=0;
+    sl_drum_map==DRUMS_GM && gm_tom(n) ? r=1;
+    sl_drum_map==DRUMS_AD && ad_tom(n) ? r=1;
+    sl_drum_map==DRUMS_BFD && bfd_tom(n) ? r=1;
+    sl_drum_map==DRUMS_SD && sd_tom(n) ? r=1;
+    r;
+);
+
+function is_ride(n)
+    local(r)
+(
+    r=0;
+    sl_drum_map==DRUMS_GM && gm_ride(n) ? r=1;
+    sl_drum_map==DRUMS_AD && ad_ride(n) ? r=1;
+    sl_drum_map==DRUMS_BFD && bfd_ride(n) ? r=1;
+    sl_drum_map==DRUMS_SD && sd_tom(n) ? r=1;
+    r;
+);
+
+function is_cymbal(n)
+    local(r)
+(
+    r=0;
+    sl_drum_map==DRUMS_GM && gm_cymbal(n) ? r=1;
+    sl_drum_map==DRUMS_AD && ad_cymbal(n) ? r=1;
+    sl_drum_map==DRUMS_BFD && bfd_cymbal(n) ? r=1;
+    sl_drum_map==DRUMS_SD && sd_cymbal(n) ? r=1;
+    r;
+);
+
+function is_brush(n)
+    local(r)
+(
+    r=0;
+    sl_drum_map==DRUMS_GM && gm_brush(n) ? r=1;
+    sl_drum_map==DRUMS_AD && ad_brush(n) ? r=1;
+    sl_drum_map==DRUMS_BFD && bfd_brush(n) ? r=1;
+    sl_drum_map==DRUMS_SD && sd_brush(n) ? r=1;
+    r;
+);
+
+function is_misc(n)
+    local(r)
+(
+    r=0;
+    sl_drum_map==DRUMS_GM && gm_misc(n) ? r=1;
+    sl_drum_map==DRUMS_AD && ad_misc(n) ? r=1;
+    sl_drum_map==DRUMS_BFD && bfd_misc(n) ? r=1;
+    sl_drum_map==DRUMS_SD && sd_misc(n) ? r=1;
+    r;
+);
+
+function process(n v)
+    local(r)
+(
+    is_kick(n) ? (
+        r=clamp(v,sl_kick_min,sl_kick_max);
+        r+=sl_kick;
+        r=clampx(r);
+        sl_kick_vel=r;
+    );
+    is_snare(n) ? (
+        r=clamp(v,sl_snare_min,sl_snare_max);
+        r+=sl_snare;
+        r=clampx(r);
+        sl_snare_vel=r;
+    );
+    is_hat(n) ? (
+        r=clamp(v,sl_hat_min,sl_hat_max);
+        r+=sl_hat;
+        r=clampx(r);
+        sl_hat_vel=r;
+    );
+    is_tom(n) ? (
+        r=clamp(v,sl_toms_min,sl_toms_max);
+        r+=sl_toms;
+        r=clampx(r);
+        sl_toms_vel=r;
+    );
+    is_ride(n) ? (
+        r=clamp(v,sl_rides_min,sl_rides_max);
+        r+=sl_rides;
+        r=clampx(r);
+        sl_rides_vel=r;
+    );
+    is_cymbal(n) ? (
+        r=clamp(v,sl_cyms_min,sl_cyms_max);
+        r+=sl_cyms;
+        r=clampx(r);
+        sl_cyms_vel=r;
+    );
+    is_brush(n) ? (
+        r=clamp(v,sl_brush_min,sl_brush_max);
+        r+=sl_brush;
+        r=clampx(r);
+        sl_brush_vel=r;
+    );
+    is_misc(n) ? (
+        r=clamp(v,sl_misc_min,sl_misc_max);
+        r+=sl_misc;
+        r=clampx(r);
+        sl_misc_vel=r;
+    );
+    r;
+);
+
+while (midirecv(offset,msg1,msg2,msg3)) (
+    type=msg1&TYPE_MASK;
+    channel=msg1&CHANNEL_MASK;
+    note=msg2;
+    velocity=msg3;
+    action=ACTION_PASS;
+    is_note(type) ? (
+        valid_note(note) ? (
+            type==NOTE_ON ? (
+                action=ACTION_PROCESS;
+                is_choke(note) && (sl_choke==CHOKE_PASS) ? action=ACTION_PASS;
+            );
+        ) : (
+            sl_wrong==WRONG_KILL ? action=ACTION_KILL;
+        );
+    );
+    action==ACTION_PASS ? midisend(offset,msg1,msg2,msg3);
+    action==ACTION_PROCESS ? (
+        velocity=process(note,velocity);
+        velocity<sl_clamp_min ? velocity=sl_clamp_min;
+        velocity>sl_clamp_max ? velocity=sl_clamp_max;
+        velocity+=sl_trim_output;
+        velocity=clampx(velocity);
+        sl_output=velocity;
+        midisend(offset,NOTE_ON+channel,note,velocity);
+    );
+);
+

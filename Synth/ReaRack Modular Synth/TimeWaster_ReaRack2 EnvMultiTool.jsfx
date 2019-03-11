@@ -4,7 +4,6 @@ noindex:   true
 author:    Malcolm Smith
            Copyright(C) 2018 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
            License: LGPL - http://www.gnu.org/licenses/lgpl.html
-
 changelog: Version 1.02 (9/03/2019) Fixed a bug preventing the envelope end value from being reached in some situations.
            Version 1.01 (1/09/2018) Fixed a bug causing stage Bezier curve to function incorrectly.
            Version 1.00 (30/07/2018) Initial working release.

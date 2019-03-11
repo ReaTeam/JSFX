@@ -1,8 +1,7 @@
 desc: Dual Time adjustment +/- Delay
-tags: stereo delay
 author: Michael Schnell (mschnell@bschnell.de)
-version: 1.1
-changelog: fix positive delays - Paweł Łyżwa (palyzwa@gmail.com)
+version: 1.2
+changelog: add temperature slider and display in cm
 donation: United Nations Foundation http://www.unfoundation.org/
 about:
   ## Description
@@ -16,6 +15,8 @@ about:
   ## Acknowlages: 
 
   Based on "Channel Time Delayer [LOSER]" by Michael Gruhn, 2007
+
+tags: stereo delay
 
 // (C) 2007, Michael Gruhn, 2017, Michael Schnell, 2018, Paweł Łyżwa
 
@@ -36,6 +37,7 @@ slider2:0<-100,100,0.01>Delay R (ms)
 slider3:0<-1000,1000,1>Delay L (spls)
 slider4:0<-1000,1000,1>Delay R (spls)
 slider5: 0<0,1,1{,Stereo,Dual}>Mode
+slider6:22<-10,30,1>°C (1 bar)
 
 in_pin:left input
 in_pin:right input
@@ -107,3 +109,19 @@ bufRpos >= buflR ? bufRpos = buflL+1;
 
 spl0 = bufLpos[0] ; 
 spl1 = bufRpos[0] ;
+
+@gfx 650 20   
+  gfx_r=gfx_g=gfx_b=0.95; gfx_a=1;
+  gfx_x=gfx_y=0;
+  gfx_rectto(gfx_w,gfx_h);
+  gfx_setfont(2,#font,15);
+  gfx_r=gfx_g=gfx_b=0;
+  gfx_x=gfx_y=10;
+  _s = 0.1*(331.5 + 0.6*slider6);             // cm per second
+  _l = _s * slider1;
+  _r = _s * slider2;
+  #_t= sprintf(#,"L    %0.1f cm", _l);
+  gfx_drawstr(#_t);
+  gfx_x = gfx_w - 100;
+  #_t= sprintf(#,"R    %0.1f cm",_r);
+  gfx_drawstr(#_t);

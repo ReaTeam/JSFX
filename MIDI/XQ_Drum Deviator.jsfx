@@ -1,0 +1,901 @@
+desc: Drum Deviator
+author: Xeewaj Q.
+version: 4.0
+changelog: Precise beats option, beat detection corrections.
+link: Forum thread https://forum.cockos.com/showthread.php?t=216953
+about:
+  # XQ Drum Deviator
+
+  This plugin is designed to reduce the pain of tweaking MIDI drums
+  (velocity/timing randomizing, filtering etc). It supports various
+  (GM, Addictive Drums, BFD, Superior Drummer) drum maps and can 
+  process subsets (i.e. hats, toms etc) separately. It supports three
+  randomizing styles (random, precise & sloppy) and can be used as
+  non-drum randomizer too.
+
+  ## Parameters
+
+  Square brackets mean that this slider/droplist is read-only.
+  After each trim and/or randomizing velocity is clamped to
+  the standard range of 1-127.
+
+  - **Input Channel:** self-explanatory.
+
+  - **[Channel]:** displays last event's channel.
+
+  - **Drum Map:** select your drum map or "None" for processing all notes (ignoring
+  subset).
+
+  - **Subset:** select set of drums you want to modify (or "Everything" for all drums
+  in the map).
+
+  - **[Note]:** displays last event's note.
+
+  - **Action:**
+    - Preview: process & visualize all sliders, but send out original values.
+    - Process: process selected notes and pass through others;
+    - Filter: process selected notes and kill others;
+    - Ignore: do nothing (pass through);
+    - Kill: delete selected notes.
+
+  - **Filter:**
+    - Normal: affect only notes;
+    - Strict: affect all events.
+
+  - **Choke:** how we process (cymbal) chokes.
+    - Ignore: pass through;
+    - Set To 1: set velocity to 1 (for aesthetic purposes?);
+    - Set To 0: set velocity to 0 (you know what you're doing, right?);
+    - Kill: delete chokes.
+
+  - **Zero Velocity:** how we process zero velocity notes.
+    - Ignore: pass through;
+    - Set To 1: set velocity to 1 and process as a normal note;
+    - Kill: delete zero notes.
+
+  - **[Input Velocity]:** displays last event's raw velocity (possibly affected by
+  choke/zero options).
+
+  - **[Input Velocity Min]:** displays lowest input velocity.
+
+  - **[Input Velocity Max]:** displays highest input velocity.
+
+  - **Reset Velocity To:** if not zero, resets all notes velocity to a fixed value.
+
+  - **Trim Input:** adds (removes) some fixed value to note velocity.
+
+  - **Velocity Deviation Type:**
+    - Random: even distribution;
+    - Precise: strives to smaller values;
+    - Sloppy: strives to bigger values.
+
+  - **Velocity Deviation Tendency:** a chance that velocity deviation will occur
+  (0-100%).
+
+  - **Max Velocity Deviation:** self-explanatory.
+
+  - **Velocity Deviation Direction:** how velocity can be changed.
+    - Up: up.
+    - Both: up/down.
+    - Down: down.
+
+  - **Stronger Beats:** if Yes, notes at beats (quarters) will get only positive 
+  deviations.
+
+  - **[Velocity Deviation]:** displays last event's velocity deviation.
+
+  - **Time Shift:** constant time shift to all notes, in ms.
+
+  - **Timing Deviation Type:** same as velocity one.
+
+  - **Timing Deviation Tendency:** same as velocity one.
+
+  - **Max Timing Deviation:** self-explanatory, in milliseconds.
+
+  - **Timing Deviation Direction:** how timing can be changed.
+    - Lag: up.
+    - Both: up/down.
+    - Haste: down.
+
+  - **Precise Beats:** if Yes, deviation will not apply to notes at beats.
+
+  - **[Timing Deviation]:** displays last event's timing deviation.
+
+  - **Min Clamp Velocity:** lowest possible velocity, lower values will be adjusted.
+
+  - **Max Clamp Velocity:** highest possible velocity, higher values will be adjusted.
+
+  - **Clamp Variation Range:** if not zero, adds variation up to specified value to
+  clamp edges (output can't be out of the clamp range).
+
+  - **Trim Output:** adds (removes) some fixed value to note velocity.
+
+  - **[Output Velocity]:** displays last event's actual velocity after processing.
+
+  - **[Output Velocity Min]:** displays lowest output velocity.
+
+  - **[Output Velocity Max]:** displays highest output velocity.
+
+  - **Output Channel:** self-explanatory.
+
+// XQ Drum Deviator
+// Author: Xeewaj Q.
+// Version: R4 (Feb-18-2019)
+// License: BSD-2-Clause
+// Requires: REAPER 5.0+
+
+slider1:sl_input_channel=0<0,16,1{Omni,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Input Channel
+slider2:sl_input_channel_display=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>[Channel]
+slider3:sl_drum_map=1<0,3,1{None,General MIDI,Addictive Drums,BFD,Superior Drummer}>Drum Map
+slider4:sl_drum_set=1<0,8,1{Everything,Kick,Snare,Hat,Toms,Rides,Cymbals,Brushes,Misc}>Subset
+slider5:sl_input_note=0<0,127,1{0 : C0,1 : C#0,2 : D0,3 : D#0,4 : E0,5 : F0,6 : F#0,7 : G0,8 : G#0,9 : A0,10 : A#0,11 : B0,12 : C1,13 : C#1,14 : D1,15 : D#1,16 : E1,17 : F1,18 : F#1,19 : G1,20 : G#1,21 : A1,22 : A#1,23 : B1,24 : C2,25 : C#2,26 : D2,27 : D#2,28 : E2,29 : F2,30 : F#2,31 : G2,32 : G#2,33 : A2,34 : A#2,35 : B2,36 : C3,37 : C#3,38 : D3,39 : D#3,40 : E3,41 : F3,42 : F#3,43 : G3,44 : G#3,45 : A3,46 : A#3,47 : B3,48 : C4,49 : C#4,50 : D4,51 : D#4,52 : E4,53 : F4,54 : F#4,55 : G4,56 : G#4,57 : A4,58 : A#4,59 : B4,60 : C5,61 : C#5,62 : D5,63 : D#5,64 : E5,65 : F5,66 : F#5,67 : G5,68 : G#5,69 : A5,70 : A#5,71 : B5,72 : C6,73 : C#6,74 : D6,75 : D#6,76 : E6,77 : F6,78 : F#6,79 : G6,80 : G#6,81 : A6,82 : A#6,83 : B6,84 : C7,85 : C#7,86 : D7,87 : D#7,88 : E7,89 : F7,90 : F#7,91 : G7,92 : G#7,93 : A7,94 : A#7,95 : B7,96 : C8,97 : C#8,98 : D8,99 : D#8,100 : E8,101 : F8,102 : F#8,103 : G8,104 : G#8,105 : A8,106 : A#8,107 : B8,108 : C9,109 : C#9,110 : D9,111 : D#9,112 : E9,113 : F9,114 : F#9,115 : G9,116 : G#9,117 : A9,118 : A#9,119 : B9,120 : C10,121 : C#10,122 : D10,123 : D#10,124 : E10,125 : F10,126 : F#10,127 : G10}>[Note]
+slider6:sl_action=1<0,4,1{Preview,Process,Filter,Ignore,Kill}>Action
+slider7:sl_filter=0<0,1,1{Normal,Strict}>Filter
+slider8:sl_choke=0<0,4,1{Ignore,Set To 1,Set To 0,Process,Kill}>Choke
+slider9:sl_zero=0<0,2,1{Ignore,Set To 1,Kill}>Zero Velocity
+slider10:sl_input=0<0,127,1>[Input Velocity]
+slider11:sl_input_min=127<0,127,1>[Min Input Velocity]
+slider12:sl_input_max=0<0,127,1>[Max Input Velocity]
+slider13:sl_reset=0<0,127,1>Reset Velocity To
+slider14:sl_trim_input=0<-127,127,1>Trim Input
+slider15:sl_vel_dev_type=0<0,2,1{Random,Precise,Sloppy}>Velocity Deviation Type
+slider16:sl_vel_dev_tend=0<0,100,1>Velocity Deviation Tendency, %
+slider17:sl_vel_dev_max=0<0,127,1>Max Velocity Deviation
+slider18:sl_vel_direction=1<0,2,1{Up,Both,Down}>Velocity Deviation Direction
+slider19:sl_stronger_beats=0<0,1,1{No,Yes}>Stronger Beats
+slider20:sl_vel_dev=0<-127,127,1>[Velocity Deviation]
+slider21:sl_time_shift=0<-25,25,0.1>Time Shift, ms
+slider22:sl_time_dev_type=0<0,1,1{Random,Precise,Sloppy}>Timing Deviation Type
+slider23:sl_time_dev_tend=0<0,100,1>Timing Deviation Tendency, %
+slider24:sl_time_dev_max=0<0,50,0.1>Max Timing Deviation, ms
+slider25:sl_time_direction=1<0,2,1{Lag,Both,Haste}>Timing Deviation Direction
+slider26:sl_precise_beats=0<0,1,1{No,Yes}>Precise Beats
+slider27:sl_time_dev=0<-50,50,0.1>[Timing Deviation]
+slider28:sl_min_clamp_vel=1<1,127,1>Min Clamp Velocity
+slider29:sl_max_clamp_vel=127<1,127,1>Max Clamp Velocity
+slider30:sl_clamp_var_range=0<0,16,1>Clamp Variation Range
+slider31:sl_clamp_var=0<-16,16,1>[Clamp Variation]
+slider32:sl_trim_output=0<-127,127,1>Trim Output
+slider33:sl_output=0<0,127,1>[Output Velocity]
+slider34:sl_output_min=127<0,127,1>[Min Output Velocity]
+slider35:sl_output_max=0<0,127,1>[Max Output Velocity]
+slider36:sl_output_channel=0<0,16,1{As Is,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Output Channel
+
+in_pin:none
+out_pin:none
+
+@init
+
+TYPE_MASK=0xF0;
+CHANNEL_MASK=0x0F;
+OMNI=0x00;
+NOTE_ON=0x90;
+NOTE_OFF=0x80;
+DRUMS_NONE=0x00;
+DRUMS_GM=0x01;
+DRUMS_AD=0x02;
+DRUMS_BFD=0x03;
+DRUMS_SD=0x04;
+SET_ALL=0x00;
+SET_KICK=0x01;
+SET_SNARE=0x02;
+SET_HAT=0x03;
+SET_TOMS=0x04;
+SET_RIDES=0x05;
+SET_CYMS=0x06;
+SET_BRUSH=0x07;
+SET_MISC=0x08;
+ACTION_PREVIEW=0x00;
+ACTION_PROCESS=0x01;
+ACTION_FILTER=0x02;
+ACTION_PASS=0x03;
+ACTION_KILL=0x04;
+FILTER_NORMAL=0x00;
+FILTER_STRICT=0x01;
+CHOKE_PASS=0x00;
+CHOKE_ONE=0x01;
+CHOKE_ZERO=0x02;
+CHOKE_DO=0x03;
+CHOKE_KILL=0x04;
+ZERO_PASS=0x00;
+ZERO_ONE=0x01;
+ZERO_KILL=0x02;
+DEV_LINEAR=0x00;
+DEV_ZERO=0x01;
+DEV_MAX=0x02;
+DIR_VEL_UP=0x00;
+DIR_BOTH=0x01;
+DIR_VEL_DN=0x02;
+DIR_TIME_LAG=0x00;
+DIR_BOTH=0x01;
+DIR_TIME_HASTE=0x02;
+last_note=0;
+last_velocity=0;
+
+@slider
+
+sl_min_clamp_vel>sl_max_clamp_vel || sl_max_clamp_vel<sl_min_clamp_vel ? (
+    sl_max_clamp_vel=sl_min_clamp_vel;
+);
+
+@block
+
+function gm_drum_note(n)
+    local(r)
+(
+    n>=35 && n<=81 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_drum_note(n)
+    local(r)
+(
+    n>=26 && n<=103 ? (
+        r=1;
+        n==27 || n==64 || n==83 || n==88 || n==95 ? (
+            r=0;
+        );
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_drum_note(n)
+    local(r)
+(
+    n>=24 && n<=94 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_note(n)
+    local(r)
+(
+    n>=6 && n<=127 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_kick(n)
+    local(r)
+(
+    n==35 || n==36 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_kick(n)
+    local(r)
+(
+    n==36 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_kick(n)
+    local(r)
+(
+    n==24 || n==84  ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_kick(n)
+    local(r)
+(
+    n>=34 && n<=36  ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_snare(n)
+    local(r)
+(
+    n==38 || n==40 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_snare(n)
+    local(r)
+(
+    n>=37 && n<=44 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_snare(n)
+    local(r)
+(
+    (n>=25 && n<=29) || n==86 || n==88 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_snare(n)
+    local(r)
+(
+    n==6 || (n>=28 && n<=33) || (n>=37 && n<=40) || (n>=69 && n<=71) || n==76 || n==125 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_hat(n)
+    local(r)
+(
+    n==42 || n==44 || n==46 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_hat(n)
+    local(r)
+(
+    n>=48 && n<=59 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_hat(n)
+    local(r)
+(
+    n==30 || n==32 || n==34 || n==37 || n==39 || n==42 || n==44 || n==46 || n==49 || n==51 || n==54 || n==56 || n==58 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_hat(n)
+    local(r)
+(
+    (n>=7 && n<=26) || n==42 || n==44 || n==46 || (n>=60 && n<=65) || (n>=119 && n<=124) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_tom(n)
+    local(r)
+(
+    n==41 || n==43 || n==45 || n==47 || n==48 || n==50 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_tom(n)
+    local(r)
+(
+    n>=65 && n<=72 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_tom(n)
+    local(r)
+(
+    n==31 || n==33 || n==35 || n==36 || n==38 || n==40 || n==61 || n==63 || n==66 || n==68 || n==70 || n==73 || (n>=89 && n<=94) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_tom(n)
+    local(r)
+(
+    n==41 || n==43 || n==45 || n==47 || n==48 || (n>=72 && n<=75) || (n>=77 && n<=82) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_ride(n)
+    local(r)
+(
+    n==51 || n==53 | n==59 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_ride(n)
+    local(r)
+(
+    n==45 || (n>=60 && n<=63) || (n>=84 && n<=87) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_ride(n)
+    local(r)
+(
+    n==50 || n==60 || n==71 || n==81 || n==87 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_ride(n)
+    local(r)
+(
+    n==51 || n==53 || n==59 || (n>=113 && n<=118) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_cymbal(n)
+    local(r)
+(
+    n==49 || n==52 || n=55 || n==57 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_cymbal(n)
+    local(r)
+(
+    n==46 || (n>=77 && n<=82) || (n>=89 && n<=94) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_cymbal(n)
+    local(r)
+(
+    n==41 || n==43 || n==45 || n==47 || n==48 || n==52 || n==53 || n==55 || n==57 || n==59 || n==62 || n==64 || n==65 || n==67 || n==69 || n==72 || n==82 || n==85 || (n>=74 && n<=80) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_cymbal(n)
+    local(r)
+(
+    n==27 || n==49 || n==50 || n==52 || (n>=54 && n<=58) || (n>=83 && n<=112) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function gm_brush(n)
+(
+    0;
+);
+
+function ad_brush(n)
+    local(r)
+(
+    n==26 || (n>=28 && n<=35) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_brush(n)
+(
+    0;
+);
+
+function sd_brush(n)
+    local(r)
+(
+    (n>=66 && n<=68) || n==126 || n==127 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+function gm_misc(n)
+    local(r)
+(
+    n==37 || n==39 || n==54 ||  n==56 || n==58 || (n>=60 && n<=81) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function ad_misc(n)
+    local(r)
+(
+    n==47 || (n>=73 && n<=76) || (n>=96 && n<=103) ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_misc(n)
+    local(r)
+(
+    n==83 || n==95 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_misc(n)
+(
+    0;
+);
+
+function gm_choke(n)
+(
+    0;
+);
+
+function ad_choke(n)
+    local(r)
+(
+    n==63 || n==78 || n==80 || n==82 || n==87 || n==90 || n==92 || n==94 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function bfd_choke(n)
+    local(r)
+(
+    n==75 || n==78 || n==80 || n==82 || n==85 || n==87 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function sd_choke(n)
+    local(r)
+(
+    n==50 || n==54 || n==56 || n==58 || n==83 || n==118 ? (
+        r=1;
+    ) : (
+        r=0;
+    );
+    r;
+);
+
+function is_choke(n)
+    local(r)
+(
+    r=0;
+    (sl_drum_map==DRUMS_GM && gm_choke(n))
+    || (sl_drum_map==DRUMS_AD && ad_choke(n))
+    || (sl_drum_map==DRUMS_BFD && bfd_choke(n))
+    || (sl_drum_map==DRUMS_SD && sd_choke(n)) ? (
+        r=1;
+    );
+    r;
+);
+
+function is_note(t) (
+    t==NOTE_ON || t==NOTE_OFF ? 1 : 0;
+);
+
+function valid_note(n)
+    local(r)
+(
+    r=0;
+    sl_drum_map==DRUMS_NONE ? (
+        r=1;
+    );
+    sl_drum_map==DRUMS_GM ? (
+        gm_drum_note(n) ? (
+            (sl_drum_set==SUB_ALL)
+            || (sl_drum_set==SET_KICK && gm_kick(n))
+            || (sl_drum_set==SET_SNARE && gm_snare(n))
+            || (sl_drum_set==SET_HAT && gm_hat(n))
+            || (sl_drum_set==SET_TOMS && gm_tom(n))
+            || (sl_drum_set==SET_RIDES && gm_ride(n))
+            || (sl_drum_set==SET_CYMS && gm_cymbal(n))
+            || (sl_drum_set==SET_BRUSH && gm_brush(n))
+            || (sl_drum_set==SET_MISC && gm_misc(n)) ? (
+                r=1;
+            );
+        );    );
+    sl_drum_map==DRUMS_AD ? (
+        ad_drum_note(n) ? (
+            (sl_drum_set==SET_ALL)
+            || (sl_drum_set==SET_KICK && ad_kick(n))
+            || (sl_drum_set==SET_SNARE && ad_snare(n))
+            || (sl_drum_set==SET_HAT && ad_hat(n))
+            || (sl_drum_set==SET_TOMS && ad_tom(n))
+            || (sl_drum_set==SET_RIDES && ad_ride(n))
+            || (sl_drum_set==SET_CYMS && ad_cymbal(n))
+            || (sl_drum_set==SET_BRUSH && ad_brush(n))
+            || (sl_drum_set==SET_MISC && ad_misc(n)) ? (
+                r=1;
+            );
+        );
+    );
+    sl_drum_map==DRUMS_BFD ? (
+        bfd_drum_note(n) ? (
+            (sl_drum_set==SET_ALL)
+            || (sl_drum_set==SET_KICK && bfd_kick(n))
+            || (sl_drum_set==SET_SNARE && bfd_snare(n))
+            || (sl_drum_set==SET_HAT && bfd_hat(n))
+            || (sl_drum_set==SET_TOMS && bfd_tom(n))
+            || (sl_drum_set==SET_RIDES && bfd_ride(n))
+            || (sl_drum_set==SET_CYMS && bfd_cymbal(n))
+            || (sl_drum_set==SET_BRUSH && bfd_brush(n))
+            || (sl_drum_set==SET_MISC && bfd_misc(n)) ? (
+                r=1;
+            );
+        );
+    );
+    sl_drum_map==DRUMS_SD ? (
+        sd_note(n) ? (
+            (sl_drum_set==SET_ALL)
+            || (sl_drum_set==SET_KICK && sd_kick(n))
+            || (sl_drum_set==SET_SNARE && sd_snare(n))
+            || (sl_drum_set==SET_HAT && sd_hat(n))
+            || (sl_drum_set==SET_TOMS && sd_tom(n))
+            || (sl_drum_set==SET_RIDES && sd_ride(n))
+            || (sl_drum_set==SET_CYMS && sd_cymbal(n))
+            || (sl_drum_set==SET_BRUSH && sd_brush(n))
+            || (sl_drum_set==SET_MISC && sd_misc(n)) ? (
+                r=1;
+            );
+        );
+    );
+    r;
+);
+
+function frac(x) (
+    x-floor(x);
+);
+
+function clamp(v n x) (
+    v<n ? v=n;
+    v>x ? v=x;
+    v;
+);
+
+function clampx(v) (
+    clamp(v,1,127);
+);
+
+function valid_event(t,c,n,v)
+    local(r)
+(
+    r=0;
+    (sl_input_channel==OMNI) || ((sl_input_channel-1)==c) ? (
+        valid_note(n) && is_note(t) ? r=1;
+    );
+    r;
+);
+
+function rand_sign() (
+    sign(sin((rand(360)-180)*0.017453));
+);
+
+function deviation(dmax,dtype,dtend)
+    local(r)
+(
+    rand(100)>=(100-dtend) ? (
+        dtype==DEV_LINEAR ? r=rand(1);
+        dtype==DEV_ZERO ? r=1-log10(rand(9)+1);
+        dtype==DEV_MAX ? r=log10(rand(9)+1);
+    );
+    r*dmax;
+);
+
+function is_beat()
+    local(x)
+(
+    x=abs(1-frac(beat_position*2));
+    x==1 ? x=0;
+    x < 0.1 ? 1 : 0;
+);
+
+function deviate_velocity(v,n)
+    local(d,out)
+(
+    d=floor(deviation(sl_vel_dev_max,sl_vel_dev_type,sl_vel_dev_tend));
+    sl_vel_direction==DIR_VEL_UP ? d=abs(d) :
+    sl_vel_direction==DIR_BOTH ? d*=rand_sign() :
+    sl_vel_direction==DIR_VEL_DN ? d=-d;
+    sl_stronger_beats && is_beat() ? (
+        sl_vel_direction==DIR_VEL_DN ? d=0 : d=abs(d);
+    );
+    sl_vel_dev=d;
+    out=v+d;
+    (out==last_velocity) && (n==last_note) ? (
+        sl_vel_direction==DIR_VEL_UP ? out+=1 :
+        sl_vel_direction==DIR_BOTH ? out+=rand_sign() :
+        sl_vel_direction==DIR_VEL_DN ? out-=1;
+    );
+    last_velocity=out;
+    last_note=n;
+    out;
+);
+
+function ms_to_samples(ms)
+(
+    ms*srate/1000;
+);
+
+function deviate_timing()
+    local(d)
+(
+    d=deviation(sl_time_dev_max,sl_time_dev_type,sl_time_dev_tend);
+    sl_time_direction==DIR_TIME_LAG ? d=abs(d) :
+    sl_time_direction==DIR_BOTH ? d*=rand_sign() :
+    sl_time_direction==DIR_TIME_HASTE ? d=-d;
+    d=(floor(d*10)/10);
+    sl_precise_beats && is_beat() ? d=0;
+    sl_time_dev=d;
+    (play_position+(d/1000)) < 0 ? (
+        sl_time_direction==DIR_DN_LAG ? d=0 : d=abs(d);
+    );
+    ms_to_samples(d);
+);
+
+function clamp_out(v)
+    local(vr)
+(
+    vr=0;
+    sl_clamp_var_range>0 ? (
+        vr=floor(rand(min(sl_clamp_var_range,sl_max_clamp_vel-sl_min_clamp_vel)));
+    );
+    v<=sl_min_clamp_vel ? (
+        v=sl_min_clamp_vel+vr;
+        sl_clamp_var=vr;
+    );
+    v>=sl_max_clamp_vel ? (
+        v=sl_max_clamp_vel-vr;
+        sl_clamp_var=-vr;
+    );
+    v;
+);
+
+while (midirecv(offset,msg1,msg2,msg3)) (
+    type=msg1&TYPE_MASK;
+    channel=msg1&CHANNEL_MASK;
+    note=msg2;
+    velocity=msg3;
+    valid_event(type,channel,note,velocity) ? (
+        type == NOTE_ON ? (
+            sl_input=velocity;
+            velocity<sl_input_min ? sl_input_min=velocity;
+            velocity>sl_input_max ? sl_input_max=velocity;
+            sl_input_max<sl_input_min ? sl_input_max=sl_input_min;
+            sl_input_note=note;
+            sl_input_channel_display=channel;
+        );
+        action = sl_action;
+        action==ACTION_PROCESS || action==ACTION_FILTER || action==ACTION_PREVIEW ? (
+            is_choke(note) && sl_choke==CHOKE_PASS ? action=ACTION_PASS;
+            is_choke(note) && sl_choke==CHOKE_ONE ? velocity=1;
+            is_choke(note) && sl_choke==CHOKE_ZERO ? velocity=0;
+            is_choke(note) && sl_choke==CHOKE_KILL ? action=ACTION_KILL;
+            velocity==0 && sl_zero==ZERO_PASS ? action=ACTION_PASS;
+            velocity==0 && sl_zero==ZERO_ONE ? velocity=1;
+            velocity==0 && sl_zero==ZERO_KILL ? action=ACTION_KILL;
+        );
+        type==NOTE_OFF && action!=ACTION_KILL ? action=ACTION_PASS;
+        action==ACTION_PASS ? (
+            midisend(offset,msg1,msg2,msg3);
+        );
+        action==ACTION_PROCESS || action==ACTION_FILTER || action==ACTION_PREVIEW ? (
+            sl_reset>0 ? velocity=sl_reset;
+            velocity+=sl_trim_input;
+            velocity=clampx(velocity);
+            sl_vel_dev_tend>0 ? (
+                velocity=deviate_velocity(velocity,note);
+                velocity=clampx(velocity);
+            );
+            sl_time_dev_tend>0 ? (
+                time_dev=deviate_timing();
+            ) : time_dev=0;
+            velocity=clamp_out(velocity);
+            velocity+=sl_trim_output;
+            velocity=clampx(velocity);
+            type==NOTE_ON ? (
+                sl_output=velocity;
+                velocity<sl_output_min ? sl_output_min=velocity;
+                velocity>sl_output_max ? sl_output_max=velocity;
+                sl_input_max<sl_input_min ? sl_input_max=sl_input_min;
+            );
+            sl_output_channel!=0 ? (
+                channel=sl_output_channel-1;
+            );
+            action==ACTION_PREVIEW ? (
+                velocity=msg3;
+                time_dev=0;
+            );
+            midisend(offset+time_dev+ms_to_samples(sl_time_shift),NOTE_ON+channel,note,velocity);
+        );
+    ) : (
+        pass=0;
+        sl_action!=ACTION_FILTER ? (
+            pass=1;
+        ) : (
+            !is_note(type) && sl_filter!=FILTER_NORMAL ? pass=1;
+        );
+        pass ? midisend(offset,msg1,msg2,msg3);
+    )
+);
