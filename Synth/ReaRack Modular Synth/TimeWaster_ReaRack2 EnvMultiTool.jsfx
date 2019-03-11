@@ -1,11 +1,11 @@
-version: 1.11
+version: 1.02
 desc:ReaRack2 - Envelope Multi-Tool
 noindex:   true
 author:    Malcolm Smith
            Copyright(C) 2018 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
            License: LGPL - http://www.gnu.org/licenses/lgpl.html
-
-changelog: Version 1.01 (1/09/2018) Fixed a bug causing stage Bezier curve to function incorrectly.
+changelog: Version 1.02 (9/03/2019) Fixed a bug preventing the envelope end value from being reached in some situations.
+           Version 1.01 (1/09/2018) Fixed a bug causing stage Bezier curve to function incorrectly.
            Version 1.00 (30/07/2018) Initial working release.
            Version 0.90 (13/07/2018) Beta release.
 
@@ -221,6 +221,85 @@ while(pt < points)
   pt[y_index+(stg_index-1)*points] = ((1-ptr)^2*p0y)+(2*ptr*(1-ptr)*p1y)+(ptr^2*p2y); //pty
   pt += 1;
   );
+);
+
+function bezier_calc(x_index,y_index,stg_index,points,p0x,p0y,p1x,p1y,p2x,p2y)
+(
+pt  = 0;
+while(pt <= points)
+  (
+  ptr = pt/(points-1);
+  pt[x_index+(stg_index-1)*points] = ((1-ptr)^2*p0x)+(2*ptr*(1-ptr)*p1x)+(ptr^2*p2x); //ptx
+  pt[y_index+(stg_index-1)*points] = ((1-ptr)^2*p0y)+(2*ptr*(1-ptr)*p1y)+(ptr^2*p2y); //pty
+  pt += 1;
+  );
+);
+
+function midi_out()
+(
+soutput >= 2 ?
+(
+  ccnval = y_out * 127.9921875; 
+  ccnvalmsb = floor(ccnval);
+  ccnvallsb = floor((ccnval-ccnvalmsb)*128);
+  chanout == -1 ?
+    (
+    n = 0;
+    loop(16,
+      pre_ccnvalmsb != ccnvalmsb ? midisend(count,$xB0+n,ccoutmsb,ccnvalmsb);
+      pre_ccnvallsb != ccnvallsb ? midisend(count,$xB0+n,ccoutlsb,ccnvallsb);
+      n += 1;
+      );
+    ):
+  pre_ccnvalmsb != ccnvalmsb ? midisend(count,$xB0+chanout,ccoutmsb,ccnvalmsb);
+  pre_ccnvallsb != ccnvallsb ? midisend(count,$xB0+chanout,ccoutlsb,ccnvallsb);
+  pre_ccnvalmsb = ccnvalmsb;
+  pre_ccnvallsb = ccnvallsb;
+):
+(
+x >= xstg[mstgstrt] && x <= xstg[mstgstrt]+xstg[mnotel]*xstg[mstgl] ?
+  (
+  pre_n_out != n_out ?
+    (
+    pre_n_off != pre_n_out ? // Send a note off for the previous note
+      (
+      chanout == -1 ?
+        (
+        n = 0;
+        loop(16,
+          midisend(count,$x80+n,pre_n_out);
+          n += 1;
+          );
+        ):
+        midisend(count,$x80+chanout,pre_n_out);
+        pre_n_off = pre_n_out;
+      );
+    chanout == -1 ?
+    (
+      n = 0;
+      loop(16,
+        midisend(count+1,$x90+n,n_out,xstg[mvel]);
+        n += 1;
+        );
+      ):
+      midisend(count+1,$x90+chanout,n_out,xstg[mvel]);
+      pre_n_out = n_out;;
+    );
+  );
+x > xstg[mstgstrt]+xstg[mnotel]*xstg[mstgl] && pre_n_off != pre_n_out ?
+  (
+  chanout == -1 ?
+    (
+    n = 0;
+    loop(16,
+      midisend(count,$x80+n,pre_n_out);
+      n += 1;
+      );
+    ):
+  midisend(count,$x80+chanout,pre_n_out);
+  pre_n_off = pre_n_out;
+  );
+);
 );
 
 update = 1;
@@ -912,69 +991,8 @@ while(n_out > 127)
 
 // Output MIDI..........................
 // CC Output
-soutput >= 2 ?
-(
-  ccnval = y_out * 127.9921875; 
-  ccnvalmsb = floor(ccnval);
-  ccnvallsb = floor((ccnval-ccnvalmsb)*128);
-  chanout == -1 ?
-    (
-    n = 0;
-    loop(16,
-      pre_ccnvalmsb != ccnvalmsb ? midisend(count,$xB0+n,ccoutmsb,ccnvalmsb);
-      pre_ccnvallsb != ccnvallsb ? midisend(count,$xB0+n,ccoutlsb,ccnvallsb);
-      n += 1;
-      );
-    ):
-  pre_ccnvalmsb != ccnvalmsb ? midisend(count,$xB0+chanout,ccoutmsb,ccnvalmsb);
-  pre_ccnvallsb != ccnvallsb ? midisend(count,$xB0+chanout,ccoutlsb,ccnvallsb);
-  pre_ccnvalmsb = ccnvalmsb;
-  pre_ccnvallsb = ccnvallsb;
-):
-(
-x >= xstg[mstgstrt] && x <= xstg[mstgstrt]+xstg[mnotel]*xstg[mstgl] ?
-  (
-  pre_n_out != n_out ?
-    (
-    pre_n_off != pre_n_out ? // Send a note off for the previous note
-      (
-      chanout == -1 ?
-        (
-        n = 0;
-        loop(16,
-          midisend(count,$x80+n,pre_n_out);
-          n += 1;
-          );
-        ):
-        midisend(count,$x80+chanout,pre_n_out);
-        pre_n_off = pre_n_out;
-      );
-    chanout == -1 ?
-    (
-      n = 0;
-      loop(16,
-        midisend(count+1,$x90+n,n_out,xstg[mvel]);
-        n += 1;
-        );
-      ):
-      midisend(count+1,$x90+chanout,n_out,xstg[mvel]);
-      pre_n_out = n_out;;
-    );
-  );
-x > xstg[mstgstrt]+xstg[mnotel]*xstg[mstgl] && pre_n_off != pre_n_out ?
-  (
-  chanout == -1 ?
-    (
-    n = 0;
-    loop(16,
-      midisend(count,$x80+n,pre_n_out);
-      n += 1;
-      );
-    ):
-  midisend(count,$x80+chanout,pre_n_out);
-  pre_n_off = pre_n_out;
-  );
-);
+midi_out();
+
 // Increment counter and x value.
 count += 1;
 x += 1;
@@ -1001,6 +1019,8 @@ x > e_end || xstg > stages?
   envon = 0;
   xstg = 1;
   x = 0;
+  y = y_out = stages[0]*velmod;
+  midi_out();
   sclass == 3 ? gmem[fxn+24] = sgroup + 1;
   sclass == 4 ? gmem[fxn+24] = 0;
   );
@@ -1021,6 +1041,8 @@ xstg > stages ?
   );
   xstg = 1;
   x = 0;
+  y = y_out = stages[0]*velmod;
+  midi_out();
   sclass == 3 ? gmem[fxn+24] = sgroup + 1;
   sclass == 4 ? gmem[fxn+24] = 0;
   );
@@ -1043,21 +1065,21 @@ gmem[fxn+24] = -1;
 );
 );
 scount += 1;
-//aaa = gmem[group+fxn+24];
+
 // GRAPHICS ////////////////////////////////////////
-@gfx 400 440
+@gfx 400 440 // Default 400 440
 
 // Scale factors for active stage definition area
-xscl = 200;
+xscl = 200; // Default 200
 xmin = gfx_w/2-xscl/2;
 xmax = xmin+xscl;
-yscl = 200;
-ymin = 90;
+yscl = 200; // Default 200
+ymin = 90; // Default 90
 ymax = ymin+yscl;
 pdx = (mouse_x-mouse_x_pre)/xscl;
 pdy = (mouse_y-mouse_y_pre)/yscl;
 // Scale factors for envelope definition area
-bscl = 40;
+bscl = 40; //Default 40
 bxscl = gfx_w > bscl*(stages+1)? bscl:(gfx_w-bscl)/stages;
 bxmin = bscl/4;
 bymin = 20;
@@ -1065,10 +1087,10 @@ bymax = bymin+bscl;
 bmid = bymin+bscl/2;
 // Scale factors for envelope output area
 exmin = 20;
-eymin = 330;
+eymin = 3300; // Default 330
 exscl = gfx_w-exmin*2;
 exdiv = floor(stages[mstgstrt+1]/exscl);
-eyscl = 100;
+eyscl = 100; //Default 100
 eymax = eymin + eyscl;
 
 // Find active stage
