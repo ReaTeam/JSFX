@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="fa83e7eeea30648ada0c0f901e5f6ece3214ace3">
+<index version="1" name="ReaTeam JSFX" commit="82b75d5d4f9f09aec9a4260c0718bbf0bd0cc651">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -396,6 +396,27 @@ here
     </reapack>
   </category>
   <category name="Misc">
+    <reapack name="brumbear_LiveBeatRepeater.jsfx" type="effect" desc="LiveBeatRepeater">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 LiveBeatRepeater\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 JSFX for live performance stutter effects. Zero latency. Synchronized to project tempo and time signature. Works well with linear songs as well as loop based material. Mashes up nicely your rhythms on drum tracks/percussion. Great toy on voices.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 What makes this fx different from the classical looper or "instant" samplers is the fact that it constantly samples the input and repeats what you just heard when you trigger the repeat mode. I.e. you do not have to trigger recording a loop blindly hoping it will be what you want, but you repeat what was just played.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Most fun if controlled via a MIDI/OSC hardware device (pad controller, touch screen device). E.g. Repeat On-Off to a pad, continuous Loop Length to a rotary encoder (relative mode) and stepped Loop Length to dedicated pads (one for each loop length).\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Separate loop audio routing allows to feed the repeating loop into any custom fx chain. Resonant HP/LP filters with variable cut off frequency, ping pong delays, distortion etc work particularly well with the stutter and allow spontaneous live (or automated) build ups.\par}
+}
+]]></description>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?t=211834">Forum thread</link>
+      </metadata>
+      <version name="1.02" author="brumbear" time="2019-03-16T19:24:19Z">
+        <changelog><![CDATA[Added Features
+- Continuous Loop Length Change Slider. Map this one to a rotary encoder in relative mode. When used the loop length transitions will happen immediately while repeat mode is on. When repeat mode switches back to off the plugin automatically goes back to stepped mode.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/82b75d5d4f9f09aec9a4260c0718bbf0bd0cc651/Misc/brumbear_LiveBeatRepeater.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="TiaR_PM_Resynth.jsfx" type="effect" desc="MIDI PM Resynth">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
