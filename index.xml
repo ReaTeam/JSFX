@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="9b9fc08ab330801d426e551649b3e8c2b739ca5b">
+<index version="1" name="ReaTeam JSFX" commit="fa83e7eeea30648ada0c0f901e5f6ece3214ace3">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -206,7 +206,7 @@ here
 
 {\pard \ql \f0 \sa180 \li0 \fi0 8 x Router/Filter/Transposer/Bank+Program\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Features hanging note prevention so holding a note or sustain pedal while changing output routing, note filter or transpose is unlikely to leave notes hanging when they are released.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Hold CTRL/Command to mousewheel shift by 12 - but only if the fx window is focused\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Hold CTRL/Command to mousewheel shift by 12 (only if the fx window is focused).\par}
 }
 ]]></description>
         <link rel="screenshot">https://stash.reaper.fm/35134/performer.PNG</link>
@@ -226,6 +226,14 @@ here
       <version name="0.2.1" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-02-27T04:56:49Z">
         <changelog><![CDATA[Fix for broken presets created with v1]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/fb029b2799bcafae5397b4342760cf4de366f5a1/MIDI/TJA_MIDI%20Performer.jsfx</source>
+      </version>
+      <version name="0.3" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-03-16T07:59:57Z">
+        <changelog><![CDATA[-Add more routing options
+-Add coloured Keyboard zone view
+-Show note names on note zone controls
+-Gray out unused rows
+-Fixed bug with input sliders]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/fa83e7eeea30648ada0c0f901e5f6ece3214ace3/MIDI/TJA_MIDI%20Performer.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
