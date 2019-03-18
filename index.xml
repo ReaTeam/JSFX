@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="82b75d5d4f9f09aec9a4260c0718bbf0bd0cc651">
+<index version="1" name="ReaTeam JSFX" commit="dfa967305ea712ecef76ef4030937eb46971d802">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -29,6 +29,27 @@
     </reapack>
   </category>
   <category name="MIDI">
+    <reapack name="bertbouwhuis_MIDI controller for S8 looper with fade in and out.jsfx" type="effect" desc="MIDI controller for S8 looper with fade in and out">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 To be used together with Reaper's Super8 looper plugin, one or more external foot pedals or foot switches and an optional external midi controller.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Features:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab arm looper slots\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab start and stop looper slots\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab start and stop recording into slots with a foot pedal\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab fade in and fade out of slot playback\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 See also https://youtu.be/ZFwtxXYLkZI\par}
+}
+]]></description>
+        <link rel="website">https://github.com/EarlyBert/S8-midi-controller</link>
+      </metadata>
+      <version name="1.0" author="Bert Bouwhuis" time="2019-03-18T16:31:00Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/dfa967305ea712ecef76ef4030937eb46971d802/MIDI/bertbouwhuis_MIDI%20controller%20for%20S8%20looper%20with%20fade%20in%20and%20out.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="cfillion_MIDI Note Length Control.jsfx" type="effect" desc="MIDI Note Length Control">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
@@ -234,6 +255,12 @@ here
 -Gray out unused rows
 -Fixed bug with input sliders]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/fa83e7eeea30648ada0c0f901e5f6ece3214ace3/MIDI/TJA_MIDI%20Performer.jsfx</source>
+      </version>
+      <version name="0.4" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-03-18T16:29:57Z">
+        <changelog><![CDATA[-Add Note/CC/Pitch Wheel filter for each row
+-Depreciate CC/PW row selectors
+-Bugfixes]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/79ff0c480863c84849d53814c0ca8745e5c01231/MIDI/TJA_MIDI%20Performer.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
