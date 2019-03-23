@@ -1,30 +1,37 @@
 desc: MIDI MPE to single channel
 author: Michael Schnell (mschnell@bschnell.de)
-version: 1.0
-changelog: Initial release
+version: 2.0
+changelog: rework, add smoothing
 about:
-  This plugin combines the multiple channels in an MPE Midi stream to a single channel to allow for feeding a single polyphonic or monophonic instrument.
+  ## Description
+      This plugin combines the multiple channels in an MPE Midi stream to a single channel to allow for feeding a single polyphonic or monophonic instrument.
   
-    All incoming midi messages are routed to a single channel.
+      All incoming midi messages are routed to a single channel.
     
-    Up to three three realtime control messages are modified on the fly. All other messages are not modified. Each of the three message types can be chosen to be either of a CC message with a defined number, Pitch Wheel, or Channel Pressure.
-    For each of the three, the incoming values are monitored and the current state is stored according to the input channel, i.e. for any keys simultaneously pressed on an MPE aware keyboard. 
-    In order to create a consistent value for the non-MPE-aware instrument to be played, appropriate modified messages for these control values are generated any time either such a control value change message is received or a Note-On or Note-Off message is received. 
-    This message will denote either the last received value ("latest", which in effect provides no change to that value), or a combination of the just received message and current values of all channels that currently hold a running sound, according to the previous Note-On and Note-Off messages. 
+      Up to three realtime control messages are modified on the fly. All other messages are not modified. Each of the three message types can be chosen to be either of a CC message with a defined number, Pitch Wheel, or Channel Pressure.
+      For each of the three, the incoming values are monitored and the current state is stored according to the input channel, i.e. for any keys simultaneously pressed on an MPE aware keyboard. 
+      In order to create a consistent value for the non-MPE-aware instrument to be played, appropriate modified messages for these control values are generated any time either such a control value change message is received or a Note-On or Note-Off message is received. 
+      This message will denote either the last received value ("latest", which in effect provides no change to that value), or a combination of the just received message and current values of all channels that currently hold a running sound, according to the previous Note-On and Note-Off messages. 
   
-    In "Polyphonic" mode, this combination will be computed as either of the minimum, the average, or the maximum. Hence the played polyphonic sound will be provided with more reasonable control values than just adhering to the latest value present on any of the MPE channels. 
+      In "Polyphonic" mode, this combination will be computed as either of the minimum, the average, the maximum or the sum. Hence the played polyphonic sound will be provided with more reasonable control values than just adhering to the latest value present on any of the MPE channels. 
   
-    In "Monophonic" mode, the three selected realtime control messages are never modified, but blocked while two or more channels provide a running sound. This allows for rather normal behavior of instruments that detect legato note transitions and trills. 
+      In "Monophonic" mode, the three selected realtime control messages are never modified, but blocked while two or more channels provide a running sound. This allows for rather normal behavior of instruments that detect legato note transitions and trills. 
+    
+      The "Smoothing" fader defines the time span a new value will need to be reached in case multiple keys are running. If the current value had been the result of at max one pressed key, the new value is sent out immediately. 
   
-  
-    A graphic shows the currently "running" channels and the saved values of the three managed realtime controls. The last line shows the last value sent out.
-    Moreover the first number in the last line denotes that one of the following states has been encountered since the last start: 1: a Note On has been detected on an already running channel. 2: a Note Off has been detected on a not running channel. 4: two running channel at the same time in "Monophonic" mode, resulting in blocking realtime messages. The second number shows the number of currently "running" channels.
 
+    ## Graph
+  
+      A graph shows the currently "running" channels and the saved values of the three managed realtime controls. The last burt one line shows the values to be sent out when smoothiong is finished. The last line shows the last value sent out, proceeded by a star as long as smoothing is running on that value.
+      Moreover the first number in the last but one line denotes that one of the following states has been encountered since the last start: 1: a Note On has been detected on an already running channel. 2: a Note Off has been detected on a not running channel. 4: two running channel at the same time in "Monophonic" mode, resulting in blocking realtime messages. The second number shows the number of currently "running" channels.
 
-tags: MIDI processing routing
 
 
 donation: United Nations Foundation http://www.unfoundation.org/
+
+
+  
+  
 
 
   
@@ -47,15 +54,32 @@ out_pin:none
 slider1:0<0,1,1{Polyphonic: compute controllers,Monophonic: support legato}>Mode
 slider2:1<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Output MIDI Channel
 slider3:128<0,129,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,Pitch Wheel, Channel Pressure}>Controller 1
-slider4:2<0,2,1{latest,minimum,average,maximum}>Controller 1 Mode
+slider4:2<0,3,1{latest,minimum,average,maximum,sum}>Controller 1 Mode
 slider5:129<0,129,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,Pitch Wheel, Channel Pressure}>Controller 2
-slider6:2<0,2,1{latest,minimum,average,maximum}>Controller 2 Mode
+slider6:2<0,3,1{latest,minimum,average,maximum,sum}>Controller 2 Mode
 slider7:074<0,129,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,Pitch Wheel, Channel Pressure}>Controller 3
-slider8:2<0,2,1{latest,minimum,average,maximum}>Controller 3 Mode
+slider8:2<0,3,1{latest,minimum,average,maximum,sum}>Controller 3 Mode
+slider9:50<0,100,1>Smoohing (msec)
 
 
 
 @init
+function sendstatus(m, cc_nr) local (message, msg2, msg3) (
+  cc_nr == 128 ? (
+    message = PITCH_BEND;
+    msg2 = m & 0x7F;
+    msg3 = m >> 7;
+   ) : cc_nr == 129 ? (
+    message = CHANNEL_PRESSURE;   
+    msg2 = m;
+    msg3 = 0;
+   ) : (
+    message = CC;   
+    msg2 = cc_nr;  
+    msg3 = m;
+  );
+  midisend(offset, message + output_channel, msg2, msg3);  
+);  
 
 //ext_midi_bus = 1;
 NOTE_ON         = 0x90;
@@ -70,6 +94,8 @@ contr2          = 2*16;                                                     // a
 contr3          = 3*16;                                                     // array for storing controller 3
 //msg_nr          = 0;                                                        // total message number. Do we need to consider overrun ? 
 
+
+
 @slider
 mode           = slider1;
 output_channel = slider2;
@@ -79,6 +105,13 @@ cc2            = slider5;
 cc2mode        = slider6;
 cc3            = slider7;
 cc3mode        = slider8;
+smooth         = slider9 ? 1000 / slider9 : -1;          
+
+mode ? (
+  cc1mode = 0;
+  cc2mode = 0;
+  cc3mode = 0;
+);
 
 memset(running,  0,       16); 
 memset(contr1,   MISSING, 16); 
@@ -87,12 +120,19 @@ memset(contr3,   MISSING, 16);
 y = 0;
 
 ____ss = 0;
-____cc1m = MISSING;
-____cc2m = MISSING;
-____cc3m = MISSING;
+cc1t  = MISSING;
+cc2t  = MISSING; 
+cc3t  = MISSING;
+cc1o  = MISSING;
+cc2o  = MISSING; 
+cc3o  = MISSING;
+cc1oo = MISSING;
+cc2oo = MISSING;
+cc3oo = MISSING;
+____smooth = 0;
 
 @block
-function avg(c, cur, mode, channel) local(i, j, a) (
+function calculate(c, cur, mode, channel, cc_nr) local(i, j, a) (
   mode == 0 ? (
     a = cur;
    ) : mode == 1 ? (                                      // Minimum
@@ -111,7 +151,7 @@ function avg(c, cur, mode, channel) local(i, j, a) (
     !j ? (
       a = cur;
     );      
-   ) : mode == 2 ? (                                      // Avarage
+   ) : mode == 2 ? (                                      // Average
     i = 0;
     j = 0;
     a = 0;
@@ -126,6 +166,7 @@ function avg(c, cur, mode, channel) local(i, j, a) (
     );   
     j ? (
       a /= j;
+      a = (a + 0.5) | 0;
      ) : (
       a = cur;
     );  
@@ -145,31 +186,45 @@ function avg(c, cur, mode, channel) local(i, j, a) (
     !j ? (
       a = cur;
     );      
+   ) : mode == 4 ? (                                      // add
+    i = 0;
+    j = 0;
+    a = 0;
+    loop(16,
+      running[i] | (i == channel) ? (
+        c[i] != MISSING ? (
+          j += 1;
+          a += c[i];
+        );  
+      );
+      i += 1;
+    );  
+    !j ? (
+      a = cur;
+     ) : (
+      cc_nr == 128 ? (
+        a -= 0x2000*j;
+        a > 0x3FFF ? (
+          a = 0x3FFF;
+         ) : ( 
+          a < -0x3FFF ? a = -0x3FFF;
+        ); 
+       ) : ( 
+        a > 127 ? a = 127;  
+      );  
+    ); 
    ) : (
     a = MISSING; 
   ); 
   a;
 );
 
-function sendstatus(m, cc_nr) local (message, msg2, msg3) (
-  cc == 128 ? (
-    message = PITCH_BEND;
-    msg2 = m & 0x7F;
-    msg3 = m >> 7;
-   ) : cc == 129 ? (
-    message = CHANNEL_PRESSURE;   
-    msg2 = m;
-    msg3 = 0;
-   ) : (
-    message = CC;   
-    msg2 = cc_nr;  
-    msg3 = m;
-  );
-  midisend(offset, message + output_channel, msg2, msg3);  
-);  
+smoothf = smooth / srate;
+current_offset = 0;
 
 while (midirecv(offset, msg1, msg2, msg3)) (
 //  msg_nr += 1;   
+  nocc = 1;
   f = 0;
   ____f = 0;
   input_channel = (msg1 & 0x0f);
@@ -187,9 +242,9 @@ while (midirecv(offset, msg1, msg2, msg3)) (
     running[input_channel] = 1;
    ) : yoff ? (
     !running[input_channel] ? (
-      ____ss |= 2;                               // Note OFF at a nnot running channel 
+      ____ss |= 2;                               // Note OFF at a not running channel 
     );    
-    running[input_channel] = 0;                  // presumung MPE does not generate overlapping notes in a single channel 
+    running[input_channel] = 0;                  // presuming MPE does not generate overlapping notes in a single channel 
   ); 
   yon || yoff ? (
     y = 0; 
@@ -200,130 +255,254 @@ while (midirecv(offset, msg1, msg2, msg3)) (
     );
     ____running = y;
     y ? (
-      m = avg(contr1, MISSING, cc1mode, MISSING);
+      m = calculate(contr1, MISSING, cc1mode, MISSING, cc1);
       m != MISSING ? (
         cc1m = m;
-        !mode ? ____cc1m = m;
+        !mode ? (
+          cc1o = m;
+          cc1m = m;
+        );  
       );
-      m = avg(contr2, MISSING, cc2mode, MISSING);
+      m = calculate(contr2, MISSING, cc2mode, MISSING, cc2);
       m != MISSING ? (
         cc2m = m;
-        !mode ? ____cc2m = m;
+        !mode ? (
+          cc2o = m;
+          cc2m = m;
+        );  
       );
-      m = avg(contr3, MISSING, cc3mode, MISSING);
+      m = calculate(contr3, MISSING, cc3mode, MISSING, cc3);
       m != MISSING ? (
-        cc2m = m;
-        !mode ? ____cc3m = m;
+        cc3m = m;        
+        !mode ? (
+          cc3o = m;
+          cc3m = m;
+        );  
       );
     ); 
    ) :  message == CC ? (
     msg2 == cc1 ? (
+      nocc = 0;
       contr1[input_channel] = msg3;
-      m = avg(contr1, msg3, cc1mode, input_channel);
-      !mode ? ____cc1m = m;
+      m = calculate(contr1, msg3, cc1mode, input_channel, cc1);
+      !mode ? (
+        cc1o = m;
+        cc1m = m;
+      );   
       f = 1;
       ____f = 1;
      ) : msg2 == cc2 ? (
+      nocc = 0;
       contr2[input_channel] = msg3;
-      m = avg(contr2, msg3, cc2mode, input_channel);
-      !mode ? ____cc2m = m;
+      m = calculate(contr2, msg3, cc2mode, input_channel, cc2);
+      !mode ? (
+        cc2o = m;
+        cc2m = m;
+      ); 
       f = 1;
       ____f = 2;
      ) : msg2 == cc3 ? (
+      nocc = 0;
       contr3[input_channel] = msg3;
-      m = avg(contr3, msg3, cc3mode, input_channel);
-      !mode ? ____cc3m = m;
+      m = calculate(contr3, msg3, cc3mode, input_channel, cc3);
+      !mode ? (
+        cc3o = m;
+        cc3m = m;
+      );  
       f = 1;
       ____f = 3;
     );
    ) : message == PITCH_BEND ? (
     cur = 0x80*msg3 + msg2;
     cc1 == 128 ? (
+      nocc = 0;
       contr1[input_channel] = cur;
-      m = avg(contr1, cur, cc1mode, input_channel);
-      !mode ? ____cc1m = m;
+      m = calculate(contr1, cur, cc1mode, input_channel, cc1);
+      !mode ? (
+        cc1o = m;
+        cc1m = m;
+      );  
       f = 2;
       ____f = 1;
      ) : cc2 == 128 ? (
+      nocc = 0;
       contr2[input_channel] = cur;
-      m = avg(contr2, cur, cc2mode, input_channel);
-      !mode ? ____cc2m = m;
+      m = calculate(contr2, cur, cc2mode, input_channel, cc2);
+      !mode ? (
+        cc2o = m;
+        cc2m = m;
+      );  
       f = 2;
       ____f = 2;
      ) : cc3 == 128 ? (
+      nocc = 0;
       contr3[input_channel] = cur;
-      m = avg(contr2, cur, cc3mode, input_channel);
-      !mode ? ____cc3m = m;
+      m = calculate(contr3, cur, cc3mode, input_channel, cc3);
+      !mode ? (
+        cc3o = m;
+        cc3m = m;
+      );  
       f = 2;
       ____f = 3;
     );
    ) : message == CHANNEL_PRESSURE ? (
     cc1 == 129 ? (
+      nocc = 0;
       contr1[input_channel] = msg2;
-      m = avg(contr1, msg2, cc1mode, input_channel);
-      !mode ? ____cc1m = m;
+      m = calculate(contr1, msg2, cc1mode, input_channel, cc1);
+      !mode ? (
+        cc1o = m;
+        cc1m = m;
+      );  
       f = 3;
       ____f = 1;
      ) : cc2 == 129 ? (
+      nocc = 0;
       contr2[input_channel] = msg2;
-      m = avg(contr2, msg2, cc2mode, input_channel);
-      !mode ? ____cc2m = m;
+      m = calculate(contr2, msg2, cc2mode, input_channel, cc2);
+      !mode ? (
+        cc2o = m;
+        cc2m = m;
+      );  
       f = 3;
       ____f = 2;
      ) : cc3 == 129 ? (
+      nocc = 0;
       contr3[input_channel] = msg2;
-      m = avg(contr3, msg2, cc3mode, input_channel);
-      !mode ? ____cc3m = m;
+      m = calculate(contr3, msg2, cc3mode, input_channel, cc3);
+      !mode ? (
+        cc3o = m;
+        cc3m = m;
+      );  
       f = 3;
       ____f = 3;
     );
   );
-  ! mode ? (                      // "Polyphonix"
-    f ? (                         // modified ? 
-      f == 1 ? (                  // CC
-        msg3 = m;
-       ) : f == 2 ? (             // Pitch Bend
-        msg2 = m & 0x7F;
-        msg3 = m >> 7;
-       ) : (                      // 3 : Channel Pressure
-        msg2 = m;
-      );  
+  ! mode ? (                      // "Polyphonic"
+
+    ((y <= 1) && !yoff) || (smooth <= 0) ? (        // value resulting from no more than one ky     or no smoothing
+      cc1m != MISSING ? (
+        cc1o = cc1m;
+        cc1t = cc1m;                                // for display
+        cc1d = 0;                                   // no smoothing necessary 
+        cc1v = cc1m;                                // next smoothing start value
+      );
+      cc2m != MISSING  ? (
+        cc2o = cc2m;
+        cc2t = cc2m;                                // for display
+        cc2d = 0;
+        cc2v = cc2m;
+      );
+      cc3m != MISSING  ? (
+        cc3o = cc3m;
+        cc3t = cc3m;                                // for display
+        cc3d = 0;
+        cc3v = cc3m;
+      );
+     ) : ( 
+      cc1m != MISSING ? (          
+        cc1t = cc1m;                                // target value
+        cc1d = (cc1t-cc1oo) * smoothf                // step per sample
+      );
+      cc2m != MISSING  ? (
+        cc2t = cc2m;
+        cc2d = (cc2t-cc2oo) * smoothf
+      );
+      cc3m != MISSING  ? (
+        cc3t = cc3m;
+        cc3d = (cc3t-cc3oo) * smoothf
+      );
     );  
-    cc1m != MISSING ? (
-      sendstatus(cc1m, cc1);
-    );
-    cc2m != MISSING  ? (
-      sendstatus(cc2m, cc2);
-    );
-    cc3m != MISSING  ? (
-      sendstatus(cc3m, cc3);
-    );
-    midisend(offset, message + output_channel, msg2, msg3);      
-   ) : (                          // "Monophonic"
+   
+
+
+   ) : (                                            // "Monophonic"
     z = 1; 
-    y > 1 ? (                     // two or more notes running
-      f ? (                       // one of the three selected controllers
+    y > 1 ? (                                       // two or more notes running
+      f ? (                                         // one of the three selected controllers
         z = 0;
-        ____ss |= 4;              // two running channels in "Monophonic" mode -> block appropriate messages
+        ____ss |= 4;                                // two running channels in "Monophonic" mode -> block appropriate messages
       );  
     );
     z ? (
-      midisend(offset, message + output_channel, msg2, msg3);      
+//      midisend(offset, message + output_channel, msg2, msg3);      
       ____f == 1 ? (
-        ____cc1m = m;
+        cc1o = m;
+        cc11 = m;
+        cc1oo= m;
        ) : ____f == 2 ? (
-        ____cc2m = m;
+        cc2o = m;
+        cc2t = m;
+        cc2oo= m;
        ) : ____f == 3 ? (
-        ____cc3m = m;
+        cc3o = m;
+        cc2t = m;
+        cc3oo = m;
       );  
     );  
   ); 
+  
+
+  nocc ? (
+    midisend(offset, message + output_channel, msg2, msg3);      
+  );
+);
+ 
+ 
+@sample 
+current_offset += 1;
+offset = current_offset;
+____smooth = 0;
+cc1d ? (                                            // do smoothing ?                     
+  ____smooth |= 1;
+  abs(cc1v - cc1t) > abs(cc1d) ? (                  // not last step 
+    cc1v += cc1d;                                   // step
+   ) : ( 
+    cc1v = cc1t;                                    // reached
+    cc1d = 0;                                       // stop
+  );
+  cc1o = (cc1v+0.5) | 0;                            // value to be sent
+);
+
+cc2d ? (                                            // do smoothing ?                     
+  ____smooth |= 2;
+  abs(cc2v - cc2t) > abs(cc2d) ? (                  // not last step 
+    cc2v += cc2d;                                   // step
+   ) : ( 
+    cc2v = cc2t;                                    // reached
+    cc2d = 0;                                       // stop
+  );
+  cc2o = (cc2v+0.5) | 0;                            // value to be sent
+);
+
+cc3d ? (                                            // do smoothing ?                     
+  ____smooth |= 4;
+  abs(cc3v - cc3t) > abs(cc3d) ? (                  // not last step 
+    cc3v += cc3d;                                   // step
+   ) : ( 
+    cc3v = cc3t;                                    // reached
+    cc3d = 0;                                       // stop
+  );
+  cc3o = (cc3v+0.5) | 0;                            // value to be sent
 );
 
 
+cc1oo != cc1o ? (
+  sendstatus(cc1o, cc1);
+  cc1oo = cc1o;
+);  
+cc2oo != cc2o ? (
+  sendstatus(cc2o, cc2);
+  cc2oo = cc2o;
+);  
+cc3oo != cc3o ? (
+  sendstatus(cc3o, cc3);
+  cc3oo = cc3o;
+);  
 
 
-@gfx 640 400
+
+@gfx 640 420
 function convert(val, nr) (
   val == MISSING ? (
     " ";
@@ -412,21 +591,46 @@ loop (16,
   #_t = sprintf(#, "%d", ____running);
   gfx_drawstr(#_t);
 
+
   gfx_x = 10 + 80 * 1;
-  #_t = convert(____cc1m, cc1);
+  #_t = convert(cc1t, cc1);
   gfx_drawstr(#_t);
   gfx_x = 10 + 80 * 2;
-  #_t = convert(____cc2m, cc2);
+  #_t = convert(cc2t, cc2);
   gfx_drawstr(#_t);
   gfx_x = 10 + 80 * 3;
-  #_t = convert(____cc3m, cc3);
+  #_t = convert(cc3t, cc3);
   gfx_drawstr(#_t);
-  
+
   gfx_x = 10 + 80 * 0;
   #_t = sprintf(#, "%d", ____ss);
   gfx_drawstr(#_t);
-/*
-  gfx_x = 10 + 80 * 5;
-  #_t = sprintf(#, "%2.2x", ____s);
+
+
+  gfx_y += 20;
+
+  #_t1 = ____smooth & 1 ? "*" : " ";
+  #_t2 = ____smooth & 2 ? "*" : " ";
+  #_t3 = ____smooth & 4 ? "*" : " ";
+  gfx_x = -3 + 80 * 1;
+  #_t = convert(cc1oo, cc1);
+  gfx_drawstr(#_t1);
+  gfx_x = 10 + 80 * 1;
   gfx_drawstr(#_t);
+  gfx_x = -3 + 80 * 2;
+  #_t = convert(cc2oo, cc2);
+  gfx_drawstr(#_t2);
+  gfx_x = 10 + 80 * 2;
+  gfx_drawstr(#_t);
+  gfx_x = -3 + 80 * 3;
+  #_t = convert(cc3oo, cc3);
+  gfx_drawstr(#_t3);
+  gfx_x = 10 + 80 * 3;
+  gfx_drawstr(#_t);
+  
+/*
+  gfx_x = 10 + 80 * 4;
+  gfx_drawstr(#_t1);
+  gfx_drawstr(#_t2);
+  gfx_drawstr(#_t3);
 */  
