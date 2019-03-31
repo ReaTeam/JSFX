@@ -14,21 +14,6 @@ about:
 
   Putting the minimum or maximum length sliders to 0 will disable that specific feature.
 
-desc: MIDI note length control
-author: cfillion
-version: 1.0.2
-changelog:
-  Decrease maximum range of beats sliders
-  Fix embarrassingly wrong calculation of beats to seconds
-about:
-  # MIDI Note Length Control
-
-  Set a minimum length in beats and/or a maximum length to incoming MIDI notes.
-  This plugin supports input channel selection and choosing a
-  range of notes on which to apply the processing on.
-
-  Putting the minimum or maximum length sliders to 0 will disable that specific feature.
-
 slider1:0<0,8>Minimum Length (Beats)
 slider2:0<0,8>Maximum Length (Beats)
 slider3:0<0,16,1{Any,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Input Channel
