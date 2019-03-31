@@ -1,7 +1,10 @@
-desc: MIDI Note Length Control
-version: 1.0.1
-changelog: Fix for subsequent notes being cut early.
+desc: MIDI note length control
 author: cfillion
+version: 1.0.2
+changelog:
+  Decrease maximum visible range of beats sliders to 8 beats (was 255)
+  Fix embarrassingly wrong calculation of beats to seconds
+  Improve behavior when the minimum beats slider > maximum beats and vice versa
 about:
   # MIDI Note Length Control
 
@@ -11,8 +14,23 @@ about:
 
   Putting the minimum or maximum length sliders to 0 will disable that specific feature.
 
-slider1:0<0,255>Minimum Length (Beats)
-slider2:0<0,255>Maximum Length (Beats)
+desc: MIDI note length control
+author: cfillion
+version: 1.0.2
+changelog:
+  Decrease maximum range of beats sliders
+  Fix embarrassingly wrong calculation of beats to seconds
+about:
+  # MIDI Note Length Control
+
+  Set a minimum length in beats and/or a maximum length to incoming MIDI notes.
+  This plugin supports input channel selection and choosing a
+  range of notes on which to apply the processing on.
+
+  Putting the minimum or maximum length sliders to 0 will disable that specific feature.
+
+slider1:0<0,8>Minimum Length (Beats)
+slider2:0<0,8>Maximum Length (Beats)
 slider3:0<0,16,1{Any,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Input Channel
 slider4:0<0,127>Lowest Key
 slider5:127<0,127>Highest Key
@@ -39,9 +57,11 @@ function releaseNote(note)
   offnbuf[note] = 0;
 );
 
-function beats2time(val)
+function beats2time(val) local(onesecQN, QN2beat)
 (
-  val * (tempo / ts_denom / 60);
+  onesecQN = 60 / tempo;
+  QN2beat  = ts_denom / 4;
+  val * (onesecQN / QN2beat);
 );
 
 function isOverMinimum(note)
@@ -58,8 +78,8 @@ function isOverMaximum(note)
 
 @slider
 slider1 && slider2 ? (
-  slider1 = min(slider1, slider2);
-  slider2 = max(slider1, slider2);
+  slider1 > slider2 ? slider2 = slider1;
+  slider2 < slider1 ? slider1 = slider2;
 );
 
 @block
