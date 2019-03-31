@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="c9ba84936f6b78857fcd2e4031798697c418bc7a">
+<index version="1" name="ReaTeam JSFX" commit="e64ae7ea6fad4806b5921083f52762271eeff5fd">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -50,7 +50,7 @@
         <source>https://github.com/ReaTeam/JSFX/raw/dfa967305ea712ecef76ef4030937eb46971d802/MIDI/bertbouwhuis_MIDI%20controller%20for%20S8%20looper%20with%20fade%20in%20and%20out.jsfx</source>
       </version>
     </reapack>
-    <reapack name="cfillion_MIDI Note Length Control.jsfx" type="effect" desc="MIDI Note Length Control">
+    <reapack name="cfillion_MIDI note length control.jsfx" type="effect" desc="MIDI note length control">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
@@ -62,12 +62,11 @@
 }
 ]]></description>
       </metadata>
-      <version name="1.0" author="cfillion" time="2017-04-21T19:20:48Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/b858e8ace51ac0be8d0cbb0d995ca8efa82175f4/MIDI/cfillion_MIDI%20Note%20Length%20Control.jsfx</source>
-      </version>
-      <version name="1.0.1" author="cfillion" time="2017-04-23T15:29:14Z">
-        <changelog><![CDATA[Fix for subsequent notes being cut early.]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/b95520767d8de9aa7ae8b79a63e443a30f9e0ac9/MIDI/cfillion_MIDI%20Note%20Length%20Control.jsfx</source>
+      <version name="1.0.2" author="cfillion" time="2019-03-31T05:31:20Z">
+        <changelog><![CDATA[Decrease maximum visible range of beats sliders to 8 beats (was 255)
+Fix embarrassingly wrong calculation of beats to seconds
+Improve behavior when the minimum beats slider > maximum beats and vice versa]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/e64ae7ea6fad4806b5921083f52762271eeff5fd/MIDI/cfillion_MIDI%20note%20length%20control.jsfx</source>
       </version>
     </reapack>
     <reapack name="cfillion_MIDI Taps Repeater.jsfx" type="effect" desc="MIDI Taps Repeater">
