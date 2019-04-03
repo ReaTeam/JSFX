@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="e64ae7ea6fad4806b5921083f52762271eeff5fd">
+<index version="1" name="ReaTeam JSFX" commit="e62e08f18c811ce0d1374b77ae16aa15bdf0130f">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -234,48 +234,30 @@ Moreover the first number in the last but one line denotes that one of the follo
         <source>https://github.com/ReaTeam/JSFX/raw/da50c468ef9e62d19973fd55abf8959c77248482/MIDI/TJA_MIDI%20note-banked%20CC%20multiplier.jsfx</source>
       </version>
     </reapack>
-    <reapack name="TJA_MIDI Performer.jsfx" type="effect" desc="MIDI Performer">
+    <reapack name="TJA_MIDI Performer2.jsfx" type="effect" desc="MIDI Performer2">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 8 x Router/Filter/Transposer/Bank+Program\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Features hanging note prevention so holding a note or sustain pedal while changing output routing, note filter or transpose is unlikely to leave notes hanging when they are released.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 MIDI Router / Filter / Transposer / CC generator / Bank+Program\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 MIDI multi-tool a bit like ReaControlMIDI. Features hanging note prevention so holding a note or sustain pedal while changing output routing, note filter or transpose is unlikely to leave notes hanging when they are released.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Hold CTRL/Command to mousewheel shift by 12 (only if the fx window is focused).\par}
 }
 ]]></description>
         <link rel="screenshot">https://stash.reaper.fm/35134/performer.PNG</link>
       </metadata>
-      <version name="0.1" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-01-15T11:32:09Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/9d3ea500df460ad7f495a5bbf9277701c9f63e7f/MIDI/TJA_MIDI%20Performer.jsfx</source>
-      </version>
-      <version name="0.1.1" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-02-13T23:01:23Z">
-        <changelog><![CDATA[Stops sending bank & program changes on project load]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/c2a1d58984d075ee30175dcde6b3db99a8c90d53/MIDI/TJA_MIDI%20Performer.jsfx</source>
-      </version>
-      <version name="0.2" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-02-26T14:36:13Z">
-        <changelog><![CDATA[-Scale with window resize
--Add bus + channel input for all rows - defaults to global buss + channel]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/34d9abe37f1d0187a5c0fba74ea17e3a416957de/MIDI/TJA_MIDI%20Performer.jsfx</source>
-      </version>
-      <version name="0.2.1" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-02-27T04:56:49Z">
-        <changelog><![CDATA[Fix for broken presets created with v1]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/fb029b2799bcafae5397b4342760cf4de366f5a1/MIDI/TJA_MIDI%20Performer.jsfx</source>
-      </version>
-      <version name="0.3" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-03-16T07:59:57Z">
-        <changelog><![CDATA[-Add more routing options
--Add coloured Keyboard zone view
--Show note names on note zone controls
--Gray out unused rows
--Fixed bug with input sliders]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/fa83e7eeea30648ada0c0f901e5f6ece3214ace3/MIDI/TJA_MIDI%20Performer.jsfx</source>
-      </version>
-      <version name="0.4" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-03-18T16:29:57Z">
-        <changelog><![CDATA[-Add Note/CC/Pitch Wheel filter for each row
--Depreciate CC/PW row selectors
--Bugfixes]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/79ff0c480863c84849d53814c0ca8745e5c01231/MIDI/TJA_MIDI%20Performer.jsfx</source>
+      <version name="0.5" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-04-03T01:28:37Z">
+        <changelog><![CDATA[- Renamed to MIDI Performer2 because presets will not be compatible - too many changes under the hood
+ - Variable no. of rows - up to 32 rows
+ - Rows can be always enabled (∀)
+ - Program Changes can be sent on preset load and Row # change (edit @init to enable PC by default & on project load)
+ - Add output monitor
+ - Generate 6 CCs per row (edit @init to change which CCs)
+ - Reshuffle columns (out is now last)
+ - Fixed Touchpad value scrolling
+ - Automation: Sliders update to top 4 selected rows]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/e62e08f18c811ce0d1374b77ae16aa15bdf0130f/MIDI/TJA_MIDI%20Performer2.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
