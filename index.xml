@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="e62e08f18c811ce0d1374b77ae16aa15bdf0130f">
+<index version="1" name="ReaTeam JSFX" commit="7af3b1bc4397b60fc013aaf416baffc6eba62f31">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -258,6 +258,10 @@ Moreover the first number in the last but one line denotes that one of the follo
  - Fixed Touchpad value scrolling
  - Automation: Sliders update to top 4 selected rows]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/e62e08f18c811ce0d1374b77ae16aa15bdf0130f/MIDI/TJA_MIDI%20Performer2.jsfx</source>
+      </version>
+      <version name="0.5.1" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-04-03T17:41:44Z">
+        <changelog><![CDATA[Range all sliders from 0 to gain compatibility with ReaLearn relative mode (Transpose, Out Channel and Max Note sliders now work)]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/7af3b1bc4397b60fc013aaf416baffc6eba62f31/MIDI/TJA_MIDI%20Performer2.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
