@@ -1,20 +1,7 @@
 desc: MIDI Performer2
 author: Kevin Morrison (ThrashJazzAssassin)
 version: 0.5.1
-changelog:
-  v0.5.1
-   - Range all sliders from 0 to gain compatibility with ReaLearn relative mode (Transpose, Out Channel and Max Note sliders now work)
-
-  v0.5
-  - Renamed to MIDI Performer2 because presets will not be compatible - too many changes under the hood
-   - Variable no. of rows - up to 32 rows
-   - Rows can be always enabled (∀)
-   - Program Changes can be sent on preset load and Row # change (edit @init to enable PC by default & on project load)
-   - Add output monitor
-   - Generate 6 CCs per row (edit @init to change which CCs)
-   - Reshuffle columns (out is now last)
-   - Fixed Touchpad value scrolling
-   - Automation: Sliders update to top 4 selected rows
+changelog: Range all sliders from 0 to gain compatibility with ReaLearn relative mode (Transpose, Out Channel and Max Note sliders now work)
 screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
   MIDI Router / Filter / Transposer / CC generator / Bank+Program
