@@ -1,7 +1,11 @@
 desc: MIDI Performer2
 author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.5
+version: 0.5.1
 changelog:
+  v0.5.1
+   - Range all sliders from 0 to gain compatibility with ReaLearn relative mode (Transpose, Out Channel and Max Note sliders now work)
+
+  v0.5
   - Renamed to MIDI Performer2 because presets will not be compatible - too many changes under the hood
    - Variable no. of rows - up to 32 rows
    - Rows can be always enabled (∀)
@@ -30,10 +34,10 @@ slider7:  PCresend=0<0,  1, 1>                                             -PCre
 slider8:   0<   0,  17, 1{^,  1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}> -1-In Bus
 slider9:   0<   0,  17, 1{^,  1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}> -1-In Channel
 slider10:  1<   0,  16, 1{OFF,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}> -1-Output Bus
-slider11:  1<   1,  16, 1> -1-Ouput Channel
+slider11:  1<   0,  16, 1> -1-Ouput Channel
 slider12:  0<   0, 127, 1> -1-Minimum Note
-slider13:127<   1, 127, 1> -1-Maximum Note
-slider14:  0< -48,  48, 1> -1-Transpose
+slider13:127<   0, 127, 1> -1-Maximum Note
+slider14: 48<   0,  96, 1{-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48}> -1-Transpose
 slider15:  0<   0, 127, 1> -1-Bank MSB
 slider16:  0<   0, 127, 1> -1-Bank LSB
 slider17:  0<   0, 127, 1> -1-Program
@@ -41,10 +45,10 @@ slider17:  0<   0, 127, 1> -1-Program
 slider18:  0<   0,  16, 1{^,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>   -2-In Bus
 slider19:  0<   0,  16, 1{^,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>   -2-In Channel
 slider20:  1<   0,  16, 1{OFF,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}> -2-Output Bus
-slider21:  1<   1,  16, 1> -2-Ouput Channel
+slider21:  1<   0,  16, 1> -2-Ouput Channel
 slider22:  0<   0, 127, 1> -2-Minimum Note
-slider23:127<   1, 127, 1> -2-Maximum Note
-slider24:  0< -48,  48, 1> -2-Transpose
+slider23:127<   0, 127, 1> -2-Maximum Note
+slider24: 48<   0,  96, 1{-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48}> -2-Transpose
 slider25:  0<   0, 127, 1> -2-Bank MSB
 slider26:  0<   0, 127, 1> -2-Bank LSB
 slider27:  0<   0, 127, 1> -2-Program
@@ -52,10 +56,10 @@ slider27:  0<   0, 127, 1> -2-Program
 slider28:  0<   0,  16, 1{^,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>   -3-In Bus
 slider29:  0<   0,  16, 1{^,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>   -3-In Channel
 slider30:  0<   0,  16, 1{OFF,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}> -3-Output Bus
-slider31:  1<   1,  16, 1> -3-Ouput Channel
+slider31:  1<   0,  16, 1> -3-Ouput Channel
 slider32:  0<   0, 127, 1> -3-Minimum Note
 slider33:127<   0, 127, 1> -3-Maximum Note
-slider34:  0< -48,  48, 1> -3-Transpose
+slider34: 48<   0,  96, 1{-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48}> -3-Transpose
 slider35:  0<   0, 127, 1> -3-Bank MSB
 slider36:  0<   0, 127, 1> -3-Bank LSB
 slider37:  0<   0, 127, 1> -3-Program
@@ -63,10 +67,10 @@ slider37:  0<   0, 127, 1> -3-Program
 slider38:  0<   0,  16, 1{^,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>   -4-In Bus
 slider39:  0<   0,  16, 1{^,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>   -4-In Channel
 slider40:  0<   0,  16, 1{OFF,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}> -4-Output Bus
-slider41:  1<   1,  16, 1> -4-Ouput Channel
+slider41:  1<   0,  16, 1> -4-Ouput Channel
 slider42:  0<   0, 127, 1> -4-Minimum Note
 slider43:127<   0, 127, 1> -4-Maximum Note
-slider44:  0< -48,  48, 1> -4-Transpose
+slider44: 48<   0,  96, 1{-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48}> -4-Transpose
 slider45:  0<   0, 127, 1> -4-Bank MSB
 slider46:  0<   0, 127, 1> -4-Bank LSB
 slider47:  0<   0, 127, 1> -4-Program
@@ -198,7 +202,7 @@ memset(outBus+1,   0, noOfOuts-1);
 memset(outChan ,   0, noOfOuts);
 memset(minNote ,   0, noOfOuts);
 memset(maxNote , 127, noOfOuts);
-memset(trans   ,   0, noOfOuts);
+memset(trans   ,  48, noOfOuts);
 memset(bankMSB ,   0, noOfOuts);
 memset(bankLSB ,   0, noOfOuts);
 memset(prog    ,   0, noOfOuts);
@@ -273,7 +277,7 @@ while (midirecv(offset,msg1,msg2,msg3)) (
             noteInfo[j+offsetNoteOutBus +msg2] = outBus [i]-1;  //Store note out Bus
             noteInfo[j+offsetNoteOutChan+msg2] = outChan[i]-1;  //Store note out Chan
             noteInfo[j+offsetTrans      +msg2] = trans  [i];    //Store note Trans
-            note[i] = msg2 + trans[i];                          //Transpose note
+            note[i] = msg2 + trans[i]-48;                       //Transpose note
             note[i]<0?note[i]=0:note[i]>127?note[i]=127;        //Constrain note
             outputMon[i]=0.6;
             midisend(offset, noteStatus + outChan[i]-1, note[i], msg3);
@@ -282,7 +286,7 @@ while (midirecv(offset,msg1,msg2,msg3)) (
         ):isNoteOff() ? (
           noteInfo[j+msg2]>0 ? (                                 //Has note-on been stored?
             midi_bus = noteInfo[j + offsetNoteOutBus    + msg2]; //Restore note bus
-            note[i]  = noteInfo[j + offsetTrans + msg2] + msg2 ; //Restore note transpose
+            note[i]  = noteInfo[j + offsetTrans + msg2]-48 + msg2 ; //Restore note transpose
             note[i]<0?note[i]=0:note[i]>127?note[i]=127;         //Constrain note
             noteInfo[j + msg2] -= 1;                             //remove record of note-on
             midisend(offset,noteStatus+noteInfo[j+offsetNoteOutChan+msg2],note[i],msg3);
@@ -627,7 +631,7 @@ g=0; loop(dispOuts,
     w = gfx_texth*2.4; xgap = gfx_texth*3;
     minNote[g] = numSlide(  "Min",   "0",  "1", minNote[g], x, y, w+4, h,   0, 127 ,0, "note"); x+= xgap;
     maxNote[g] = numSlide(  "Max",   "0",  "1", maxNote[g], x, y, w+4, h,   0, 127 ,0, "note"); x+= xgap;
-      trans[g] = numSlide("Trans",   "0",  "1",   trans[g], x, y, w  , h, -48,  48 ,0,  "num"); x+= xgap + xgaplus;
+      trans[g] = numSlide("Trans",   "-48",  "-47",   trans[g], x, y, w  , h, 0,  96 ,-48,  "num"); x+= xgap + xgaplus;
      
     //Program Changes
     PCenable ? (
