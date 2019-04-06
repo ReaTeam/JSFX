@@ -1,4 +1,4 @@
-version: 2.03
+version: 2.04
 desc: ReaRack2 - Amplifier
 noindex: true
 author:    Malcolm Smith
@@ -8,7 +8,8 @@ license:   LGPL - http://www.gnu.org/licenses/lgpl.html
 
 about:     Amplifier module for the ReaRack2 modular JSFX synth system.
 
-changelog: Version 2.03 (24/07/2018) Improved passing of data from @block to @sample for smoother volume curves.
+changelog: Version 2.04 (07/04/2019) Bug fixes for previous release.
+           Version 2.03 (07/03/2019) Improved passing of data from @block to @sample for smoother volume curves.
            Version 2.02 (24/07/2018) Added - get attack rate from Envelope Multi-Tool.
            Version 2.0.1 (10/02/2018) Improved accuracy of input CC decoding.
            Version 2.0.0 (10/12/2017) Initial version 2 release.
@@ -33,7 +34,7 @@ buffcount = 0;
 slidermove = 1;
 
 @block
-
+scount = 0;
 sclass == 2 ? slidermove  = gmem[group+fxn+5];
 
 slidermove == 1 ?
@@ -68,10 +69,12 @@ outlevelatt = 2^(((soutlevelatt-1)*60)/6);
 slidermove = 0;
 ); // end if slidermove
 
-getattr > 0 && getattr >= 16 ? sattr = gmem[(getattr-1)*1000+160+34];
+getattr > 0 && getattr <= 16 ? sattr = gmem[(getattr-1)*1000+160+34];
 getattr > 16 ? sattr = gmem[(getattr-17)*1000+350+17]*1000;
 
 bufflen = max(1,floor((sattr/1000)*srate));
+
+modccmsb   > -1 ? memset(bufflen,-2,samplesblock);
   
 while (midirecv(offset, msg1, msg2, msg3))
 (  
@@ -84,7 +87,7 @@ while (midirecv(offset, msg1, msg2, msg3))
     msg2 == modccmsb ? modvalmsb = msg3;
     msg2 == modcclsb ? modvallsb = msg3;
     modval = (modvalmsb/127.9921875)+(modvallsb/16384);
-    modval < 0.001 ? outlevel = 0:
+    modval < 0.0001 ? 0[bufflen+offset] = 0:
     0[bufflen+offset] = 2^(((modval-1)*60)/6);
   );
   // Pass thru
@@ -93,7 +96,8 @@ while (midirecv(offset, msg1, msg2, msg3))
 
  
 @sample
-0[bufflen+scount] != outlevel ? outlevel = 0[bufflen+scount];
+0[bufflen+scount] >= 0 ? outlevel = 0[bufflen+scount];
+//outlevel = 0[bufflen+scount];
 
 midor == 0 ?
 (
@@ -141,6 +145,7 @@ outlevelavg > 0 ? disto = 4*max(disto0,disto1): disto = 0;
 spl0 = spl0*outlevelavg*outlevelatt;
 spl1 = spl1*outlevelavg*outlevelatt;
 
+scount += 1;
 
 @gfx 400 40
 
