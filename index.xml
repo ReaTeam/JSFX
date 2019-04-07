@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="932d030c9067964a9b9331e7f83e914355f98a15">
+<index version="1" name="ReaTeam JSFX" commit="2b624a9c3c1d9e899e351623576f88ad99063ecf">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -194,11 +194,13 @@ All incoming midi messages are routed to a single channel.\line
 Up to three realtime control messages are modified on the fly. All other messages are not modified. Each of the three message types can be chosen to be either of a CC message with a defined number, Pitch Wheel, or Channel Pressure.\line
 For each of the three, the incoming values are monitored and the current state is stored according to the input channel, i.e. for any keys simultaneously pressed on an MPE aware keyboard. \line
 In order to create a consistent value for the non-MPE-aware instrument to be played, appropriate modified messages for these control values are generated any time either such a control value change message is received or a Note-On or Note-Off message is received. \line
-This message will denote either the last received value ("latest", which in effect provides no change to that value), or a combination of the just received message and current values of all channels that currently hold a running sound, according to the previous Note-On and Note-Off messages. \line
+This message will denote either the last received value ("current", which in effect provides no change to that value), or a combination of the just received message and current values of all channels that currently hold a running sound, according to the previous Note-On and Note-Off messages. \line
 \line
-In "Polyphonic" mode, this combination will be computed as either of the minimum, the average, the maximum or the sum. Hence the played polyphonic sound will be provided with more reasonable control values than just adhering to the latest value present on any of the MPE channels. \line
+In "Polyphonic" mode, this combination will be computed as either of the minimum, the average, the maximum, the sum or the value of the latest key pressed. Hence the played polyphonic sound will be provided with more reasonable control values than just adhering to the latest value present on any of the MPE channels. \line
 \line
 In "Monophonic" mode, the three selected realtime control messages are never modified, but blocked while two or more channels provide a running sound. This allows for rather normal behavior of instruments that detect legato note transitions and trills. \line
+\line
+Optionally the modes can be set to handle all channels equally or to use channel 1 as a global channel. In global mode, note on/off events on channel 1 are ignored and blocked, and all other events are passed thiought to the otput channel. \line
 \line
 The "Smoothing" fader defines the time span a new value will need to be reached in case multiple keys are running. If the current value had been the result of at max one pressed key, the new value is sent out immediately. \par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Graph\par}
@@ -214,6 +216,10 @@ Moreover the first number in the last but one line denotes that one of the follo
       <version name="2.0" author="Michael Schnell (mschnell@bschnell.de)" time="2019-03-23T00:23:43Z">
         <changelog><![CDATA[rework, add smoothing]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/c9ba84936f6b78857fcd2e4031798697c418bc7a/MIDI/mschnell_MIDI%20MPE%20to%20single%20channel.jsfx</source>
+      </version>
+      <version name="2.1" author="Michael Schnell (mschnell@bschnell.de)" time="2019-04-07T09:49:20Z">
+        <changelog><![CDATA[improved handling of Midi offset, "latest key" mode, bugfixes]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/2b624a9c3c1d9e899e351623576f88ad99063ecf/MIDI/mschnell_MIDI%20MPE%20to%20single%20channel.jsfx</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI note-banked CC multiplier.jsfx" type="effect" desc="MIDI note-banked CC multiplier">
