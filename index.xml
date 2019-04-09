@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f14cf7c0a33c50bd40c7645c5ac5d0b7c66bf53a">
+<index version="1" name="ReaTeam JSFX" commit="0b93282c24df9e45aeba1f43b308c6cf7af7c647">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -220,6 +220,10 @@ Moreover the first number in the last but one line denotes that one of the follo
       <version name="2.1" author="Michael Schnell (mschnell@bschnell.de)" time="2019-04-07T09:49:20Z">
         <changelog><![CDATA[improved handling of Midi offset, "latest key" mode, bugfixes]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/2b624a9c3c1d9e899e351623576f88ad99063ecf/MIDI/mschnell_MIDI%20MPE%20to%20single%20channel.jsfx</source>
+      </version>
+      <version name="2.2" author="Michael Schnell (mschnell@bschnell.de)" time="2019-04-09T23:05:29Z">
+        <changelog><![CDATA[bugfixes, improved Display]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/0b93282c24df9e45aeba1f43b308c6cf7af7c647/MIDI/mschnell_MIDI%20MPE%20to%20single%20channel.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI PB x X.jsfx" type="effect" desc="MIDI Pitch Bend Factor">
