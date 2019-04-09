@@ -1,36 +1,31 @@
 desc: MIDI MPE to single channel
 author: Michael Schnell (mschnell@bschnell.de)
-version: 2.1
-changelog: improved handling of Midi offset, "latest key" mode, bugfixes
+version: 2.2
+changelog: bugfixes, improved Display
 about:
   ## Description
       This plugin combines the multiple channels in an MPE Midi stream to a single channel to allow for feeding a single polyphonic or monophonic instrument.
-  
+
       All incoming midi messages are routed to a single channel.
-    
+
       Up to three realtime control messages are modified on the fly. All other messages are not modified. Each of the three message types can be chosen to be either of a CC message with a defined number, Pitch Wheel, or Channel Pressure.
       For each of the three, the incoming values are monitored and the current state is stored according to the input channel, i.e. for any keys simultaneously pressed on an MPE aware keyboard. 
       In order to create a consistent value for the non-MPE-aware instrument to be played, appropriate modified messages for these control values are generated any time either such a control value change message is received or a Note-On or Note-Off message is received. 
       This message will denote either the last received value ("current", which in effect provides no change to that value), or a combination of the just received message and current values of all channels that currently hold a running sound, according to the previous Note-On and Note-Off messages. 
-  
+
       In "Polyphonic" mode, this combination will be computed as either of the minimum, the average, the maximum, the sum or the value of the latest key pressed. Hence the played polyphonic sound will be provided with more reasonable control values than just adhering to the latest value present on any of the MPE channels. 
-  
+
       In "Monophonic" mode, the three selected realtime control messages are never modified, but blocked while two or more channels provide a running sound. This allows for rather normal behavior of instruments that detect legato note transitions and trills. 
-    
+
       Optionally the modes can be set to handle all channels equally or to use channel 1 as a global channel. In global mode, note on/off events on channel 1 are ignored and blocked, and all other events are passed thiought to the otput channel. 
-    
+
       The "Smoothing" fader defines the time span a new value will need to be reached in case multiple keys are running. If the current value had been the result of at max one pressed key, the new value is sent out immediately. 
-  
+
 
     ## Graph
-  
+
       A graph shows the currently "running" channels and the saved values of the three managed realtime controls. The last burt one line shows the values to be sent out when smoothiong is finished. The last line shows the last value sent out, proceeded by a star as long as smoothing is running on that value.
       Moreover the first number in the last but one line denotes that one of the following states has been encountered since the last start: 1: a Note On has been detected on an already running channel. 2: a Note Off has been detected on a not running channel. 4: two running channel at the same time in "Monophonic" mode, resulting in blocking realtime messages. The second number shows the number of currently "running" channels.
-
-
-
-
-  
   
 // NO WARRANTY IS GRANTED. THIS PLUG-IN IS PROVIDED ON AN "AS IS" BASIS, WITHOUT
 // WARRANTY OF ANY KIND. NO LIABILITY IS GRANTED, INCLUDING, BUT NOT LIMITED TO,
@@ -262,15 +257,16 @@ while (midirecv(offset, msg1, msg2, msg3)) (
     i = 0;
     loop (16,
       r = running[i];
-      y += cr;
-      r ? cr = c[i];
+      y += r;
+      r ? cr = i;
       i += 1;
     );
     ____running = y;
     yoff ? (
       y > 1 ? (
         latest = latest_1;
-       ) : (                                    // ?? berre ways ? 
+       ) : (           
+        latest_1 = latest;                         // ?? better ways ? 
         latest = cr;
       );
     );
@@ -635,7 +631,7 @@ loop (16,
   _n11 = (____1 >>  7) & 0x7F;
   _n21 = (____2 >>  7) & 0x7F;
 */  
-  gfx_y = 30 + 20 * (__i+1);
+  gfx_y = 30 + 20 * (__i);
 /*
   gfx_x = 10 + 80 * 0;
   #_t = sprintf(#, "%2.2x", _n0);
@@ -656,16 +652,22 @@ loop (16,
   #_t = convert(cc3t, cc3);
   gfx_drawstr(#_t);
 
-  gfx_x = 10 + 80 * 0;
-  #_t = sprintf(#, "%d", ____ss);
-  gfx_drawstr(#_t);
-
-
+  ____ss ? (
+    gfx_r=1; gfx_g=gfx_b=0;
+    gfx_x = 10 + 80 * 0;
+    #_t = sprintf(#, "%d", ____ss);
+    gfx_drawstr(#_t);
+    gfx_r=gfx_g=gfx_b=1;
+  );  
+ 
+ 
   gfx_y += 20;
   gfx_x = 10 + 40 * 1;
 
-  #_t = sprintf(#, "%d", latest);
-  gfx_drawstr(#_t);
+  ____running  ? ( 
+    #_t = sprintf(#, "%d", latest+1);
+    gfx_drawstr(#_t);
+  );  
 
   #_t1 = ____smooth & 1 ? "*" : " ";
   #_t2 = ____smooth & 2 ? "*" : " ";
