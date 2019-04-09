@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="4fbf8c85f742b0a754b8e9c4de9299b1bf9fc741">
+<index version="1" name="ReaTeam JSFX" commit="f14cf7c0a33c50bd40c7645c5ac5d0b7c66bf53a">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -220,6 +220,25 @@ Moreover the first number in the last but one line denotes that one of the follo
       <version name="2.1" author="Michael Schnell (mschnell@bschnell.de)" time="2019-04-07T09:49:20Z">
         <changelog><![CDATA[improved handling of Midi offset, "latest key" mode, bugfixes]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/2b624a9c3c1d9e899e351623576f88ad99063ecf/MIDI/mschnell_MIDI%20MPE%20to%20single%20channel.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_MIDI PB x X.jsfx" type="effect" desc="MIDI Pitch Bend Factor">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \f1 The Midi Pitch Bend messages in the selected Midi channel are multiplied by the factor.\line
+The result is limited to the maximum possible Pitch Bend range of +/- 8191.\line
+The "Factor" slider can be moved in steps of one between 1 and 16, but of course you can type in any value, which even can be lower than one or negative.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Purpose\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \f1 A major usage case of "MIDI Pitch Bend Factor" is adapting the "Glide" function of a fretless keyboard such as a Seaboard Rise to a synth plugin.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2019-04-09T22:51:18Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/f14cf7c0a33c50bd40c7645c5ac5d0b7c66bf53a/MIDI/mschnell_MIDI%20PB%20x%20X.jsfx</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI note-banked CC multiplier.jsfx" type="effect" desc="MIDI note-banked CC multiplier">
