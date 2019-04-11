@@ -1,10 +1,7 @@
 desc: MIDI note length control
 author: cfillion
-version: 1.0.2
-changelog:
-  Decrease maximum visible range of beats sliders to 8 beats (was 255)
-  Fix embarrassingly wrong calculation of beats to seconds
-  Improve behavior when the minimum beats slider > maximum beats and vice versa
+version: 1.0.3
+changelog: Fix handling of notes active on more than one channel simultaneously
 about:
   # MIDI Note Length Control
 
@@ -21,25 +18,26 @@ slider4:0<0,127>Lowest Key
 slider5:127<0,127>Highest Key
 
 @init
-BUFSIZE = 128;
+BUFSIZE = 16 * 128;
 
 notebuf = 0;
 memset(notebuf, 0, BUFSIZE);
 
-chanbuf = notebuf + BUFSIZE;
-memset(chanbuf, 0, BUFSIZE);
-
-offnbuf = chanbuf + BUFSIZE;
+offnbuf = notebuf + BUFSIZE;
 memset(offnbuf, 0, BUFSIZE);
 
 pos = 0;
 
-function releaseNote(note)
+function indexOf(chan, note) (
+  (128 * chan) + note
+);
+
+function releaseNote(index) local(chan)
 (
-  midisend(offset, $x90 + chanbuf[note], note, 0);
-  notebuf[note] = 0;
-  chanbuf[note] = 0;
-  offnbuf[note] = 0;
+  chan = floor(index / 128);
+  midisend(offset, $x90 + chan, note, 0);
+  notebuf[index] = 0;
+  offnbuf[index] = 0;
 );
 
 function beats2time(val) local(onesecQN, QN2beat)
@@ -49,16 +47,16 @@ function beats2time(val) local(onesecQN, QN2beat)
   val * (onesecQN / QN2beat);
 );
 
-function isOverMinimum(note)
+function isOverMinimum(index)
 (
-  slider1 && notebuf[note] && offnbuf[note] &&
-    pos >= notebuf[note] + beats2time(slider1);
+  slider1 && notebuf[index] && offnbuf[index] &&
+    pos >= notebuf[index] + beats2time(slider1);
 );
 
-function isOverMaximum(note)
+function isOverMaximum(index)
 (
-  slider2 && notebuf[note] &&
-    pos >= notebuf[note] + beats2time(slider2);
+  slider2 && notebuf[index] &&
+    pos >= notebuf[index] + beats2time(slider2);
 );
 
 @slider
@@ -85,16 +83,16 @@ while(midirecv(offset, msg, note, vel)) (
     note >= slider4 && note <= slider5;
 
   type == $x90 && capture ? ( // note message
+    index = indexOf(chan, note);
     vel > 0 ? (
       // note on
-      notebuf[note] ? releaseNote(note);
-      notebuf[note] = pos;
-      chanbuf[note] = chan;
-    ) : slider1 && notebuf[note] ? (
+      notebuf[index] ? releaseNote(index);
+      notebuf[index] = pos;
+    ) : slider1 && notebuf[index] ? (
       // note off
       passthrough = 0;
-      offnbuf[note] = 1;
-      isOverMinimum(note) ? releaseNote(note);
+      offnbuf[index] = 1;
+      isOverMinimum(index) ? releaseNote(index);
     );
   );
 
