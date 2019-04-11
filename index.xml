@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="0b93282c24df9e45aeba1f43b308c6cf7af7c647">
+<index version="1" name="ReaTeam JSFX" commit="ca7c02c4a274b0b15d2aa972c8e747bad69cfbe1">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -68,6 +68,10 @@ Fix embarrassingly wrong calculation of beats to seconds
 Improve behavior when the minimum beats slider > maximum beats and vice versa]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/e64ae7ea6fad4806b5921083f52762271eeff5fd/MIDI/cfillion_MIDI%20note%20length%20control.jsfx</source>
       </version>
+      <version name="1.0.3" author="cfillion" time="2019-04-11T23:30:24Z">
+        <changelog><![CDATA[Fix handling of notes active on more than one channel simultaneously]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/61b62b58ce6f666baf8dcfd93c85d0f2730c37a4/MIDI/cfillion_MIDI%20note%20length%20control.jsfx</source>
+      </version>
     </reapack>
     <reapack name="cfillion_MIDI Taps Repeater.jsfx" type="effect" desc="MIDI Taps Repeater">
       <metadata>
@@ -113,6 +117,11 @@ Improve behavior when the minimum beats slider > maximum beats and vice versa]]>
       </metadata>
       <version name="1.0" author="cfillion" time="2019-03-01T14:57:23Z">
         <source>https://github.com/ReaTeam/JSFX/raw/7619ef24c53218875baaf2213727a77be7b1f4fd/MIDI/cfillion_Sustain%20pedal%20to%20note%20length.jsfx</source>
+      </version>
+      <version name="1.0.1" author="cfillion" time="2019-04-11T23:35:22Z">
+        <changelog><![CDATA[Fix handling of MIDI note #128
+Fix note off events always being sent to channel 1]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/ca7c02c4a274b0b15d2aa972c8e747bad69cfbe1/MIDI/cfillion_Sustain%20pedal%20to%20note%20length.jsfx</source>
       </version>
     </reapack>
     <reapack name="mathphreak_Learningbaby.jsfx" type="effect" desc="Learningbaby">
