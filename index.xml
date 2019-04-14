@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="ab319c74a46f2e4f724b21d9de6fb14843100732">
+<index version="1" name="ReaTeam JSFX" commit="0670142f975df983edc3b6f66a95cf5e9722bc42">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -71,6 +71,10 @@ Improve behavior when the minimum beats slider > maximum beats and vice versa]]>
       <version name="1.0.3" author="cfillion" time="2019-04-11T23:30:24Z">
         <changelog><![CDATA[Fix handling of notes active on more than one channel simultaneously]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/61b62b58ce6f666baf8dcfd93c85d0f2730c37a4/MIDI/cfillion_MIDI%20note%20length%20control.jsfx</source>
+      </version>
+      <version name="1.0.4" author="cfillion" time="2019-04-14T14:21:54Z">
+        <changelog><![CDATA[Hotfix]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/0670142f975df983edc3b6f66a95cf5e9722bc42/MIDI/cfillion_MIDI%20note%20length%20control.jsfx</source>
       </version>
     </reapack>
     <reapack name="cfillion_MIDI Taps Repeater.jsfx" type="effect" desc="MIDI Taps Repeater">
