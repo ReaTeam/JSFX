@@ -1,7 +1,7 @@
 desc: MIDI MPE to single channel
 author: Michael Schnell (mschnell@bschnell.de)
-version: 2.2
-changelog: bugfixes, improved Display
+version: 2.3
+changelog: removed the @sample section, improved Display
 about:
   ## Description
       This plugin combines the multiple channels in an MPE Midi stream to a single channel to allow for feeding a single polyphonic or monophonic instrument.
@@ -21,12 +21,13 @@ about:
 
       The "Smoothing" fader defines the time span a new value will need to be reached in case multiple keys are running. If the current value had been the result of at max one pressed key, the new value is sent out immediately. 
 
+      The "Bypass" option does the obvious.
 
     ## Graph
 
       A graph shows the currently "running" channels and the saved values of the three managed realtime controls. The last burt one line shows the values to be sent out when smoothiong is finished. The last line shows the last value sent out, proceeded by a star as long as smoothing is running on that value.
       Moreover the first number in the last but one line denotes that one of the following states has been encountered since the last start: 1: a Note On has been detected on an already running channel. 2: a Note Off has been detected on a not running channel. 4: two running channel at the same time in "Monophonic" mode, resulting in blocking realtime messages. The second number shows the number of currently "running" channels.
-  
+
 // NO WARRANTY IS GRANTED. THIS PLUG-IN IS PROVIDED ON AN "AS IS" BASIS, WITHOUT
 // WARRANTY OF ANY KIND. NO LIABILITY IS GRANTED, INCLUDING, BUT NOT LIMITED TO,
 // ANY DIRECT OR INDIRECT,  SPECIAL,  INCIDENTAL OR CONSEQUENTIAL DAMAGE ARISING
@@ -51,6 +52,7 @@ slider6:2<0,6,1{current,minimum,average,maximum,sum,latest key}>Controller 2 Mod
 slider7:074<0,129,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,Pitch Wheel, Channel Pressure}>Controller 3
 slider8:2<0,6,1{current,minimum,average,maximum,sum,latest key}>Controller 3 Mode
 slider9:50<0,100,1>Smoohing (msec)
+slider64:0<0,1,1{Active,Bypass}>Bypass
 
 
 
@@ -84,6 +86,7 @@ contr1          = 1*16;                                                     // a
 contr2          = 2*16;                                                     // array for storing controller 2
 contr3          = 3*16;                                                     // array for storing controller 3
 //msg_nr          = 0;                                                        // total message number. Do we need to consider overrun ? 
+____ss = 0;
 
 
 
@@ -213,6 +216,7 @@ function calculate(c, cur, mode, channel, cc_nr) local(i, j, a) (
   a;
 );
 
+!slider64 ? (
 smoothf = smooth / srate;
 //current_offset = 0;
 current_offset1 = 0;
@@ -468,7 +472,11 @@ while (midirecv(offset, msg1, msg2, msg3)) (
 );
  
  
-@sample 
+// !!! @sample 
+// !!!
+loop(samplesblock,
+// !!!
+
 //current_offset += 1;
 //offset = current_offset;
 ____smooth = 0;
@@ -514,6 +522,10 @@ cc3d ? (                                            // do smoothing ?
   );  
 );
 
+// !!!
+);
+// !!!
+
 
 cc1oo != cc1o ? (
   sendstatus(current_offset1, cc1o, cc1);
@@ -528,7 +540,7 @@ cc3oo != cc3o ? (
   cc3oo = cc3o;
 );  
 
-
+);
 
 @gfx 640 420
 function convert(val, nr) (
@@ -552,7 +564,10 @@ function _mode(val) (
    :    val == 5 ? "latest key";
 );
 
-  gfx_r=gfx_g=gfx_b=1; gfx_a=1;
+gfx_r=gfx_g=gfx_b=0; gfx_a=1;
+gfx_rect(0, 0 ,gfx_w, gfx_h);
+!slider64 ? (
+  gfx_r=gfx_g=gfx_b=1;
   gfx_setfont(2,#font,18);
   gfx_y = 5;
   gfx_x = 10;
@@ -638,8 +653,14 @@ loop (16,
   gfx_drawstr(#_t);
 */  
   gfx_x = 10 + 40 * 1;
-  #_t = sprintf(#, "%d", ____running);
+  gfx_r=0; gfx_g=1; gfx_b=0;
+  ____running ? (
+    #_t = sprintf(#, "%d", ____running);
+   ):(
+    #_t = "-";
+  ); 
   gfx_drawstr(#_t);
+  gfx_r=gfx_g=gfx_b=1;
 
 
   gfx_x = 10 + 80 * 1;
@@ -652,7 +673,7 @@ loop (16,
   #_t = convert(cc3t, cc3);
   gfx_drawstr(#_t);
 
-  ____ss ? (
+  ____ss && (mode & 1) ? (
     gfx_r=1; gfx_g=gfx_b=0;
     gfx_x = 10 + 80 * 0;
     #_t = sprintf(#, "%d", ____ss);
@@ -665,8 +686,10 @@ loop (16,
   gfx_x = 10 + 40 * 1;
 
   ____running  ? ( 
+    gfx_r=1; gfx_g=0; gfx_b=1;
     #_t = sprintf(#, "%d", latest+1);
     gfx_drawstr(#_t);
+    gfx_r=gfx_g=gfx_b=1;
   );  
 
   #_t1 = ____smooth & 1 ? "*" : " ";
@@ -694,3 +717,5 @@ loop (16,
   gfx_drawstr(#_t2);
   gfx_drawstr(#_t3);
 */  
+
+);
