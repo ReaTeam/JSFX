@@ -1,11 +1,10 @@
 desc: MIDI Performer2
 author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.5.2
+version: 0.5.3
 changelog:
-  - Add note monitor
-  - More accurate monitoring
-  - Send CC's when all rows are enabled
-  - CC's default to 64
+  - Split multiple keyzones to lanes instead of overlapping
+  - Right Click on number sliders to revert to default value (draggable)
+  - Add hanging prevention to input parameters (## is now the only parameter that will leave notes hanging)
 screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
   MIDI Router / Filter / Transposer / CC generator / Bank+Program
@@ -121,6 +120,11 @@ function isPitchW  ()(noteStatus == statPitchW);
 function isProgram ()(noteStatus == statProgram);
 function isRow     (i)(rowRoute   == 1 || rowRoute - 1 == row[i] || row[i] == 0);
 
+function isBussAndChannel(i) (      
+  (origBus == inBus [i]-1 || (inBus [i] == 0 && (globBusIn -1==origBus || globBusIn  == 0) ) ) && 
+  (channel == inChan[i]-1 || (inChan[i] == 0 && (globChanIn-1==channel || globChanIn == 0) ) )
+);
+
 function findLargest(arr, len) (
   largest = i = 0;
   loop(dispOuts,
@@ -128,6 +132,16 @@ function findLargest(arr, len) (
     i += 1;
   );
   largest;
+);
+
+function countEnabledRows()
+  local(i)(
+  i = rowCount = 0;
+  loop(dispOuts, 
+    isRow(i) && outBus[i] && filter[i]&4 ?rowCount += 1 ;
+    i +=1;
+  );
+  rowCount;
 );
 
 //arrays
@@ -172,12 +186,10 @@ function findLargest(arr, len) (
   noteInfo     = noOfOuts + susPedalChan;
 
 //noteInfo Offsets
-offsetNoteInBus   = $x80    ;
-offsetNoteInChan  = $x80 * 2;
-offsetNoteOutBus  = $x80 * 3;
-offsetNoteOutChan = $x80 * 4;
-offsetTrans       = $x80 * 5;
-offsetNoteMon     = $x80 * 6;
+offsetNoteOutBus  = $x80 ;
+offsetNoteOutChan = $x80 * 2;
+offsetTrans       = $x80 * 3;
+offsetNoteMon     = $x80 * 4;
 
 i=j=0; loop(noOfOuts,
   memset(row+j  , i+1, 1);
@@ -269,17 +281,14 @@ while (midirecv(offset,msg1,msg2,msg3)) (
 
   i = j = 0;
   loop(DispOuts,
-      (origBus == inBus [i]-1 || (inBus [i] == 0 && (globBusIn -1==origBus || globBusIn  == 0) ) ) && 
-      (channel == inChan[i]-1 || (inChan[i] == 0 && (globChanIn-1==channel || globChanIn == 0) ) ) ? (
+
         midi_bus = outBus[i]-1;
 
-        isNoteOn() && isRow(i) ? (
+        isNoteOn() && isRow(i)  ? (
           noteInfo[offsetNoteMon+msg2] = 1;
           inputMon = 0.6;
-          msg2>=minNote[i] && msg2<=maxNote[i] && outBus[i]-1 >= 0 && filter[i]&4 ? (
+          isBussAndChannel(i) && msg2>=minNote[i] && msg2<=maxNote[i] && outBus[i]-1 >= 0 && filter[i]&4 ? (
             noteInfo[j+msg2] += 1;                              //Store note-on
-        //  noteInfo[j+offsetNoteInBus  +msg2] = inBus  [i]-1;  //Store note in Bus
-        //  noteInfo[j+offsetNoteInChan +msg2] = inChan [i]-1;  //Store note in Chan
             noteInfo[j+offsetNoteOutBus +msg2] = outBus [i]-1;  //Store note out Bus
             noteInfo[j+offsetNoteOutChan+msg2] = outChan[i]-1;  //Store note out Chan
             noteInfo[j+offsetTrans      +msg2] = trans  [i];    //Store note Trans
@@ -293,7 +302,7 @@ while (midirecv(offset,msg1,msg2,msg3)) (
           inputMon = 0.6;
           noteInfo[offsetNoteMon+msg2] = 0;
           noteInfo[j+msg2]>0 ? (                                   //Has note-on been stored?
-            midi_bus = noteInfo[j + offsetNoteOutBus    + msg2];   //Restore note bus
+            midi_bus = noteInfo[j + offsetNoteOutBus + msg2];      //Restore note bus
             note[i]  = noteInfo[j + offsetTrans + msg2]-48 + msg2; //Restore note transpose
             note[i]<0?note[i]=0:note[i]>127?note[i]=127;           //Constrain note
             noteInfo[j + msg2] -= 1;                               //remove record of note-on
@@ -303,7 +312,7 @@ while (midirecv(offset,msg1,msg2,msg3)) (
 
         ):isSusPedal() ? (
           inputMon = 0.6;
-          msg3 && isRow(i) && outBus[i]-1>=0 ? (  //Sustain pedal depressed?
+          msg3 && isRow(i)  && isBussAndChannel(i) && outBus[i]-1>=0 ? (  //Sustain pedal depressed?
             susPedal[i]     = 1;                  //Store depression
             susPedalBus[i]  = outBus[i]-1;        //Store Bus
             susPedalChan[i] = outChan[i]-1;       //Store Channel
@@ -320,17 +329,16 @@ while (midirecv(offset,msg1,msg2,msg3)) (
 
         ):isCC()  ? (
           inputMon = 0.6; 
-          isRow(i) && filter[i]&2 && outBus[i]>0 ? (
+          isRow(i)  && isBussAndChannel(i) && filter[i]&2 && outBus[i]>0 ? (
             outputMon[i]=0.6; 
             midisend(offset,noteStatus+outChan[i]-1,msg2,msg3));
 
         ):isPitchW() ? ( 
           inputMon = 0.6; 
-          isRow(i) && filter[i]&1 && outBus[i]>0 ? (
+          isRow(i)  && isBussAndChannel(i)  && filter[i]&1 && outBus[i]>0 ? (
             outputMon[i]=0.6; 
             midisend(offset,noteStatus+outChan[i]-1,msg2,msg3));
         );
-      );
       
     i+=1;
     j+=$x400;
@@ -440,7 +448,7 @@ function button(label, x, y, w, h, clicked) (
     clicked;
 );
 
-function numSlide(label, zeroStr, oneStr, num, x, y, w, h, mini, maxi, numOffset, type) (
+function numSlide(label, zeroStr, oneStr, num, x, y, w, h, default, mini, maxi, numOffset, type) (
     
     //CC knobs
     type=="CC"? ( gfx_set(0,0,0,0.4); gfx_circle(x+gfx_texth/1.5, y+gfx_texth/2, w/4,1));
@@ -478,12 +486,16 @@ function numSlide(label, zeroStr, oneStr, num, x, y, w, h, mini, maxi, numOffset
         gfx_r=gfx_r+0.1;
         gfx_g=gfx_g+0.1; 
         gfx_b=gfx_b+0.1;  
-        //gfx_set(0.7);
+        
         mouse_cap == 1 ? (
           _mouse_y = mouse_y;
           _x = mouse_x;
           _y = mouse_y;
           dragMode = 1;
+          
+        ): mouse_cap == 2 ? (
+          num = default;
+        
         ):
         
         abs(mouse_wheel)>=120?(
@@ -529,9 +541,10 @@ function drawKeyboard(y, h) (
     allNoteWidth   = gfx_w /  noOfNotes;
     whiteNoteWidth = gfx_w / (noOfNotes / 1.714285714285714);
     
-    //Draw White Keys
+    
     g=0; 
     loop(noOfNotes,
+      //Draw White Keys
       gfx_set(0.1);
       x = g * whiteNoteWidth;
       gfx_line(x, y, x, y+h);
@@ -549,18 +562,25 @@ function drawKeyboard(y, h) (
       ); 
       g+=1;
     );
-  
+    
     //Draw note keyzones
-    g=f=0; loop(DispOuts,
-      outBus[g] && filter[g]&4 && (rowRoute==1 || rowRoute-1==row[g] || row[g]==0)?(
-        gfx_set(0,0,0,0.3);
-        f%3==0 ? gfx_r=1;
-        f%3==1 ? gfx_g=1;
-        f%3==2 ? gfx_b=1;
+    enabledRows = countEnabledRows();
+    h = h/enabledRows+gfx_texth/18;
+    
+    g=0; loop(DispOuts,
+      outBus[g] && filter[g]&4 && isRow(g)?(
+        gfx_set(0.2,0.2,0.2,0.6);
+
+        g%3==0 ? gfx_r=0.8;
+        g%3==1 ? gfx_g=0.8;
+        g%3==2 ? gfx_b=0.8;
         x = minNote[g] * gfx_w / noOfNotes;
+        
+        
         w = ( (maxNote[g]-minNote[g]) * allNoteWidth) + allNoteWidth;
         gfx_rect(x,y,w,h);
-        f+=1
+        y += h-gfx_texth/18;
+
       );
       g+=1;
     );
@@ -589,19 +609,19 @@ drawLabel = 1;
 
 
 //Draw top parameters
-dispOuts   = numSlide(  "##",   "",  "1",   dispOuts, x, y, w, h, 1, 32 ,0, "num"); x += xgap;
+dispOuts   = numSlide(  "##",   "",  "1",   dispOuts, x, y, w, h, 8, 1, 32 ,0, "num"); x += xgap;
 
          w = gfx_texth*2.4;
 
-globBusIn  = numSlide( "Bus", "All", "1",  globBusIn, x, y, w, h, 0, 16 ,0, "num"); x+=xgap;
-globChanIn = numSlide("Chan", "All", "1", globChanIn, x, y, w, h, 0, 16 ,0, "num"); x+=xgap;
+globBusIn  = numSlide( "Bus", "All", "1",  globBusIn, x, y, w, h, 0, 0, 16 ,0, "num"); x+=xgap;
+globChanIn = numSlide("Chan", "All", "1", globChanIn, x, y, w, h, 0, 0, 16 ,0, "num"); x+=xgap;
 
 inputMon>0.3?(inputMon-=0.02); gfx_set(inputMon,inputMon,0.3); gfx_circle(x*1.05,gfx_texth*1.8,w/6,1); x+=xgap; //Input Monitor
 
          w = gfx_texth*3; 
       xgap = gfx_texth*5;
 
-rowRoute   = numSlide("Row #", "None",  "All", rowRoute, x, y, w, h, 0, findLargest(row, dispOuts)+1 , -1, "num"); x+=xgap;
+rowRoute   = numSlide("Row #", "None",  "All", rowRoute, x, y, w, h, 1, 0, findLargest(row, dispOuts)+1 , -1, "num"); x+=xgap;
 
          w = gfx_texth*2.5; 
       xgap = gfx_texth*4  ;
@@ -611,7 +631,7 @@ thru       = button("THRU"   , x ,y, w, h, thru     ); x+=xgap*2;
 PCenable   = button("PC"     , x ,y, w, h, PCenable ); x+=xgap;
 PCresend   = button("#Resend", x ,y, w, h, PCresend ); x+=xgap;
 
-drawKeyboard(gfx_texth*3.4, gfx_texth*1.5);
+drawKeyboard(gfx_texth*3.0, gfx_texth*1.9);
 
 
 //Draw Section Labels
@@ -641,12 +661,12 @@ g=0; loop(dispOuts,
   setgfx = $xbbb;
         
     //Row #
-       row[g]  = numSlide(   "#",   "∀",  "1",    row[g], x, y, w, h, 0, noOfOuts, 0, "num"); x += xgap; 
+       row[g]  = numSlide(   "#",   "∀",  "1",    row[g], x, y, w, h, 0, 0, noOfOuts, 0, "num"); x += xgap; 
        
     //Input Bus & Channel
     w = gfx_texth*2.4;
-     inBus[g]  = numSlide( "Bus", "^  ",  "1",  inBus[g], x, y, w, h, 0,       16, 0, "num"); x += xgap;
-    inChan[g]  = numSlide("Chan", "^  ",  "1", inChan[g], x, y, w, h, 0,       16, 0, "num"); x += xgap+xgaplus; 
+     inBus[g]  = numSlide( "Bus", "^  ",  "1",  inBus[g], x, y, w, h, 0, 0,       16, 0, "num"); x += xgap;
+    inChan[g]  = numSlide("Chan", "^  ",  "1", inChan[g], x, y, w, h, 0, 0,       16, 0, "num"); x += xgap+xgaplus; 
     
     //Filter
     w=gfx_texth*1.4; xgap = gfx_texth*2;
@@ -656,24 +676,24 @@ g=0; loop(dispOuts,
     
     //Note range & Transpose
     w = gfx_texth*2.4; xgap = gfx_texth*3;
-    minNote[g] = numSlide(  "Min",   "0",  "1", minNote[g], x, y, w+4, h,   0, 127 ,0, "note"); x+= xgap;
-    maxNote[g] = numSlide(  "Max",   "0",  "1", maxNote[g], x, y, w+4, h,   0, 127 ,0, "note"); x+= xgap;
-      trans[g] = numSlide("Trans",   "-48",  "-47",   trans[g], x, y, w  , h, 0,  96 ,-48,  "num"); x+= xgap + xgaplus;
+    minNote[g] = numSlide(  "Min",   "0",  "1", minNote[g], x, y, w+4, h, 0,  0, 127 ,0, "note"); x+= xgap;
+    maxNote[g] = numSlide(  "Max",   "0",  "1", maxNote[g], x, y, w+4, h, 127,  0, 127 ,0, "note"); x+= xgap;
+      trans[g] = numSlide("Trans",   "-48",  "-47",   trans[g], x, y, w  , h, 48, 0,  96 ,-48,  "num"); x+= xgap + xgaplus;
      
     //Program Changes
     PCenable ? (
-       bankMSB[g] = numSlide("MSB",  "0",  "1", bankMSB[g], x, y, w, h,  0, 127 ,0, "num"); x+= xgap;
-       bankLSB[g] = numSlide("LSB",  "0",  "1", bankLSB[g], x, y, w, h,  0, 127 ,0, "num"); x+= xgap;
-          prog[g] = numSlide("Prog", "0",  "1",    prog[g], x, y, w, h,  0, 127 ,0, "num"); x+= xgap + xgaplus;
+       bankMSB[g] = numSlide("MSB",  "0",  "1", bankMSB[g], x, y, w, h,  0, 0, 127 ,0, "num"); x+= xgap;
+       bankLSB[g] = numSlide("LSB",  "0",  "1", bankLSB[g], x, y, w, h,  0, 0, 127 ,0, "num"); x+= xgap;
+          prog[g] = numSlide("Prog", "0",  "1",    prog[g], x, y, w, h,  0, 0, 127 ,0, "num"); x+= xgap + xgaplus;
           
-    ):(numSlide("MSB",  "0",  "1", bankMSB[g], x, y, w, h,  0, 127 ,0, "num"); x += xgap;
-       numSlide("LSB",  "0",  "1", bankLSB[g], x, y, w, h,  0, 127 ,0, "num"); x += xgap;
-       numSlide("Prog", "0",  "1",    prog[g], x, y, w, h,  0, 127 ,0, "num"); x += xgap + xgaplus;
+    ):(numSlide("MSB",  "0",  "1", bankMSB[g], x, y, w, h,  0, 0, 127 ,0, "num"); x += xgap;
+       numSlide("LSB",  "0",  "1", bankLSB[g], x, y, w, h,  0, 0, 127 ,0, "num"); x += xgap;
+       numSlide("Prog", "0",  "1",    prog[g], x, y, w, h,  0, 0, 127 ,0, "num"); x += xgap + xgaplus;
     );
    
    //Out Bus & Channel
-    outBus[g] = numSlide(  "Bus", "OFF",  "1",  outBus[g], x, y, w  , h,   0,  16 ,0,  "num"); x+= xgap;
-   outChan[g] = numSlide( "Chan",   "0",  "1", outChan[g], x, y, w  , h,   1,  16 ,0,  "num"); x+= xgap;
+    outBus[g] = numSlide(  "Bus", "OFF",  "1",  outBus[g], x, y, w  , h,   0, 0,  16 ,0,  "num"); x+= xgap;
+   outChan[g] = numSlide( "Chan",   "0",  "1", outChan[g], x, y, w  , h,   1, 1,  16 ,0,  "num"); x+= xgap;
    
    //Output Monitor
    outputMon[g]>0.3 ? outputMon[g]-=0.02 : outputMon[g]=0.3; 
@@ -703,12 +723,12 @@ g=0; loop(dispOuts,
     gfx_gradrect(gfx_w/2, y-gfx_texth*0.4, gfx_w/2, gfx_texth*1.8, 0, 0, 0, 0.25, 0, 0, 0, -0.5/gfx_w);
     
     
-    CC1[g] =numSlide(CCsend1, "0",  "1",    CC1[g] , x, y, w, h,  0, 127 ,0, "CC"); x += xgap;
-    CC2[g] =numSlide(CCsend2, "0",  "1",    CC2[g] , x, y, w, h,  0, 127 ,0, "CC"); x += xgap;
-    CC3[g] =numSlide(CCsend3, "0",  "1",    CC3[g] , x, y, w, h,  0, 127 ,0, "CC"); x += xgap;
-    CC4[g] =numSlide(CCsend4, "0",  "1",    CC4[g] , x, y, w, h,  0, 127 ,0, "CC"); x += xgap;
-    CC5[g] =numSlide(CCsend5, "0",  "1",    CC5[g] , x, y, w, h,  0, 127 ,0, "CC"); x += xgap;
-    CC6[g] =numSlide(CCsend6, "0",  "1",    CC6[g] , x, y, w, h,  0, 127 ,0, "CC"); x += xgap;
+    CC1[g] =numSlide(CCsend1, "0",  "1",    CC1[g] , x, y, w, h, 64, 0, 127 ,0, "CC"); x += xgap;
+    CC2[g] =numSlide(CCsend2, "0",  "1",    CC2[g] , x, y, w, h, 64, 0, 127 ,0, "CC"); x += xgap;
+    CC3[g] =numSlide(CCsend3, "0",  "1",    CC3[g] , x, y, w, h, 64, 0, 127 ,0, "CC"); x += xgap;
+    CC4[g] =numSlide(CCsend4, "0",  "1",    CC4[g] , x, y, w, h, 64, 0, 127 ,0, "CC"); x += xgap;
+    CC5[g] =numSlide(CCsend5, "0",  "1",    CC5[g] , x, y, w, h, 64, 0, 127 ,0, "CC"); x += xgap;
+    CC6[g] =numSlide(CCsend6, "0",  "1",    CC6[g] , x, y, w, h, 64, 0, 127 ,0, "CC"); x += xgap;
   ):Yadd = 0;
   
   drawLabel = 0;
