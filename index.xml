@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="0670142f975df983edc3b6f66a95cf5e9722bc42">
+<index version="1" name="ReaTeam JSFX" commit="bc08b426df81d3fe76262546696cf088fd60abf7">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -321,6 +321,12 @@ The "Factor" slider can be moved in steps of one between 1 and 16, but of course
 - Send CC's when all rows are enabled
 - CC's default to 64]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/4fbf8c85f742b0a754b8e9c4de9299b1bf9fc741/MIDI/TJA_MIDI%20Performer2.jsfx</source>
+      </version>
+      <version name="0.5.3" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-04-14T20:11:46Z">
+        <changelog><![CDATA[- Split multiple keyzones to lanes instead of overlapping
+- Right Click on number sliders to revert to default value (draggable)
+- Add hanging prevention to input parameters (## is now the only parameter that will leave notes hanging)]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/bc08b426df81d3fe76262546696cf088fd60abf7/MIDI/TJA_MIDI%20Performer2.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
