@@ -1,7 +1,7 @@
 desc: MIDI note length control
 author: cfillion
-version: 1.0.3
-changelog: Fix handling of notes active on more than one channel simultaneously
+version: 1.0.4
+changelog: Hotfix
 about:
   # MIDI Note Length Control
 
@@ -28,13 +28,16 @@ memset(offnbuf, 0, BUFSIZE);
 
 pos = 0;
 
-function indexOf(chan, note) (
+function indexOf(chan, note)
+(
   (128 * chan) + note
 );
 
-function releaseNote(index) local(chan)
+function releaseNote(index) local(chan, note)
 (
   chan = floor(index / 128);
+  note = index % 128;
+
   midisend(offset, $x90 + chan, note, 0);
   notebuf[index] = 0;
   offnbuf[index] = 0;
