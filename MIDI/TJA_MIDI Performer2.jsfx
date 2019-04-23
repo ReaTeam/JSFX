@@ -1,10 +1,10 @@
 desc: MIDI Performer2
 author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.5.3
+version: 0.5.4
 changelog:
-  - Split multiple keyzones to lanes instead of overlapping
-  - Right Click on number sliders to revert to default value (draggable)
-  - Add hanging prevention to input parameters (## is now the only parameter that will leave notes hanging)
+  - Fix sending sporadic random midi messages when row count (##) is high
+  - slightly improve logic regarding bank/PC getting sent
+link: Forum thread https://forum.cockos.com/showthread.php?t=216034
 screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
   MIDI Router / Filter / Transposer / CC generator / Bank+Program
@@ -98,6 +98,8 @@ CCsend4 = 11; //Expression
 CCsend5 = 12;
 CCsend6 = 13;
 
+debugButton = 0;
+
 ext_midi_bus = 1;
 ext_noinit   = 1;
 
@@ -125,7 +127,7 @@ function isBussAndChannel(i) (
   (channel == inChan[i]-1 || (inChan[i] == 0 && (globChanIn-1==channel || globChanIn == 0) ) )
 );
 
-function findLargest(arr, len) (
+function findLargest(arr, len) local(i) (
   largest = i = 0;
   loop(dispOuts,
     arr[i] > largest ? largest = arr[i];
@@ -134,11 +136,10 @@ function findLargest(arr, len) (
   largest;
 );
 
-function countEnabledRows()
-  local(i)(
+function countEnabledRows() local(i) (
   i = rowCount = 0;
   loop(dispOuts, 
-    isRow(i) && outBus[i] && filter[i]&4 ?rowCount += 1 ;
+    isRow(i) && outBus[i] && filter[i]&4 ? rowCount += 1 ;
     i +=1;
   );
   rowCount;
@@ -179,17 +180,16 @@ function countEnabledRows()
 
   //Output states
   outputMon    = noOfOuts + _CC6;
-  note         = noOfOuts + outputMon;
-  susPedal     = noOfOuts + note;
+  susPedal     = noOfOuts + outputMon;
   susPedalBus  = noOfOuts + susPedal;
   susPedalChan = noOfOuts + susPedalBus;
   noteInfo     = noOfOuts + susPedalChan;
 
 //noteInfo Offsets
-offsetNoteOutBus  = $x80 ;
-offsetNoteOutChan = $x80 * 2;
-offsetTrans       = $x80 * 3;
-offsetNoteMon     = $x80 * 4;
+offsetNoteOutBus  = 128;
+offsetNoteOutChan = 128 * 2;
+offsetTrans       = 128 * 3;
+offsetNoteMon     = 128 * 4;
 
 i=j=0; loop(noOfOuts,
   memset(row+j  , i+1, 1);
@@ -292,10 +292,10 @@ while (midirecv(offset,msg1,msg2,msg3)) (
             noteInfo[j+offsetNoteOutBus +msg2] = outBus [i]-1;  //Store note out Bus
             noteInfo[j+offsetNoteOutChan+msg2] = outChan[i]-1;  //Store note out Chan
             noteInfo[j+offsetTrans      +msg2] = trans  [i];    //Store note Trans
-            note[i] = msg2 + trans[i]-48;                       //Transpose note
-            note[i]<0?note[i]=0:note[i]>127?note[i]=127;        //Constrain note
+            msg2 = msg2 + trans[i]-48;                       //Transpose note
+            msg2<0?msg2=0:msg2>127?msg2=127;        //Constrain note
             outputMon[i]=0.6;
-            midisend(offset, noteStatus + outChan[i]-1, note[i], msg3);
+            midisend(offset, noteStatus + outChan[i]-1, msg2, msg3);
           );
 
         ):isNoteOff() ? (
@@ -303,11 +303,11 @@ while (midirecv(offset,msg1,msg2,msg3)) (
           noteInfo[offsetNoteMon+msg2] = 0;
           noteInfo[j+msg2]>0 ? (                                   //Has note-on been stored?
             midi_bus = noteInfo[j + offsetNoteOutBus + msg2];      //Restore note bus
-            note[i]  = noteInfo[j + offsetTrans + msg2]-48 + msg2; //Restore note transpose
-            note[i]<0?note[i]=0:note[i]>127?note[i]=127;           //Constrain note
+            msg2 = noteInfo[j + offsetTrans + msg2]-48 + msg2; //Restore note transpose
+            msg2<0?msg2=0:msg2>127?msg2=127;           //Constrain note
             noteInfo[j + msg2] -= 1;                               //remove record of note-on
             outputMon[i]=0.6;
-            midisend(offset,noteStatus+noteInfo[j+offsetNoteOutChan+msg2],note[i],msg3);
+            midisend(offset,noteStatus+noteInfo[j+offsetNoteOutChan+msg2],msg2,msg3);
           );
 
         ):isSusPedal() ? (
@@ -345,6 +345,8 @@ while (midirecv(offset,msg1,msg2,msg3)) (
   );
 );
 
+
+
 _rowRoute2 = rowRoute;
 
 i=j=0; loop(dispOuts,
@@ -352,15 +354,18 @@ i=j=0; loop(dispOuts,
   midi_bus = outBus[i]-1;
 
   //Send Bank+PC
-  PCenable && outBus[i] && (!PCresend || isRow(i)) ? (
-    bankMSB[i]!=_bankMSB[i] || bankLSB[i]!=_bankLSB[i] || prog[i]!=_prog[i] || (PCresend && rowRoute!=_rowRoute) ? (
+  PCenable && (!PCresend || isRow(i)) ? (
+    bankMSB[i]!=_bankMSB[i] || bankLSB[i]!=_bankLSB[i] || prog[i]!=_prog[i] || (PCresend && rowRoute!=_rowRoute) 
+    ? (
       _bankMSB[i] = bankMSB[i];
       _bankLSB[i] = bankLSB[i];
       _prog   [i] = prog   [i];
-      outputMon[i]=0.6;
-      midisend(0,     statCC + outChan[i] - 1,  0,bankMSB[i]);
-      midisend(0,     statCC + outChan[i] - 1, 32,bankLSB[i]);
-      midisend(0,statProgram + outChan[i] - 1, prog[i]);
+      outBus[i]?(
+        outputMon[i]=0.6;
+        midisend(0,     statCC + outChan[i] - 1,  0,bankMSB[i]);
+        midisend(0,     statCC + outChan[i] - 1, 32,bankLSB[i]);
+        midisend(0,statProgram + outChan[i] - 1, prog[i]);
+      );
     );
   );
   
@@ -404,7 +409,7 @@ i=j=0; loop(dispOuts,
   i += 1;     
 );
 
-_rowRoute != rowRoute ? ( _rowRoute = rowRoute; slider_automate(slider(4)) );
+_rowRoute != rowRoute ? (slider_automate(slider(4)) );
 
 _rowRoute=rowRoute;
 
@@ -616,7 +621,7 @@ dispOuts   = numSlide(  "##",   "",  "1",   dispOuts, x, y, w, h, 8, 1, 32 ,0, "
 globBusIn  = numSlide( "Bus", "All", "1",  globBusIn, x, y, w, h, 0, 0, 16 ,0, "num"); x+=xgap;
 globChanIn = numSlide("Chan", "All", "1", globChanIn, x, y, w, h, 0, 0, 16 ,0, "num"); x+=xgap;
 
-inputMon>0.3?(inputMon-=0.02); gfx_set(inputMon,inputMon,0.3); gfx_circle(x*1.05,gfx_texth*1.8,w/6,1); x+=xgap; //Input Monitor
+inputMon>0.3?(inputMon-=0.04); gfx_set(inputMon,inputMon,0.3); gfx_circle(x*1.05,gfx_texth*1.8,w/6,1); x+=xgap; //Input Monitor
 
          w = gfx_texth*3; 
       xgap = gfx_texth*5;
@@ -630,6 +635,8 @@ enableCCs  = button("CC's"   , x ,y, w, h, enableCCs); x+=xgap;
 thru       = button("THRU"   , x ,y, w, h, thru     ); x+=xgap*2;
 PCenable   = button("PC"     , x ,y, w, h, PCenable ); x+=xgap;
 PCresend   = button("#Resend", x ,y, w, h, PCresend ); x+=xgap;
+
+debugButton? debug = button("", gfx_w-gfx_texth ,y, w, h, debug ); 
 
 drawKeyboard(gfx_texth*3.0, gfx_texth*1.9);
 
@@ -696,7 +703,7 @@ g=0; loop(dispOuts,
    outChan[g] = numSlide( "Chan",   "0",  "1", outChan[g], x, y, w  , h,   1, 1,  16 ,0,  "num"); x+= xgap;
    
    //Output Monitor
-   outputMon[g]>0.3 ? outputMon[g]-=0.02 : outputMon[g]=0.3; 
+   outputMon[g]>0.3 ? outputMon[g]-=0.04;// : outputMon[g]=0.3; 
    gfx_set(outputMon[g], outputMon[g], 0.3); gfx_circle(x, y+gfx_texth/2, w/6, 1); 
    
    
@@ -746,3 +753,22 @@ gfx_line(gfx_w, gfx_h-10, gfx_w-10, gfx_h);
 gfx_line(gfx_w, gfx_h-15, gfx_w-15, gfx_h);
 
 gfx_set(1); gfx_roundrect(0,-1,gfx_w-1,gfx_h,0); //White Border
+
+debug?(
+  squ = floor(allNoteWidth);
+  g = 0;
+  gfx_y=0;
+  loop(32,
+  
+    gfx_x = 0; 
+  
+    loop(128,
+      gfx_set(0[g],0[g]/16,0[g]/128,0.9);
+      gfx_rect(gfx_w-gfx_x-squ,gfx_h-gfx_y-squ,squ,squ);
+      g += 1;
+      gfx_x+=squ;
+    );
+    gfx_y+=squ;
+  );
+);
+  
