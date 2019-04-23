@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="bc08b426df81d3fe76262546696cf088fd60abf7">
+<index version="1" name="ReaTeam JSFX" commit="2265ecb0954dcf48242f4c6eafc545568ec69a71">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -297,6 +297,7 @@ The "Factor" slider can be moved in steps of one between 1 and 16, but of course
 {\pard \ql \f0 \sa180 \li0 \fi0 Hold CTRL/Command to mousewheel shift by 12 (only if the fx window is focused).\par}
 }
 ]]></description>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?t=216034">Forum thread</link>
         <link rel="screenshot">https://stash.reaper.fm/35134/performer.PNG</link>
       </metadata>
       <version name="0.5" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-04-03T01:28:37Z">
@@ -327,6 +328,11 @@ The "Factor" slider can be moved in steps of one between 1 and 16, but of course
 - Right Click on number sliders to revert to default value (draggable)
 - Add hanging prevention to input parameters (## is now the only parameter that will leave notes hanging)]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/bc08b426df81d3fe76262546696cf088fd60abf7/MIDI/TJA_MIDI%20Performer2.jsfx</source>
+      </version>
+      <version name="0.5.4" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-04-23T19:04:45Z">
+        <changelog><![CDATA[- Fix sending sporadic random midi messages when row count (##) is high
+- slightly improve logic regarding bank/PC getting sent]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/2265ecb0954dcf48242f4c6eafc545568ec69a71/MIDI/TJA_MIDI%20Performer2.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
