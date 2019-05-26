@@ -1,9 +1,7 @@
 desc: MIDI Performer2
 author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.5.4
-changelog:
-  - Fix sending sporadic random midi messages when row count (##) is high
-  - slightly improve logic regarding bank/PC getting sent
+version: 0.5.5
+changelog: - Fix note-offs getting through from the wrong MIDI bus
 link: Forum thread https://forum.cockos.com/showthread.php?t=216034
 screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
@@ -122,7 +120,7 @@ function isPitchW  ()(noteStatus == statPitchW);
 function isProgram ()(noteStatus == statProgram);
 function isRow     (i)(rowRoute   == 1 || rowRoute - 1 == row[i] || row[i] == 0);
 
-function isBussAndChannel(i) (      
+function isBussAndChannel(i) (
   (origBus == inBus [i]-1 || (inBus [i] == 0 && (globBusIn -1==origBus || globBusIn  == 0) ) ) && 
   (channel == inChan[i]-1 || (inChan[i] == 0 && (globChanIn-1==channel || globChanIn == 0) ) )
 );
@@ -138,7 +136,7 @@ function findLargest(arr, len) local(i) (
 
 function countEnabledRows() local(i) (
   i = rowCount = 0;
-  loop(dispOuts, 
+  loop(dispOuts,
     isRow(i) && outBus[i] && filter[i]&4 ? rowCount += 1 ;
     i +=1;
   );
@@ -162,7 +160,7 @@ function countEnabledRows() local(i) (
   _bankLSB = noOfOuts + bankLSB;
   prog     = noOfOuts + _bankLSB;
   _prog    = noOfOuts + prog;
-  
+
   //CCs
   CC1 = noOfOuts + _prog;
   CC2 = noOfOuts + CC1;
@@ -170,7 +168,7 @@ function countEnabledRows() local(i) (
   CC4 = noOfOuts + CC3;
   CC5 = noOfOuts + CC4;
   CC6 = noOfOuts + CC5;
-  
+
   _CC1 = noOfOuts + CC6;
   _CC2 = noOfOuts + _CC1;
   _CC3 = noOfOuts + _CC2;
@@ -186,10 +184,12 @@ function countEnabledRows() local(i) (
   noteInfo     = noOfOuts + susPedalChan;
 
 //noteInfo Offsets
-offsetNoteOutBus  = 128;
-offsetNoteOutChan = 128 * 2;
-offsetTrans       = 128 * 3;
-offsetNoteMon     = 128 * 4;
+offsetNoteInBus   = 128;
+offsetNoteInChan  = 128 * 2;
+offsetNoteOutBus  = 128 * 3;
+offsetNoteOutChan = 128 * 4;
+offsetTrans       = 128 * 5;
+offsetNoteMon     = 128 * 6;
 
 i=j=0; loop(noOfOuts,
   memset(row+j  , i+1, 1);
@@ -289,11 +289,13 @@ while (midirecv(offset,msg1,msg2,msg3)) (
           inputMon = 0.6;
           isBussAndChannel(i) && msg2>=minNote[i] && msg2<=maxNote[i] && outBus[i]-1 >= 0 && filter[i]&4 ? (
             noteInfo[j+msg2] += 1;                              //Store note-on
+            noteInfo[j+offsetNoteInBus  +msg2] = origBus;       //Store note in Bus
+            noteInfo[j+offsetNoteInChan +msg2] = channel;       //Store note in Chan
             noteInfo[j+offsetNoteOutBus +msg2] = outBus [i]-1;  //Store note out Bus
             noteInfo[j+offsetNoteOutChan+msg2] = outChan[i]-1;  //Store note out Chan
             noteInfo[j+offsetTrans      +msg2] = trans  [i];    //Store note Trans
-            msg2 = msg2 + trans[i]-48;                       //Transpose note
-            msg2<0?msg2=0:msg2>127?msg2=127;        //Constrain note
+            msg2 = msg2 + trans[i]-48;                          //Transpose note
+            msg2<0?msg2=0:msg2>127?msg2=127;                    //Constrain note
             outputMon[i]=0.6;
             midisend(offset, noteStatus + outChan[i]-1, msg2, msg3);
           );
@@ -301,11 +303,15 @@ while (midirecv(offset,msg1,msg2,msg3)) (
         ):isNoteOff() ? (
           inputMon = 0.6;
           noteInfo[offsetNoteMon+msg2] = 0;
-          noteInfo[j+msg2]>0 ? (                                   //Has note-on been stored?
-            midi_bus = noteInfo[j + offsetNoteOutBus + msg2];      //Restore note bus
+
+          noteInfo[j+msg2]>0 //Has note-on been stored?
+          && (origBus == noteInfo[j+offsetNoteInBus  +msg2] || (inBus [i] == 0 && (globBusIn -1==origBus || globBusIn  == 0) ) ) 
+          && (channel == noteInfo[j+offsetNoteInChan +msg2] || (inChan[i] == 0 && (globChanIn-1==channel || globChanIn == 0) ) )
+          ? (
+            midi_bus = noteInfo[j + offsetNoteOutBus + msg2];  //Restore note bus
             msg2 = noteInfo[j + offsetTrans + msg2]-48 + msg2; //Restore note transpose
-            msg2<0?msg2=0:msg2>127?msg2=127;           //Constrain note
-            noteInfo[j + msg2] -= 1;                               //remove record of note-on
+            msg2<0?msg2=0:msg2>127?msg2=127;                   //Constrain note
+            noteInfo[j + msg2] -= 1;                           //remove record of note-on
             outputMon[i]=0.6;
             midisend(offset,noteStatus+noteInfo[j+offsetNoteOutChan+msg2],msg2,msg3);
           );
