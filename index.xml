@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="a62c8c35c1926f39343cbb54c631501a36811ad0">
+<index version="1" name="ReaTeam JSFX" commit="b0b4600014aee9e8751b3fef1c21b8d79adebe7d">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -266,6 +266,27 @@ The "Factor" slider can be moved in steps of one between 1 and 16, but of course
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2019-04-14T11:01:26Z">
         <changelog><![CDATA[Bugfix, add Bypass]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/ab319c74a46f2e4f724b21d9de6fb14843100732/MIDI/mschnell_MIDI%20PB%20x%20X.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_Note On under X velocity to Note Off and send All Notes Off.jsfx" type="effect" desc="Note On under X velocity to Note Off and send All Notes Off">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \f1 Based on "X-Raym_Note On under X velocity to Note Off"\line
+Kills all notes below a selectable velocity threshold and sends an "All Notes Off" message when a Note-On with velocity below this threshold is found, or when a selectable CC control drops below another selectable threshold\line
+"Input Channel select a dedicated channel to work on or "All"\line
+"Velocity Threshold" sets the Note-on Velocity below that all notes are killed\line
+"Controller" selects the CC controller # to work on\line
+"Controller Threshold" sets the CC value below that an "All sound Off" message is sent.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2019-05-26T22:40:10Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/b0b4600014aee9e8751b3fef1c21b8d79adebe7d/MIDI/mschnell_Note%20On%20under%20X%20velocity%20to%20Note%20Off%20and%20send%20All%20Notes%20Off.jsfx</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI note-banked CC multiplier.jsfx" type="effect" desc="MIDI note-banked CC multiplier">
