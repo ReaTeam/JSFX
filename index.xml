@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="2265ecb0954dcf48242f4c6eafc545568ec69a71">
+<index version="1" name="ReaTeam JSFX" commit="a62c8c35c1926f39343cbb54c631501a36811ad0">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -333,6 +333,10 @@ The "Factor" slider can be moved in steps of one between 1 and 16, but of course
         <changelog><![CDATA[- Fix sending sporadic random midi messages when row count (##) is high
 - slightly improve logic regarding bank/PC getting sent]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/2265ecb0954dcf48242f4c6eafc545568ec69a71/MIDI/TJA_MIDI%20Performer2.jsfx</source>
+      </version>
+      <version name="0.5.5" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-05-26T21:54:15Z">
+        <changelog><![CDATA[- Fix note-offs getting through from the wrong MIDI bus]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/a62c8c35c1926f39343cbb54c631501a36811ad0/MIDI/TJA_MIDI%20Performer2.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
