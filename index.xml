@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="b0b4600014aee9e8751b3fef1c21b8d79adebe7d">
+<index version="1" name="ReaTeam JSFX" commit="8df4d36e6338cfda5684790552f0c71530504e63">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -287,6 +287,10 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2019-05-26T22:40:10Z">
         <changelog><![CDATA[initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/b0b4600014aee9e8751b3fef1c21b8d79adebe7d/MIDI/mschnell_Note%20On%20under%20X%20velocity%20to%20Note%20Off%20and%20send%20All%20Notes%20Off.jsfx</source>
+      </version>
+      <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2019-05-26T23:06:04Z">
+        <changelog><![CDATA[allow for setting vel = 0 -> pass through]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/8df4d36e6338cfda5684790552f0c71530504e63/MIDI/mschnell_Note%20On%20under%20X%20velocity%20to%20Note%20Off%20and%20send%20All%20Notes%20Off.jsfx</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI note-banked CC multiplier.jsfx" type="effect" desc="MIDI note-banked CC multiplier">
