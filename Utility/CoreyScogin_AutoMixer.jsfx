@@ -14,13 +14,7 @@ about:
   - Inactive channels will be attenuated helping to decrease background noise.
   - Multiple active channels will be attenuated according to the sum of all channels helping to keep the overall volume under control.
   See [Wikipedia](https://en.wikipedia.org/wiki/Automixer) for a more thorough description.
-changelog: 
-  v1.1
-    Removed the linear to dB conversions. All attenuation values calculated directly now. 
-    Clear the buffer when the window changes. Keeping old buffer values would result in unexpected behavior. 
-    Added the freembuf call to indicate how much memory is used.
-  v1.2
-    Improved plugin bypass behavior. Instance count now resets on stop/play.
+changelog: Improved plugin bypass behavior. Instance count now resets on stop/play.
 
 // Known Bugs:
 //  - Playback must be stopped and started if an instance is bypassed, added, or removed.
