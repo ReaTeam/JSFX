@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="8df4d36e6338cfda5684790552f0c71530504e63">
+<index version="1" name="ReaTeam JSFX" commit="f0220e8e447493e785f814283a0ad3542fd845f4">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1413,6 +1413,10 @@ Wikipedia
 Clear the buffer when the window changes. Keeping old buffer values would result in unexpected behavior. 
 Added the freembuf call to indicate how much memory is used.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/247f64ccae7c8d62f184ae6d4a515dda661cd406/Utility/CoreyScogin_AutoMixer.jsfx</source>
+      </version>
+      <version name="1.2" author="Corey Scogin" time="2019-06-23T11:25:25Z">
+        <changelog><![CDATA[Improved plugin bypass behavior. Instance count now resets on stop/play.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/f0220e8e447493e785f814283a0ad3542fd845f4/Utility/CoreyScogin_AutoMixer.jsfx</source>
       </version>
     </reapack>
     <reapack name="CoreyScogin_TimeDelayByDistance.jsfx" type="effect" desc="Time Delay by Distance">
