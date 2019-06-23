@@ -1,6 +1,6 @@
 desc:AutoMixer
 author: Corey Scogin
-version: 1.1
+version: 1.2
 tags: volume, attenuation, automation
 link: Forum Thread https://forum.cockos.com/showthread.php?t=173289
 about: 
@@ -15,14 +15,17 @@ about:
   - Multiple active channels will be attenuated according to the sum of all channels helping to keep the overall volume under control.
   See [Wikipedia](https://en.wikipedia.org/wiki/Automixer) for a more thorough description.
 changelog: 
-  Removed the linear to dB conversions. All attenuation values calculated directly now. 
-  Clear the buffer when the window changes. Keeping old buffer values would result in unexpected behavior. 
-  Added the freembuf call to indicate how much memory is used.
+  v1.1
+    Removed the linear to dB conversions. All attenuation values calculated directly now. 
+    Clear the buffer when the window changes. Keeping old buffer values would result in unexpected behavior. 
+    Added the freembuf call to indicate how much memory is used.
+  v1.2
+    Improved plugin bypass behavior. Instance count now resets on stop/play.
 
 // Known Bugs:
-//  -If an instance of a plugin is removed or bypassed, the others do not know and it throws off the mix calculations.
-//  You may have to close and reopen the project in order to reset the instance count and restore functionality.
-//  Is there a better way to keep track of the number of plugin instances?
+//  - Playback must be stopped and started if an instance is bypassed, added, or removed.
+//      or if playback is paused. The pause issue is due to a bug in the play_state variable.
+//		Is there a better way to keep track of plugin instances?
 
 options:gmem=AutoMixer
 
@@ -33,16 +36,14 @@ slider3:0<0,1,1{Rectangular,Efficient}>RMS Window Type
  
   minRmsValue = 10^(-144/20) ; // Minimum RMS value (-144) in linear representation
   
-  // Options      
-  ext_noinit = 1;   // Do not call @init on play else the instance ID gets reset.    
-  
   // Variables/Properties
-  gmem[0] += 1;     // Create an id for each instance. 
-                    // Is there a better way to determine how many instances are running?
-  thisID = gmem[0]; // note local ID for debug display. 
-                    // Global Memory storage descriptions:
-                    //  gmem[0] stores how many instances of this plugin exist
-                    //  gmem[n] stores the current rms value for each of the n instances of the plugin
+  gmem[0] += 1;             // Create an id for each instance. 
+                            // Is there a better way to determine how many instances are running?
+  thisID = gmem[0];         // store local ID. 
+  
+  // Global Memory locations used:
+  //  gmem[0] stores how many instances of this plugin exist
+  //  gmem[n] stores the current rms value for each of the n instances of the plugin
 
 @slider 
   // Recalculate constants
@@ -61,32 +62,39 @@ slider3:0<0,1,1{Rectangular,Efficient}>RMS Window Type
 
   freembuf(window + 1);     // Tell the memory manager how much memory we need or don't need
 
+@block
+  // Reset the instance count on stop, pause, or error
+  play_state < 1 || play_state == 2 || play_state == 6 ? (
+    gmem[0] = 0;
+  );
+  count = gmem[0];          // For debug display
+
 @sample
   
   // Average all channels in this track (typically 2)
   i=0;
   trkSum=0;
-  loop(num_ch,                // For each channel
-        trkSum += spl(i);     // Add the sample values
+  loop(num_ch,              // For each channel
+        trkSum += spl(i);   // Add the sample values
         i += 1;
        ); 
-  trkAvg = trkSum / num_ch;   // Calculate the average
+  trkAvg = trkSum / num_ch; // Calculate the average
   
   
   // Calculate the new rms value
-  slider3 == 0 ? (      // Window Type == Rectangular
-                        // Less efficient true rectangular window moving average 
-    splSq = trkAvg ^ 2; // Sample (or average of channel samples) squared for moving average sum.
-    rmsSum -= buf[0];   // Subtract the oldest value square from the sum
-    rmsSum += splSq;    // add the newest value square to the sum
-    buf[0] = splSq;     // add the newest value square to the buffer
+  slider3 == 0 ? (          // Window Type == Rectangular
+                            // Less efficient true rectangular window moving average 
+    splSq = trkAvg ^ 2;     // Sample (or average of channel samples) squared for moving average sum.
+    rmsSum -= buf[0];       // Subtract the oldest value square from the sum
+    rmsSum += splSq;        // add the newest value square to the sum
+    buf[0] = splSq;         // add the newest value square to the buffer
   
     (buf+=1) >= window ? buf=0;   // increment buffer position
   
     rms = sqrt( rmsSum / window ) ; // Calculate the new RMS value
     
   ):( // Window Type == efficient approximation 
-      // Efficient moving average approximation
+    // Efficient moving average approximation
     fout = a0 * (trkAvg ^ 2) + b1 * fout;
     rms = sqrt(fout);
   );
@@ -106,7 +114,7 @@ slider3:0<0,1,1{Rectangular,Efficient}>RMS Window Type
   rms < minSplValue ? rms = minSplValue; // -144 dB
   
   // The AutoMixer Algorithm
-  attSpl = rms / sum; // For reference: subtraction in dB corresponds to division in linear
+  attSpl = rms / sum;       // For reference: subtraction in dB corresponds to division in linear
     
   // Attenuate each channel sample value
   i = 0;
@@ -117,4 +125,3 @@ slider3:0<0,1,1{Rectangular,Efficient}>RMS Window Type
 
 // Possible future modifications:
 //    -Instance grouping
-//    -Better ID management
