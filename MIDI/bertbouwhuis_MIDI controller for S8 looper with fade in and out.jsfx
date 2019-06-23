@@ -1,0 +1,303 @@
+desc: MIDI controller for S8 looper with fade in and out
+author: Bert Bouwhuis
+version: 1.0
+link: https://github.com/EarlyBert/S8-midi-controller
+about:
+  To be used together with Reaper's Super8 looper plugin, one or more external foot pedals or foot switches and
+  an optional external midi controller.
+
+  Features:
+  - arm looper slots
+  - start and stop looper slots
+  - start and stop recording into slots with a foot pedal
+  - fade in and fade out of slot playback
+
+  See also  https://youtu.be/ZFwtxXYLkZI
+
+desc:MIDI controller for S8 looper with fade in and out
+
+// Author: Bert Bouwhuis
+// LICENSE: LGPL v2 or later - http://www.gnu.org/licenses/lgpl.html
+
+// Version 2, including fade in and out, as well as volume and pan control
+
+// General notes:
+// To be used together with Reaper's Super8 looper plugin, an external foot pedal (or switch) and
+// an optional external midi controller.
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+slider1:0<0,3,1{Foot pedal,Foot switch,Both,None}>Foot pedal or foot switch?
+slider2:64<0,119,1>Midi cc for foot pedal (input from foot pedal)
+slider3:0<0,127,1>Midi value for foot pedal up
+slider4:127<0,127,1>Midi value for foot pedal down
+slider5:0<0,127,1>Midi note foot switch (input from foot switch)
+slider6:0<0,17,1{Same as input,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Midi channel (for output to Super8 FX)?
+slider7:36<0,127,1>Super8 rec note (output to Super8 FX)
+slider8:37<0,127,1>Super8 ply note (output to Super8 FX)
+slider9:0<0,1,1{No,Yes}>External midi controller?
+slider10:0<0,127,1>Looper arm note (input from midi controller)
+slider11:0<0,127,1>Looper play note (input from midi controller)
+slider12:0<0,1,1{No,Yes}>Midi pass through (all input to output)?
+slider13:0<-60,12,0.1>Volume (dB)
+slider14:0<-10,10,0.1>Pan
+slider15:0<0,5,0.01>Fade in duration (sec)
+slider16:0<0,5,0.01>Fade out duration (sec)
+
+@init
+ext_noinit = 1.0; // don't initialize at playback start/stop since we don't want to loose current state
+// constant definitions (states and events)
+s_idle=0;
+s_arm_pad_is_on = 1;
+s_armed_and_playing = 2;
+s_looper_is_recording = 3;
+s_looper_is_playing = 4;
+e_arm_pad_going_on = 1;
+e_arm_pad_going_off = 2;
+e_play_pad_going_on = 3;
+e_play_pad_going_off = 4;
+e_pedal_or_switch_activated = 5;
+f_fading_in = 1;        // if we're currently fading in
+f_fading_out = 2;       // if we're currently fading out
+f_faded_out = 3;        // if we have faded out and the volume is still set to 0
+
+// initialization
+s_new = s_current = s_idle;
+pedal_is_down = 0;
+prev_ui_ext_contr = -1;
+
+AMP_dB = 8.68588963806504;
+f_fade_status = 0;      // currently not fading in or out
+
+//--------------------------------------------------------------------------------------------------------------
+
+// support function for handling both foot pedal cases: pedal down value either > or < pedal up value
+
+function between(input_value, first, second) local(return_value)
+(
+  first < second ? (
+    return_value = input_value >= first && input_value <= second;
+    ) : (
+    return_value = input_value <= first && input_value >= second;
+  );
+  return_value;
+);
+
+// support function to check for - and filter multiple - "pedal going down" events
+
+function pedal_going_down() local(return_value)
+(
+  return_value = 0;
+  pedal_is_down ? (
+    msg == 0xB0 && no == ui_cc_pedal && between(val, pedal_middle, ui_pedal_up) ? (
+      pedal_is_down = 0;
+    );
+  ) : (
+    msg == 0xB0 && no == ui_cc_pedal && between(val, pedal_middle, ui_pedal_down) ? (
+      return_value = 1;
+      pedal_is_down = 1;
+    );
+  );
+  return_value;
+);
+
+// support function to check for  "foot switch activated" event
+
+function foot_switch_activated()
+(
+  no == ui_note_foot_switch && (msg == 0x90 || msg == 0x80);
+);
+
+// support function for sending on-off notes
+
+function send_on_off(note)
+(
+  midisend(ofs, 0x90 | ch, note | 64 << 8);
+  midisend(ofs, 0x80 | ch, note | 0x4000); 
+);
+
+// support function to start playback
+
+function start_playback() local(start_fade_at)
+(
+  start_fade_at = 0.0;
+  f_fade_status == f_fading_out ?
+  (
+    send_on_off(ui_note_play_looper);                       // abort fade out
+    f_fade_status = 0;
+    start_fade_at = faded_volume;
+  );
+  send_on_off(ui_note_play_looper);                         // start S8 playback
+  ui_fade_in > 0.0 ?                                        // fade in required?
+  (
+    faded_volume = start_fade_at;                           // set fade volume to 0
+    fade_samples_left = no_samples_fade_in;
+    f_fade_status = f_fading_in;                            // remember we're fading in
+  ) :
+  (
+    f_fade_status == f_faded_out ? (faded_volume = ui_volume; f_fade_status = 0);
+  );
+);
+
+// support function to stop playback
+
+function stop_playback()
+(
+  ui_fade_out > 0.0 ?
+  (
+    f_fade_status !== f_fading_in ? faded_volume = ui_volume;
+    fade_samples_left = no_samples_fade_out;
+    f_fade_status = f_fading_out;                           // remember we're fading out
+  )
+  :
+  (
+    send_on_off(ui_note_play_looper);                       // stop immediately if no fade out
+  );
+);
+
+//-------------------------------------------------------------------------------------------------------------
+
+@slider
+
+// here initially and if user changes one or more slider values
+
+ui_pedal_or_switch = slider1;
+ui_cc_pedal = slider2;
+ui_pedal_up = slider3;
+ui_pedal_down = slider4;
+ui_note_foot_switch = slider5;
+ui_output_channel = slider6;
+ui_note_start_looper = slider7;
+ui_note_play_looper = slider8;
+ui_ext_contr = slider9;
+ui_note_arm_pad = slider10;
+ui_note_play_pad = slider11;
+ui_pass_through = slider12;
+ui_volume = exp(slider13/AMP_DB);
+ui_pan = 0.1 * min(10,max(-10,slider14));
+ui_fade_in = max(0,slider15);
+ui_fade_out = max(0,slider16);
+
+pedal_middle = floor((ui_pedal_down + ui_pedal_up)/2);      // the threshold value for the foot pedal
+f_fade_status == f_fading_out ? faded_volume = ui_volume;   // force volume if changed during fade out
+no_samples_fade_in = ui_fade_in * srate;                    // the number of samples equivalent to the required fade in time
+no_samples_fade_out = ui_fade_out * srate;                  // the number of samples equivalent to the required fade out time
+
+// if ui_external_controller just changed, force the correct starting state (either idle or armed_and_playing)
+
+(ui_ext_contr !== prev_ui_ext_contr) ?
+ (prev_ui_ext_contr = ui_ext_contr; ui_ext_contr ? (s_current = s_idle) : (s_current = s_armed_and_playing); s_new = s_current);
+
+//-------------------------------------------------------------------------------------------------------------
+
+@block
+
+// midi processing
+
+while(
+  midirecv(ofs, msg1, msg23) ? (
+  // if required, pass through without changes to next fx in chain
+  ui_pass_through ? (midisend(ofs, msg1, msg23));
+  // deconstruct midi message
+  msg = msg1 & 0xF0;
+  ch = msg1 & 0x0F;
+  no = msg23 & 0x7F;
+  val = msg23 >> 8;
+  ui_output_channel ? (no = ui_output_channel - 1);
+  /*
+
+  Finite state machine diagram
+
+                      | arm_pad_going_on             | arm_pad_going_off            | play_pad_going_on            | play_pad_going_off            | pedal_or_switch_activated      |
+  --------------------|------------------------------|------------------------------|------------------------------|-------------------------------|--------------------------------|
+  idle                | new state: arm_pad_is_on     |                              | action: send ply note to S8  |                               |                                |
+                      |                              |                              | new state: looper_is_playing |                               |                                |
+  --------------------|------------------------------|------------------------------|------------------------------|-------------------------------|--------------------------------|
+  arm_pad_is_on       |                              | new state: idle              | action: send ply note to S8  |                               |                                |
+                      |                              |                              | new state: armed_and_playing |                               |                                |
+  --------------------|------------------------------|------------------------------|------------------------------|-------------------------------|--------------------------------|
+  armed_and_playing   |                              | new state: looper_is_playing |                              | action: send ply note to S8   | action: send rec note to S8    |
+                      |                              |                              |                              | new state: arm_pad_is_on      | new state: looper_is_recording |
+  --------------------|------------------------------|------------------------------|------------------------------|-------------------------------|--------------------------------|
+  looper_is_recording |                              | action: send ply note to S8  |                              | action: send two ply notes to | action: send ply note to S8    |
+                      |                              | new state: looper_is_playing |                              | S8 (stop recording and stop   | new state: armed_and_playing   |
+                      |                              |                              |                              | playing)                      |                                |
+                      |                              |                              |                              | new state: arm_pad_is_on      |                                |
+  --------------------|------------------------------|------------------------------|------------------------------|-------------------------------|--------------------------------|
+  looper_is_playing   | new state: armed_and_playing |                              |                              | action: send ply note to S8   |                                |
+                      |                              |                              |                              | new state: idle               |                                |
+  --------------------|------------------------------|------------------------------|------------------------------|-------------------------------|--------------------------------|
+
+  */
+  //
+  // what event just occured?
+  //
+  event = 0;
+  ui_ext_contr ? (
+    no == ui_note_arm_pad && msg == 0x90 ? (event = e_arm_pad_going_on);
+    no == ui_note_arm_pad && msg == 0x80 ? (event = e_arm_pad_going_off);
+    no == ui_note_play_pad && msg == 0x90 ? (event = e_play_pad_going_on);
+    no == ui_note_play_pad && msg == 0x80 ? (event = e_play_pad_going_off);
+  );
+  ui_pedal_or_switch == 0 ? (pedal_going_down() ? (event = e_pedal_or_switch_activated));
+  ui_pedal_or_switch == 1 ? (foot_switch_activated() ? (event = e_pedal_or_switch_activated));
+  ui_pedal_or_switch == 2 ? ((pedal_going_down() || foot_switch_activated()) ? (event = e_pedal_or_switch_activated));
+  //
+  // determine what to do based on current state
+  //
+  s_current == s_idle ? (
+    event == e_arm_pad_going_on ? (s_new = s_arm_pad_is_on);
+    event == e_play_pad_going_on ? (start_playback(); s_new = s_looper_is_playing);
+  );
+  s_current == s_arm_pad_is_on ? (
+    event == e_arm_pad_going_off ? (s_new = s_idle);
+    event == e_play_pad_going_on ? (start_playback(); s_new = s_armed_and_playing);
+  );
+  s_current == s_armed_and_playing ? (
+    event == e_arm_pad_going_off ? (s_new = s_looper_is_playing);
+    event == e_play_pad_going_off ? (stop_playback(); s_new = s_arm_pad_is_on);
+    event == e_pedal_or_switch_activated ? (send_on_off(ui_note_start_looper); s_new = s_looper_is_recording);
+  );
+  s_current == s_looper_is_recording ? (
+    event == e_arm_pad_going_off ? (send_on_off(ui_note_play_looper); s_new = s_looper_is_playing);
+    event == e_play_pad_going_off ? (send_on_off(ui_note_play_looper); send_on_off(ui_note_play_looper); s_new = s_arm_pad_is_on);
+    event == e_pedal_or_switch_activated ? (send_on_off(ui_note_play_looper); s_new = s_armed_and_playing);
+  );
+  s_current == s_looper_is_playing ? (
+    event == e_arm_pad_going_on ? (s_new = s_armed_and_playing);
+    event == e_play_pad_going_off) ? (stop_playback(); s_new = s_idle);
+  s_current = s_new;
+  );
+);
+
+@sample
+
+// audio processing per sample (trying not to waste any cpu time)
+
+f_fade_status == 0 ?                                      // currently not fading in or out?
+(
+  faded_volume = ui_volume                                // volume = what user requested
+) :
+(
+  f_fade_status == f_fading_in ?                          // currently fading in?
+  (
+    faded_volume += ((ui_volume - faded_volume) / fade_samples_left); // increase volume by one step
+    (fade_samples_left -= 1) <= 0 ? f_fade_status = 0;
+  ) :
+  (
+    f_fade_status == f_fading_out ?                       // currently fading out?
+    (
+      faded_volume -= (faded_volume / fade_samples_left); // decrease volume by one step
+      (fade_samples_left -= 1) <= 0 ? (f_fade_status = f_faded_out; faded_volume = 0.0; send_on_off(ui_note_play_looper));
+    );
+  );
+);
+volume_left = volume_right = max(0.0, min(4.0, faded_volume));
+ui_pan > 0.0 ? (volume_left *= 1.0 - ui_pan);
+ui_pan < 0.0 ? (volume_right *= 1.0 + ui_pan);
+spl0 *= volume_left;
+spl1 *= volume_right;
+

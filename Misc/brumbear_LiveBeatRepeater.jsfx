@@ -1,0 +1,250 @@
+desc: LiveBeatRepeater
+author: brumbear
+version: 1.02
+changelog:
+  Added Features
+  - Continuous Loop Length Change Slider. Map this one to a rotary encoder in relative mode. When used the loop length transitions will happen immediately while repeat mode is on. When repeat mode switches back to off the plugin automatically goes back to stepped mode.
+link: Forum thread https://forum.cockos.com/showthread.php?t=211834
+about:
+  # LiveBeatRepeater
+
+  JSFX for live performance stutter effects. Zero latency. Synchronized to project tempo and time signature. Works well with linear songs as well as loop based material. Mashes up nicely your rhythms on drum tracks/percussion. Great toy on voices.
+
+  What makes this fx different from the classical looper or "instant" samplers is the fact that it constantly samples the input and repeats what you just heard when you trigger the repeat mode. I.e. you do not have to trigger recording a loop blindly hoping it will be what you want, but you repeat what was just played.
+
+  Most fun if controlled via a MIDI/OSC hardware device (pad controller, touch screen device). E.g. Repeat On-Off to a pad, continuous Loop Length to a rotary encoder (relative mode) and stepped Loop Length to dedicated pads (one for each loop length).
+
+  Separate loop audio routing allows to feed the repeating loop into any custom fx chain. Resonant HP/LP filters with variable cut off frequency, ping pong delays, distortion etc work particularly well with the stutter and allow spontaneous live (or automated) build ups.
+
+// This effect Copyright (C) 2018 and later Pacific Peaks Studio
+// License: GPLv3 - http://www.gnu.org/licenses/gpl
+// desc: LiveBeatRepeater (brumbear@pacific_peaks)
+// author: brumbear @ pacific peaks
+// 2018-10-12: Release V1.02
+
+
+//------------------------------------------------------------------------------------------------
+slider1:0<0,1,1{Off,On}>Repeat
+slider2:3<0,6,1{2,1,1/2,1/4,1/8,1/16,1/32}>Loop Length [bars] (Stepped Mode)
+// Continuous Loop Length will be reset to closest stepped Loop Length when Repeat is switched from ON to OFF unless Transition is set to "Immediately"
+slider3:48<0,96,1>Loop Length (Continuous Mode)
+slider4:1<0,3,1{Immediately,At Next Beat,At Next Bar}>Loop Start
+slider5:2<0,2,1{Immediately,At Next Beat,At Loop End}>Length Transitions (Stepped Mode)
+slider6:1<0,1,1{Immediately,Soft Fade Out}>Repeat Ending  
+// chose "Separate Loop Channels" to route loop via other (external) effect plugins
+slider7:0<0,1,1{Combined Main Output,Loop on Separate Fx Output only}>Fx Channel Routing
+
+
+in_pin:left input
+in_pin:right input
+out_pin:left main output
+out_pin:right main output
+out_pin:left loop fx output
+out_pin:right loop fx output
+
+//------------------------------------------------------------------------------------------------
+@init
+// need some defaults when sliders have not been touched yet, no playback or just input monitoring
+
+  default_samples_per_bar = 96000; // default values at 120bpm, 4/4 signature and 48kHz sample rate
+  samples_per_bar = default_samples_per_bar;
+
+  // create a buffer hosting 2 sections: track ring buffer and loop copy buffer
+  buf_size = 5 * samples_per_bar; //track ring buffer has to be > 2x max loop length sample
+  buf0 = 0; buf1 = buf0 + buf_size;
+  buf_pos_WRITE = 0; // position in track ring buffer that is being filled with current track samples
+
+  // buf0[loop_copy_offset + pos] and buf1[loop_copy_offset + pos] store a copy of the max length loop portion from track ring buffer. 
+  loop_copy_offset = 2 * buf_size; 
+  loop_pos_COPY = 0;
+  loop_copied = 0; // flag to indicate that the max length loop portion (= 2 bars) has been fully copied
+
+// end of default values
+
+loop_size = 0; // repeat loop length
+loop_start = 0; // start position of loop within track ring buffer
+loop_end = buf_size; // end position of loop within track ring buffer. Frozen when repeat mode is switched on.
+loop_overflow = 0; // flag to indicate if loop stretches beyond buffer end, i.e. loop_end < loop_start
+loop_pos_READ = 0; // position in buffer that will be played back when repeat is on
+loop_trigger_beat_pos = 0;
+play_loop = 0;
+
+next_loop_start = 0; 
+next_loop_overflow = 0;
+next_loop_trigger_beat_pos = 0;
+
+last_slider1 = 0;
+last_slider2 = 3;
+last_slider3 = 48;
+
+immediate_transition_override = 0; // flag to indicate if we are in Continuos Mode (NOT discrete loop length)
+
+//------------------------------------------------------------------------------------------------
+@slider
+// adjust buffer size to follow tempo changes
+(ts_num > 0) && (tempo > 0) ? (
+  samples_per_bar = floor(ts_num*(srate/tempo)*60 + 0.5); // ts_num is equal to beats per bar)
+):(
+  samples_per_bar = default_samples_per_bar;
+);
+buf_size = 5*samples_per_bar; 
+buf0 = 0; buf1 = buf0 + buf_size;
+loop_copy_offset = 2 * buf_size; 
+
+// synchronize loop length sliders
+(last_slider3 != slider3) && (last_slider2 == slider2) ? (
+  slider2 = floor(slider3/16 + 0.5);
+  last_slider2 = slider2;
+  last_slider3 = slider3;
+  immediate_transition_override = 1;
+):(
+  last_slider2 != slider2 ? (
+    slider3 = slider2 * 16;
+    last_slider2 = slider2;
+    last_slider3 = slider3;
+    immediate_transition_override = 0;
+  );  
+);    
+
+// adjust loop start position when loop length changes
+loop_size = floor(1/2^(slider3/16 - 1)*samples_per_bar);
+(slider5 == 1) && (immediate_transition_override == 0) ? (
+  // loop start point may only be updated at next beat
+  next_loop_trigger_beat_pos = floor(beat_position + 1);
+  next_loop_start = loop_end - loop_size;
+  next_loop_start <0 ? (next_loop_start += buf_size; next_loop_overflow = 1;) : (next_loop_overflow = 0);
+):(
+  // update the loop start position
+  loop_start = loop_end - loop_size;
+  loop_start <0 ? (loop_start += buf_size; loop_overflow = 1;) : (loop_overflow = 0);
+);
+
+// check if repeat switched to ON
+slider1 > last_slider1 ? (
+  slider4 == 0 ? loop_trigger_beat_pos = beat_position 
+    : slider4 == 1 ? loop_trigger_beat_pos = floor(beat_position + 1)
+      : loop_trigger_beat_pos = (floor(beat_position/ts_num) + 1) * ts_num 
+); 
+// check if repeat switched to OFF
+slider1 < last_slider1 ? (
+  play_loop = 0; 
+  immediate_transition_override = 0;
+  slider5 != 0 ? (
+    // revert back to Stepped Mode and set slider 3 to closest stepped length unless transition was set to "Immediately"
+    slider3 = slider2 * 16;
+    last_slider2 = slider2;
+    last_slider3 = slider3;
+  );
+  slider6 ? ( // fade out requested?
+    loop_pos_READ <= loop_end ? (
+      remaining_loop_length = loop_end - loop_pos_READ;
+    ):(
+      remaining_loop_length = buf_size - loop_pos_READ + loop_end;
+    );
+    remaining_loop_length == 0 ? ( // no need for fade out as we are exactly at the loop end
+      fade_vol = 0;
+    ):(
+      fade_step = 1/remaining_loop_length;
+      fade_vol =1;
+    );
+  );        
+); 
+last_slider1 = slider1;
+
+
+@sample
+//------------------------------------------------------------------------------------------------
+// Continously fill the track ring buffer with the audio input
+buf0[buf_pos_WRITE] = spl0; buf1[buf_pos_WRITE] = spl1;
+
+//------------------------------------------------------------------------------------------------
+play_loop ? (  
+  // Copy the max length loop portion (2 bars) of the track ring section to the loop_copy section of the buffer 
+  loop_copied == 0 ? (
+    buf0[loop_copy_offset + loop_pos_COPY] = buf0[loop_pos_COPY];
+    buf1[loop_copy_offset + loop_pos_COPY] = buf1[loop_pos_COPY];
+    loop_pos_COPY += 1; loop_pos_COPY >= buf_size ? loop_pos_COPY = 0;
+    loop_pos_COPY == loop_end ? loop_copied = 1;
+  );
+
+  // check if there is the need to update the loop start position
+  (slider5 == 1) && (immediate_transition_override == 0) ? (
+    loop_start != next_loop_start ? (
+      beat_position >= next_loop_trigger_beat_pos ? (
+        loop_start = next_loop_start;
+        loop_overflow = next_loop_overflow;
+        loop_pos_READ = loop_start;
+      );
+    );
+  );      
+  
+  // play back the loop & mute what is coming from the input channels
+  spl2 = buf0[loop_copied*loop_copy_offset + loop_pos_READ];  spl3 = buf1[loop_copied*loop_copy_offset + loop_pos_READ];
+  Slider7 ? (
+    spl0 = 0; spl1 = 0;
+  ):(
+    spl0 = spl2;  spl1 = spl3;
+  );  
+  
+  // advancing the loop READ position depending on specific settings
+  (slider5 == 2) && (immediate_transition_override == 0) ? (
+    //loop must play till end before READ position may be set to current loop start position
+    loop_pos_READ == loop_end ? (
+      loop_pos_READ = loop_start;
+    ):(
+      loop_pos_READ += 1; loop_pos_READ >= buf_size ? loop_pos_READ = 0;
+    );  
+  ):(
+    // loop READ position moves to (new) start position immediately if it has reached the loop end or if loop length has been shortened while playing
+    loop_pos_READ += 1; loop_pos_READ >= buf_size ? loop_pos_READ = 0;  
+    loop_overflow == 0 ? (
+      (loop_pos_READ > loop_end)||(loop_pos_READ < loop_start) ? loop_pos_READ = loop_start;
+    ):(
+      (loop_pos_READ > loop_end)&&(loop_pos_READ < loop_start) ? loop_pos_READ = loop_start;
+    );
+  ); 
+//------------------------------------------------------------------------------------------------  
+):(
+  // No continuous loop playback from here
+  // check if loop playback requested and we are ready to go
+  slider1 ? (
+    beat_position >= loop_trigger_beat_pos ? (
+      // freeze the loop end point at the current position, set loop start point and flag to play the loop
+      loop_end = buf_pos_WRITE;
+      loop_start = loop_end - loop_size;
+      loop_start <0 ? (loop_start += buf_size; loop_overflow = 1;) : (loop_overflow = 0);
+      next_loop_start = loop_start; next_loop_overflow = loop_overflow;
+      loop_pos_READ = loop_start;
+      loop_pos_COPY = loop_end - 2*samples_per_bar; // start copy at max length that the looping section can have
+      loop_pos_COPY <0 ? loop_pos_COPY += buf_size;
+      loop_copied = 0;
+      play_loop = 1;
+    );
+  );
+
+  // is there a loop fading out?
+  fade_vol > 0 ? (
+    track_X_vol = sqrt(1-fade_vol); loop_X_vol = sqrt(fade_vol); // equal power cross fade
+    spl2 = buf0[loop_copied*loop_copy_offset+loop_pos_READ]*loop_X_vol; spl3 = buf1[loop_copied*loop_copy_offset+loop_pos_READ]*loop_X_vol;
+    slider7 ? (
+      spl0 = spl0*track_X_vol; spl1 = spl1*track_X_vol;
+    ):(
+      spl0 = spl0*track_X_vol + spl2; spl1 = spl1*track_X_vol + spl3;
+    );
+    fade_vol -= fade_step;
+    loop_pos_READ += 1; loop_pos_READ >= buf_size ? loop_pos_READ = 0;
+  );    
+);
+//------------------------------------------------------------------------------------------------  
+
+// Move buffer write position forward
+buf_pos_WRITE += 1; buf_pos_WRITE >= buf_size ? buf_pos_WRITE = 0;
+
+//------------------------------------------------------------------------------------------------
+  
+
+
+
+
+
+

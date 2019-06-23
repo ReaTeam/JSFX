@@ -1,20 +1,8 @@
 # ReaTeam JSFX Repository
 
-Community-maintained collection of JS effects for REAPER
+[![Build status](https://travis-ci.org/ReaTeam/JSFX.svg?branch=master)](https://travis-ci.org/ReaTeam/JSFX)
 
-[![Build Status](https://travis-ci.org/ReaTeam/JSFX.svg?branch=master)](https://travis-ci.org/ReaTeam/JSFX)
-
-## Contributors
-
-The JS effects in this repository were brought to you by these generous people:
-
-- [anomaly](http://forum.cockos.com/member.php?u=6341) (Stige T)
-  ([website](http://sonic.supermaailma.net/plugins))
-- [EpicSounds](http://forum.cockos.com/member.php?u=15127) (The REAPER Blog/Jon Tidey)
-  ([website](http://reaperblog.net/))
-- [mschnell](http://forum.cockos.com/member.php?u=60721) (Michael Schnell)
-- [Smashed Transistors](http://forum.cockos.com/member.php?u=92538) (TiaR)
-- [Time Waster](http://forum.cockos.com/member.php?u=63705) (Malcolm Smith)
+Community-maintained collection of JS effects for REAPER.
 
 ## Installation
 
@@ -26,10 +14,6 @@ https://github.com/ReaTeam/JSFX/raw/master/index.xml
 
 ## Contributing
 
-Check out the [package examples](https://github.com/cfillion/reapack-index/wiki/Examples) and
-reapack-index's [packaging documentation](https://github.com/cfillion/reapack-index/wiki/Packaging-Documentation).
+Use <https://reapack.com/upload/jsfx> to upload your JS effects on this repository.
 
-1. [Create](https://github.com/ReaTeam/JSFX/new/master) a file for your effect named `Category Name/username_Name of the Effect.jsfx`
-2. Click on "Propose new file" and create a Pull Request
-3. Wait for a team member to validate the request (it should be quick)
-4. If everything is ok... it's done!
+Have a question? Come discuss in the [development thread](https://forum.cockos.com/showthread.php?t=169127).

@@ -1,0 +1,64 @@
+desc:Time Delay by Distance
+author: Corey Scogin
+version: 1.0
+tags: utility, time, adjustment
+author: Corey Scogin
+about:
+  # Time Delay by Distance
+  ---
+  ## Description
+  Delays a stereo or mono track by distance based on the approximate speed of sound through air at room temperature.
+  This is a rough approximation of the speed of sound and should be pretty close enough for normal recording conditions.
+  ## Instructions
+  - Select your preferred units.
+  - Set the distance to delay the audio.
+changelog:
+  initial release
+
+// UI Controls
+slider1:units=0<0,3,1{inches,feet,centimeters,meters}>Units
+slider2:stereo_delay=0<0,120,1>Delay (Stereo) 
+slider3:left_delay=0<0,120,1>Delay (Left) 
+slider4:right_delay=0<0,120,1>Delay (Right) 
+
+in_pin:Left input
+in_pin:Right input
+out_pin:Left output
+out_pin:Right output
+
+@init
+    // Speed of sound at room temperature, ~70 degrees
+    SPEED_OF_SOUND_INPS = 13543;    // in/s
+    SPEED_OF_SOUND_FPS  = 1128.6;   // ft/s
+    SPEED_OF_SOUND_CMPS = 34400;    // cm/s
+    SPEED_OF_SOUND_MPS  = 344;      // m/s
+
+@slider
+    SPEED_OF_SOUND = (
+        units == 0 ? SPEED_OF_SOUND_INPS : 
+        units == 1 ? SPEED_OF_SOUND_FPS : 
+        units == 2 ? SPEED_OF_SOUND_CMPS : 
+        units == 3 ? SPEED_OF_SOUND_MPS 
+    );
+
+    // Set buffer lengths
+    bufLenL = floor((stereo_delay + left_delay) / SPEED_OF_SOUND * srate);
+    bufLenR = floor((stereo_delay + right_delay) / SPEED_OF_SOUND * srate) + bufLenL + 1; // Right buffer position starts at end of Left buffer position
+
+@sample
+    // Left
+    LPntr[0] = spl0 ;               // store sample in buffer at pointer position
+    LPntr += 1 ;                    // increment buffer pointer
+    LPntr >= bufLenL ? LPntr = 0;   // loop buffer pointer if at end
+
+    // Right
+    RPntr[0] = spl1 ;                 
+    RPntr += 1 ;
+    RPntr >= bufLenR ? RPntr = bufLenL + 1;
+
+    // Set output sample value to next pointer position (end of buffer)
+    spl0 = LPntr[0] ; 
+    spl1 = RPntr[0] ;
+
+// Possible future modifications:
+//  -temperature control

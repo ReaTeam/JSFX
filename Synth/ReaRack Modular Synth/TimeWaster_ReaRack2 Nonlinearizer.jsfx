@@ -1,10 +1,12 @@
+version: 0.4.1
 desc:ReaRack2 - Nonlinearizer
 noindex:   true
 author:    Malcolm Smith
            Copyright(C) 2018 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
            License: LGPL - http://www.gnu.org/licenses/lgpl.html
 
-changelog: Version 0.4.0 (9/02/2018) Improved output CC values.
+changelog: Version 0.4.1 (9/05/2018) fxn  number updated.
+           Version 0.4.0 (9/02/2018) Improved output CC values.
            Version 0.3.0 (8/02/2018) Fixed a bug which output incorrect CC values.
            Version 0.2.0 (8/02/2018) Added code to prevent multiple sends of unchanged CC values.
                                      Fixed a bug preventing messages being passed through when not processed.
@@ -33,9 +35,13 @@ function mousetarget(mx,my,xrange,yrange)
   mouse_x >= mx - xrange/2 && mouse_x <= mx + xrange/2 && mouse_y >= my - yrange/2 && mouse_y <= my + yrange/2 ? 1:0;
 );
 
-fxn = 310;
+fxn = 320;
 prepx = 1;
 pts = 500;
+sp0x = sp0;
+sp1xx = sp1x;
+sp1yy = sp1y;
+sp2x = sp2;
 
 @slider
 
@@ -266,11 +272,13 @@ status == $x80 || status == $x90  && sinput == 1 ?
 
 @gfx 400 400
 xscl = 300;
-xmin = 80;
+xmin = 50;
 xmax = xmin+xscl;
 yscl = 300;
-ymin = 25;
+ymin = 50;
 ymax = ymin+yscl;
+pdx = (mouse_x-mouse_x_pre)/xscl;
+pdy = (mouse_y-mouse_y_pre)/yscl;
 
 align = gfx_getchar(97);
 
@@ -284,12 +292,10 @@ gp2y = ymax - (p2*xscl);
 gx = xmin + (x*xscl);
 gy = ymax - (y*yscl);
 
-//scurve == 0 ?
-//( // Start Bezier curve option.
 // Get user input.
 
 // Is the mouse in the p1 target area and is the mouse button down?
-mousetarget(gp1x,gp1y,6,6) == 1 && mouse_cap == 1 && p0_on == 0 && p1_on == 0 && p2_on == 0?
+mousetarget(gp1x,gp1y,20,20) == 1 && mouse_cap == 1 && p0_on == 0 && p1_on == 0 && p2_on == 0?
 (
 p1_on = 1;
 p1_time1 = p1_time2;
@@ -297,11 +303,11 @@ time_precise(p1_time2);
 );
 
 // Test for double click.
-p1_time2 - p1_time1 > 0.1 && p1_time2 - p1_time1 < 0.5 && p1_on == 1 ?
+p1_time2 - p1_time1 > samplesblock/srate && p1_time2 - p1_time1 < 0.3 && p1_on == 1 && dclick == 0 ?
 // If double click, reset the control point.
 (
-sp1x = 0.5;
-sp1y = 0.5;
+sp1x = sp1xx = 0.5;
+sp1y = sp1yy = 0.5;
 slidermove = 1;
 p1_on = 0;
 p1x_pre = sp1x;
@@ -311,8 +317,8 @@ p1y_pre = sp1y;
 // If not a double click, move the control point.
 p1_on == 1?
 (
-sp1xx = (mouse_x-(xmin+(p0*xscl)))/(xscl*(p2-p0));
-sp1yy = ((ymax-(p0*xscl))-mouse_y)/(yscl*(p2-p0));
+sp1xx += pdx;
+sp1yy -= pdy;
 align == 1 ?
 (
 dp1xx = sp1xx - p1x_pre;
@@ -345,7 +351,7 @@ mouse_cap != 1 ?
 );
 
 // Is the mouse in the p0 target area and is the mouse button down?
-mousetarget(gp0x,gp0y,6,6) == 1 && mouse_cap == 1 && p0_on == 0 && p1_on == 0 && p2_on == 0 ?
+mousetarget(gp0x,gp0y,20,20) == 1 && mouse_cap == 1 && p0_on == 0 && p1_on == 0 && p2_on == 0 ?
 (
 p0_on = 1;
 p0_time1 = p0_time2;
@@ -353,7 +359,7 @@ time_precise(p0_time2);
 );
 
 // Test for double click.
-p0_time2 - p0_time1 > 0.1 && p0_time2 - p0_time1 < 0.5 && p0_on == 1 ?
+p0_time2 - p0_time1 > samplesblock/srate && p0_time2 - p0_time1 < 0.3 && p0_on == 1 && dclick == 0 ?
 // If double click, toggle the end state.
 (
 ends == 0 ? ends = 3:
@@ -361,13 +367,14 @@ ends == 1 ? ends = 2:
 ends == 2 ? ends = 1:
 ends == 3 ? ends = 0;
 slidermove = 1;
+dclick = 1;
 p0_on = 0;
 );
 
 // If not a double-click, move limit point 0.
-p0_on == 1?
+p0_on == 1 ?
 (
-sp0x = (mouse_x-xmin)/xscl;
+sp0x += pdx;
 sp0x < 0 ? sp0x = 0;
 sp0x > 1 ? sp0x = 1;
 sp0 = sp0x;
@@ -379,7 +386,7 @@ mouse_cap != 1 ?
 );
 
 // Is the mouse in the p2 target area and is the mouse button down?
-mousetarget(gp2x,gp2y,6,6) == 1 && mouse_cap == 1 && p0_on == 0 && p1_on == 0 && p2_on == 0 ?
+mousetarget(gp2x,gp2y,20,20) == 1 && mouse_cap == 1 && p0_on == 0 && p1_on == 0 && p2_on == 0 ?
 (
 p2_on = 1;
 p2_time1 = p2_time2;
@@ -387,7 +394,7 @@ time_precise(p2_time2);
 );
 
 // Test for double click.
-p2_time2 - p2_time1 > 0.1 && p2_time2 - p2_time1 < 0.5 && p2_on == 1 ?
+p2_time2 - p2_time1 > samplesblock/srate && p2_time2 - p2_time1 < 0.3 && p2_on == 1 && dclick == 0 ?
 // If double click, toggle the end state.
 (
 ends == 0 ? ends = 2:
@@ -395,13 +402,14 @@ ends == 1 ? ends = 3:
 ends == 2 ? ends = 0:
 ends == 3 ? ends = 1;
 slidermove = 1;
+dclick = 1;
 p2_on = 0;
 );
 
 // If not a double-click, move limit point 2.
 p2_on == 1?
 (
-sp2x = (mouse_x-xmin)/xscl;
+sp2x += pdx;
 sp2x < 0 ? sp2x = 0;
 sp2x > 1 ? sp2x = 1;
 sp2 = sp2x;
@@ -411,6 +419,7 @@ mouse_cap != 1 ?
   p2_on = 0;
   );
 );
+mouse_cap != 1 ? dclick = 0;
 // End get user input.
 
 // Draw graphics.
@@ -420,14 +429,28 @@ gfx_r = 0.5;
 gfx_g = 0.5;
 gfx_b = 0.5;
 gfx_x = gx;
-gfx_y = ymax;
+gfx_y = ymin-25;
+gfx_lineto(gx,ymin-13);
+gfx_lineto(gx+3,ymin-13);
+gfx_lineto(gx,ymin);
+gfx_lineto(gx-3,ymin-13);
+gfx_lineto(gx,ymin-13);
+gfx_x = gx;
+gfx_y = ymin;
 gfx_lineto(gx,gy);
-gfx_lineto(xmin,gy);
+gfx_lineto(xmax+12,gy);
+gfx_lineto(xmax+12,gy-3);
+gfx_lineto(xmax+25,gy);
+gfx_lineto(xmax+12,gy+3);
+gfx_lineto(xmax+12,gy);
 
+// Boundary
 gfx_x = xmin;
 gfx_y = ymin;
 gfx_lineto(xmin,ymax);
 gfx_lineto(xmax,ymax);
+gfx_lineto(xmax,ymin);
+gfx_lineto(xmin,ymin);
 
 // Orthogonal alignment lines
 align == 1 ?
@@ -442,10 +465,12 @@ gfx_lineto(xmax,gfx_y);
 
 // Axis labels
 gfx_x = xmin+(xscl/2)-20;
-gfx_y = ymax+15;
+//gfx_x = gx - 8;
+gfx_y = ymin-35;
 gfx_drawstr("Input"); // Input label
-gfx_x = xmin-60;
+gfx_x = xmax+26;
 gfx_y = ymin+(yscl/2)+2;
+//gfx_y = gy - 3;
 gfx_drawstr("Output"); // Output label
 
 // Lower end
@@ -548,18 +573,15 @@ gfx_y = ymax+4;
 gfx_drawnumber(0,0); // Origin point
 sinput > 1 ?
 (
-gfx_x = xmin-10;
-gfx_y = ymin-2;
+gfx_x = xmax+4;
+gfx_y = ymin-10;
 gfx_drawnumber(1,0); // Output max - CC
-gfx_x = xmax-2;
-gfx_y = ymax+4;
-gfx_drawnumber(1,0) // Input max - CC
 ):
 (
-gfx_x = xmin-26;
-gfx_y = ymin-2;
+gfx_x = xmax+4;
+gfx_y = ymin-10;
 gfx_drawnumber(127,0); // Output max - Note
-gfx_x = xmax-12;
-gfx_y = ymax+4;
-gfx_drawnumber(127,0) // Input max - Note
 );
+// Record base point for point adjustment
+mouse_x_pre = mouse_x;
+mouse_y_pre = mouse_y;

@@ -1,20 +1,21 @@
 desc: ReaRack Modular Synth
 author: Malcolm Smith
-version: 2.2.1
-changelog:
-  Version 2.2.1 - 25/02/2018 Updated the Poly Splitter module to accept note-on with velocity = 0 as note-off.
+version: 2.3.6
+changelog: Bug Fix in Amplifier module.
 about:
   # ReaRack Modular Synth
-  ReaRack is a modular MIDI controlled digital synth system. There are currently 18 modules-
+  ReaRack is a modular MIDI controlled digital synth system. There are currently 20 modules-
   Oscillator - Trapezoidal
   Oscillator - Twin-Saw
   Oscillator - Additive
   Oscillator - Noise
   LFO
   Envelope Generator
+  Envelope Multi-Tool
   Filter
   Filter - Moog 24 db
-  CC mixer
+  Amplifier
+  MIDI mixer
   Trigger
   Key Follower
   Poly Splitter

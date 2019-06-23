@@ -1,0 +1,2064 @@
+version: 1.02
+desc:ReaRack2 - Envelope Multi-Tool
+noindex:   true
+author:    Malcolm Smith
+           Copyright(C) 2018 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
+           License: LGPL - http://www.gnu.org/licenses/lgpl.html
+changelog: Version 1.02 (9/03/2019) Fixed a bug preventing the envelope end value from being reached in some situations.
+           Version 1.01 (1/09/2018) Fixed a bug causing stage Bezier curve to function incorrectly.
+           Version 1.00 (30/07/2018) Initial working release.
+           Version 0.90 (13/07/2018) Beta release.
+
+about:     The Envelope Multi-Tool is a 1 to 16 stage envelope generator/LFO/step sequencer.
+           Output can be either MIDI CC or MIDI Note on/off messages.
+
+           In the envelope definition area:
+           Click and drag the grey tag on the right hand end to change the number of stages.
+           If adding stages, hold down the shift key while dragging the tag to give all new stages
+           the same curve type as the initial end stage.
+           
+           In either the envelope definition or the envelope output areas:
+           Click in a stage box to make it the active stage.
+           
+           In either the envelope definition, the envelope output areas, or the stage definition area:
+           Double click in the active stage box to toggle between curve and step modes.
+
+           In the stage definition area:
+           Click and drag the red, green, grey or yellow control points to control the shape of the
+           envelope stage curve.
+           Double click a red curve end point to make it the sustain point
+           (except in a loop trigger mode or single pass).
+           Double click the green middle control point to straighten the curve.
+           Hold down the ctrl/command key for fine movement of control points.
+           
+           
+slider1:sinput=0<0,65,1{Off,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv}>Input
+slider2:soutput=22<0,66,1{MIDI Note - Absolute,MIDI Note - Relative,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv}>Output
+slider3:schanout=1<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Output Channel
+slider5:vsens=1<0,1,0.001>Velocity Sensitivity
+slider9:stbase=0<0,1,1{Seconds,Beats}>Time Unit
+slider7:trigmode=0<0,7,1{Re-trigger from start value,Re-trigger from last value,Legato - Re-trigger from start value,Legato - Re-trigger from last value,Latch trigger,Triggered single pass - no sustain,Loop - Triggered,Loop - Latch triggered,Loop - Continuous}>Trigger Mode
+slider11:stglen=0<0,11,1{Stage Length - active stage,Stage Lengths - all equal,Stage Length - active stage proportional,Envelope Length,Note Length - active stage,Note Lengths - all equal,Note Lengths - all proportional,Velocity - active stage,Velocity - all equal,Stage End Point Level,Root Note,Minimum Stage Length all stages}>Control
+slider12:stglc=4<0,19,1{1/16 time units,1/8 time units,1/4 time units,1/2 time units,1 time unit,2 time units,4 time units,8 time units,16 time units,32 time units,64 time units,128 time units,256 time units,512 time units,active stage length,minimum stage length,127,1,12 (chromatic note number),1 millisecond>Control Unit
+slider13:stglf=1<0,1,0.001>Control Multiplier
+slider14:mrange=0<0,1,0.001>Control Modulation Range
+slider18:sclass=0<0,4,1{None,Master,Slave,Chain link,Chain looper}>Class
+slider19:sgroup=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Class Group or Chain Position
+
+options:gmem=ReaRack
+
+in_pin:none
+out_pin:none
+
+@init
+fxn = 350;      // Global memory index.
+prepx = 1;      // Initial Bezier interpolation previous point value.
+vel = 1;        // Set initial velocity to highest value.
+tlm = 5;        // Start point for 'trigmode' loop options,
+pts = 50;       // Number of points on Bezier curve.
+gmem[fxn+24] = -1;  // Set the follower trigger value.
+// Local Memory indices..............
+// Stage start/end control point y values stored in slots 0 to 17.
+mpx = 17;                // Mid control point x values.
+mpy = mpx+16;            // Mid control point y values.
+mp01x = mpy+16;          // First intermediate control point x values.
+mp01y = mp01x+16;        // First intermediate control point y values.
+mp12x = mp01y+16;        // Second intermediate control point x values.
+mp12y = mp12x+16;        // Second intermediate control point y values.
+mcurve = mp12y+16;       // Curve type for each stage.
+mcc = mcurve+16;         // Modulating CC number for each control.
+mcci = mcc+90;          // Modulation CC recieved values.
+mmod = mcci+130;         // Moduation multipliers.
+mstat = mmod+130;        // Control slider raw vaules.
+mrng = mstat+90;        // Modulation range slider vaules.
+mstglst = mrng+90;      // Static stage length values, in samples.
+mstgl = mstglst+20;      // Modulated stage length values, in samples.
+mstgstrt = mstgl+20;     // Modulated stage start points. Incudes end point, so 17 points in total.
+mnotelst = mstgstrt+20;  // Static stage note lengths.
+mnotel = mnotelst+20;    // Modulated stage note lengths.
+mvelst = mnotel+20;      // Static stage velocity values.
+mvel = mvelst+20;        // Modulated stage velocity values.
+mr0 = mvel+20;           // Bezier mid point level ratio for active stage.
+mr1 = mr0+20;            // Bezier mid point level ratio for active stage + 1.
+myst = mr1+20;           // Modulated end point (p2) values.
+mbezx = myst+20;         // Bezier x points for graphics.
+mbezy = mbezx+17*pts;    // Bezier y points for graphics.
+mbezox = mbezy+17*pts;   // Bezier x points for calculation of output.
+mbezoy = mbezox+17*pts;  // Bezier y points for calculation of output.
+mend = mbezoy+17*pts;    // End of stored memeory.         
+mend[1] = "C";
+mend[2] = "C#";
+mend[3] = "D";
+mend[4] = "D#";
+mend[5] = "E";
+mend[6] = "F";
+mend[7] = "F#";
+mend[8] = "G";
+mend[9] = "G#";
+mend[10] = "A";
+mend[11] = "A#";
+mend[12] = "B";
+scalepos = mend+12;
+scalepos[1]  = "1";
+scalepos[2]  = "1#";
+scalepos[3]  = "2";
+scalepos[4]  = "2#";
+scalepos[5]  = "3";
+scalepos[6]  = "4";
+scalepos[7]  = "4#";
+scalepos[8]  = "5";
+scalepos[9]  = "5#";
+scalepos[10] = "6";
+scalepos[11] = "6#";
+scalepos[12] = "7";
+ci = scalepos+13; // Control CC index
+ci[0] = 0;
+ci[1] = 16;
+ci[2] = 17;
+ci[3] = 33;
+ci[4] = 34;
+ci[5] = 50;
+ci[6] = 51;
+ci[7] = 52;
+ci[8] = 68;
+ci[9] = 69;
+ct = ci+10; // Control type (stage dependant or all equal).
+ct[0] = 0;
+ct[1] = 1;
+ct[2] = 0;
+ct[3] = 1;
+ct[4] = 0;
+ct[5] = 1;
+ct[6] = 1;
+ct[7] = 0;
+ct[8] = 1;
+ct[9] = 0;
+
+file_var(0,used) == 0? // If a new instance, set defaults.
+(
+stages = 3;
+stg = 2;
+sus = 2;
+root = 1;
+
+// Set stage start and end point y values for first three stages.
+0[0] = myst[0] = 0;
+0[1] = myst[1] = 1;
+0[2] = myst[2] = 0.5;
+0[3] = myst[3] = 0;
+
+// Set curve mid point y values for first three stages.
+0[33] = 1;
+0[34] = 0.6;
+0[35] = 0.1;
+
+// Set curve mid point x values for all stages.
+i = 17;
+while(i <= 32)
+(
+0[i] = 0.5;
+i += 1;
+);
+
+i = 1;
+loop(16,
+i[mvelst] = 96; // Set initial velocity value.
+i[mnotelst] = 0.75; // Set initial note length value.
+i += 1;
+);
+
+i = 1;
+loop(89,
+i[mcc] = -1; // Set the initial modulation CCs to 'Off'
+i += 1;
+);
+
+i = 1;
+loop(16, // Set the p1 ratio values.
+i[mr0] = (i[mpy]-i[-1])/(i[0]-i[-1]);
+i[mr1] = (i[mpy+1]-i[1])/(i[0]-i[1]);
+i += 1;
+);
+
+stglf = 0.75;
+stgl_min_sec = 0.00025; // Minimun stage length in seconds.
+stgl_min = ceil(srate*stgl_min_sec); // Minimun stage length in samples.
+e_end = 1.5*srate;
+
+1[mcurve] = 1; // Set the first stage to a step curve.
+): // If an existing instance, read saved values.
+(
+file_var(0,e_end);
+file_var(0,stages);
+file_var(0,stg);
+file_var(0,sus);
+file_var(0,splbase);
+file_var(0,scurve);
+file_var(0,stgl_min_sec);
+file_mem(0,0,mend);
+pre_stglen_slider = stglen;
+);
+
+function mouse_target(mx,my,xrange,yrange,block) // 'block' is used to test whether any other node points are currently 'on'.
+(
+  mouse_x >= mx - xrange/2 && mouse_x <= mx + xrange/2 && mouse_y >= my - yrange/2 && mouse_y <= my + yrange/2 ? fin=1:fin=0;
+  fin == 1 && block == 0 && (mouse_cap == 1 || (mouse_cap == 5 || mouse_cap == 9)) ?
+  (
+  this.on = 1;
+  time1 = time2;
+  time_precise(time2);
+  time2 - time1 > samplesblock/srate && time2 - time1 < 0.3 ? this.dbl_clk = 1 : this.dbl_clk = 0;
+  ):this.on = 0;
+);
+
+function bezier_calc(x_index,y_index,stg_index,points,p0x,p0y,p1x,p1y,p2x,p2y)
+(
+pt  = 0;
+while(pt < points)
+  (
+  ptr = pt/points;
+  pt[x_index+(stg_index-1)*points] = ((1-ptr)^2*p0x)+(2*ptr*(1-ptr)*p1x)+(ptr^2*p2x); //ptx
+  pt[y_index+(stg_index-1)*points] = ((1-ptr)^2*p0y)+(2*ptr*(1-ptr)*p1y)+(ptr^2*p2y); //pty
+  pt += 1;
+  );
+);
+
+function bezier_calc(x_index,y_index,stg_index,points,p0x,p0y,p1x,p1y,p2x,p2y)
+(
+pt  = 0;
+while(pt <= points)
+  (
+  ptr = pt/(points-1);
+  pt[x_index+(stg_index-1)*points] = ((1-ptr)^2*p0x)+(2*ptr*(1-ptr)*p1x)+(ptr^2*p2x); //ptx
+  pt[y_index+(stg_index-1)*points] = ((1-ptr)^2*p0y)+(2*ptr*(1-ptr)*p1y)+(ptr^2*p2y); //pty
+  pt += 1;
+  );
+);
+
+function midi_out()
+(
+soutput >= 2 ?
+(
+  ccnval = y_out * 127.9921875; 
+  ccnvalmsb = floor(ccnval);
+  ccnvallsb = floor((ccnval-ccnvalmsb)*128);
+  chanout == -1 ?
+    (
+    n = 0;
+    loop(16,
+      pre_ccnvalmsb != ccnvalmsb ? midisend(count,$xB0+n,ccoutmsb,ccnvalmsb);
+      pre_ccnvallsb != ccnvallsb ? midisend(count,$xB0+n,ccoutlsb,ccnvallsb);
+      n += 1;
+      );
+    ):
+  pre_ccnvalmsb != ccnvalmsb ? midisend(count,$xB0+chanout,ccoutmsb,ccnvalmsb);
+  pre_ccnvallsb != ccnvallsb ? midisend(count,$xB0+chanout,ccoutlsb,ccnvallsb);
+  pre_ccnvalmsb = ccnvalmsb;
+  pre_ccnvallsb = ccnvallsb;
+):
+(
+x >= xstg[mstgstrt] && x <= xstg[mstgstrt]+xstg[mnotel]*xstg[mstgl] ?
+  (
+  pre_n_out != n_out ?
+    (
+    pre_n_off != pre_n_out ? // Send a note off for the previous note
+      (
+      chanout == -1 ?
+        (
+        n = 0;
+        loop(16,
+          midisend(count,$x80+n,pre_n_out);
+          n += 1;
+          );
+        ):
+        midisend(count,$x80+chanout,pre_n_out);
+        pre_n_off = pre_n_out;
+      );
+    chanout == -1 ?
+    (
+      n = 0;
+      loop(16,
+        midisend(count+1,$x90+n,n_out,xstg[mvel]);
+        n += 1;
+        );
+      ):
+      midisend(count+1,$x90+chanout,n_out,xstg[mvel]);
+      pre_n_out = n_out;;
+    );
+  );
+x > xstg[mstgstrt]+xstg[mnotel]*xstg[mstgl] && pre_n_off != pre_n_out ?
+  (
+  chanout == -1 ?
+    (
+    n = 0;
+    loop(16,
+      midisend(count,$x80+n,pre_n_out);
+      n += 1;
+      );
+    ):
+  midisend(count,$x80+chanout,pre_n_out);
+  pre_n_off = pre_n_out;
+  );
+);
+);
+
+update = 1;
+
+@slider
+used == 1 ?
+(
+stg[mcurve] = scurve; // Curve type for active stage
+
+// Read control slider values when control target changes.............
+//.......................................................................
+pre_stglen_slider >= 3 && stglen < 3 ? // Get stage length slider values
+(
+stglc = 0;
+stglf = stg[mstglst]/(2^(stglc-4)*splbase);
+while(stglf > 1)
+  (
+  stglc += 1;
+  stglf = stg[mstglst]/(2^(stglc-4)*splbase);
+  );
+);
+pre_stglen_slider < 3 && stglen < 3 ? // Limit control unit slider
+stglc > 9 ? stglc = 9;
+//.......................................................................
+pre_stglen_slider != 3 && stglen == 3 ? // Get envelope length slider values
+(
+stglc = 0;
+stglf = e_end /(2^(stglc-4)*splbase);
+stglf > 1 ?
+(
+while(stglf > 1)
+  (
+  stglc += 1;
+  stglf = e_end /(2^(stglc-4)*splbase);
+  );
+);
+);
+pre_stglen_slider == 3 && stglen == 3 ? // Limit control unit slider
+stglc > 13 ? stglc = 13;
+//.......................................................................
+pre_stglen_slider != 4 && stglen == 4 ? // Get note length slider values
+(
+stglc = 14;
+stglf = stg[mnotelst];
+);
+stglen == 4 && stglc != 14 ? stglc = 14;
+
+pre_stglen_slider != 5 && stglen == 5 ? // Get note length slider values
+(
+stglc = 15;
+stglf = stg[mnotelst];
+);
+stglen == 5 && stglc != 15 ? stglc = 15;
+
+pre_stglen_slider != 6 && stglen == 6 ? // Get note length slider values
+(
+stglc = 14;
+stglf = stg[mnotelst];
+);
+stglen == 6 && stglc != 14 ? stglc = 14;
+
+pre_stglen_slider != 7 && stglen == 7 ? // Get velocity slider values
+(
+stglc = 16;
+stglf = stg[mvelst]/127;
+);
+stglen == 7 && stglc != 16 ? stglc = 16;
+
+pre_stglen_slider != 8 && stglen == 8 ? // Get velocity slider values
+(
+stglc = 16;
+stglf = stg[mvelst]/127;
+);
+stglen == 8 && stglc != 16 ? stglc = 16;
+
+pre_stglen_slider != 9 && stglen == 9 ? // Get stage end point values
+(
+soutput < 2 ? stglc = 16:stglc = 17;
+stglf = stg[myst];
+);
+stglen == 9 && soutput < 2 && stglc != 16 ? stglc = 16;
+stglen == 9 && soutput >= 2 && stglc != 17 ? stglc = 17;
+
+pre_stglen_slider != 10 && stglen == 10 ? // Get Root note value
+(
+stglc = 18;
+stglf = (root-1)/11;
+);
+stglen == 10 && stglc != 18 ? stglc = 18;
+
+pre_stglen_slider != 11 && stglen == 11 ? // Get min stage length value
+(
+stglc = 19;
+stglf = stgl_min_sec*1000;
+);
+stglen == 11 && stglc != 19 ? stglc = 19;
+
+//.......................................................................
+cix = ci[stglen]+(ct[stglen] == 0 ? stg:1); // Calculate the index to the control value slot.
+cix[mstat] = stglf;
+
+// Update modulation range sliders.
+// Test conditions.......................................................
+stglen > 9 ? mrange = 0:
+(
+mrange_pre = cix[mrng];
+pre_stglen_slider !=  stglen ? mrange = cix[mrng];
+mrange != mrange_pre ?
+// Change modulation range slider........................................
+(
+cix[mrng] = mrange; // Store the modulation value.
+);
+);
+
+// Update modulation CC input sliders.
+// Test conditions.......................................................
+stglen > 9 ? sinput = 0:
+(
+sinput_pre = cix[mcc] <= 31 ? cix[mcc]+1:cix[mcc]-31;
+pre_stglen_slider !=  stglen ?
+(
+sinput = cix[mcc] <= 31 ? cix[mcc]+1:cix[mcc]-31;
+);
+sinput != sinput_pre ?
+// Change Input CC slider..................................................
+(
+cix[mcc] = sinput <= 32 ? sinput-1:sinput+31; // Store the CC value.
+cix < 17 ? 17[mcc] = (cix+17)[mcc] = 34[mcc] = -1; // If stage length independant...
+cix == 17 ? // If stage length all equal...
+(
+i = 1;
+while(i <= 34)
+  (
+  i[mcc] = -1;
+  i += 1;
+  i == 17 ? i += 1;
+  );
+);
+cix >= 18 && cix < 34 ? 17[mcc] = (cix-17)[mcc] = 34[mcc] = -1; // If stage length all proportional...
+cix == 34 ? // If envelope length...
+(
+i = 1;
+while(i <= 33)
+  (
+  i[mcc] = -1;
+  i += 1;
+  );
+);
+cix >= 35 && cix < 51 ? 51[mcc] = 52[mcc] = -1; // If note length independant...
+cix == 51 ? // If note length all equal...
+(
+i = 35;
+while(i <= 52)
+  (
+  i[mcc] = -1;
+  i += 1;
+  i == 51 ? i += 1;
+  );
+);
+cix == 52 ? // If note length all proportional...
+(
+i = 35;
+while(i <= 51)
+  (
+  i[mcc] = -1;
+  i += 1;
+  );
+);
+cix >= 53 && cix < 69 ? 69[mcc] = -1; // If velocity independant...
+cix == 69 ? // If velocity all equal...
+(
+i = 53;
+while(i <= 68)
+  (
+  i[mcc] = -1;
+  i += 1;
+  );
+);
+
+sinput = cix[mcc] <= 31 ? cix[mcc]+1:cix[mcc]-31; // Set the modulation slider for the current stage and control.
+);
+);
+
+// Change control values............................................
+stglen == 0 ? // Stage length - independant
+(
+new_stglen = 2^(stglc-4)*stglf*splbase; // Stage length, in samples, for active stage
+new_stglen < stgl_min ? (new_stglen = stgl_min;stglf = new_stglen/(2^(stglc-4)*splbase));
+stg[mstglst] = new_stglen;
+update_param = 1;
+);
+
+stglen == 1 ? // Stage length - all equal
+(
+new_stglen = 2^(stglc-4)*stglf*splbase; // Stage length, in samples, for active stage
+new_stglen < stgl_min ? (new_stglen = stgl_min;stglf = new_stglen/(2^(stglc-4)*splbase));
+i=1;
+loop(16,
+  i[mstglst] = new_stglen;
+  i += 1;
+  );
+update_param = 1;
+);
+
+stglen == 2 ? // Stage length - proportional
+(
+pre_stglen = stg[mstglst];
+new_stglen = 2^(stglc-4)*stglf*splbase; // Stage length, in samples, for active stage
+new_stglen < stgl_min ? (new_stglen = stgl_min;stglf = new_stglen/(2^(stglc-4)*splbase));
+stg_ratio = (e_end-new_stglen)/(e_end-pre_stglen);
+i=1;
+loop(16,
+  i == stg ? i[mstglst] = new_stglen:
+  i[mstglst] *= stg_ratio;
+  i[mstglst] < 1  ? i[mstglst] = 1 ;
+  i += 1;
+  );
+update_param = 1;
+);
+
+stglen < 3?
+(
+i=1;
+e_end_stat = 0;
+while(i <= stages)
+  (
+  e_end_stat += i[mstglst]; // Update start offset, in samples, for each stage
+  i += 1;
+  );
+);
+
+stglen == 3 ? // Envelope length
+(
+env_lenc = stglc;
+env_lenf = stglf;
+new_e_end = 2^(stglc-4)*stglf*splbase; // Stage length, in samples, for active stage
+new_e_end < stgl_min ? new_e_end = stgl_min;
+env_ratio = new_e_end/e_end_stat;
+e_end_stat = new_e_end;
+i=1;
+loop(16,
+  i[mstglst] *= env_ratio;
+  i[mstglst] < 1 ? i[mstglst] = 1 ;
+  i += 1;
+  );
+i=2;
+loop(16,
+  i[mstgstrt] = i[mstgstrt-1] + i[mstglst-1]; // Update start offset, in samples, for each stage
+  i += 1;
+  );
+update_param = 1;
+);
+
+stglen == 4 ? // Note length - Individual
+notel != stglf ?
+(
+stg[mnotelst] = stglf;
+update_param = 1;
+);
+
+stglen == 5 ? // Note length - Equal
+notel != stglf ?
+(
+min_stgl = min(1[mstglst],2[mstglst]);
+i=3;
+loop(13,
+  min_stgl = min(min_stgl,i[mstglst]);
+  i+=1;
+  );
+i=1;
+loop(stages,
+  i[mnotelst] = (min_stgl/i[mstglst])*stglf;
+  i+=1;
+  );
+update_param = 1;
+);
+
+stglen == 6 ? // Note length - Proportional
+notel != stglf ?
+(
+notel = stglf;
+i=1;
+loop(16,
+  i[mnotelst] = notel;
+  i+=1;
+  );
+update_param = 1;
+);
+
+stglen == 7 ? // Velocity - Individual
+(
+stg[mvelst] != stglf*127 ?
+stg[mvelst] = floor(stglf*127);
+update_param = 1;
+);
+
+stglen == 8 ? // Velocity - All stages
+(
+glovel = floor(stglf*127);
+i=1;
+loop(16,
+  i[mvelst] = glovel;
+  i+=1;
+  );
+update_param = 1;
+);
+
+stglen == 9 ? // Stage end point (p2) level
+(
+stg[myst] = stglf;
+update_param = 1;
+);
+
+stglen == 10 ? // Root note
+(
+root = floor(stglf*11)+1;
+);
+stglen == 11 ? // Minimum stage length - All stages
+(
+stgl_min_sec = stglf*0.001; // At most 1 millisecond
+stgl_min_sec < 0.00002 ? stgl_min_sec = 0.00002; // At least one sample
+stgl_min = ceil(srate*stgl_min_sec); // Minimun stage length in samples.
+);
+
+trigmode != trig_pre? // If the trigger mode changes, reset the envelope.
+(
+x = 1;
+y = 0;
+xstg = 1;
+envon = 0;
+trigmode >= tlm && 0[0] != 0[stages] ? // If the triggermode changes to a loop mode
+  (                                    // and the start and end points are not equal,
+  0[stages] = 0[0];                    // shift the end point to the same value
+  );                                   // as the start point.
+trig_pre = trigmode;
+);
+
+);
+// CC numbers.
+ccoutmsb = soutput <= 31+2 ? soutput-2:soutput-2+32;
+ccoutlsb = ccoutmsb+32;
+chanout  = schanout-1;
+
+update = 1; // Update the graphics
+//*/
+pre_stglen_slider = stglen;
+sinput_pre = sinput;
+//stg_pre = stg;
+slidermove = 1;
+
+@block
+scount = 0; // Reset the sample counter.
+
+trigmode == 8 ? envon = 1; // If continuous loop mode, skip note detection
+
+sclass < 3 || sgroup < 1?
+// Start MIDI message detection
+(
+while(midirecv(offsetin, msg1, msg2, msg3))
+  (
+  // Extract message type
+  status = msg1 & $xF0;
+  // Is it a note on event?
+  status == $x90 && trigmode != 8 ?
+  (
+  // Get note and velocity
+  vel = msg3/127;
+  // Test trigger modes.
+  (trigmode != 2 || trigmode != 3) && noteon != 1 ?
+    (
+    (trigmode == 4 || trigmode == 7) && noteon == 2 ? noteon = 1;
+    vel == 0 || (trigmode == 4 && noteon == 1 && note == msg2) ? noteon = 0:
+    (
+    trigmode == 6 && noteon == 1 && note == msg2 ? envoff = 1:
+    (
+    // Trigger Envelope.
+    x = 0; // Reset envelope start sample counter.
+    px = 1; // Reset per stage interpolation point counter.
+    xstg = 1; // Reset the stage number counter.
+    envon = 1; // Set the envelope to 'on'.
+    count = offsetin; // Set the offet counter to start from the current offset.
+    (trigmode == 4 || trigmode == 7) && noteon == 0 ? noteon = 2;
+    noteon != 2 ? noteon = 1;
+    trigmode == 1 || trigmode == 3 ? y_strt_1 = y;
+    );
+  );
+  );
+  note = msg2;
+  );
+  // Is it a note-off event?
+  status == $x80 && noteon == 1 ? // && trigmode != 7
+  (
+  noteon = 0;
+  y_strt_sus_1 = y; // Save the value at note-off for the start of the release phase
+  );
+  // Is it a control change message
+  status == $xB0 ?
+  (
+  cci =
+    (
+    msg2 <= 31 ? msg2+1:
+    msg2 <= 63 ? msg2-31:
+    msg2 <= 95 ? msg2+1:
+    msg2-31;
+    );
+    ii = 1;
+  loop(96,
+    ii[mcc] == cci-1 ? update_param = 1;
+    ii += 1;
+    );
+  update_param == 1 ?
+  (
+  mcci[msg2+1] = msg3;
+  cci[mmod] = (cci[mcci]/127.9921875)+(cci[mcci+32]/16384);
+  );
+  );
+  // Pass through
+  soutput < 2 ?
+    (
+    status != $x80 && status != $x90 ? midisend(offsetin, msg1, msg2, msg3);
+    ):
+  midisend(offsetin, msg1, msg2, msg3);
+  );
+//End MIDI message detection
+);
+
+// Update paramrters on slider change or modulation input.
+update_param == 1 ?
+(
+1[mstgstrt] = 0;
+i = 1;
+loop(17,
+  lset = 0;
+  nset = 0;
+  vset = 0;
+  pset = 0;
+  // Stage Lengths...
+  i[mcc] > -1 ? // If a stage length independant modulator has been set...
+  (
+  i[mstgl] = max(stgl_min,
+  i[mstglst]*(i[mstat]-(i[mcc]+1)[mmod]*(i[mstat]-i[mrng]))/i[mstat]);
+  lset=1;
+  );
+  17[mcc] > -1 ? // If the all stages equal length modulator has been set...
+  (
+  i[mstgl] = max(stgl_min,
+  i[mstglst]*(17[mstat]-(17[mcc]+1)[mmod]*(17[mstat]-17[mrng]))/17[mstat]);
+  lset=1;
+  );
+  (i+17)[mcc] > -1 ? // If a stage length proportional modulator has been set...
+  (
+  i[mstgl] = max(stgl_min,
+  i[mstglst]*((i+17)[mstat]-((i+17)[mcc]+1)[mmod]*((i+17)[mstat]-(i+17)[mrng]))/(i+17)[mstat]);
+  lset=1;
+  );
+  34[mcc] > -1 ? // If the envelope length modulator has been set...
+  (
+  i[mstgl] = max(stgl_min,
+  i[mstglst]*(34[mstat]-(34[mcc]+1)[mmod]*(34[mstat]-34[mrng]))/34[mstat]);
+  lset=1;
+  );
+  lset == 0 ? i[mstgl] = max(stgl_min,i[mstglst]); // If no modulation, set the stage lengths to the slider values.
+  i > 1 ? i[mstgstrt] = i[mstgstrt-1] + i[mstgl-1]; // Update start offset, in samples, for each stage.
+  
+  //Note lengths...
+  (i+34)[mcc] > -1 && i < 17 ? // If a note length independant modulator has been set...
+  (
+  i[mnotel] = i[mnotelst]*((i+34)[mstat]-((i+34)[mcc]+1)[mmod]*((i+34)[mstat]-(i+34)[mrng]))/(i+34)[mstat];
+  nset = 1;
+  );
+  51[mcc] > -1 && i < 17 ? // If the all note lengths equal modulator has been set...
+  (
+  i[mnotel] = i[mnotelst]*(51[mstat]-(51[mcc]+1)[mmod]*(51[mstat]-51[mrng]))/51[mstat];
+  nset = 1;
+  );
+  52[mcc] > -1 && i < 17 ? // If the all note lengths proportional modulator has been set...
+  (
+  i[mnotel] = i[mnotelst]*(52[mstat]-(52[mcc]+1)[mmod]*(52[mstat]-52[mrng]))/52[mstat];
+  nset = 1;
+  );
+  nset == 0 ? i[mnotel] = i[mnotelst]; // If no modulation, set the note lengths to the slider values.
+  
+  // Note velocity...
+  (i+52)[mcc] > -1 && i < 17 ? // If a velocity independant modulator has been set...
+  (
+  //i[mvel] = i[mvelst]*((i+52)[mstat]-((i+52)[mcc]+1)[mmod]*((i+52)[mstat]-(i+52)[mrng]))/(i+52)[mstat];
+  i[mvel] = i[mvelst]+((((i+52)[mcc]+1)[mmod]*((i+52)[mrng]-(i+52)[mstat]))*127);
+  vset = 1;
+  );
+  69[mcc] > -1 && i < 17 ? // If the all velocities equal modulator has been set...
+  (
+  //i[mvel] = i[mvelst]*(69[mstat]-(69[mcc]+1)[mmod]*(69[mstat]-69[mrng]))/69[mstat];
+  i[mvel] = i[mvelst]+(((69[mcc]+1)[mmod]*(69[mrng]-69[mstat]))*127);
+  vset = 1;
+  );
+  vset == 0 ? i[mvel] = i[mvelst]; // If no modulation, set the velocities to the slider values.
+  
+  // Stage end point (p2) level...
+  (i+69)[mcc] > -1 ? // If the a stage end point modulator has been set...
+  (
+  //i[0] = i[myst]*((i+69)[mstat]-((i+69)[mcc]+1)[mmod]*((i+69)[mstat]-(i+69)[mrng]))/(i+69)[mstat];
+  i[0] = i[myst]+(((i+69)[mcc]+1)[mmod]*((i+69)[mrng]-(i+69)[mstat]));
+  i[mpy] = i[-1]+(i[0]-i[-1])*i[mr0];
+  i[mpy+1] = i[1]+(i[0]-i[1])*i[mr1];
+  pset = 1;
+  );
+  pset == 0 ? i[0] = i[myst];
+  i += 1;
+);
+e_end = stages[mstgstrt+1]; // Set envelope end sample number.
+
+update_param = 0;
+update = 1;
+);
+
+// Calculate stage length in samples
+stbase == 0 ? tbase = 1 : stbase == 1 ? tbase = 60/tempo;
+splbase = tbase*srate;
+// If the timebase is changed, adjust the slider values to maintain the active stage length.
+stbase != pre_stbase ?
+stglen < 3 ?
+(
+stglc = 0;
+stglf = stg[mstglst]/(2^(stglc-4)*splbase);
+while(stglf > 1)
+  (
+  stglc += 1;
+  stglf = stg[mstglst]/(2^(stglc-4)*splbase);
+  );
+pre_stbase = stbase;
+);
+used == 0 && meminit == 0 ?
+(
+1[mstglst] = 1[mstgl] = stgl_min;
+1[mstgstrt] = 0;
+i = 2;
+loop(17,
+i < 17 ? i[mstglst] = i[mstgl] = 0.75*splbase; // Initial stage lengths.
+i[mstgstrt] = i[mstgstrt-1]+i[mstgl-1];
+i += 1;
+);
+e_end = stages[mstgstrt+1];
+meminit = 1;
+);
+
+pg > 0 ? slidermove = 1; // If any control points are moved, send changes to global memory if required.
+sclass == 2 ? slidermove = gmem[group+fxn+10];
+slidermove == 1 ?
+(
+//Store slider values
+group = sgroup*1000;
+sclass == 1 ? (
+  gmem[group+fxn+0]  = sinput;
+  gmem[group+fxn+1]  = soutput;
+  gmem[group+fxn+2]  = schanout;
+  gmem[group+fxn+3]  = vsens;
+  gmem[group+fxn+4]  = stbase;
+  gmem[group+fxn+5]  = trigmode;
+  gmem[group+fxn+6]  = stglen;
+  gmem[group+fxn+7]  = stglc;
+  gmem[group+fxn+8]  = stglf;
+  gmem[group+fxn+9]  = mrange;
+  gmem[group+fxn+10] = slidermove;
+  gmem[group+fxn+11] = e_end;
+  gmem[group+fxn+12] = stages;
+  gmem[group+fxn+13] = stg;
+  gmem[group+fxn+14] = sus;
+  gmem[group+fxn+15] = splbase;
+  gmem[group+fxn+16] = scurve;
+  gmem[group+fxn+17] = stgl_min_sec;
+  gmem[group+fxn+18] = p0x;
+  gmem[group+fxn+19] = p0y;
+  gmem[group+fxn+20] = p1x;
+  gmem[group+fxn+21] = p1y;
+  gmem[group+fxn+22] = p2x;
+  gmem[group+fxn+23] = p2y;
+//gmem[fxn+24] = Follower trigger, stored elsewhere
+  i = 0;
+  while(i <= mbezx)
+   (
+   gmem[group+fxn+25+i] = 0[i];
+   i+=1;
+   );
+);
+
+//Retrieve slider and other variable values (slave mode)
+sclass == 2 ? ( 
+  sinput       = gmem[group+fxn+0];
+  soutput      = gmem[group+fxn+1];
+  schanout     = gmem[group+fxn+2];
+  vsens        = gmem[group+fxn+3];
+  stbase       = gmem[group+fxn+4];
+  trigmode     = gmem[group+fxn+5];
+  stglen       = gmem[group+fxn+6];
+  stglc        = gmem[group+fxn+7];
+  stglf        = gmem[group+fxn+8];
+  mrange       = gmem[group+fxn+9];
+  
+  e_end        = gmem[group+fxn+11];
+  stages       = gmem[group+fxn+12];
+  stg          = gmem[group+fxn+13];
+  sus          = gmem[group+fxn+14];
+  splbase      = gmem[group+fxn+15];
+  scurve       = gmem[group+fxn+16];
+  stgl_min_sec = gmem[group+fxn+17];
+  p0x          = gmem[group+fxn+18];
+  p0y          = gmem[group+fxn+19];
+  p1x          = gmem[group+fxn+20];
+  p1y          = gmem[group+fxn+21];
+  p2x          = gmem[group+fxn+22];
+  p2y          = gmem[group+fxn+23];
+  // Follower trigger = gmem[fxn+24], read elswhere
+  i = 0;
+  while(i <= mbezx)
+   (
+   0[i] = gmem[group+fxn+25+i];
+   i+=1;
+   );
+);
+
+update = 1;
+slidermove = 0;
+); // End if slidermove.
+
+// Modify velocity for sensitivity setting.
+soutput >=2 ? velmod = (1-((1-vel)*vsens)):velmod = 1;
+
+// Start calculating y values
+//count = 0;
+while(count < samplesblock && envon == 1)
+(
+xstg[mcurve] == 0 ?// Start Bezier Curve option loop.
+(
+// Interploate between bezier points.
+p2v = px[mbezox+(xstg-1)*pts];
+p1v = (px-1)[mbezox+(xstg-1)*pts];
+x >= p2v ?
+(
+while(x > p2v)
+  (
+  px += 1;
+  px > pts?
+  (
+  xstg += 1;
+  px = 1;
+  );
+  p2v = px[mbezox+(xstg-1)*pts];
+  );
+p1v = (px-1)[mbezox+(xstg-1)*pts];
+);
+p1u = (px-1)[mbezoy+(xstg-1)*pts];
+p2u = (px)[mbezoy+(xstg-1)*pts];
+
+rx = (x-p1v)/(p2v-p1v);
+y = p1u+(rx*(p2u-p1u)); 
+): // End Bezier Curve option
+(  // If not Bezier curve, y is a constant value for the stage..
+y = xstg[0];
+);
+// Modify y values for stage 1 and stage sustain + 1 transitions.
+xstg == 1 && 1[mcurve] == 0 &&(trigmode ==1 || trigmode == 3) ? // Blend last y value accross stage 1.
+(
+y = xstg[0]+(y-xstg[0])*((xstg[0]-y_strt_1)/(xstg[0]-xstg[-1]));
+);
+xstg == sus+1 && sus[mcurve+1] == 0 && noteon == 0 && trigmode < tlm ? // Blend last y value accross stage after sustain point.
+(
+y = xstg[0]+(y-xstg[0])*((xstg[0]-y_strt_sus_1)/(xstg[0]-xstg[-1]));
+);
+
+// Modify y values for output.
+y_out = y*velmod; // For CC output.
+soutput == 0 ?
+(
+n_out = floor(y*127); // For absolute note output.
+);
+soutput == 1 ? // For relative note output.
+(
+n_out = floor(y*127);
+n_out += note-floor(0[0]*127);
+while(n_out < 0)
+  (
+  n_out += 12;
+  );
+while(n_out > 127)
+  (
+  n_out -= 12;
+  );
+); 
+
+// Output MIDI..........................
+// CC Output
+midi_out();
+
+// Increment counter and x value.
+count += 1;
+x += 1;
+// Find which stage the current point is in.
+x >= xstg[mstgstrt+1] ?
+(
+xstg += 1;
+px = 1;
+);
+trigmode < tlm ?
+// Envelope modes
+(
+// Sustain point
+x > sus[mstgstrt+1] && noteon > 0 ? x = sus[mstgstrt+1];
+x < sus[mstgstrt+1] && noteon == 0 ?
+(
+x = sus[mstgstrt+1];
+xstg = sus+1;
+px = 1;
+);
+// End point
+x > e_end || xstg > stages?
+  (
+  envon = 0;
+  xstg = 1;
+  x = 0;
+  y = y_out = stages[0]*velmod;
+  midi_out();
+  sclass == 3 ? gmem[fxn+24] = sgroup + 1;
+  sclass == 4 ? gmem[fxn+24] = 0;
+  );
+):
+// Loop modes
+(
+xstg > stages ?
+  (
+  envoff = 1 && noteon == 0 ? 
+  (
+  envon = 0;
+  envoff = 0;
+  );
+  trigmode == 5 ?
+  (
+  envon = 0;
+  //noteon = 0;
+  );
+  xstg = 1;
+  x = 0;
+  y = y_out = stages[0]*velmod;
+  midi_out();
+  sclass == 3 ? gmem[fxn+24] = sgroup + 1;
+  sclass == 4 ? gmem[fxn+24] = 0;
+  );
+);
+); // End calculate Y
+count = 0; // reset counter for the next block
+
+@sample
+// Trigger from preceeding multitool.
+sclass > 2 ?
+(
+gmem[fxn+24] == sgroup ?
+(
+x = 0; // Reset envelope start sample counter.
+px = 1; // Reset per stage interpolation point counter.
+xstg = 1; // Reset the stage number counter.
+envon = 1; // Set the envelope to 'on'.
+count = scount; // Set the offet counter to start from the current offset.
+gmem[fxn+24] = -1;
+);
+);
+scount += 1;
+
+// GRAPHICS ////////////////////////////////////////
+@gfx 400 440 // Default 400 440
+
+// Scale factors for active stage definition area
+xscl = 200; // Default 200
+xmin = gfx_w/2-xscl/2;
+xmax = xmin+xscl;
+yscl = 200; // Default 200
+ymin = 90; // Default 90
+ymax = ymin+yscl;
+pdx = (mouse_x-mouse_x_pre)/xscl;
+pdy = (mouse_y-mouse_y_pre)/yscl;
+// Scale factors for envelope definition area
+bscl = 40; //Default 40
+bxscl = gfx_w > bscl*(stages+1)? bscl:(gfx_w-bscl)/stages;
+bxmin = bscl/4;
+bymin = 20;
+bymax = bymin+bscl;
+bmid = bymin+bscl/2;
+// Scale factors for envelope output area
+exmin = 20;
+eymin = 3300; // Default 330
+exscl = gfx_w-exmin*2;
+exdiv = floor(stages[mstgstrt+1]/exscl);
+eyscl = 100; //Default 100
+eymax = eymin + eyscl;
+
+// Find active stage
+as = 1;
+while(as <= stages)
+(
+// Test envelope output area area..............
+mouse_target(exmin+(as[mstgstrt]+as[mstgl]/2)*pscl,eymin+((eymax-eymin)/2),as[mstgl]*pscl,eymax-eymin,pg);
+mouse_target.on == 0 ? // If not in the envelope output area......
+// Test envelope definition area..............
+mouse_target(bxmin+as*bxscl-bxscl/2,bmid,bxscl,bscl,pg);
+mouse_target.on == 1 && tag_on == 0 && stg_set == 0 ?
+(
+stg_set = 1;
+// Update sliders;
+stg = as;
+scurve = stg[mcurve];
+stglen < 3 ?
+(
+stglc = 0;
+stglf = stg[mstglst]/(2^(stglc-4)*splbase);
+while(stglf > 1)
+  (
+  stglc += 1;
+  stglf = stg[mstglst]/(2^(stglc-4)*splbase);
+  );
+);
+stglen >= 4 && stglen <= 6 ? stglf = stg[mnotelst];
+stglen >= 7 && stglen <= 8 ? stglf = stg[mvelst]/127;
+stglen == 9 ? stglf = stg[myst];
+sinput = mcc[ci[stglen]+(ct[stglen] == 0 ? stg:1)] <= 31 ?
+mcc[ci[stglen]+(ct[stglen] == 0 ? stg:1)]+1:
+mcc[ci[stglen]+(ct[stglen] == 0 ? stg:1)]-31;
+mrange = mrng[ci[stglen]+(ct[stglen] == 0 ? stg:1)];
+);
+mouse_target.on == 1 && tag_on == 0 && con_set == 0 ?
+(
+// Test for double click.
+mouse_target.dbl_clk == 1 && stg_set == 1 ?
+(
+stg[mcurve] == 0 ? scurve = stg[mcurve] = 1:
+scurve = stg[mcurve] = 0;
+stg[mcurve] == 0 ?
+  (
+  stg[mpx] = 0.5;
+  stg[mpy] = (stg[-1]+stg[0])/2;
+  );
+stg[mcurve] == 1 ?
+  (
+  stg[mpx] = 0;
+  stg[mpy] = stg[0];
+  );
+);
+update = 1;
+con_set = 1;
+);
+as += 1;
+);
+mouse_cap != 1 ?
+(
+stg_set = 0;
+con_set = 0;
+);
+
+// Envelope definition area...................
+gfx_r=gfx_g=gfx_b = 0.5;
+gfx_x = bxmin;
+gfx_y = bymin-12;
+gfx_drawstr("Envelope definition");
+soutput < 2 ?
+(
+gfx_x = bxmin;
+gfx_y = bymax + 6;
+gfx_drawstr("Root note = ");
+gfx_printf(mend[root]);
+);
+// Draw stage boxes
+gfx_r = gfx_g = gfx_b =0.5;
+gfx_x = bxmin;
+gfx_y = bymin;
+gfx_lineto(gfx_x,gfx_y+bscl);
+bcount = 1;
+while(bcount <= stages && bcount <= 16)
+(
+gfx_lineto(gfx_x+bxscl,gfx_y);
+gfx_lineto(gfx_x,gfx_y-bscl);
+gfx_lineto(gfx_x-bxscl,gfx_y);
+gstx = gfx_x;
+gsty = gfx_y;
+// Draw curve inside current box
+gfx_g = 1;
+gfx_r = gfx_b = 0;
+bcount[mcurve] == 0 ?
+(
+// Draw Bezier curve
+gfx_y += (1-bcount[-1])*bscl;
+pcount = 1;
+while(pcount < pts)
+(
+gfx_lineto(gstx+pcount[mbezx+(bcount-1)*pts]*bxscl,gsty+(1-(pcount[mbezy+(bcount-1)*pts]))*bscl);
+pcount += ceil(pts/5);
+);
+gfx_lineto(gstx+bxscl,gsty+(1-bcount[0])*bscl);
+):
+(
+// Draw linear curve
+gfx_r = 1;
+gfx_g = 0.5;
+gfx_x = gstx;
+gfx_y = gsty;
+gfx_y += (1-bcount[-1])*bscl;
+//gfx_lineto(gstx+bcount[mpx]*bxscl,gsty+(1-bcount[mpy])*bscl);
+gfx_lineto(gstx,gsty+(1-bcount[0])*bscl);
+gfx_lineto(gstx+bxscl,gsty+(1-bcount[0])*bscl);
+);
+// Draw stage number inside current box
+sprintf(#stgn,"%d",bcount);
+gfx_measurestr(#stgn,stgnw,stgnh);
+bcount == stg?
+(
+gfx_r = 1;
+gfx_b = gfx_g = 0;
+):gfx_r = gfx_g = gfx_b =0.5;
+gfx_x = gstx;
+gfx_y = gsty;
+gfx_x += bxscl/2-stgnw/2;
+gfx_y += bscl/2-stgnh/2;
+gfx_drawstr(#stgn);
+// Draw Sustain Point
+sus == bcount-1 && trigmode < tlm ?
+(
+gfx_r = gfx_g = 1;
+gfx_b =0;
+gfx_x = gstx;
+gfx_y = gsty;
+gfx_y += (1-bcount[-1])*bscl;
+gfx_circle(gfx_x,gfx_y,3,1,1);
+);
+sus == bcount && trigmode < tlm ?
+(
+gfx_r = gfx_g = 1;
+gfx_b =0;
+gfx_x = gstx+bxscl;
+gfx_y = gsty+(1-bcount[0])*bscl;
+gfx_circle(gfx_x,gfx_y,3,1,1);
+);
+
+gfx_r = gfx_g = gfx_b =0.5; // Set up for next box
+gfx_x = gstx + bxscl;
+gfx_y = gsty + bscl;
+bcount += 1;
+); // End loop for stage boxes
+
+// Stages drag tag
+gfx_lineto(gfx_x+bscl/4,gfx_y);
+gfx_lineto(gfx_x+bscl/4,gfx_y-bscl/2);
+gfx_lineto(gfx_x-bscl/4,gfx_y-bscl/2);
+gfx_lineto(gfx_x-bscl/4,gfx_y);
+stgtag_x = gfx_x+bscl/4;
+stgtag_y = gfx_y+bscl/2;
+gfx_x += bscl/8;
+gfx_y += bscl/4;
+gfx_lineto(gfx_x,gfx_y+bscl/2);
+gfx_x += bscl/16;
+gfx_lineto(gfx_x,gfx_y-bscl/2);
+gfx_x += bscl/16;
+gfx_lineto(gfx_x,gfx_y+bscl/2);
+
+// Change number of stages
+mouse_target(stgtag_x,stgtag_y,bscl/2,bscl,0);
+mouse_target.on == 1 ?
+(
+tag_on = 1;
+mcon1 = stages[mcurve];
+);
+pre_tag_on == 0 ?
+(
+tag_x = gfx_x-bscl/2;
+stages_pre = stages;
+);
+tag_on == 1 ?
+(
+stg_count = stages_pre + floor((mouse_x-tag_x)/((bscl+bxscl)/2));
+stg_count > 16 ? stg_count = 16;
+stg_count < 1 ? stg_count = 1;
+stages < stg_count ?
+(
+stages += 1;
+mouse_cap == 9 ? stages[mcurve] = mcon1;
+);
+stages > stg_count ? stages -= 1;
+mouse_cap != 1 && mouse_cap != 9 ? (tag_on = 0);
+pre_tag_on = tag_on;
+stg > stages ? stg = stages;
+sus > stages ? sus = stages;
+e_end = stages[mstgstrt]+stages[mstgl]; // Update envelope end sample number.
+update = 1;
+);
+
+// Draw active stage box
+gfx_r = 1;
+gfx_b = gfx_g = 0;
+gfx_x = bxmin+stg*bxscl;
+gfx_y = bymin;
+gfx_lineto(gfx_x-bxscl,gfx_y);
+gfx_lineto(gfx_x,gfx_y+bscl);
+gfx_lineto(gfx_x+bxscl,gfx_y);
+gfx_lineto(gfx_x,gfx_y-bscl);
+
+// Calculate control and end point positions.
+gp1x = xmin + (p1x*xscl);
+gp1y = ymax - (p1y*yscl);
+gp0x = xmin;
+gp0y = ymax - (p0y*yscl);
+gp2x = xmax;
+gp2y = ymax - (p2y*yscl);
+gp01x = (gp0x+gp1x)/2;
+gp01y = (gp0y+gp1y)/2;
+gp12x = (gp1x+gp2x)/2;
+gp12y = (gp1y+gp2y)/2;
+gx = xmin + (x*xscl);
+gy = ymax - (y*yscl);
+
+
+// Get user input........................................................................
+pg = p0_on + p1_on + p2_on + p01_on + p12_on + stg_on + stg_set; // Set 'Mouse Button Down' flag  + stg_set
+
+// Point 1
+// Is the mouse in the p1 target area and is the mouse button down?
+mouse_target(gp1x,gp1y,20,20,pg);
+mouse_target.on == 1 ? p1_on = 1;
+p1_on == 1 ?
+(
+sp1xx = stg[mpx];
+sp1yy = stg[mpy];
+// Test for double click.
+mouse_target.dbl_clk == 1 && stg[mcurve] == 0 ?
+// If double click, reset the control point.
+(
+stg[mpx] = 0.5;
+stg[mpy] = (stg[-1]+stg[0])/2;
+update = 1;
+p1_on = 0;
+p1x_pre = stg[mpx];
+p1y_pre = stg[mpy];
+):
+(
+// If not a double click, move the control point.
+mouse_cap == 5 ?
+(
+fine1 = 1;
+sp1xx += 0.1*pdx;
+sp1yy -= 0.1*pdy;
+);
+fine1 == 0 ?
+(
+sp1xx += pdx;
+sp1yy -= pdy;
+);
+
+align == 1 ?
+  (
+  dp1xx = sp1xx - p1x_pre;
+  dp1yy = sp1yy - p1y_pre;
+  abs(dp1xx) < abs(dp1yy) ? sp1xx = p1x_pre:sp1yy = p1y_pre;
+  );
+sp1xx < 0 ? sp1xx = 0;
+sp1xx > 1 ? sp1xx = 1;
+sp1yy < 0 ? sp1yy = 0;
+sp1yy > 1 ? sp1yy = 1;
+
+stg[mcurve] == 1 ?
+(
+stg[mpx] = 0;
+stg[0] = sp1yy;
+):
+stg[mpx] = sp1xx;
+stg[mpy] = sp1yy;
+lev_r_on = 1;
+update = 1;
+);
+mouse_cap != 1 && mouse_cap != 5 && mouse_cap != 9 ?
+  (
+  p1_on = 0;
+  fine1 = 0;
+  p1x_pre = stg[mpx];
+  p1y_pre = stg[mpy];
+  );
+);
+// Check for orthogonal constraint
+mouse_cap == 9 && p1_on == 1 ? align = 1:align = 0;
+
+// Point p0 ..........................................
+// Is the mouse in the p0 target area and is the mouse button down?
+mouse_target(gp0x,gp0y,20,20,pg);
+mouse_target.on == 1 && p0_on == 0 ? p0_on = 1;
+
+p0_on == 1 ?
+(
+sp0y = stg[-1];
+// Test for double click.
+mouse_target.dbl_clk == 1 ?
+// If double click, make this the sustain point.
+(
+sus = stg-1;
+//suslev = suslevst = stg[-1];
+lev_r_on = 1;
+p0_on = 0;
+):
+// If not a double-click, move limit point 0.
+mouse_cap == 5 ?
+(
+fine0 = 1;
+sp0y -= 0.1*pdy;
+);
+fine0 == 0 ?
+(
+sp0y -= pdy;
+);
+sp0y < 0 ? sp0y = 0;
+sp0y > 1 ? sp0y = 1;
+stg[-1] = stg[myst-1] = sp0y;
+//stg-1 == sus ? suslev = suslevst = stg[-1];
+stg[mcurve] == 1 ? stg[mpy] = sp0y;
+trigmode >= tlm && stg == 1 ? 0[stages] = sp0y;
+lev_r_on = 1;
+update = 1;
+mouse_cap != 1 && mouse_cap != 5 && mouse_cap != 9 ?
+  (
+  p0_on = 0;
+  fine0 = 0;
+  );
+);
+
+// Point p2.................................
+// Is the mouse in the p2 target area and is the mouse button down?
+mouse_target(gp2x,gp2y,20,20,pg);
+mouse_target.on == 1 && p2_on == 0 ? p2_on = 1;
+
+p2_on == 1 ?
+(
+sp2y = stg[0];
+// Test for double click.
+mouse_target.dbl_clk == 1 ?
+// If double click, make this the sustain point.
+(
+sus = stg;
+//suslev = suslevst = stg[0];
+lev_r_on = 1;
+p2_on = 0;
+):
+// If not a double-click, move  point 2.
+//stg[mcurve] == 0 ?
+//(
+mouse_cap == 5 ?
+(
+fine2 = 1;
+sp2y -= 0.1*pdy;
+);
+fine2 == 0 ?
+(
+sp2y -= pdy;
+);
+sp2y < 0 ? sp2y = 0;
+sp2y > 1 ? sp2y = 1;
+stg[0] = stg[myst] = sp2y;
+//stg == sus ? suslev = suslevst = stg[0];
+trigmode >= tlm && stg == stages ? 0[0] = sp2y;
+//);
+lev_r_on = 1;
+update = 1;
+mouse_cap != 1 && mouse_cap != 5 && mouse_cap != 9 ?
+  (
+  p2_on = 0;
+  fine2 = 0;
+  );
+);
+
+// Mid point p01.............................
+// Is the mouse in the p01 target area and is the mouse button down?
+mouse_target(gp01x,gp01y,20,20,pg);
+mouse_target.on == 1 && p01_on != 1 && stg[mcurve] == 0? p01_on = 1;
+
+// Move mid point 01.
+p01_on == 1?
+(
+sp010y = stg[-1];
+sp011y = stg[mpy];
+mouse_cap == 5 ?
+(
+fine01 = 1;
+dp01y = 0.1*pdy;
+);
+fine01 == 0 ?
+(
+dp01y = pdy;
+);
+sp010y -= dp01y;
+sp010y > 1 ? (sp010y = 1 );
+sp010y < 0 ? (sp010y = 0 );
+sp011y -= dp01y;
+sp011y > 1 ? sp011y = 1;
+sp011y < 0 ? sp011y = 0;
+stg[-1] = stg[myst-1] = sp010y;
+stg[mpy] = sp011y;
+stg[mp01y] = (sp010y+sp011y)/2;
+
+stg[mcurve] == 1 ?
+(
+stg[mpy] = stg[mp01y];
+stg[-1] = stg[mp01y];
+);
+lev_r_on = 1;
+update = 1;
+mouse_cap != 1 && mouse_cap != 5 && mouse_cap != 9 ?
+  (
+  p01_on = 0;
+  fine01 = 0;
+  );
+);
+
+// Mid point p12.............................
+sp122y = stg[0];
+sp121y = stg[mpy];
+pre_sp12y = (sp122y+sp121y)/2;
+// Is the mouse in the p12 target area and is the mouse button down?
+mouse_target(gp12x,gp12y,20,20,pg);
+mouse_target.on == 1 && p12_on != 1 ? p12_on = 1;
+// Move mid point 01.
+p12_on == 1?
+(
+sp122y = stg[0];
+sp121y = stg[mpy];
+mouse_cap == 5 ?
+(
+fine12 = 1;
+dp12y = 0.1*pdy;
+);
+fine12 == 0 ?
+(
+dp12y = pdy;
+);
+sp122y -= dp12y;
+sp122y > 1 ? (sp122y = 1 );
+sp122y < 0 ? (sp122y = 0 );
+sp121y -= dp12y;
+sp121y > 1 ? sp121y = 1;
+sp121y < 0 ? sp121y = 0;
+stg[0] = stg[myst] = sp122y;
+stg[mpy] = sp121y;
+stg[mp12y] = (sp122y+sp121y)/2;
+lev_r_on = 1;
+update = 1;
+mouse_cap != 1 &&  mouse_cap != 5 && mouse_cap != 9 ?
+  (
+  p12_on = 0;
+  fine12 = 0;
+  );
+);
+
+// Is the mouse in the stage definition target area and is the mouse button down?
+mouse_target(xmin+xscl/2,ymin+yscl/2,xscl,yscl,pg);
+mouse_target.on == 1 && stg_on == 0 ? stg_on = 1;
+stg_on == 1 ?
+(
+// Test for double click.
+mouse_target.dbl_clk == 1 && con_set_stg == 0 ?
+(
+con_set_stg = 1;
+stg[mcurve] == 0 ? scurve = stg[mcurve] = 1:
+stg[mcurve] = scurve = stg[mcurve] = 0;
+stg[mcurve] == 0 ?
+  (
+  stg[mpx] = 0.5;
+  stg[mpy] = (stg[-1]+stg[0])/2;
+  );
+stg[mcurve] == 1 ?
+  (
+  stg[mpx] = 0;
+  stg[mpy] = stg[0];
+  );
+update = 1;
+);
+
+mouse_cap != 1 &&  mouse_cap != 5 && mouse_cap != 9 ?
+  (
+  stg_on = 0;
+  con_set_stg = 0;
+  );
+);
+
+update == 1 ?
+(
+// Point limits
+// Point 1
+p0_on != 1 && p2_on != 1 ?
+(
+stg[-1] <= stg[0] && stg[mpy] > stg[0] ? stg[0] = stg[mpy];
+stg[-1] >= stg[0] && stg[mpy] < stg[0] ? stg[0] = stg[mpy];
+stg[-1] <= stg[0] && stg[mpy] < stg[-1] ? stg[-1] = stg[mpy];
+stg[-1] >= stg[0] && stg[mpy] > stg[-1] ? stg[-1] = stg[mpy];
+);
+// Point 0
+(
+stg[-1] <= stg[0] && stg[mpy] < stg[-1] ? stg[mpy] = stg[-1];
+stg[-1] >= stg[0] && stg[mpy] > stg[-1] ? stg[mpy] = stg[-1];
+stg[-1] <= stg[0] && stg[mpy] > stg[0] ? stg[mpy] = stg[0];
+stg[-1] >= stg[0] && stg[mpy] < stg[0] ? stg[mpy] = stg[0];
+update = 1;
+);
+// Point 2
+(
+stg[0] <= stg[-1] && stg[mpy] < stg[0] ? stg[mpy] = stg[0];
+stg[0] >= stg[-1] && stg[mpy] > stg[0] ? stg[mpy] = stg[0];
+stg[0] <= stg[-1] && stg[mpy] > stg[-1] ? stg[mpy] = stg[-1];
+stg[0] >= stg[-1] && stg[mpy] < stg[-1] ? stg[mpy] = stg[-1];
+stg[mcurve+1] == 1 ? stg[mpy+1] = stg[0];
+);
+
+while(stg > 1)
+(
+stg[-1] <= stg[-2] && stg[mpy-1] < stg[-1] ? stg[mpy-1] = stg[-1];
+stg[-1] >= stg[-2] && stg[mpy-1] > stg[-1] ? stg[mpy-1] = stg[-1];
+);
+while(stg < 16)
+(
+stg[0] < stg[1] && stg[mpy+1] < stg[0] ? stg[mpy+1] = stg[0];
+stg[0] > stg[1] && stg[mpy+1] > stg[0] ? stg[mpy+1] = stg[0];
+);
+trigmode >= tlm ?
+(
+0[0] = stages[0];
+stg == 1 ?
+(
+stg[mcurve] == 0 && stages[mcurve] == 0 ?
+  (
+  0[0] <= 0[stages] && 0[mpy] < 0[0] ? stages[mpy] = 0[0];
+  0[0] >= 0[stages] && 0[mpy] > 0[0] ? stages[mpy] = 0[0];
+  );
+);
+stg == stages ?
+(
+stg[mcurve] == 0 ?
+  (
+  stg[0] < 0[0] && 1[mpy] < stg[0] ? 1[mpy] = stg[0];
+  stg[0] > 0[0] && 1[mpy] > stg[0] ? 1[mpy] = stg[0];
+  );
+);
+);
+// End get user input.
+
+// Calculate Bezier curve and store points for graphics.
+// Make sure midpoints arent outside the range
+gi = 1;
+loop(16,
+gi[mpy] < gi[-1] && gi[mpy] < gi[0] ?
+gi[mpy] = min(gi[-1],gi[0]);
+gi[mpy] > gi[-1] && gi[mpy] > gi[0] ?
+gi[mpy] = max(gi[-1],gi[0]);
+gi[mcurve] == 1 ?
+(
+gi[mpx] = 0;
+gi[mpy] = gi[0];
+);
+gi+=1;
+);
+
+p0x = 0;
+p0y = stg[-1];
+p1x = stg[mpx];
+p1y = stg[mpy];
+p2x = 1;
+p2y = stg[0];
+
+gi = 1;
+while(gi <= 16)
+(
+p0xa = 0;
+p0ya = gi[-1];
+p1xa = gi[mpx];
+p1ya = gi[mpy];
+p2xa = 1;
+p2ya = gi[0];
+bezier_calc(mbezx,mbezy,gi,pts,p0xa,p0ya,p1xa,p1ya,p2xa,p2ya); // recalc all stages
+gi += 1;
+);
+
+// Calculate Bezier curve and store points for output.
+ostg = 1;
+while(ostg <= 17)
+(
+p0xa = ostg[mstgstrt];
+p0ya = ostg[-1];
+p1xa = p0xa+(ostg[mpx]*ostg[mstgl]);
+p1ya = ostg[mpy];
+p2xa = p0xa+ostg[mstgl];
+p2ya = ostg[0];
+ostg[mcurve] == 0 ?
+(
+bezier_calc(mbezox,mbezoy,ostg,pts,p0xa,p0ya,p1xa,p1ya,p2xa,p2ya); // Actve Stage
+):
+(  // If not Bezier curve, start linear interpolation.
+ex = p0xa;
+ey = p0ya;
+ex_inc_1 = (p1xa-p0xa)/(pts/2);
+ex_inc_2 = (p2xa-p1xa)/(pts/2);
+ey_inc_1 = (p1ya-p0ya)/(pts/2);
+ey_inc_2 = (p2ya-p1ya)/(pts/2);
+expi = 0;
+while(expi < pts)// Do linear interpolation.
+(
+expi[mbezox+(ostg-1)*pts] = ex;
+expi[mbezoy+(ostg-1)*pts] = ey;
+expi <= (pts-1)/2 ?
+(
+ex += ex_inc_1;
+ey += ey_inc_1;
+):
+(
+ex += ex_inc_2;
+ey += ey_inc_2;
+);
+expi += 1;
+);
+); // End linear interpolation.
+ostg += 1;
+); // End Update.
+update = 0;
+recalc = 0;
+); // End Recalc.
+
+lev_r_on == 1 ? //calculate end point (p2) level ratios for modulation
+(
+stg[mr0] = (stg[mpy]-stg[-1])/(stg[0]-stg[-1]);
+stg[mr1] = (stg[mpy+1]-stg[1])/(stg[0]-stg[1]);
+stg[mr0-1] = (stg[mpy-1]-stg[-2])/(stg[-1]-stg[-2]);
+stg[mr1-1] = (stg[mpy]-stg[0])/(stg[-1]-stg[-2]);
+stglen == 9 ? stglf = stg[0];
+lev_r_on = 0;
+);
+
+// Draw active stage definition area..................
+// Note length and velocity
+soutput <= 1 ?
+(
+gfx_r = 0.2;
+gfx_g = 0.2;
+gfx_b = 0.2;
+gfx_x = xmin;
+gfx_y = ymax;
+gfx_rectto(xmin+stg[mnotel]*xscl,ymax-(stg[mvel]/127)*yscl);
+);
+// Axis Lines
+gfx_r = 0.7;
+gfx_g = 0;
+gfx_b = 0;
+gfx_x = xmin;
+gfx_y = ymin;
+gfx_lineto(xmin,ymax);
+gfx_lineto(xmax,ymax);
+gfx_lineto(xmax,ymin);
+gfx_lineto(xmin,ymin);
+
+// Orthogonal alignment lines
+gfx_r = 0.5;
+gfx_g = 0.5;
+gfx_b = 0.5;
+align == 1 ?
+(
+gfx_x = xmin + p1x_pre*xscl;
+gfx_y = ymax;
+gfx_lineto(gfx_x,ymin);
+gfx_x = xmin;
+gfx_y = ymax - p1y_pre*yscl;
+gfx_lineto(xmax,gfx_y);
+);
+
+// Axis labels
+gfx_x = xmin+(xscl/2)-63;
+gfx_y = ymin-12;
+gfx_drawstr("Active Stage - "); // Active stage label
+gfx_drawnumber(stg,0);
+gfx_x = xmin+(xscl/2)-100;
+gfx_y = ymax+7;
+gfx_drawstr("Stage length = "); // Active stage length lable
+stbase == 0 ?
+(
+gfx_drawnumber((stg[mstgl]/srate),3);
+stg[mstgl]/srate == 1 ? gfx_drawstr(" sec"):gfx_drawstr(" secs");
+):
+(
+gfx_drawnumber((stg[mstgl]/(tbase*srate)),3);
+stg[mstgl]/(tbase*srate) == 1 ? gfx_drawstr(" beat  "):gfx_drawstr(" beats");
+);
+soutput <= 1?
+(
+// Active note length lable
+gfx_x = stg[mnotel] < 0.5 ? xmin+stg[mnotel]*xscl+4:xmin+stg[mnotel]*xscl-90;
+gfx_y = ymax-(stg[mvel]/254)*yscl+6;
+stbase == 0 ?
+(
+gfx_drawnumber((stg[mnotel]*stg[mstgl])/srate,3);
+(stg[mnotel]*stg[mstgl])/srate == 1 ? gfx_drawstr(" sec "):gfx_drawstr(" secs");
+):
+(
+// Active velocity lable
+gfx_drawnumber((stg[mnotel]*stg[mstgl])/(tbase*srate),3);
+(stg[mnotel]*stg[mstgl])/(tbase*srate) == 1 ? gfx_drawstr(" beat "):gfx_drawstr(" beats");
+);
+gfx_x = xmin+(stg[mnotel]/2)*xscl+4;
+gfx_y = stg[mvel]/127 <= 0.5 ? ymax-(stg[mvel]/127)*yscl-10:ymax-(stg[mvel]/127)*yscl+3;
+(
+gfx_drawnumber(stg[mvel],0);
+);
+);
+
+// Draw midline control points
+stg[mcurve] == 0 ?
+  (
+  gfx_r = 0.5;
+  gfx_g = 0.5;
+  gfx_b = 0.5;
+  gfx_x = gp01x;
+  gfx_y = gp01y;
+  gfx_circle(gfx_x,gfx_y,4,1,1);
+  );
+  (
+  gfx_r = 0.5;
+  gfx_g = 0.5;
+  gfx_b = 0.5;
+  gfx_x = gp12x;
+  gfx_y = gp12y;
+  gfx_circle(gfx_x,gfx_y,4,1,1);
+  );
+// Draw Bezier or linear curve
+stg[mcurve] == 0 ?
+(
+// Bezier frame lines.
+gfx_r = 0.5;
+gfx_g = 0.5;
+gfx_b = 0.5;
+gfx_x = gp0x;
+gfx_y = gp0y;
+gfx_lineto(gp1x,gp1y);
+gfx_lineto(gp2x,gp2y);
+  gfx_r = 0;
+  gfx_g = 1;
+  gfx_b = 0;
+  gfx_x = gp0x;
+  gfx_y = gp0y;
+gpt = 0;
+while (gpt < pts)
+  (
+  // Bezier curve;
+  gfx_lineto(xmin+gpt[mbezx+(stg-1)*pts]*xscl,ymax-gpt[mbezy+(stg-1)*pts]*yscl);
+  gpt += 1;
+  );
+gfx_lineto(gp2x,gp2y);
+):
+(
+gfx_r = 1;
+gfx_g = 0.5;
+gfx_b = 0;
+gfx_x = gp0x;
+gfx_y = gp0y;
+gfx_lineto(gp1x,gp1y);
+gfx_lineto(gp2x,gp2y);
+);
+
+// Bezier frame end control points
+sus == stg-1 && trigmode < tlm ?
+(
+gfx_r = 1;
+gfx_g = 1;
+gfx_b = 0;
+):
+(
+gfx_r = 1;
+gfx_g = 0;
+gfx_b = 0;
+);
+gfx_circle(gp0x,gp0y,4,1,1);
+sus == stg && trigmode < tlm ?
+(
+gfx_r = 1;
+gfx_g = 1;
+gfx_b = 0;
+):
+(
+gfx_r = 1;
+gfx_g = 0;
+gfx_b = 0;
+);
+gfx_circle(gp2x,gp2y,4,1,1);
+
+// Bezier frame mid control point
+stg[mcurve] == 0 ?
+(
+gfx_r = 0;
+gfx_g = 1;
+gfx_b = 0;
+):
+(
+gfx_r = 1;
+gfx_g = 0.5;
+gfx_b = 0;
+);
+gfx_circle(gp1x,gp1y,4,1,1);
+
+gfx_r = 1;
+gfx_g = 0;
+gfx_b = 0;
+soutput > 1 ?
+(
+gfx_x = gp0x-38;
+gfx_y = gp0y-4;
+gfx_drawnumber(p0y,2); // value of p0 - CC
+stg[mcurve] == 0 ?
+(
+gfx_x = gp2x+8;
+gfx_y = gp2y-4;
+gfx_drawnumber(p2y,2); // value of p2 - CC
+);
+):
+(
+stg[mcurve] == 0 ?
+(
+gfx_x = p0y*127 < 100 ? gp0x-22-32:gp0x-30-32;
+gfx_y = gp0y-4;
+gfx_drawnumber(floor(p0y*127),0); // value of p0 - note
+gfx_drawstr("(");
+gfx_printf(scalepos[(p0y*127)%12+1]);
+gfx_drawstr(")");
+);
+gfx_x = gp2x+10;
+gfx_y = gp2y-4;
+gfx_drawnumber(floor(p2y*127),0); // value of p2 - note
+gfx_drawstr("(");
+gfx_printf(scalepos[(p2y*127)%12+1]);
+gfx_drawstr(")");
+);
+
+// Draw envelope output area....................
+gfx_r=gfx_g=gfx_b = 0.5;
+gfx_x = exmin;
+gfx_y = eymin-12;
+gfx_drawstr("Envelope Length = ");
+stbase == 0 ?
+(
+gfx_drawnumber((e_end/srate),3);
+e_end/srate == 1 ? gfx_drawstr(" sec "):gfx_drawstr(" secs");
+trigmode > 5 ?
+  (
+  gfx_drawstr(" (");
+  gfx_drawnumber(srate/e_end,2);
+  gfx_drawstr(" Hz)");
+  );
+):
+(
+gfx_drawnumber((e_end/(tbase*srate)),3);
+e_end/(tbase*srate) == 1 ? gfx_drawstr(" beat "):gfx_drawstr(" beats");
+trigmode > 5 ?
+  (
+  gfx_drawstr(" (");
+  gfx_drawnumber(srate/e_end,2);
+  gfx_drawstr(" Hz)");
+  );
+);
+// Draw y boundaries for envelope curves
+gfx_r = 0.2;
+gfx_g = 0.2;
+gfx_b = 0.2;
+gfx_x = exmin;
+gfx_y = eymin;
+gfx_lineto(exmin+exscl,gfx_y);
+//gfx_lineto(gfx_x,eymax);
+gfx_y = eymax;
+gfx_lineto(exmin,gfx_y);
+//gfx_lineto(gfx_x,eymin);
+pscl = exscl/(stages[mstgstrt]+stages[mstgl]);
+
+//Draw stage positions
+stgpos = 1;
+while(stgpos <= stages)
+(
+gfx_x = exmin+stgpos[mstgstrt]*pscl;
+gfx_y = eymax;
+// Note length and velocity
+soutput <= 1 ?
+(
+gfx_rectto(gfx_x+stgpos[mnotel]*stgpos[mstgl]*pscl,eymax-(stgpos[mvel]/127)*eyscl);
+gfx_x = exmin+stgpos[mstgstrt]*pscl;
+gfx_y = eymax;
+);
+gfx_lineto(gfx_x,eymin);
+stgpos += 1;
+);
+gfx_x += stages[mstgl]*pscl;
+gfx_y = eymin;
+gfx_lineto(gfx_x,eymax);
+
+// Draw Active Stage
+gfx_r = 0.7;
+gfx_g = 0;
+gfx_b = 0;
+gfx_x = exmin+stg[mstgstrt]*pscl;
+gfx_y = eymin;
+gfx_lineto(gfx_x,eymax);
+gfx_lineto(gfx_x+stg[mstgl]*pscl,eymax);
+gfx_lineto(gfx_x,eymin);
+gfx_lineto(exmin+stg[mstgstrt]*pscl,eymin);
+
+// Draw static envelope curve
+gfx_r = 0;
+gfx_g = 0.5;
+gfx_b = 0;
+gfx_x = exmin;
+gfx_y = eymax-(0[mbezoy]*eyscl);
+gex = 1;
+while(gex <= pts*stages)
+(
+gfx_lineto(exmin+gex[mbezox]*pscl,eymax-gex[mbezoy]*eyscl);
+gex += 1;
+);
+
+// Draw bouncing ball
+gfx_g = 1;
+gfx_x = exmin+x*pscl;
+soutput >=2 ? gfx_y = eymax-y_out*eyscl:gfx_y = eymax-(n_out/127)*eyscl;
+gfx_circle(gfx_x,gfx_y,3,1,1);
+
+ // Draw dynamic envelope curve
+gfx_x = exmin;
+gfx_y = eymax-(0[mbezoy]*eyscl*velmod);
+gex = 1;
+while(gex <= pts*stages)
+(
+gfx_lineto(exmin+gex[mbezox]*pscl,eymax-gex[mbezoy]*eyscl*velmod); // Draw dynamic envelope curve
+gex += 1;
+);
+
+// Sustain point
+trigmode < tlm ?
+(
+gfx_x = exmin+0[mbezox+sus*pts]*pscl;
+gfx_y = eymax-0[mbezoy+sus*pts]*eyscl*velmod;
+gfx_r = 1;
+gfx_g = 1;
+gfx_circle(gfx_x,gfx_y,4,0,1); // Draw dynamic sustain
+gfx_y = eymax-0[mbezoy+sus*pts]*eyscl;
+gfx_r = 0.5;
+gfx_g = 0.5;
+gfx_circle(gfx_x,gfx_y,4,0,1); // Draw static sustain
+);
+// Record base point for point adjustment
+mouse_x_pre = mouse_x;
+mouse_y_pre = mouse_y;
+
+pg > 0 ? slidermove = 1; // If any control points are moved, send changes to global memory if required.
+used = 1;
+
+@serialize
+file_var(0,used);
+file_var(0,e_end);
+file_var(0,stages);
+file_var(0,stg);
+file_var(0,sus);
+file_var(0,splbase);
+file_var(0,scurve);
+file_var(0,stgl_min_sec);
+file_mem(0,0,mend);

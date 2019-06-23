@@ -1,0 +1,52 @@
+desc: MIDI Pitch Bend Factor
+author: Michael Schnell (mschnell@bschnell.de)
+version: 1.1
+changelog: Bugfix, add Bypass
+about:
+  ## Description
+
+      The Midi Pitch Bend messages in the selected Midi channel are multiplied by the factor.
+      The result is limited to the maximum possible Pitch Bend range of +/- 8191.
+      The "Factor" slider can be moved in steps of one between 1 and 16, but of course you can type in any value, which even can be lower than one or negative.
+    ## Purpose
+
+      A major usage case of "MIDI Pitch Bend Factor" is adapting the "Glide" function of a fretless keyboard such as a Seaboard Rise to a synth plugin.
+
+
+slider1:1<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,Omni}>MIDI Channel
+slider2:12<1,16,1>Factor
+slider64:0<0,1,1{Active,Bypass}>Bypass
+
+@init
+PITCH_BEND      = 0xE0;
+range           = 0x2000;
+
+
+@block
+!slider64 ? (
+while (midirecv(offset, msg1, msg2, msg3)) (
+ (msg1 & 0xF0) == PITCH_BEND  ? (
+    ((msg1 & 0x0F) == slider1) || (slider1 == 16) ? (    
+      pb = msg2 + msg3 * 128;
+      pb -= range;
+      pb *= slider2;
+      pb < 0 ? (
+        pb <= -range ? (
+          pb = 1-range;
+        ); 
+       ) : (
+        pb >= range ? (
+          pb = range-1;
+        );  
+      ); 
+    );  
+    pb += range;
+    msg3 = (pb / 128) | 0;
+    msg2 = (pb - msg3 * 128) | 0;
+//    ___2 = msg2;
+//    ___3 = msg3;
+  );
+  midisend(offset, msg1, msg2, msg3);      
+);
+
+);
