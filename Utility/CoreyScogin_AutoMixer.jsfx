@@ -25,6 +25,7 @@ changelog:
 // Known Bugs:
 //  - Playback must be stopped and started if an instance is bypassed, added, or removed.
 //      or if playback is paused. The pause issue is due to a bug in the play_state variable.
+//		Is there a better way to keep track of plugin instances?
 
 options:gmem=AutoMixer
 
