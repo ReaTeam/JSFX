@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f0220e8e447493e785f814283a0ad3542fd845f4">
+<index version="1" name="ReaTeam JSFX" commit="98b23ab819457783506288060a6efded772379aa">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1417,6 +1417,10 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       <version name="1.2" author="Corey Scogin" time="2019-06-23T11:25:25Z">
         <changelog><![CDATA[Improved plugin bypass behavior. Instance count now resets on stop/play.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/f0220e8e447493e785f814283a0ad3542fd845f4/Utility/CoreyScogin_AutoMixer.jsfx</source>
+      </version>
+      <version name="1.3" author="Corey Scogin" time="2019-07-03T06:38:42Z">
+        <changelog><![CDATA[More instance count tracking improvements. Now supports jumping playback position while playing.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/98b23ab819457783506288060a6efded772379aa/Utility/CoreyScogin_AutoMixer.jsfx</source>
       </version>
     </reapack>
     <reapack name="CoreyScogin_TimeDelayByDistance.jsfx" type="effect" desc="Time Delay by Distance">
