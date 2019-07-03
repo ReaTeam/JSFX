@@ -1,6 +1,6 @@
 desc:AutoMixer
 author: Corey Scogin
-version: 1.2
+version: 1.3
 tags: volume, attenuation, automation
 link: Forum Thread https://forum.cockos.com/showthread.php?t=173289
 about: 
@@ -14,26 +14,32 @@ about:
   - Inactive channels will be attenuated helping to decrease background noise.
   - Multiple active channels will be attenuated according to the sum of all channels helping to keep the overall volume under control.
   See [Wikipedia](https://en.wikipedia.org/wiki/Automixer) for a more thorough description.
-changelog: Improved plugin bypass behavior. Instance count now resets on stop/play.
+changelog: More instance count tracking improvements. Now supports jumping playback position while playing.
 
 // Known Bugs:
 //  - Playback must be stopped and started if an instance is bypassed, added, or removed.
-//      or if playback is paused. The pause issue is due to a bug in the play_state variable.
-//		Is there a better way to keep track of plugin instances?
 
 options:gmem=AutoMixer
 
-slider2:300<1,10000,10>RMS Window Length (ms)
-slider3:0<0,1,1{Rectangular,Efficient}>RMS Window Type
+slider2:WindowLength=300<1,10000,10>RMS Window Length (ms)
+slider3:WindowType=0<0,1,1{Rectangular,Efficient}>RMS Window Type
 
 @init
  
   minRmsValue = 10^(-144/20) ; // Minimum RMS value (-144) in linear representation
+  ext_noinit = 1.0;
+
+  function ResetCount()(
+    gmem[0] = 0;
+    isInitialized = 0;  
+  );
   
-  // Variables/Properties
-  gmem[0] += 1;             // Create an id for each instance. 
-                            // Is there a better way to determine how many instances are running?
-  thisID = gmem[0];         // store local ID. 
+  function InitializeCount()(
+    gmem[0] += 1;             // Create an id for each instance. 
+                              // Is there a better way to determine how many instances are running?
+    thisID = gmem[0];         // store local ID.     
+    isInitialized = 1;    
+  );
   
   // Global Memory locations used:
   //  gmem[0] stores how many instances of this plugin exist
@@ -43,7 +49,7 @@ slider3:0<0,1,1{Rectangular,Efficient}>RMS Window Type
   // Recalculate constants
   
   // Sample window
-  window = slider2 * .001 * srate; // number of samples in selected time frame (ms)
+  window = WindowLength * .001 * srate; // number of samples in selected time frame (ms)
   
   // Constants for efficient moving average approximation
   b1 = exp(-1 / window); 
@@ -59,7 +65,11 @@ slider3:0<0,1,1{Rectangular,Efficient}>RMS Window Type
 @block
   // Reset the instance count on stop, pause, or error
   play_state < 1 || play_state == 2 || play_state == 6 ? (
-    gmem[0] = 0;
+    ResetCount();
+  );
+  // Rebuild count when playing or recording starts
+  isInitialized == 0 && (play_state == 1 || play_state == 5) ? (
+    InitializeCount();
   );
   count = gmem[0];          // For debug display
 
@@ -76,7 +86,7 @@ slider3:0<0,1,1{Rectangular,Efficient}>RMS Window Type
   
   
   // Calculate the new rms value
-  slider3 == 0 ? (          // Window Type == Rectangular
+  WindowType == 0 ? (          // Window Type == Rectangular
                             // Less efficient true rectangular window moving average 
     splSq = trkAvg ^ 2;     // Sample (or average of channel samples) squared for moving average sum.
     rmsSum -= buf[0];       // Subtract the oldest value square from the sum
