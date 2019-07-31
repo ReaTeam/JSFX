@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="90d02c68176a0ecc09fac3056f3663881b229b68">
+<index version="1" name="ReaTeam JSFX" commit="e87a95b096969893a8cccfc90bf84d99c9f29e2e">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -366,6 +366,10 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
       <version name="0.5.6" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-07-11T03:18:56Z">
         <changelog><![CDATA[- Fix for transpose sometimes causing hanging notes]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/90d02c68176a0ecc09fac3056f3663881b229b68/MIDI/TJA_MIDI%20Performer2.jsfx</source>
+      </version>
+      <version name="0.5.7" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-07-31T14:06:23Z">
+        <changelog><![CDATA[- Fix for transpose passing to subsequent zones]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/e87a95b096969893a8cccfc90bf84d99c9f29e2e/MIDI/TJA_MIDI%20Performer2.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
