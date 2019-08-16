@@ -1,13 +1,13 @@
-desc: Slider to Midi NRPM
+desc: Slider to MIDI NRPM
 author: Michael Schnell (mschnell@bschnell.de)
 version: 1.0
 changelog: initial release
-provides: . > msshnell_Slider to Midi NRPM.jsfx
 about:
   ## Description
-    Sends an RPM message according to the channel and Parameter No setting whenever the Value value slider is modified manually or by automation
-    Compress: don't send messages for partial values that did not change
-    Reset Parameter No: After sending a message seqence set parameter No to 0 to free CC # 6 and #38 for normal use
+
+  Sends an RPM message according to the channel and Parameter No setting whenever the Value value slider is modified manually or by automation
+  Compress: don't send messages for partial values that did not change
+  Reset Parameter No: After sending a message seqence set parameter No to 0 to free CC # 6 and #38 for normal use
 
 // reference: http://www.philrees.co.uk/nrpnq.htm
 
