@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="e87a95b096969893a8cccfc90bf84d99c9f29e2e">
+<index version="1" name="ReaTeam JSFX" commit="b51a9e4223f91cd7f623fa78217ac7fee1c8d992">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -291,6 +291,22 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2019-05-26T23:06:04Z">
         <changelog><![CDATA[allow for setting vel = 0 -> pass through]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/8df4d36e6338cfda5684790552f0c71530504e63/MIDI/mschnell_Note%20On%20under%20X%20velocity%20to%20Note%20Off%20and%20send%20All%20Notes%20Off.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_Slider to MIDI NRPM.jsfx" type="effect" desc="Slider to MIDI NRPM">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Sends an RPM message according to the channel and Parameter No setting whenever the Value value slider is modified manually or by automation Compress: don't send messages for partial values that did not change Reset Parameter No: After sending a message seqence set parameter No to 0 to free CC # 6 and #38 for normal use\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2019-08-16T10:43:16Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/b51a9e4223f91cd7f623fa78217ac7fee1c8d992/MIDI/mschnell_Slider%20to%20MIDI%20NRPM.jsfx</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI note-banked CC multiplier.jsfx" type="effect" desc="MIDI note-banked CC multiplier">
