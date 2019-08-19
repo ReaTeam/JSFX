@@ -6,10 +6,11 @@ about:
   ## Description
 
   Sends an RPM message according to the channel and Parameter No setting whenever the Value value slider is modified manually or by automation
-  Compress: don't send messages for partial values that did not change
-  Reset Parameter No: After sending a message seqence set parameter No to 0 to free CC # 6 and #38 for normal use
 
-// reference: http://www.philrees.co.uk/nrpnq.htm
+  Compress: don't send messages for partial values that did not change
+
+  Reset Parameter No: After sending a message sequence set parameter No to 0 to free CC # 6 and #38 for normal use
+
 
 slider1:0<0,16,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Channel
 slider2:0<0,16383,1>Parameter No
