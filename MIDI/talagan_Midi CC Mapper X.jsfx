@@ -1,0 +1,2680 @@
+desc: Midi CC Mapper X
+author: Talagan
+version: 3.1c
+changelog: First Reapack version.
+about:
+  # Midi CC Mapper X
+
+  This JSFX  is an extended version of the original plugin called "MIDI CC Mapper" with many more features. It allows to modify the behavior and the real-time feel of a MIDI controller, by acting as a pre-filter on the MIDI input. It can : 
+
+  - Filter in/out keyboard keys 
+  - Transpose keyboard keys
+  - Re-route CCs
+  - Tweak CC response curves, either by using predefined curves, or by pen-drawing/smoothing custom curves.
+  - Tweak the keyboard velocity response curve
+
+  The UI shows a virtual controller, on which CCs can be attributed to controls, allowing a user to visually map her/his real controller.
+
+  High-Res MIDI input can be enabled via a global parameter, and High-Res MIDI output can be enabled on CCs individually.
+
+  ## Keyboard Filtering Module
+
+  Located in the top left of the main window. This module can be enabled or bypassed with the button located in the module title bar. If enabled, all keys colorized in red are filtered out. The keys can be colorized by click/moving the mouse on them. The UI provides feedback for currently pressed keys.
+
+  ## Keyboard Transposition Module
+
+  Located in the top right of the main window. This module can be enabled or bypassed with the button located in the module title bar. If enabled, applies the sum of two parameters, one for transposing by octaves, one for transposing by semitones.
+
+  ## CC Routing/Curve tweaking
+
+  Located in the bottom of the main window. This module UI is contextual to the selected control. When selected, a control can be enabled or disabled individually with the button located in the module title bar. For each control :
+
+  - A description can be given that will appear in the title bar
+  - A short description can be given that will appear close to the control for convenience
+  - An input CC can be assigned (except for the velocity control which is tied to the keyboard velocity)
+  - This input CC can be CC learned
+  - An output CC can be assigned
+  - This output CC can be copied from the input CC
+  - The response curve can be pendrawn by hand with the mouse
+  - The response curve can be defined from one of the templates on the right
+  - The response curve can be smoothed with the smoothe button
+
+  ## Reaper forum thread
+
+  https://forum.cockos.com/showthread.php?t=172630
+
+  ## Notes
+
+  Older versions (v1 and v2) can be found on the forum thread.
+
+license:
+  MIT (Do whatever you like with this code).
+
+// Helpful Documentation
+//
+// Midi HR for Velocity : https://forum.cockos.com/showthread.php?t=83782
+
+options:want_all_kb
+
+//===========================================//
+//=============      INIT      ==============//
+//===========================================//
+@init
+
+NOTE_OFF_MSG              = 8;
+NOTE_ON_MSG               = 9;
+CC_MSG                    = 11; // 0x0B
+
+
+// Plugin Controls parameters
+CONTROL_COUNT             = 36;  // mod wh + 4 peds + 10 Sliders + 10 knobs + 10 pads + velo
+
+CONTROL_WHEELS_START      = 0;
+CONTROL_PEDALS_START      = 1;
+CONTROL_FADERS_START      = 5;
+CONTROL_KNOBS_START       = 15;
+CONTROL_PADS_START        = 25;
+CONTROL_VELOCITY_START    = 35;
+CONTROL_MOD_WHEEL         = CONTROL_WHEELS_START;
+CONTROL_VELOCITY          = CONTROL_VELOCITY_START;
+
+// Curve parameters
+RESOLUTION                = 2;
+BUTTON_GRID_SIZE          = 10;
+CURVESIZE                 = 128; // 1:1 for control values going from 0 to 127 
+
+// Curve buttons params
+BUTTON_ROW_LINEAR = 0;
+BUTTON_ROW_POW2   = 1;
+BUTTON_ROW_POW3   = 2;
+BUTTON_ROW_CIRC   = 3;
+BUTTON_ROW_STEP   = 4;
+BUTTON_ROW_GATE   = 5;
+
+// Various UI dimensions
+CONTROL_PANNEL_TOP       = 100;
+KEYBOARD_FILTERING_TOP   = 0;
+GUI_CONTROL_PARAMS_TOP   = 220;
+KEYBOARD_PANNEL_WIDTH    = 670;
+
+// Helper function for memory allocation.
+MEM_PTR  = 0;
+function malloc(msize)
+(
+  ret = MEM_PTR;
+  MEM_PTR += msize;
+  ret;
+);
+
+////////////////////////////////
+// Persistent data (user conf)
+////////////////////////////////
+
+CONTROL_ENABLED                 = malloc(CONTROL_COUNT);
+CONTROL_SRCS                    = malloc(CONTROL_COUNT);
+CONTROL_DSTS                    = malloc(CONTROL_COUNT);
+CONTROL_HIGHRES_OUTPUT_ENABLED  = malloc(CONTROL_COUNT);  // Per control option
+CURVES                          = malloc(CONTROL_COUNT*CURVESIZE);
+
+KEYBOARD_FILTERING_ENABLED      = malloc(1);
+KEYBOARD_FILTERED_NOTES         = malloc(88);
+KEYBOARD_TRANSPOSE_ENABLED      = malloc(1);
+KEYBOARD_TRANSPOSE_8VA          = malloc(1);
+KEYBOARD_TRANSPOSE_SEMI_TONES   = malloc(1);
+
+HIGHRES_INPUT_ENABLED           = malloc(1); // Global option              
+DROP_UNROUTED_CC_MESSAGES       = malloc(1); // Global option
+
+
+/////////////////////////////////
+// Buffers, used for computation
+/////////////////////////////////
+
+// Cosinus and sinus tables for all possible eleven angles
+KNOB_TICS_X               = malloc(11); // This is not spinal tap... 0..10 == 11 tics!
+KNOB_TICS_Y               = malloc(11); 
+
+BUTTON_GRID_PRESENCE      = malloc(BUTTON_GRID_SIZE * BUTTON_GRID_SIZE);  
+BUTTON_DATA               = malloc(32 * BUTTON_GRID_SIZE * BUTTON_GRID_SIZE);
+
+// Curve smoothing buffer
+SCURVE                    = malloc(CURVESIZE);
+
+// Control states memorization
+CONTROL_LAST_IN           = malloc(CONTROL_COUNT);
+CONTROL_LAST_OUT          = malloc(CONTROL_COUNT);
+
+OCTAVE_BLACK_KEY_LOOKUP   = malloc(12);
+OCTAVE_TOP_KEY_WIDTHS     = malloc(12);
+OCTAVE_TOP_KEY_OFFSETS    = malloc(12);
+OCTAVE_LOOKUP_BOTTOM      = malloc(7);
+
+KEY_VELOCITIES            = malloc(88);
+CC_RECEIVED_VALUES        = malloc(128); 
+
+GUI_MODE                  = malloc(1);
+
+/////////////////////////
+//    MEMORY ACCESS    //
+/////////////////////////
+
+function curveAddress(cnum)
+(
+  (cnum <0 || cnum >= CONTROL_COUNT)?(-1):(
+    CURVES + (cnum * CURVESIZE)
+  );
+);
+
+function shouldDropUnroutedCCMessages() (
+  (DROP_UNROUTED_CC_MESSAGES[0] == 1);
+);
+
+function isKeyboardFilteringEnabled() (
+  (KEYBOARD_FILTERING_ENABLED[0] == 1);
+);
+
+function isKeyboardTranspositionEnabled() (
+  (KEYBOARD_TRANSPOSE_ENABLED[0] == 1);
+);
+
+function shouldFilterOutKey(k) (
+  (KEYBOARD_FILTERED_NOTES[k]==1)
+);
+
+
+/////////////////////////
+//        MATH         //
+/////////////////////////
+
+function roundi(valf) (
+  floor(valf+0.5) | 0;
+);
+
+// Applies a curve, returns a value from 0 to 1.
+
+// Internally, the curve values are 128 floating values, between 0 and 127, 
+// but this is historical (before midi high-res implementation).
+// And ideally, they should have been between 0 and 1,
+// Because what we want is a curve from [0..1] to [0..1].
+// We thus need to pass a reference for normalization
+// Telling what is the maximum value allowed for the reference space.
+// For example, low-res midi values are going from 0 to 127, so the max is 127.
+// But for high-res midi, values are going from 0 to 127.999 so the max is 128 ! Argh !
+
+function applyCurve(blk_control, x01) (
+  
+  attached_curve = curveAddress(blk_control);
+  
+  // Do some clamping cleanup first
+  x01 = min(max(x01,0),1);
+  
+  // Normalize reference space > Curve space
+  sample_num_f  = 127 * x01;
+  sample_num_il = floor(sample_num_f);
+  sample_num_ir = ceil(sample_num_f);
+  
+  // Get left sample, right sample, and linear interpolation factor
+  sample_l      = attached_curve[sample_num_il];
+  sample_r      = attached_curve[sample_num_ir];
+  alpha         = sample_num_f - sample_num_il;
+  
+  // Lerp : this will return a value between 0 and 127
+  curve_interp  = (1-alpha) * sample_l + alpha * sample_r;
+
+  // Return a value between 0 and 1.
+  (curve_interp/127.0);
+);
+
+// Calculate pre-defined curves
+function buttonEquate(row,col,x01)
+(
+  ret = 0;
+  (row == BUTTON_ROW_LINEAR) ? (
+    (col == 0)? (
+      ret = x01;  
+    );
+    (col == 1)? (
+      ret = 1-x01;
+    );
+  );
+  
+  (row == BUTTON_ROW_CIRC) ? (
+    (col == 0)? (
+      ret = 1-sqrt(1-pow(x01,2));
+    ); 
+    (col == 1)? (
+      ret = 1-sqrt(1-pow(1-x01,2));
+    );
+    (col == 2)? (
+      ret = sqrt(1-pow(1-x01,2));
+    );
+    (col == 3)? (
+      ret = sqrt(1-pow(x01,2));
+    );   
+  );
+  
+  
+  (row == BUTTON_ROW_POW2) ? (
+    (col == 0)? (
+      ret = pow(x01,2);
+    );
+    (col == 1)? (
+      ret = pow(1-x01,2);
+    );
+    (col == 2)? (
+      ret = pow(x01,0.5);
+    );
+    (col == 3)? (
+    ret   = pow(1-x01,0.5);
+    );
+  );
+  
+  (row == BUTTON_ROW_POW3) ? (
+    (col == 0)? (
+      ret = pow(x01,3);
+    );
+    (col == 1)? (
+      ret = pow(1-x01,3);
+    );
+    (col == 2)? (
+      ret = pow(x01,1/3);
+    ); 
+    (col == 3)? (
+      ret = pow(1-x01,1/3);
+    );  
+  ); 
+   
+  (row == BUTTON_ROW_STEP) ? (
+    (col == 0)? (
+      // Smooth step
+      ret = 3*pow(x01,2) - 2*pow(x01,3);
+    );
+    (col == 1)? (
+      // Smooth step
+      ret = 1-(3*pow(x01,2) - 2*pow(x01,3));
+    );
+    (col == 2)? (
+      // Smoother step
+      ret = 6*pow(x01,5) - 15*pow(x01,4) + 10*pow(x01,3);
+    ); 
+    (col == 3)? (
+      // Smoother step
+      ret = 1-(6*pow(x01,5) - 15*pow(x01,4) + 10*pow(x01,3));
+    ); 
+    (col == 4)? (
+      // Discrete step
+      ret = (x01<=0.5)?(0):(1);
+    );
+    (col == 5)? (
+      // Discrete step
+      ret = (x01<=0.5)?(1):(0);
+    );
+  );
+  
+  (row == BUTTON_ROW_GATE) ? (
+    (col == 0)? (
+      // Smoother gatep
+      x01 = (x01 <= 0.5)?(2*x01):(2-2*x01);
+      ret = (6*pow(x01,5) - 15*pow(x01,4) + 10*pow(x01,3));
+    );
+    (col == 1)? (
+      // Smoother gatep
+      x01 = (x01 <= 0.5)?(2*x01):(2-2*x01);
+      ret = 1-(6*pow(x01,5) - 15*pow(x01,4) + 10*pow(x01,3));    
+    );
+    (col == 2)? (
+      // Triangle
+      x01 = (x01 <= 0.5)?(2*x01):(2-2*x01);
+      ret = x01;
+    );
+    (col == 3)? (
+      // Triangle
+      x01 = (x01 <= 0.5)?(2*x01):(2-2*x01);
+      ret = 1-x01;
+    );
+    (col == 4)? (
+      // Square
+      x01 = (x01 <= 0.25 || x01 > 0.75)?(0):(1);
+      ret = x01;
+    );
+    (col == 5)? (
+      // Square
+      x01 = (x01 <= 0.25 || x01 > 0.75)?(0):(1);
+      ret = 1-x01;
+    );
+  );
+  
+  ret;
+);
+
+//////////////////////
+//       MIDI       //
+//////////////////////
+
+g_hres_h = 0;
+g_hres_l = 0;
+
+// Converts a floating value of a CC **between 0 and 1**
+// To high/low parts of a 14-bit hres
+// For CC #0 to #31 (with respective #32 to #63).
+function midiCCHresF012I(f01) (
+  
+  // Clamp to 0..1 for safety
+  f01  = max(min(f01,1),0);
+  
+  // Convert to 14-bit space
+  ival = roundi(f01 * 16383);
+  
+  // Floor to int for the high part
+  g_hres_h  = (ival >> 7);
+  g_hres_l  = ival & 0x7F;
+);
+
+// Inverse of midiCCHresF012I
+function midiCCHresI2F01(high,low) (
+  
+  // Sanitize
+  high = max(min(high,127),0);
+  low  = max(min(low,127),0);
+  
+  // 14-bit value
+  ival = (high << 7) + low;
+  
+  // Put it in 0-1 space
+  val01 = ival/16383;
+);
+
+// Converts a floating value of a key velocity **between 0 and 1**
+// To high/low parts of a 14-bit hres
+//
+// Specification for this
+// https://forum.cockos.com/showthread.php?t=83782
+//
+// CAUTION : Calling this function for f01 = 0 will not return 0!!
+// Don't call it on NOTE_OFF messages!!
+function midiVelocityHresF012I(f01) (
+  
+  // Clamp to 0..1 for safety
+  f01  = max(min(f01,1),0);
+
+  // Convert to 14-bit space
+  // Caution : only 16256 values are possible 
+  // (All LSB values for MSB=0 NOTE OFF are not allowed)
+  ival = roundi(f01 * 16255);
+  
+  // Floor to int for the high part
+  // Add 1 for NOTE_ON
+  g_hres_h  = (ival >> 7)+1;
+  g_hres_l  = ival & 0x7F;
+);
+
+// Inverse of midiVelocityHresF012I
+function midiVelocityHresI2F01(high,low) (
+
+  // Sanitize
+  high = max(min(high,127),0);
+  low  = max(min(low,127),0);
+    
+  high==0?(
+    // If high is equal to 0
+    // Low = 0 is not allowed for NOTE OFF compatibility
+    // So just return 0, it's a NOTE OFF, period.
+    0;
+  ):(
+  
+    // This said, we can start at 0.
+    high = high-1;
+    
+    // 14-bit value
+    ival = (high << 7) + low;
+    
+    // Put it in 0-1 space
+    // Only 16256 values are available since we rejected all LSB values for MSB=0
+    val01 = ival/16255;
+    val01 = max(min(val01,1),0);
+  );
+);
+
+// Octave number for a floating x axis of white keys
+function octaveForBottomPos(keyboard_floating_pos) (
+  floor(keyboard_floating_pos/7);
+);
+
+// Octave note for a floating x axis of white keys
+// For the bottom row of the keyboard (only white keys here)
+function octaveNoteForBottomPos(keyboard_bottom_floating_pos) (
+  OCTAVE_LOOKUP_BOTTOM[floor(keyboard_bottom_floating_pos) % 7];
+);
+
+// Is key black? (keys are numbered from 0 to 87)
+function keyIsBlack(key_num) (
+  OCTAVE_BLACK_KEY_LOOKUP[key_num % 12] == 1;
+);
+
+// Key octave
+function octaveForKey(key_num) (
+  floor(key_num / 12);
+);
+
+// Key for midi note
+function midiNoteToKey(midi_note) (
+  midi_note - 21; // A0
+);
+
+// Midi note to key
+function keyToMidiNote(key) (
+  key + 21; // A0
+);
+
+
+// For a #CC, returns LSB counterpart or -1 if it hasn't.
+function ccLsbCounterpart(ccnum) (
+  ret = -1;
+  
+  (ccnum>=0 && ccnum < 32)?(
+    ret = ccnum + 32;
+  );
+  
+  ret;
+);
+
+// For a #CC, returns MSB counterpart or -1 if it hasn't.
+function ccMsbCounterpart(ccnum) (
+  ret = -1;
+  
+  (ccnum>=32 && ccnum < 64)?(
+    ret = ccnum - 32;
+  );
+  
+  ret;
+);
+
+function isALsbCC(ccnum) (
+  // 88 is the LSB Channel for velocity.
+  (ccMsbCounterpart(ccnum) != -1 || ccnum == 88);
+);
+
+function isAMsbCC(ccnum) (
+  // 88 is the LSB Channel for velocity.
+  (ccLsbCounterpart(ccnum) != -1);
+);
+
+// High res midi input? (it's a global param)
+function isHighResMidiInputEnabled()
+(
+  HIGHRES_INPUT_ENABLED[0];
+);
+
+// High res output? (it's a local param)
+function isHighResMidiOutputEnabledForControl(control) 
+(
+  CONTROL_HIGHRES_OUTPUT_ENABLED[control];
+);
+
+// Is the CC learnable? (in high res, we don't allow LSB controls to be learnable)
+function isCCLearnable(ccnum) (
+  (!isHighResMidiInputEnabled())?(1):(!isALsbCC(ccnum););
+);
+
+function enableCCLearn()
+(
+  g_cc_learn = 1;
+);
+
+function disableCCLearn()
+(
+  g_cc_learn = 0;
+);
+
+function isCCLearning() 
+(
+  (g_cc_learn == 1);
+);
+
+
+/////////////////////
+//  INIT FUNCTIONS //
+/////////////////////
+
+function knobTic(val, x_or_y)
+(
+  // Clamp val between 0 and 1
+  val = min(val,0.99999);
+  val = max(0,val);
+  
+  val = 10*val;
+  
+  v1 = floor(val) | 0; // intify, v1 between 0 and 9
+  v2 = (v1 + 1) | 0;
+  
+  (x_or_y == 1)?
+  ( 
+    ret = KNOB_TICS_X[v1] + (val-v1)*(KNOB_TICS_X[v2]-KNOB_TICS_X[v1]);
+  ):
+  (
+    ret = KNOB_TICS_Y[v1] + (val-v1)*(KNOB_TICS_Y[v2]-KNOB_TICS_Y[v1]); 
+  );
+);
+
+function initKnobTics()
+(
+  t = 0;
+  while(t<11)
+  (
+    angle = 90 + 30 + t*(36-6);
+    angle *= $pi / 180;
+    KNOB_TICS_X[t] = cos(angle);
+    KNOB_TICS_Y[t] = sin(angle);
+    t += 1;
+  );
+);
+
+function initMidiControlNames()
+(
+  strcpy(0,"Bank Select");
+  strcpy(1,"Modulation Wheel");
+  strcpy(2,"Breath");
+  strcpy(3,"CC 3");
+  strcpy(4,"Foot Controller");
+  strcpy(5,"Portamento Time");
+  strcpy(6,"Data Entry");
+  strcpy(7,"Volume");
+  strcpy(8,"Balance");
+  strcpy(9,"CC 9");
+  strcpy(10,"Pan");
+  strcpy(11,"Expression");
+  strcpy(12,"Effect Controller 1");
+  strcpy(13,"Effect Controller 2");
+  strcpy(14,"CC 14");
+  strcpy(15,"CC 15");
+  strcpy(16,"General Purpose Slider 1");
+  strcpy(17,"General Purpose Slider 2");
+  strcpy(18,"General Purpose Slider 3");
+  strcpy(19,"General Purpose Slider 4");
+  strcpy(20,"CC 20");
+  strcpy(21,"CC 21");
+  strcpy(22,"CC 22");
+  strcpy(23,"CC 23");
+  strcpy(24,"CC 24");
+  strcpy(25,"CC 25");
+  strcpy(26,"CC 26");
+  strcpy(27,"CC 27");
+  strcpy(28,"CC 28");
+  strcpy(29,"CC 29");
+  strcpy(30,"CC 30");
+  strcpy(31,"CC 31");
+  
+  strcpy(32+0,"Bank Select");
+  strcpy(32+1,"Modulation Wheel");
+  strcpy(32+2,"Breath");
+  strcpy(32+3,"CC 3");
+  strcpy(32+4,"Foot Controller");
+  strcpy(32+5,"Portamento Time");
+  strcpy(32+6,"Data Entry");
+  strcpy(32+7,"Volume");
+  strcpy(32+8,"Balance");
+  strcpy(32+9,"CC 14");
+  strcpy(32+10,"Pan");
+  strcpy(32+11,"Expression");
+  strcpy(32+12,"Effect Controller 1");
+  strcpy(32+13,"Effect Controller 2");
+  strcpy(32+14,"CC 14");
+  strcpy(32+15,"CC 15");
+  strcpy(32+16,"General Purpose Slider 1");
+  strcpy(32+17,"General Purpose Slider 2");
+  strcpy(32+18,"General Purpose Slider 3");
+  strcpy(32+19,"General Purpose Slider 4");
+  strcpy(32+20,"CC 20");
+  strcpy(32+21,"CC 21");
+  strcpy(32+22,"CC 22");
+  strcpy(32+23,"CC 23");
+  strcpy(32+24,"CC 24");
+  strcpy(32+25,"CC 25");
+  strcpy(32+26,"CC 26");
+  strcpy(32+27,"CC 27");
+  strcpy(32+28,"CC 28");
+  strcpy(32+29,"CC 29");
+  strcpy(32+30,"CC 30");
+  strcpy(32+31,"CC 31");
+
+  strcpy(64,"Damper/Sustain Pedal (Hold1) On/Off");
+  strcpy(65,"Portamento On/Off");
+  strcpy(66,"Sostenuto On/Off");
+  strcpy(67,"Soft Pedal On/Off");
+  strcpy(68,"Legato Pedal On/Off");
+  strcpy(69,"Damper/Sustain Pedal (Hold2) On/Off");
+  strcpy(70,"Sound Variation");
+  strcpy(71,"Sound Timbre/Resonance/Harmonics");
+  strcpy(72,"Release");
+  strcpy(73,"Attack");
+  strcpy(74,"Cutoff/Brightness");
+  strcpy(75,"Sound Controller 6");
+  strcpy(76,"Sound Controller 7");
+  strcpy(77,"Sound Controller 8");
+  strcpy(78,"Sound Controller 9");
+  strcpy(79,"Sound Controller 10");
+  strcpy(80,"General Purpose On/Off 1");
+  strcpy(81,"General Purpose On/Off 2");
+  strcpy(82,"General Purpose On/Off 3");
+  strcpy(83,"General Purpose On/Off 4");
+  strcpy(83,"General Purpose On/Off 4");
+  strcpy(84,"Portamento Amount");
+  
+  strcpy(88,"Keyboard velocity");
+  
+  strcpy(91,"Effect 1 Level (Reverb)");
+  strcpy(92,"Effect 2 Level (Tremolo)");
+  strcpy(93,"Effect 3 Level (Chorus)");
+  strcpy(94,"Effect 4 Level (Detune/Celeste)");
+  strcpy(95,"Effect 5 Level (Phaser)");
+  strcpy(96,"NRPN/RPN Data +1");
+  strcpy(97,"NRPN/RPN Data +1");
+  strcpy(98,"NRPN LSB");
+  strcpy(99,"NRPN MSB");
+  strcpy(100,"RPN LSB");
+  strcpy(101,"RPN MSB");
+);
+
+function initPluginControlNames()
+(
+  strcpy(128+CONTROL_WHEELS_START+0,"Modulation Wheel");
+  
+  strcpy(128+CONTROL_PEDALS_START+0,"Pedal Sustain");
+  strcpy(128+CONTROL_PEDALS_START+1,"Pedal 2");
+  strcpy(128+CONTROL_PEDALS_START+2,"Pedal 3");
+  strcpy(128+CONTROL_PEDALS_START+3,"Pedal 4");
+  
+  strcpy(128+CONTROL_FADERS_START+0,"Fader 1");
+  strcpy(128+CONTROL_FADERS_START+1,"Fader 2");
+  strcpy(128+CONTROL_FADERS_START+2,"Fader 3");
+  strcpy(128+CONTROL_FADERS_START+3,"Fader 4");
+  strcpy(128+CONTROL_FADERS_START+4,"Fader 5");
+  strcpy(128+CONTROL_FADERS_START+5,"Fader 6");
+  strcpy(128+CONTROL_FADERS_START+6,"Fader 7");
+  strcpy(128+CONTROL_FADERS_START+7,"Fader 8");
+  strcpy(128+CONTROL_FADERS_START+8,"Fader 9");
+  strcpy(128+CONTROL_FADERS_START+9,"Fader 10");
+  
+  strcpy(128+CONTROL_KNOBS_START+0,"Knob 1");
+  strcpy(128+CONTROL_KNOBS_START+1,"Knob 2");
+  strcpy(128+CONTROL_KNOBS_START+2,"Knob 3");
+  strcpy(128+CONTROL_KNOBS_START+3,"Knob 4");
+  strcpy(128+CONTROL_KNOBS_START+4,"Knob 5");
+  strcpy(128+CONTROL_KNOBS_START+5,"Knob 6");
+  strcpy(128+CONTROL_KNOBS_START+6,"Knob 7");
+  strcpy(128+CONTROL_KNOBS_START+7,"Knob 8");
+  strcpy(128+CONTROL_KNOBS_START+8,"Knob 9");
+  strcpy(128+CONTROL_KNOBS_START+9,"Knob 10");
+  
+  strcpy(128+CONTROL_PADS_START+0,"Pad 1");
+  strcpy(128+CONTROL_PADS_START+1,"Pad 2");
+  strcpy(128+CONTROL_PADS_START+2,"Pad 3");
+  strcpy(128+CONTROL_PADS_START+3,"Pad 4");
+  strcpy(128+CONTROL_PADS_START+4,"Pad 5");
+  strcpy(128+CONTROL_PADS_START+5,"Pad 6");
+  strcpy(128+CONTROL_PADS_START+6,"Pad 7");
+  strcpy(128+CONTROL_PADS_START+7,"Pad 8");
+  strcpy(128+CONTROL_PADS_START+8,"Pad 9");
+  strcpy(128+CONTROL_PADS_START+9,"Pad 10");
+  
+  strcpy(128+CONTROL_VELOCITY_START+0,"Keyboard velocity");
+);
+
+function initOctaveLookups() (
+  
+  OCTAVE_LOOKUP_BOTTOM[0] = 0; // A
+  OCTAVE_LOOKUP_BOTTOM[1] = 2; // B
+  OCTAVE_LOOKUP_BOTTOM[2] = 3; // C
+  OCTAVE_LOOKUP_BOTTOM[3] = 5; // D
+  OCTAVE_LOOKUP_BOTTOM[4] = 7; // E
+  OCTAVE_LOOKUP_BOTTOM[5] = 8; // F
+  OCTAVE_LOOKUP_BOTTOM[6] = 10; // G
+  
+  // Starts at A (not C)
+  OCTAVE_BLACK_KEY_LOOKUP[0]  = 0; // A
+  OCTAVE_BLACK_KEY_LOOKUP[1]  = 1; // A#/Bb
+  OCTAVE_BLACK_KEY_LOOKUP[2]  = 0; // B
+  OCTAVE_BLACK_KEY_LOOKUP[3]  = 0; // C
+  OCTAVE_BLACK_KEY_LOOKUP[4]  = 1; // C#/Db
+  OCTAVE_BLACK_KEY_LOOKUP[5]  = 0; // D
+  OCTAVE_BLACK_KEY_LOOKUP[6]  = 1; // D#/Eb
+  OCTAVE_BLACK_KEY_LOOKUP[7]  = 0; // E
+  OCTAVE_BLACK_KEY_LOOKUP[8]  = 0; // F
+  OCTAVE_BLACK_KEY_LOOKUP[9]  = 1; // F#/Gb
+  OCTAVE_BLACK_KEY_LOOKUP[10] = 0; // G
+  OCTAVE_BLACK_KEY_LOOKUP[11] = 1; // G#/Ab     
+  
+  OCTAVE_TOP_KEY_WIDTHS[0]  = 0;   // A
+  OCTAVE_TOP_KEY_WIDTHS[1]  = 1;   // A#/Bb
+  OCTAVE_TOP_KEY_WIDTHS[2]  = 0.5; // B
+  OCTAVE_TOP_KEY_WIDTHS[3]  = 0.5; // C
+  OCTAVE_TOP_KEY_WIDTHS[4]  = 1;   // C#/Db
+  OCTAVE_TOP_KEY_WIDTHS[5]  = 0;   // D
+  OCTAVE_TOP_KEY_WIDTHS[6]  = 1;   // D#/Eb
+  OCTAVE_TOP_KEY_WIDTHS[7]  = 0.5; // E
+  OCTAVE_TOP_KEY_WIDTHS[8]  = 0.5; // F
+  OCTAVE_TOP_KEY_WIDTHS[9]  = 1;   // F#/Gb
+  OCTAVE_TOP_KEY_WIDTHS[10] = 0;   // G
+  OCTAVE_TOP_KEY_WIDTHS[11] = 1;   // G#/Ab  
+  
+  OCTAVE_TOP_KEY_OFFSETS[0]  = 0.5; // A
+  OCTAVE_TOP_KEY_OFFSETS[1]  = 0.5; // A#/Bb
+  OCTAVE_TOP_KEY_OFFSETS[2]  = 1.5; // B
+  OCTAVE_TOP_KEY_OFFSETS[3]  = 2;   // C
+  OCTAVE_TOP_KEY_OFFSETS[4]  = 2.5; // C#/Db
+  OCTAVE_TOP_KEY_OFFSETS[5]  = 3.5; // D
+  OCTAVE_TOP_KEY_OFFSETS[6]  = 3.5; // D#/Eb
+  OCTAVE_TOP_KEY_OFFSETS[7]  = 4.5; // E
+  OCTAVE_TOP_KEY_OFFSETS[8]  = 5;   // F
+  OCTAVE_TOP_KEY_OFFSETS[9]  = 5.5; // F#/Gb
+  OCTAVE_TOP_KEY_OFFSETS[10] = 6.5; // G
+  OCTAVE_TOP_KEY_OFFSETS[11] = 6.5; // G#/Ab 
+);
+
+////////////////////////
+//     UI HELPERS     //
+////////////////////////
+
+function hasButtonInGrid(row,col)
+(
+  BUTTON_GRID_PRESENCE[row*BUTTON_GRID_SIZE + col];
+);
+
+function buttonDataAddress(row,col)
+(
+  BUTTON_DATA + (BUTTON_GRID_SIZE*row+col)*32;
+);
+
+function midiControlName(midi_cnum)
+(
+  midi_cnum;
+);
+function controlName(cnum)
+(
+  128+cnum;
+);
+function controlDescription(cnum)
+(
+  128+CONTROL_COUNT+cnum;
+);
+function controlLabel(cnum)
+(
+  128+CONTROL_COUNT+CONTROL_COUNT+cnum;
+);
+function controlLabelWithFallback(cnum)
+(
+  str = controlLabel(cnum);
+  (strlen(str)==0)?(str="?");
+  str;
+);
+
+function selectedControlCurveAddress()
+(
+  curveAddress(g_selected_control);
+);
+
+function initButton(row,col)
+(
+  BUTTON_GRID_PRESENCE[row*BUTTON_GRID_SIZE + col] = 1;
+  points = buttonDataAddress(row,col);
+  
+  i = 0;
+  while(i<32) ( points[i] = buttonEquate(row,col,i/31); i+=1);
+);
+
+
+
+///////////////////////////////
+//     MAIN INIT FUNCTIONS   //
+///////////////////////////////
+
+function firstInit() 
+( 
+  // Init midi control names
+  initMidiControlNames();
+  initPluginControlNames();
+
+  // Init knob tics
+  initKnobTics();
+  
+  // Init octave lookups
+  initOctaveLookups();
+
+  // Init curves
+  c = 0;
+  while(c<CONTROL_COUNT) ( 
+
+    // Init to identity.   
+    CONTROL_ENABLED[c] = 1;
+
+    curve = curveAddress(c);
+    i = 0; 
+    while(i<CURVESIZE) ( 
+      curve[i] = i;
+      i+=1; 
+    ); 
+    
+    c += 1; 
+  );
+  
+  // Init controls
+  c = 0; while(c<CONTROL_COUNT) (  
+    CONTROL_LAST_IN[c]                  = 0;
+    CONTROL_LAST_OUT[c]                 = 0;
+    CONTROL_ENABLED[c]                  = 0;    
+    CONTROL_SRCS[c]                     = 127; 
+    CONTROL_DSTS[c]                     = 127; 
+    CONTROL_HIGHRES_OUTPUT_ENABLED[c]   = 0; 
+    c+=1 
+  );
+  
+  // Init global params
+  KEYBOARD_TRANSPOSE_ENABLED[0]     = 0;
+  KEYBOARD_TRANSPOSE_8VA[0]         = 0;
+  KEYBOARD_TRANSPOSE_SEMI_TONES[0]  = 0;     
+ 
+  HIGHRES_INPUT_ENABLED[0]          = 0;
+  DROP_UNROUTED_CC_MESSAGES[0]      = 0;
+
+  // Init mod wheel
+  CONTROL_ENABLED[CONTROL_WHEELS_START] = 1;
+  CONTROL_SRCS[CONTROL_WHEELS_START]    = 1; // Midi mod wheel
+  CONTROL_DSTS[CONTROL_WHEELS_START]    = 1; // Midi mod wheel
+  
+  // Init sustain pedal
+  CONTROL_ENABLED[CONTROL_PEDALS_START] = 1;
+  CONTROL_SRCS[CONTROL_PEDALS_START]    = 64; // Midi sustain pedal
+  CONTROL_DSTS[CONTROL_PEDALS_START]    = 64; // Midi sustain pedal
+  
+  // Init button presence grid
+  i = 0; while(i<BUTTON_GRID_SIZE*BUTTON_GRID_SIZE) ( BUTTON_GRID_PRESENCE[i] = 0; i+=1 );
+   
+  // Init buttons
+  initButton(BUTTON_ROW_LINEAR,0);
+  initButton(BUTTON_ROW_LINEAR,1);
+  
+  initButton(BUTTON_ROW_POW2,0);
+  initButton(BUTTON_ROW_POW2,1); 
+  initButton(BUTTON_ROW_POW2,2);
+  initButton(BUTTON_ROW_POW2,3);
+    
+  initButton(BUTTON_ROW_POW3,0);
+  initButton(BUTTON_ROW_POW3,1);
+  initButton(BUTTON_ROW_POW3,2);
+  initButton(BUTTON_ROW_POW3,3);
+   
+  initButton(BUTTON_ROW_CIRC,0);
+  initButton(BUTTON_ROW_CIRC,1);
+  initButton(BUTTON_ROW_CIRC,2);
+  initButton(BUTTON_ROW_CIRC,3);   
+  
+  initButton(BUTTON_ROW_STEP,0);
+  initButton(BUTTON_ROW_STEP,1);
+  initButton(BUTTON_ROW_STEP,2);
+  initButton(BUTTON_ROW_STEP,3);
+  initButton(BUTTON_ROW_STEP,4);
+  initButton(BUTTON_ROW_STEP,5);
+  
+  initButton(BUTTON_ROW_GATE,0);
+  initButton(BUTTON_ROW_GATE,1);
+  initButton(BUTTON_ROW_GATE,2);
+  initButton(BUTTON_ROW_GATE,3);
+  initButton(BUTTON_ROW_GATE,4);
+  initButton(BUTTON_ROW_GATE,5);   
+  
+  GUI_MODE[0] = 1;
+  
+  // Configure font number 1
+  gfx_setfont(1,"Arial",10,'b');           
+  gfx_setfont(0);
+);
+
+ext_noinit=1;
+!hasinit ? (
+  firstInit();
+  
+  last_modified = -1;
+  g_selected_control = -1;
+);
+hasinit=1;
+
+//===========================================//
+//==============    SLIDER     ==============//
+//===========================================//
+@slider
+
+//===========================================//
+//==============   SERIALIZE   ==============//
+//===========================================//
+@serialize
+
+// CURRENT FILE FORMAT
+FILE_FORMAT_1_0             = (1<<8)+0; // 1.0 (==256)
+CURRENT_FILE_FORMAT_VERSION = FILE_FORMAT_1_0;
+
+function memwr(is_saving, ver) (
+  
+  ccount = (is_saving)?(CONTROL_COUNT):(0);
+    
+  // version and control count bytes introduced in V3.1a
+  (ver>0)?(
+    // Version number already managed 
+    // Now the control count. 
+    // Read it if we're reading, or save it if we're writing
+    file_var(0,ccount);
+    // And the first curve
+    file_mem(0,CURVES+0,CURVESIZE);
+  ):(
+    !is_saving?(
+      // In that version there were 35 controls
+      ccount = 35;
+    );
+  
+    // Version number was in fact the first sample of the first curve.
+    // There are still n-1 samples to read afterwards.
+    file_mem(0,CURVES+1,CURVESIZE-1);
+  );
+  
+  // Read/Write other (ccount-1) curves (first one handled separately for bw compatibility)
+  file_mem(0,CURVES+CURVESIZE , (ccount-1) * CURVESIZE);
+ 
+  // Flags
+  file_mem(0,CONTROL_ENABLED  , ccount);
+  
+  // Srcs and dests
+  file_mem(0,CONTROL_SRCS     , ccount);
+  file_mem(0,CONTROL_DSTS     , ccount);
+  
+  // Descriptions
+  s=0;while(s<ccount) 
+  ( 
+    file_string(0,controlDescription(s)); 
+    s+=1;
+  );
+  
+  // Short descriptions
+  s=0;while(s<ccount) 
+  ( 
+    file_string(0,controlLabel(s)); 
+    s+=1;
+  );
+  
+  // Introduced in V3
+  file_mem(0,KEYBOARD_FILTERING_ENABLED,1);
+  file_mem(0,KEYBOARD_FILTERED_NOTES,88);
+  
+  // Introduced in V3.1a
+  file_mem(0,CONTROL_HIGHRES_OUTPUT_ENABLED, ccount);
+  file_mem(0,KEYBOARD_TRANSPOSE_ENABLED,1);
+  file_mem(0,KEYBOARD_TRANSPOSE_8VA,1);
+  file_mem(0,KEYBOARD_TRANSPOSE_SEMI_TONES,1);
+  file_mem(0,HIGHRES_INPUT_ENABLED,1);
+  file_mem(0,DROP_UNROUTED_CC_MESSAGES,1);
+  
+);
+
+function backupOrRestore() (
+
+  is_saving = (file_avail(0)<0);
+  
+  (is_saving)?(
+
+    file_var(0, CURRENT_FILE_FORMAT_VERSION);
+    memwr(is_saving, CURRENT_FILE_FORMAT_VERSION);
+  ):
+  (  
+    // Reading the file
+    // Have to manage the old format ...
+    check_ver = 0;
+    file_var(0,check_ver);
+    
+    // Now, we put a version number >= 256.
+    // The old format had a curve point on the first slot, so < 256.
+    old_format = (check_ver < 256);
+    
+    (old_format)?( 
+      // Repair first curve 
+      // The "ver" would not exist and is in fact the first sample of the first curve
+      CURVES[0] = check_ver; // Yuuuk!!
+      // Force the file format to 0.0
+      memwr(is_saving, 0);
+    ):( 
+      // 1.0 format, 36 controls
+      memwr(is_saving, FILE_FORMAT_1_0);
+    );
+  )
+);
+
+backupOrRestore();
+
+//===========================================//
+//===============     GFX     ===============//
+//===========================================//
+@gfx 840 640
+
+//////////////////////////
+// GENERIC UI FUNCTIONS //
+//////////////////////////
+
+function gfx_rgb(hex_col) (
+  gfx_r = ((hex_col>>16)&0xFF)/255; 
+  gfx_g = ((hex_col>>8)&0xFF)/255;
+  gfx_b = ((hex_col>>0)&0xFF)/255;
+);
+
+// Draws a enable/disable button
+// This button is linked to an adress in memory : flag_address[flag_local_address].
+// The only way I had found in EEL to use "pointers" was an array trick.
+// I've just discovered pseudo objects, it could be a solution too.
+function drawBistateButton(flag_address,flag_local_address,t,l,ontext,offtext,color_on,color_off,color_on_hover,color_off_hover) (
+
+  tmp = 0; ontextw = 0; offtextw = 0;
+  gfx_measurestr(ontext, ontextw,tmp);
+  gfx_measurestr(offtext,offtextw,tmp);
+  
+  bw = max(ontextw,offtextw) + 10;
+  bh = 15;
+  
+  bl = l;
+  bt = t;
+  
+  br = bl + bw;
+  bb = bt + bh;
+  
+  enabled = flag_address[flag_local_address];
+  in_rect = mouse_x >= bl && mouse_x <= br && mouse_y >= bt && mouse_y <= bb;
+  
+  in_rect ?(
+    // Hover color
+    gfx_rgb((enabled)?(color_on_hover):(color_off_hover));
+
+    // Click
+    mouse_click == 1 ? (
+      flag_address[flag_local_address] = !flag_address[flag_local_address];
+    );
+  ):(
+    // Not-hovered color
+    gfx_rgb((enabled)?(color_on):(color_off));
+  );
+  gfx_rect(bl,bt,bw,bh); 
+  
+  gfx_r = gfx_g = gfx_b = 0.8;
+  gfx_y = t + 4;
+  enabled?(
+    gfx_x = l+(bw-ontextw)/2; 
+    gfx_drawstr(ontext); 
+  ):(
+    gfx_x = l+(bw-offtextw)/2;
+    gfx_drawstr(offtext)
+  );
+);
+
+// ShortCut for a OnOff button with "Enabled"/"Bypass" texts
+function drawEnableDisableButton(flag_address,flag_local_address,t,l) (
+  drawBistateButton(flag_address,flag_local_address,t,l,"Enabled","Bypass",0x207020,0x303030,0x20C020,0x606060);
+);
+
+// ShortCut for a OnOff button with "Yes"/"No" texts
+function drawYesNobutton(flag_address,flag_local_address,t,l) (
+  drawBistateButton(flag_address,flag_local_address,t,l,"Yes","No",0x207020,0x202020,0x20C020,0x606060);
+);
+
+// ShortCut for a OnOff button with "On"/"Off" texts
+function drawOnOffButton(flag_address,flag_local_address,t,l) (
+  drawBistateButton(flag_address,flag_local_address,t,l,"On","Off",0x207020,0x303030,0x20C020,0x606060);
+);
+
+// - or + button for a spinbox
+function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_sub,minval,maxval)
+(
+  bl = l;
+  bt = t;
+   
+  br = bl + 15;
+  bb = bt + 15;
+  
+  in_rect =(mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt); 
+   
+  (mouse_click == 1 && in_rect)?(
+    mouse_capturator = button_id;
+  ); 
+   
+  in_rect  ?
+  (
+    gfx_r = gfx_g = gfx_b = 0.3;   
+    val_shift = 0;
+   
+    // Handle the callback in the draw function... erm
+    // Let's have another one.
+    mouse_cap == 1 && mouse_capturator == button_id ? (
+      // Limit this to 20 calls / seconds
+      new_srcdstbtn_time = time_precise();
+      (new_srcdstbtn_time - last_srcdstbtn_time > 0.03 || mouse_click) ? (
+        val_shift = (add_or_sub)?(1):(-1);
+        last_srcdstbtn_time = new_srcdstbtn_time; 
+        mouse_click == 1 ? (last_srcdstbtn_time += 0.3);
+      );
+    ); 
+    /*
+      // maybe too dangerous ?
+      mouse_wheeli != 0 ? (
+        val_shift = mouse_wheeli;
+      );
+    */
+    val_shift != 0 ? (  
+      val_address[val_local_address] += val_shift;
+      val_address[val_local_address] = min(max(val_address[val_local_address],minval),maxval);    
+    );
+  
+  ):(gfx_r = gfx_g = gfx_b = 0.15;);  
+  
+  gfx_x   = bl;
+  gfx_y   = bt;
+  gfx_rect(bl,bt,br-bl,bb-bt);
+  gfx_x   = bl+3;
+  gfx_y   = bt+4;
+  gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;  
+  
+  add_or_sub == 0?(gfx_drawstr("-")):(gfx_drawstr("+"));  
+);
+
+// A Spinbox, with a int value and two +/- buttons
+function drawAddOrSubWidget(widget_id,val_address,val_local_address,l,t,minval,maxval)
+(
+  tmp = #; 
+  
+  // Buttons -/+
+  sprintf(tmp,"%s_sub",widget_id);
+  drawAddOrSubButton(tmp,val_address,val_local_address,l,t,0,minval,maxval);
+  sprintf(tmp,"%s_add",widget_id);
+  drawAddOrSubButton(tmp,val_address,val_local_address,l+50,t,1,minval,maxval);
+  
+  gfx_r = gfx_g = 0.5; gfx_b = 1;
+  gfx_x = l+23; gfx_y = t+4;
+  
+  // Value at the center
+  sprintf(tmp,"%d",val_address[val_local_address]);
+  gfx_drawStr(tmp);
+);
+
+/////////////////////
+//    CURVE ZONE   //
+/////////////////////
+
+function mousePenCallback()
+(   
+  in_rect = (mouse_x >= gzone_l && mouse_x < gzone_r && mouse_y >= gzone_t && mouse_y < gzone_b);
+
+  // Remember that first click was in drawing zone (click focus)
+  (mouse_click == 1 && in_rect)?(
+    mouse_capturator = "curvezone";
+  );
+
+  // Only handle events if we have click focus
+  mouse_cap == 1 && mouse_capturator == "curvezone" ? (  
+    // Drawing callback
+    in_rect ?
+    (
+      px = (mouse_x-left)/(RESOLUTION);
+      py = (bottom-mouse_y+2)/(RESOLUTION);
+      px < 0 ? px = 0;
+      px > CURVESIZE - 1 ? px = CURVESIZE-1;
+      py < 0 ? py = 0;
+      py > CURVESIZE - 1 ? py = CURVESIZE-1;
+      px = floor(px+0.5);
+      py = floor(py+0.5); 
+      
+      last_modified == -1 || last_modified == px ? (
+        CURVE[px]       = py;
+        last_modified = px;
+      ):
+      (
+        x1=x2=y1=y2=0;
+        px <= last_modified ? 
+        ( x1 = px; x2 = last_modified; y1 = py; y2 = CURVE[last_modified]; ):
+        ( x1 = last_modified; x2 = px; y1 = CURVE[last_modified]; y2 = py; );
+        i = x1;
+        while(i <= x2) (
+          alpha  = (i-x1)/(x2-x1);
+          CURVE[i] = y1 + alpha * (y2-y1);
+          i += 1;
+        );
+        last_modified = px;
+      )
+    )
+  ):(
+    last_modified = -1
+  );
+);
+
+function smootheButtonCallback()
+(
+  curve = selectedControlCurveAddress();
+  
+  // Limit this to 20 calls / seconds
+  new_smoothe_time = time_precise();
+  (new_smoothe_time - last_smoothe_time > 0.05) ? (
+    
+    SCURVE[0]           = curve[0];
+    SCURVE[CURVESIZE-1] = curve[CURVESIZE-1];
+    
+    // Blur the curve
+    i = 1;
+    while(i<CURVESIZE-1)
+    (
+      SCURVE[i] = (CURVE[i-1] + CURVE[i] + CURVE[i+1])/3;
+      i+=1;
+    );
+    
+    i=0; while(i<CURVESIZE) ( CURVE[i] = SCURVE[i]; i+=1 );
+    last_smoothe_time = new_smoothe_time;
+  );
+);
+
+function curveButtonCallback(row_num, button_num)
+(
+  curve = selectedControlCurveAddress();
+
+  i = 0;
+  while(i<CURVESIZE) (
+    curve[i] = (CURVESIZE-1) * buttonEquate(row_num, button_num, i/(CURVESIZE-1));
+    i+=1;
+  );
+);
+
+// Smoothe button
+function drawSmootheButton()
+(
+  bl = 110+gzone_l;
+  bt = gzone_b;
+  br = bl + 95;
+  bb = bt + 20;
+   
+  mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt ?
+  (
+   gfx_r = gfx_g = gfx_b = 0.3;   
+   // Handle the callback in the draw function... erm
+   // Let's have another one.
+   
+   mouse_click == 1 ? ( mouse_capturator = "smoothebutton" );
+   
+   mouse_cap == 1 && mouse_capturator == "smoothebutton" ? (
+     smootheButtonCallback();
+   ); 
+  ):(gfx_r = gfx_g = gfx_b = 0.15;);  
+  
+  gfx_x   = bl;
+  gfx_y   = bt;
+  gfx_rect(bl,bt,br-bl,bb-bt);
+  gfx_x   = bl+20;
+  gfx_y   = bt+7;
+  gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;  
+  gfx_drawstr("Smoothe");  
+);
+
+// Draw buttons
+function drawCurveButton(row_num, button_num) 
+(
+  // Adress of the row
+  points  = buttonDataAddress(row_num,button_num);
+  
+  bl = bzone_margin + 15 + bzone_l + button_num*42;
+  bt = bzone_margin + 7 + bzone_t + row_num*42;
+  br = bl + 32;
+  bb = bt + 32;
+   
+  mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt ?
+  (
+   gfx_r = gfx_g = gfx_b = 0.2;   
+   // Handle the callback in the draw function... erm
+   (mouse_click==1) ? (
+     curveButtonCallback(row_num,button_num);
+   ); 
+  ):
+  ( 
+    gfx_r = gfx_g = gfx_b = 0.1;
+  );
+  
+  // Draw the button rect
+  gfx_x   = bl;
+  gfx_y   = bt;
+  gfx_rect(bl,bt,br-bl,bb-bt);
+     
+  // Draw the button points   
+  gfx_r = 1; gfx_g = 0.35; gfx_b = 0.35;
+  gfx_x = bl; gfx_y = floor(bb- 31*points[0]-0.5);  
+  i = 1;
+  while(i<32)
+  (
+    gfx_lineto(bl+i ,floor(bb- 31*points[i]-0.5));
+    i+=1;
+  );
+);
+
+// Curve buttons
+function drawCurveButtons()
+(
+  // Draw headers
+  gfx_r   = gfx_g = gfx_b = 1;
+  by      = bzone_t+bzone_margin+20;
+  gfx_x   = bzone_l;
+  gfx_y   = by;
+  gfx_drawstr("Lin");
+  by      += 42;
+  gfx_x   = bzone_l;
+  gfx_y   = by;
+  gfx_drawstr("X^2"); 
+  by      += 42;
+  gfx_x   = bzone_l;
+  gfx_y   = by;
+  gfx_drawstr("X^3");  
+  by      += 42;
+  gfx_x   = bzone_l;
+  gfx_y   = by;
+  gfx_drawstr("Circ");
+  by      += 42;
+  gfx_x   = bzone_l;
+  gfx_y   = by;
+  gfx_drawstr("Step");  
+  by      += 42;
+  gfx_x   = bzone_l;
+  gfx_y   = by;
+  gfx_drawstr("Gate"); 
+
+  // Draw buttons
+  r=0; 
+  while(r<BUTTON_GRID_SIZE)
+  (
+    c=0;
+    while(c<BUTTON_GRID_SIZE)
+    (
+      hasButtonInGrid(r,c) ? (
+        drawCurveButton(r,c);
+      );
+      c+=1; 
+    );
+   r+=1;
+  );
+);
+
+function drawCurvezone()
+(
+   // Curve zone
+    curve_pannel_top = GUI_CONTROL_PARAMS_TOP+70;  
+    curve = selectedControlCurveAddress();
+   
+    // Curve sonze
+    gzone_margin = 20;
+    
+    // Button zone
+    bzone_margin = 20;
+    
+    gzone_l   = 10;
+    gzone_t   = curve_pannel_top; 
+    top       = gzone_t + gzone_margin;
+    left      = gzone_l + gzone_margin;
+    right     = left    + (CURVESIZE-1)*RESOLUTION;
+    bottom    = top     + (CURVESIZE-1)*RESOLUTION;
+    gzone_r   = right   + gzone_margin;
+    gzone_b   = bottom  + gzone_margin;
+   
+    bzone_l   = gzone_r;
+    bzone_t   = gzone_t;
+     
+    // Draw background
+    gfx_r=gfx_g=gfx_b=0.1;
+    gfx_rect(left,top,right-left,bottom-top);
+      
+    // Draw grid
+    gfx_r=gfx_g=gfx_b=0.2;
+    gridstep = (CURVESIZE/4)*RESOLUTION;
+    gfx_line(left+1*gridstep,top,left+1*gridstep,bottom);
+    gfx_line(left+2*gridstep,top,left+2*gridstep,bottom);
+    gfx_line(left+3*gridstep,top,left+3*gridstep,bottom);
+    gfx_line(left,top+1*gridstep,right,top+1*gridstep);
+    gfx_line(left,top+2*gridstep,right,top+2*gridstep);
+    gfx_line(left,top+3*gridstep,right,top+3*gridstep);
+      
+    // Draw border
+    gfx_r=gfx_g=gfx_b=0.3;
+    gfx_x = left;
+    gfx_y = top;
+    gfx_lineto(right,top);
+    gfx_lineto(right,bottom);
+    gfx_lineto(left,bottom);
+    gfx_lineto(left,top);
+     
+    // Draw curve
+    gfx_r = 0.35;
+    gfx_g = 0.35;
+    gfx_b = 1;
+    gfx_x = left;
+    gfx_y = bottom-floor(0.5+RESOLUTION*curve[0]);
+      
+    i = 1; while(i<CURVESIZE)(
+      gfx_lineto(left+i*RESOLUTION,bottom-floor(0.5+ RESOLUTION*curve[i]));
+      i+=1; 
+    );
+      
+    gfx_r = 1;
+    gfx_g = 0.1;
+    gfx_b = 0.1;
+       
+    // Draw last event
+    gfx_circle(left + CONTROL_LAST_IN[g_selected_control]*RESOLUTION ,bottom-floor(1.5 + RESOLUTION*CONTROL_LAST_OUT[g_selected_control]),3);
+        
+    mousePenCallback();    
+        
+    drawCurveButtons();
+    drawSmootheButton();
+);
+
+
+//////////////////////
+//  ASSIGN PANNEL   //
+//////////////////////
+
+// Enable/Disable button for a CC control
+function drawEnableDisableButtonForControl(control_num) (
+  drawEnableDisableButton(CONTROL_ENABLED,control_num,CONTROL_PANNEL_TOP+3,10);
+);
+
+function onControlSelect()
+(
+  disableCCLearn();
+  edit_description = 0;
+  edit_label = 0;
+);
+
+function drawWheel(wh_num)
+(
+  control_num = CONTROL_WHEELS_START + wh_num;
+ 
+  slider_zone_x_offset = 30;
+  slider_zone_y_offset = CONTROL_PANNEL_TOP + 32;
+  
+  slider_h     = 70 + 5;  
+  slider_w     = 15;
+  slider_t     = slider_zone_y_offset;
+  slider_l     = slider_zone_x_offset; 
+  slider_b     = slider_t + slider_h;
+  slider_r     = slider_l + slider_w;
+
+  in_rect = (mouse_x >= slider_l && mouse_x <= slider_r && mouse_y <= slider_b && mouse_y >= slider_t);
+  
+  // Click event
+  mouse_click == 1 && in_rect ?
+  (
+    g_selected_control == control_num?(g_selected_control = -1):(g_selected_control = control_num);
+    onControlSelect();
+  );
+  
+  // Draw background
+  g_selected_control == control_num ?
+  (
+    gfx_r=0.4;gfx_g=0.4;gfx_b=0;
+    gfx_rect(slider_l-5,slider_t-5,slider_w+10,slider_h+10);
+  );
+  
+  // Draw wheel body
+  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=0.8;):(gfx_r=gfx_g=gfx_b=0.3;);
+  gfx_rect(slider_l,slider_t,slider_w,slider_h);
+    
+  // Draw Cursor
+  cval = CONTROL_LAST_IN[control_num]/127.0;
+  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=0.3;):(gfx_r=gfx_g=gfx_b=0.1;);
+  rect_x = slider_l;
+  rect_y = slider_b - cval*65 - 10;
+  gfx_rect(rect_x, rect_y, slider_w,10);
+);
+
+function drawPad(pad_num, is_pedal)
+(
+  control_num = (is_pedal==1)?(CONTROL_PEDALS_START + pad_num):(CONTROL_PADS_START + pad_num);
+ 
+  slider_h     = is_pedal == 1?(12):(22);  
+  slider_w     = is_pedal == 1?(15):(32);
+ 
+  slider_zone_x_offset = (is_pedal==1)?(58):(
+    507 + (pad_num % 5) * (slider_w+9);
+  );
+  slider_zone_y_offset =(is_pedal==1)?(32 + pad_num*21):
+  (
+    30 + floor(pad_num / 5) * (slider_h+23);
+  );
+  
+  slider_t     = CONTROL_PANNEL_TOP + slider_zone_y_offset;
+  slider_l     = slider_zone_x_offset; 
+  slider_b     = slider_t + slider_h;
+  slider_r     = slider_l + slider_w;
+  
+  in_rect = (mouse_x >= slider_l && mouse_x <= slider_r && mouse_y <= slider_b && mouse_y >= slider_t);
+  
+  // Handle events
+  mouse_click == 1 && in_rect ?
+  (
+    g_selected_control == control_num?(g_selected_control = -1):(g_selected_control = control_num);
+    onControlSelect();
+  );
+  
+  // Draw background
+  g_selected_control == control_num ?
+  (
+    gfx_r=0.4;gfx_g=0.4;gfx_b=0;  
+    gfx_rect(slider_l-3,slider_t-3,slider_w+6,slider_h+((is_pedal==1)?(7):(17)) );
+  );
+  
+  // Draw body
+  cval = CONTROL_LAST_IN[control_num]/127.0;
+  CONTROL_ENABLED[control_num] == 1?(
+    gfx_r=gfx_g=0.7;
+    gfx_b=0.7+cval*0.3;
+  ):
+  (
+    gfx_r=gfx_g=gfx_b=0.15;
+  );
+  gfx_rect(slider_l,slider_t,slider_w,slider_h);
+    
+  is_pedal == 1?
+  (
+    gfx_r=gfx_g=gfx_b=0;
+    gfx_line(slider_l,slider_t+4,slider_r,slider_t+4);  
+    gfx_line(slider_l+3,slider_t,slider_l+3,slider_t+4);  
+    gfx_line(slider_l+7,slider_t,slider_l+7,slider_t+4);  
+    gfx_line(slider_l+11,slider_t,slider_l+11,slider_t+4);  
+  ):
+  (
+    // Draw Label
+    gfx_r=gfx_g=gfx_b=(CONTROL_ENABLED[control_num] == 1)?(0.7):(0.25);
+    gfx_setfont(1);
+    str_w = 0; str_h = 0;
+    str = controlLabelWithFallback(control_num);
+    gfx_measurestr(str,str_w,str_h);
+    gfx_x = slider_l + slider_w/2 - str_w/2; gfx_y = slider_b+1;
+    gfx_drawstr(str);
+    gfx_setfont(0);
+  );
+);
+
+function drawPedal(ped_num)
+(
+  drawPad(ped_num,1);
+);
+
+function drawFader(sl_num)
+(
+  control_num = CONTROL_FADERS_START + sl_num;
+ 
+  slider_zone_x_offset = 85;
+  slider_zone_y_offset = 32;
+  
+  slider_inter = 6;
+  slider_w     = 15;
+  slider_h     = slider_inter*10 + 5;  
+  slider_t     = CONTROL_PANNEL_TOP + slider_zone_y_offset;
+  slider_l     = slider_zone_x_offset + sl_num * 20; 
+  slider_b     = slider_t + slider_h;
+  slider_r     = slider_l + slider_w;
+  
+  // Handle events
+  mouse_click == 1 && mouse_x >= slider_l && mouse_x <= slider_r && mouse_y <= slider_b && mouse_y >= slider_t ?
+  (
+    g_selected_control == control_num?(g_selected_control = -1):(g_selected_control = control_num);
+    onControlSelect();
+  );
+  
+  // Draw background
+  g_selected_control == control_num ?
+  (
+    gfx_r=0.4;gfx_g=0.4;gfx_b=0;    
+    gfx_rect(slider_l,slider_t,slider_w,slider_h+12);
+  );
+  
+  // Draw tics
+  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=0.5;):(gfx_r=gfx_g=gfx_b=0.15;);
+  s = 0;
+  while(s<11)
+  (
+    gfx_line(slider_l + 3, 2 + slider_t + s*slider_inter, slider_r - 4, 2 + slider_t + s*slider_inter);
+    s += 1;
+  );
+  
+  // Draw Cursor
+  cval = CONTROL_LAST_IN[control_num]/127.0;
+  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=0.8;):(gfx_r=gfx_g=gfx_b=0.2;);
+  rect_x = slider_l;
+  rect_y = slider_b - cval*slider_inter*10-5;
+  gfx_rect(rect_x, rect_y, slider_w,5);
+  
+  // Draw Label
+  gfx_r=gfx_g=gfx_b=(CONTROL_ENABLED[control_num] == 1)?(0.7):(0.25);
+  gfx_setfont(1);
+  str_w = 0; str_h = 0;
+  str = controlLabelWithFallback(control_num);
+  gfx_measurestr(str,str_w,str_h);
+  gfx_x = slider_l + slider_w/2 - str_w/2; gfx_y = slider_b;
+  gfx_drawstr(str);
+  gfx_setfont(0);
+);
+
+function drawVelocityWidget() (
+ 
+  control_num          = CONTROL_VELOCITY;
+  is_control_enabled   = (CONTROL_ENABLED[control_num] == 1);
+  is_control_selected  = (g_selected_control == control_num);
+ 
+  slider_w      = 60;
+  slider_h      = 67;
+  slider_full_h = 72;
+ 
+  slider_t      = CONTROL_PANNEL_TOP + 32;
+  slider_l      = 722; 
+  
+  slider_r      = slider_l + slider_w;
+  slider_b      = slider_t + slider_full_h;
+  
+  in_rect = (mouse_x >= slider_l && mouse_x <= slider_r && mouse_y <= slider_b && mouse_y >= slider_t);
+  
+  // Click event
+  mouse_click == 1 && in_rect ?
+  (
+    is_control_selected?(g_selected_control = -1):(g_selected_control = control_num);
+    onControlSelect();
+  );
+  
+  // Draw background
+  is_control_selected ?
+  (
+    gfx_r=0.4;gfx_g=0.4;gfx_b=0;
+    gfx_rect(slider_l-5,slider_t-5,slider_w+10,slider_full_h+10);
+  );
+  
+  // Icon
+  icon_top = slider_t + 17;
+  gfx_r=gfx_g=gfx_b=(is_control_enabled)?(0.8):(0.2);
+  
+  // White keys
+  gfx_rect(slider_l,    icon_top + 14, 18, 3);
+  gfx_rect(slider_l+20, icon_top + 14, 18, 3);
+  gfx_rect(slider_l+40, icon_top + 14, 18, 3);
+  
+  gfx_rect(slider_l+2,  icon_top + 19, 16, 11); 
+  gfx_rect(slider_l+20, icon_top + 19, 18, 11);
+  gfx_rect(slider_l+40, icon_top + 19, 16, 11); 
+  
+  // Black keys
+  gfx_r=gfx_g=gfx_b=(is_control_enabled)?(0.15):(0.1);
+  gfx_rect(slider_l+11, icon_top+1, 14, 11); 
+  gfx_rect(slider_l+33, icon_top+1, 14, 11); 
+
+  gfx_r=gfx_g=gfx_b=(is_control_enabled)?(0.8):(0.2);
+  gfx_setfont(1);
+  gfx_x = slider_l+9; gfx_y = icon_top + 35;
+  gfx_drawstr("Velocity");
+  gfx_setfont(0);
+);
+
+function drawKnob(knob_num)
+(
+  control_num = CONTROL_KNOBS_START + knob_num;
+
+  kb_zone_x_offset = 305;
+  kb_zone_y_offset = 41;
+  
+  xpos = (knob_num % 5);
+  ypos = floor(knob_num / 5);
+  
+  kb_center_x = kb_zone_x_offset + xpos*43;
+  kb_center_y =  CONTROL_PANNEL_TOP + kb_zone_y_offset + ypos*44;
+  
+  kb_l        = kb_center_x - 16;
+  kb_r        = kb_center_x + 17;
+  kb_t        = kb_center_y - 16;
+  kb_b        = kb_center_y + 17;
+  
+  // Handle events
+  mouse_click == 1 && mouse_x >= kb_l && mouse_x <= kb_r && mouse_y <= kb_b && mouse_y >= kb_t ?
+  (
+    (g_selected_control == control_num)?(g_selected_control = -1):(g_selected_control = control_num);
+    onControlSelect();   
+  );
+  
+  // Draw background
+  g_selected_control == control_num ?
+  (
+    gfx_r=0.4;gfx_g=0.4;gfx_b=0;    
+    gfx_rect(kb_l,kb_t,33,43);
+  );
+  
+  // KB Tics
+  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=1;):(gfx_r=gfx_g=gfx_b=0.3);
+  t = 0;
+  while(t<11)
+  (
+    gfx_line(kb_center_x,kb_center_y,kb_center_x + floor(14*KNOB_TICS_X[t]+0.5), kb_center_y + floor(14*KNOB_TICS_Y[t]+0.5));
+    t += 1;
+  ); 
+  
+  // KB Background
+  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=0.5;):(gfx_r=gfx_g=gfx_b=0.15;);
+  gfx_circle(kb_center_x,kb_center_y,12,1,0);
+  
+  // KB Border
+  gfx_r=gfx_g=gfx_b=0;
+  gfx_circle(kb_center_x,kb_center_y,12,0,1);
+  
+  // Cursor
+  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=1;):(gfx_r=gfx_g=gfx_b=0.4;);
+  
+  cval = CONTROL_LAST_IN[control_num]/127.0;
+  x = floor(knobTic(cval,1)*12 + 0.5);
+  y = floor(knobTic(cval,0)*12 + 0.5);
+  
+  gfx_line(kb_center_x, kb_center_y, kb_center_x + x, kb_center_y + y);
+  
+  // Draw Label
+  gfx_r=gfx_g=gfx_b=(CONTROL_ENABLED[control_num] == 1)?(0.7):(0.25);
+  gfx_setfont(1);
+  str_w = 0; str_h = 0;
+  str = controlLabelWithFallback(control_num);
+  gfx_measurestr(str,str_w,str_h);
+  gfx_x = kb_center_x - str_w/2; gfx_y = kb_b-3;
+  gfx_drawstr(str);
+  gfx_setfont(0);
+);
+// CC Learn widget
+function drawCCLearnButton(cnum)
+(
+  bl = 140;
+  bt = GUI_CONTROL_PARAMS_TOP+30;
+  br = bl + 70;
+  bb = bt + 15;
+   
+  in_rect = (mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt);
+  in_rect ? 
+  (
+    (isCCLearning())?(gfx_r=0.6;gfx_g=0.6;gfx_b=0):(gfx_r=gfx_g=gfx_b=0.3);   
+    // Handle the callback in the draw function... erm
+    // Let's have another one.
+    mouse_click == 1 ? (
+      (isCCLearning())?(disableCCLearn()):(enableCCLearn());
+    ); 
+  ):
+  (
+    (isCCLearning())?(gfx_r=0.4;gfx_g=0.4;gfx_b=0):(gfx_r=gfx_g=gfx_b=0.15);   
+  );  
+  
+  gfx_x   = bl;
+  gfx_y   = bt;
+  gfx_rect(bl,bt,br-bl,bb-bt);
+  gfx_x   = bl+3;
+  gfx_y   = bt+4;
+  gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;  
+  gfx_drawstr("CC Learn");
+);
+
+// CC Learn widget
+function drawCopySrcButton(cnum)
+(
+  bl = 140;
+  bt = GUI_CONTROL_PARAMS_TOP+50;
+  br = bl + 70;
+  bb = bt + 15;
+   
+  in_rect = (mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt);
+  in_rect ?
+  (
+    // Hover in color
+    gfx_r=gfx_g=gfx_b=0.3;   
+    // Handle the callback in the draw function... erm
+    mouse_click == 1 ? (
+      CONTROL_DSTS[cnum] = CONTROL_SRCS[cnum];
+    ); 
+  ):
+  (
+    // Hover out color
+    gfx_r=gfx_g=gfx_b=0.15;
+  );  
+  
+  gfx_x   = bl;
+  gfx_y   = bt;
+  gfx_rect(bl,bt,br-bl,bb-bt);
+  gfx_x   = bl+3;
+  gfx_y   = bt+4;
+  gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;  
+  gfx_drawstr("Copy Src");
+);
+
+
+// Description label widget
+function drawDescriptionInputLine()
+(
+  bl = 140;
+  bt = GUI_CONTROL_PARAMS_TOP+10;
+  br = bl + 146;
+  bb = bt + 15;
+  
+  in_rect = ( mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt ); 
+  in_rect ?
+  (
+    (edit_description==1)?(gfx_r=0.6;gfx_g=0.6;gfx_b=0):(gfx_r=gfx_g=gfx_b=0.3);   
+   
+    // Handle the callback in the draw function... erm
+    // Let's have another one.
+    mouse_click == 1 ? (
+      (edit_description==0)?(
+        edit_description=1;
+        edit_label = 0;
+      )
+      :
+      (
+        edit_description=0
+       );
+    ); 
+  ):
+  (
+    (edit_description==1)?(gfx_r=0.4;gfx_g=0.4;gfx_b=0):(gfx_r=gfx_g=gfx_b=0.15);   
+  );  
+  
+  edit_description == 1?
+  (
+    new_char = gfx_getchar();
+    str = controlDescription(g_selected_control);
+    new_char >= 32 && new_char <= 126  ?
+    (
+      sprintf(str,"%s%c",str,new_char);
+    );
+    new_char == 8?
+    (
+      strncpy(str, str, max(strlen(str)-1,0)); 
+    );
+    new_char == 13?edit_description=0;
+  );
+  
+  gfx_x   = bl;
+  gfx_y   = bt;
+  gfx_rect(bl,bt,br-bl,bb-bt);
+  gfx_x   = bl+3;
+  gfx_y   = bt+4;
+  (edit_description==1)?(gfx_r = 1; gfx_g = 1; gfx_b = 1;):(gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;); 
+  gfx_drawstr(controlDescription(g_selected_control));
+);
+
+// Small label edition widget
+function drawSmallLabelInputLine()
+(
+  bl = 400;
+  bt = GUI_CONTROL_PARAMS_TOP+10;
+  br = bl + 40;
+  bb = bt + 15;
+  
+  in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
+  in_rect ?
+  (
+    (edit_label==1)?(gfx_r=0.6;gfx_g=0.6;gfx_b=0):(gfx_r=gfx_g=gfx_b=0.3);   
+    // Handle the callback in the draw function... erm
+    // Let's have another one.
+    mouse_click == 1 ? (
+      (edit_label==0)?(
+        edit_label=1;
+        edit_description = 0;
+      )
+      :(edit_label=0);
+    ); 
+  ):
+  (
+    (edit_label==1)?(gfx_r=0.4;gfx_g=0.4;gfx_b=0):(gfx_r=gfx_g=gfx_b=0.15);   
+  );  
+  
+  edit_label == 1?
+  (
+    new_char = gfx_getchar();
+    str = controlLabel(g_selected_control);
+    new_char >= 32 && new_char <= 126  ?
+    (
+      sprintf(str,"%s%c",str,new_char);
+    );
+    new_char == 8?
+    (
+      strncpy(str, str, max(strlen(str)-1,0)); 
+    );
+    new_char == 13?edit_label=0;
+  );
+  
+  gfx_x   = bl;
+  gfx_y   = bt;
+  gfx_rect(bl,bt,br-bl,bb-bt);
+  gfx_x   = bl+3;
+  gfx_y   = bt+4;
+  (edit_label==1)?(gfx_r = 1; gfx_g = 1; gfx_b = 1;):(gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;); 
+  gfx_drawstr(controlLabel(g_selected_control));
+);
+
+// Control editor sub pannel for midi cc assignment
+function drawAssignZone()
+(
+  gfx_r = gfx_g = gfx_b = 0.8;
+   
+   
+  gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+14;
+  gfx_drawStr("Description");
+  
+  gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+34;
+  gfx_drawStr("MIDI CC Src");
+  
+  gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+54;
+  gfx_drawStr("MIDI CC Dst");
+   
+  g_selected_control != CONTROL_VELOCITY ?(
+    gfx_x = 295; gfx_y = GUI_CONTROL_PARAMS_TOP+14;
+    gfx_drawStr("Small Label");
+    
+    drawDescriptionInputLine();
+    drawSmallLabelInputLine();
+
+    drawCCLearnButton(g_selected_control);
+    drawCopySrcButton(g_selected_control);
+   
+    drawAddOrSubWidget("cc_src_spinbox",CONTROL_SRCS,g_selected_control,217,GUI_CONTROL_PARAMS_TOP+30,0,127);
+    drawAddOrSubWidget("cc_dst_spinbox",CONTROL_DSTS,  g_selected_control,217,GUI_CONTROL_PARAMS_TOP+50,0,127);
+ 
+    // Name of the src CC
+    gfx_r = gfx_g = 0.5; gfx_b = 1;
+    gfx_x = 295;  gfx_y = GUI_CONTROL_PARAMS_TOP+34;
+    src_cc     = CONTROL_SRCS[g_selected_control];
+    src_name   = midiControlName(src_cc);
+    src_is_lsb = isALsbCC(src_cc);
+    src_is_msb = isAMsbCC(src_cc);
+    
+    gfx_drawStr(src_name);
+    
+    (src_is_lsb)?(
+      (isHighResMidiInputEnabled())?(
+        gfx_r = 1; gfx_g = 0; gfx_b = 0;
+        gfx_drawStr(" [LSB not routable in High-Res]");
+      ):(
+        gfx_drawStr(" (LSB)");
+      );
+    );
+    
+    (src_is_msb)?(
+      (isHighResMidiInputEnabled())?(
+        gfx_r = 0; gfx_g = 1; gfx_b = 0;
+        gfx_drawStr(" [High Res]");
+      ):(
+        gfx_drawStr(" (MSB)");
+      );
+    );
+    
+    // Name of the dst CC
+    gfx_r = gfx_g = 0.5; gfx_b = 1;
+    gfx_x = 295;  gfx_y = GUI_CONTROL_PARAMS_TOP+54;
+    dst_cc     = CONTROL_DSTS[g_selected_control];
+    dst_name   = midiControlName(dst_cc);
+    dst_is_lsb = isALsbCC(dst_cc);
+    dst_is_msb = isAMsbCC(dst_cc);
+    
+    gfx_drawStr(dst_name);
+    
+    (dst_is_msb)?(
+      (isHighResMidiOutputEnabledForControl(g_selected_control))?(
+        gfx_r = 0; gfx_g = 1; gfx_b = 0;
+        gfx_drawStr(" [High Res]");
+      ):(
+        gfx_drawStr(" (MSB)");
+      );
+    );
+    
+    (dst_is_lsb)?(
+      gfx_drawStr(" (LSB)");
+    );
+    
+  ):(
+    // Keyboard Velocity special case
+  
+    gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;
+    gfx_x = 140; gfx_y = GUI_CONTROL_PARAMS_TOP+14;
+    gfx_drawStr("Keyboard velocity");  
+    
+    gfx_r = 0.35; gfx_g = 0.35; gfx_b = 0.35;
+    gfx_x = 140; gfx_y = GUI_CONTROL_PARAMS_TOP+34;
+    gfx_drawStr("Keyboard velocity");  
+    (isHighResMidiInputEnabled())?(
+      gfx_r = 0; gfx_g = 1; gfx_b = 0;
+      gfx_drawStr(" [High Res]");
+    );
+    
+    gfx_r = 0.35; gfx_g = 0.35; gfx_b = 0.35;
+    gfx_x = 140; gfx_y = GUI_CONTROL_PARAMS_TOP+54;
+    gfx_drawStr("Keyboard velocity");    
+    (isHighResMidiOutputEnabledForControl(g_selected_control))?(
+      gfx_r = 0; gfx_g = 1; gfx_b = 0;
+      gfx_drawStr(" [High Res]");
+    );
+  ); 
+  
+  (g_selected_control == CONTROL_VELOCITY || ccLsbCounterpart(CONTROL_DSTS[g_selected_control])!=-1)?(
+    gfx_r = gfx_g = gfx_b = 0.8;
+    gfx_x = 455; gfx_y = GUI_CONTROL_PARAMS_TOP+14;
+    gfx_drawStr("High res output");  
+    drawYesNobutton(CONTROL_HIGHRES_OUTPUT_ENABLED,g_selected_control,GUI_CONTROL_PARAMS_TOP+11,590);
+  );
+);
+
+function drawControlPannel()
+(
+  // Header Background
+  gfx_r = 0.1; gfx_g = 0.1; gfx_b = 0.4;
+  gfx_rect(0,CONTROL_PANNEL_TOP,gfx_w,20);
+       
+  (g_selected_control != -1)?(
+  
+    // Header text
+    gfx_r = gfx_g = gfx_b = 0.8;
+    gfx_x = 88; gfx_y = CONTROL_PANNEL_TOP+7;
+    str = #;
+    sprintf(str,"%s / %s", controlName(g_selected_control), controlDescription(g_selected_control));
+    gfx_drawstr(str);
+    
+    // Enable / Disable
+    drawEnableDisableButtonForControl(g_selected_control);
+  ):(
+    gfx_r = gfx_g = gfx_b = 0.8;
+    gfx_x = 10; gfx_y = CONTROL_PANNEL_TOP+7;  
+    gfx_drawstr("Select a control to edit it."); 
+  );
+  
+  drawWheel(0);
+  drawPedal(0);
+  drawPedal(1);
+  drawPedal(2);
+  drawPedal(3);
+  
+  i = 0; while(i<10)
+  (
+    drawKnob(i);
+    i += 1;
+  );
+  i = 0; while(i<10)
+  (
+    drawFader(i);
+    i += 1;
+  );
+  i = 0; while(i<10)
+  (
+    drawPad(i,0);
+    i += 1;
+  );
+  
+  drawVelocityWidget();
+  
+  // Edition of the selected control
+  (g_selected_control != -1 && CONTROL_ENABLED[g_selected_control] == 1 )?(
+    // Assignment zone   
+    drawAssignZone();
+    drawCurveZone(); 
+  );
+);
+
+////////////////////////
+//   KEYBOARD PANNEL  //
+////////////////////////
+
+function drawKeyboardKeyMarker(x,y)
+(
+  gfx_r = 1; gfx_g = 1; gfx_b = 1;
+  gfx_circle(x,y,4,1,0);
+  gfx_r = 0; gfx_g = 0; gfx_b = 0;
+  gfx_circle(x,y,4,0,0);
+);
+
+function drawTransposePannel() (
+
+  // Header Background
+  gfx_r = 0.1; gfx_g = 0.1; gfx_b = 0.4;
+  gfx_rect(KEYBOARD_PANNEL_WIDTH+2,KEYBOARD_FILTERING_TOP,gfx_w - KEYBOARD_PANNEL_WIDTH-2,20);
+
+  // Button 
+  drawEnableDisableButton(KEYBOARD_TRANSPOSE_ENABLED,0,KEYBOARD_FILTERING_TOP + 3,10 + KEYBOARD_PANNEL_WIDTH);
+  
+  // Title
+  gfx_x = 88 + KEYBOARD_PANNEL_WIDTH; gfx_y = KEYBOARD_FILTERING_TOP + 7;
+  gfx_drawstr("Transpose"); 
+  
+  enabled = KEYBOARD_TRANSPOSE_ENABLED[0];
+  
+  enabled?(
+    gfx_x = KEYBOARD_PANNEL_WIDTH+10; gfx_y = KEYBOARD_FILTERING_TOP+45;
+    gfx_drawstr("8vi");
+    gfx_x = KEYBOARD_PANNEL_WIDTH+10; gfx_y = KEYBOARD_FILTERING_TOP+65;
+    gfx_drawstr("Semitones");
+    
+    drawAddOrSubWidget("8va"     , KEYBOARD_TRANSPOSE_8VA,0,KEYBOARD_PANNEL_WIDTH+90,KEYBOARD_FILTERING_TOP+41,-2,2);
+    drawAddOrSubWidget("semitone", KEYBOARD_TRANSPOSE_SEMI_TONES,0,KEYBOARD_PANNEL_WIDTH+90,KEYBOARD_FILTERING_TOP+61,-12,12);
+  );
+);
+
+function drawKeyboardPannel() 
+(
+  kf_enabled = KEYBOARD_FILTERING_ENABLED[0];
+
+  // Header Background
+  gfx_r = 0.1; gfx_g = 0.1; gfx_b = 0.4;
+  gfx_rect(0,KEYBOARD_FILTERING_TOP,KEYBOARD_PANNEL_WIDTH,20);
+  
+  // Enable/Disable
+  drawEnableDisableButton(KEYBOARD_FILTERING_ENABLED,0,KEYBOARD_FILTERING_TOP + 3,10);
+
+  // Header text
+  gfx_r = gfx_g = gfx_b = 0.8;
+  gfx_x = 87; gfx_y = KEYBOARD_FILTERING_TOP+7;
+  (kf_enabled)?
+  (
+    gfx_drawstr("Keyboard filtering (Red keys are filtered out)");
+  ):
+  (
+    gfx_drawstr("Keyboard filtering (All notes are forwarded)");
+  );
+  
+  // 88 keys keyboard
+  // A0 : midi note 21
+  // C8 : midi note 108
+  
+  loff              = 30;
+  white_key_width   = 12;
+  key_height_top    = 35;
+  key_height_bottom = 25;
+  key_height_full   = key_height_top + key_height_bottom;
+  
+  key_top           = KEYBOARD_FILTERING_TOP + 30; // Header skip
+  
+  // Top part of the keyboard
+  i = 0; 
+  while(i<88) (
+    bk = keyIsBlack(i);
+      
+    oct         = floor(i / 12);
+    in_oct_pos  = i%12;
+    
+    normalized_key_offset = OCTAVE_TOP_KEY_OFFSETS[in_oct_pos];
+    normalized_key_width  = OCTAVE_TOP_KEY_WIDTHS[in_oct_pos];
+    
+    (i==0)?(
+      // A0 patch
+      normalized_key_offset = 0;
+      normalized_key_width  = 0.5;
+    );
+    
+    (i==87)?(
+      // C8 patch
+      normalized_key_width = 1;
+    );
+    
+    key_offset = loff + (normalized_key_offset + oct * 7) * white_key_width; 
+    key_width  = normalized_key_width * white_key_width;
+    
+    (key_width != 0)?(
+    
+      // Key should appear at the top part of the keyboard
+      left = key_offset;
+      top  = key_top;
+      
+      // Draw white keys
+      (!kf_enabled)?(
+        // Keyboard filtering not enabled, all keys are grayed out
+        gfx_r = gfx_g = gfx_b = ((bk)?(0.1):(0.3));
+        gfx_rect(left,top,key_width,key_height_top);
+      ):(
+      
+        // Keyboard filtering enabled, color depends on key conf
+        (KEYBOARD_FILTERED_NOTES[i] == 1)?(
+          // The Key is disabled
+          gfx_g = gfx_b = ((bk)?(0.3):(0.5)); gfx_r = ((bk)?(0.7):(0.9));
+        ):(
+          // The Key is enabled 
+          gfx_r = gfx_b = ((bk)?(0.3):(0.5)); gfx_g = ((bk)?(0.7):(0.9))
+        );
+        gfx_rect(left,top,key_width,key_height_top);
+        
+        in_rect = (mouse_x >= left && mouse_y >= top && mouse_x <= (left+key_width) && mouse_y <= (top+key_height_top));       
+        (in_rect)?(
+          
+          (mouse_click == 1)?( 
+            // Remember that the keybord has click focus
+            mouse_capturator      = "keyboard";
+            // We clicked on a key, we are colorizing all future hovered keys
+            // With the opposite color.
+            keyboard_key_enabling = ((KEYBOARD_FILTERED_NOTES[i] == 1)?(0):(1));
+          );
+          
+          (mouse_cap == 1 && mouse_capturator == "keyboard")?(
+            
+            // Ok we are changing the status of this key
+            KEYBOARD_FILTERED_NOTES[i] = keyboard_key_enabling;
+          );  
+        );
+        
+      );
+
+      // Black separation lines
+      gfx_r = gfx_g = gfx_b = 0;
+      gfx_line(left+key_width-1,top,left+key_width-1,top+key_height_top-1);
+      
+      (bk)?(
+        gfx_line(left,top+key_height_top-1,left+key_width-1,top+key_height_top-1);
+        
+        // Key press marker
+        (KEY_VELOCITIES[i] > 0)?(
+          drawKeyboardKeyMarker(left + floor(key_width/2) -1,top+floor(key_height_top/2));
+        );
+      );
+    );
+    
+    i+=1;
+  );
+  
+
+  // Bottom part of the keyboard
+  wkcount = 0; i = 0; 
+  while(i<88) (
+  
+    bk = keyIsBlack(i);
+    
+    (!bk)?(
+      left = loff+wkcount*white_key_width;
+      top  = key_top + key_height_top;
+    
+      // Draw white keys
+      (!kf_enabled)?(
+        // Keyboard filtering not enabled, all keys are grayed out
+        gfx_r = gfx_g = gfx_b = 0.3;
+        gfx_rect(left,top,white_key_width,key_height_bottom);
+      ):
+      (
+        // Keyboard filtering enabled, color depends on key conf
+        (KEYBOARD_FILTERED_NOTES[i] == 1)?(
+          // The Key is disabled
+          gfx_g = gfx_b = 0.5; gfx_r = 0.9;
+        ):(
+          // The Key is enabled 
+          gfx_r = gfx_b = 0.5; gfx_g = 0.9;
+        );
+        
+        gfx_rect(left,top,white_key_width,key_height_bottom); 
+      
+        in_rect = (mouse_x >= left && mouse_y >= top && mouse_x <= (left+white_key_width) && mouse_y <= (top+key_height_bottom));       
+        (in_rect)?(
+          
+          (mouse_click == 1)?( 
+            // Remember that the keybord has click focus
+            mouse_capturator      = "keyboard";
+            // We clicked on a key, we are colorizing all future hovered keys
+            // With the opposite color.
+            keyboard_key_enabling = ((KEYBOARD_FILTERED_NOTES[i] == 1)?(0):(1));
+          ); 
+          
+          (mouse_cap == 1 && mouse_capturator == "keyboard")?(
+  
+            //Ok we are changing the status of this key
+            KEYBOARD_FILTERED_NOTES[i] = keyboard_key_enabling;
+          );
+        );
+      );  
+            
+      // Black separation line
+      gfx_r = gfx_g = gfx_b = 0;
+      gfx_line(left+white_key_width-1,top,left+white_key_width-1,top+key_height_bottom-1);
+      
+      // Key press marker
+      (KEY_VELOCITIES[i] > 0)?(
+        drawKeyboardKeyMarker(left + floor(white_key_width/2) -1,top+floor(key_height_bottom/2));
+      );
+      
+      // Increment white key counter
+      wkcount += 1;
+    );
+    
+    // Next key
+    i+=1; 
+  );
+  drawTransposePannel();
+);
+
+function drawBottomBanner()
+(
+  // Header Background
+  gfx_r = 0.1; gfx_g = 0.1; gfx_b = 0.4;
+  gfx_rect(0,gfx_h-20,gfx_w,20);
+      
+  // Header text
+  gfx_r = gfx_g = gfx_b = 0.8;
+  gfx_x = 6; gfx_y = gfx_h - 14;
+  gfx_drawstr("Midi CC Mapper X (3.1c) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai"); 
+
+  drawBistateButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin",0x202020,0x202020,0x505050,0x505050);
+);
+
+function drawGlobalSettingsPannel() (
+  // Header Background
+  gfx_r = 0.1; gfx_g = 0.1; gfx_b = 0.4;
+  gfx_rect(0,0,gfx_w,20);
+  
+  gfx_r = gfx_g = gfx_b = 0.8;
+  gfx_x= 10; gfx_y = 7;
+  gfx_drawstr("Global Settings"); 
+  
+  // Add an additional button for going back (one never knows)
+  drawBistateButton(GUI_MODE,0,4,gfx_w - 134,"Global settings","Back to plugin",0x202020,0x202020,0x505050,0x505050);
+
+  // 
+  drawOnOffButton(HIGHRES_INPUT_ENABLED,0,50,50);
+  gfx_r = gfx_g = gfx_b = 0.9;
+  gfx_x= 100; gfx_y = 54;
+  gfx_drawstr("High-Res midi input"); 
+  
+  gfx_r = gfx_b = gfx_g = 0.5;
+  gfx_x= 100; gfx_y = 74;
+  gfx_drawstr("If this option is on, all LSB CCs become 'unroutable' : they are aggregated"); 
+  gfx_x= 100; gfx_y = 88;
+  gfx_drawstr("to their MSB counterparts to form High-Res midi CC values. To route these"); 
+  gfx_x= 100; gfx_y = 102;
+  gfx_drawstr("values in that configuration, you should route the MSB CC."); 
+    
+  drawOnOffButton(DROP_UNROUTED_CC_MESSAGES,0,120,50);
+  gfx_r = gfx_g = gfx_b = 0.9;
+  gfx_x= 100; gfx_y = 124;
+  gfx_drawstr("Drop unrouted CC messages"); 
+  
+  gfx_r = gfx_b = gfx_g = 0.5;
+  gfx_x= 100; gfx_y = 144;
+  gfx_drawstr("If this option is on, all CC messages from unrouted controls are dropped."); 
+  gfx_x= 100; gfx_y = 158;
+  gfx_drawstr("This makes the plugin acts as a firewall for the CC controls."); 
+);
+
+function drawGui()
+(
+  (GUI_MODE[0] == 1)?(
+    drawKeyboardPannel();
+    drawControlPannel();
+  ):(
+    drawGlobalSettingsPannel();
+  );
+  drawBottomBanner();
+);
+
+///////////////////////////////////
+// MOUSE EVENT ADDITIONAL LOGIC  //
+///////////////////////////////////
+
+function mouseClickAddOn()
+(
+  // Create a mouse_click event
+  (mouse_cap != last_mouse_cap)?(
+    (mouse_cap == 1)?(mouse_click = 1):(mouse_click = 0);
+    last_mouse_cap = mouse_cap;    
+  ):(
+    mouse_click = 0;
+  );
+  
+  // Clear the capturator source
+  (mouse_cap == 0)?(
+     mouse_capturator = "";
+  );
+);
+
+function mouseWheelAddon()
+(
+  mouse_wheel != 0?
+  (
+    mouse_wheeli = (mouse_wheel>0)?(1):(-1);
+  ):(
+    mouse_wheeli = 0;
+  );
+  
+  mouse_wheel = 0;
+);
+
+//////////////
+// UI MAIN  //
+//////////////
+
+function ui_main() (
+  // Main Routine
+  mouseClickAddon();
+  mouseWheelAddon();
+  drawGui();
+);
+
+ui_main();
+
+/*
+// Convert to i and back
+aaa_test_fconv     = midiVelocityHresI2F01(15,119);
+midiVelocityHresF012I(aaa_test_fconv);
+aaa_test_fconv_h   = g_hres_h;
+aaa_test_fconv_l   = g_hres_l;
+
+aaa_vtest_fconv     = midiVelocityHresI2F01(0,0);
+midiVelocityHresF012I(aaa_vtest_fconv);
+aaa_vtest_fconv_h   = g_hres_h;
+aaa_vtest_fconv_l   = g_hres_l;
+*/
+
+//===========================================//
+//==============     BLOCK     ==============//
+//===========================================//
+@block
+
+// For a given CONTROL on the UI, try to process the CC message
+// The value is not passed. It's already been stored in CC_RECEIVED_VALUES.
+function tryProcessCCWithControl(mpos, status, in_cc_num, blk_control) local (was_processed) (
+
+  was_processed = 0;
+
+  // We found in the GUI a Control with is enabled and matches this CC
+  src_matches                 = (CONTROL_SRCS[blk_control] == in_cc_num);
+  src_is_enabled              = (CONTROL_ENABLED[blk_control] == 1);
+  src_matches_and_is_enabled  = (src_matches && src_is_enabled);
+  control_is_not_velocity     = (blk_control != CONTROL_VELOCITY);
+  
+  (src_matches_and_is_enabled && control_is_not_velocity) ? (
+  
+    // Calculate curve result
+    in_val_01  = 0;
+    
+    in_lsb_counterpart = ccLsbCounterpart(in_cc_num); 
+    
+    in_lsb_counterpart != -1 && isHighResMidiInputEnabled() ? (
+      // It's a high res control. 
+      // Read full value and convert.
+      in_val_01   = midiCCHresI2F01(CC_RECEIVED_VALUES[in_cc_num], CC_RECEIVED_VALUES[in_lsb_counterpart]);
+    ):(
+      // Low res are normalized with a max of 127.0
+      in_val_01   = CC_RECEIVED_VALUES[in_cc_num]/127.0;
+    );
+  
+    // Apply the curve
+    out_val_01 = applyCurve(blk_control, in_val_01);
+    
+    // Save some values for UI feedback (small red circle)
+    CONTROL_LAST_IN[blk_control]  = in_val_01 * 127;
+    CONTROL_LAST_OUT[blk_control] = out_val_01 * 127;
+    
+    // Send result
+    out_cc_num          = CONTROL_DSTS[blk_control];
+    out_lsb_counterpart = ccLsbCounterpart(out_cc_num);
+    
+    out_lsb_counterpart != -1 && isHighResMidiOutputEnabledForControl(blk_control) ? (
+      // Output high res, normalize by 128 (max is 128).
+      midiCCHresF012I(out_val_01);     
+      // Send lsb first then msb
+      midiSend(mpos, status, out_lsb_counterpart, g_hres_l);
+      midiSend(mpos, status, out_cc_num,          g_hres_h);
+    ):(
+      // Output low res, normalize by 127 (max is 127).
+      midiSend(mpos, status, out_cc_num, roundi(out_val_01 * 127) );
+    );
+    
+    was_processed = 1;
+  );
+
+  was_processed;
+);
+
+function processCCMessage(mpos, status, cc_num, cc_val) local (procees_counter) (
+ 
+  // Memorize, may be useful
+  CC_RECEIVED_VALUES[cc_num] = cc_val;
+
+  process_counter = 0;
+  (isHighResMidiInputEnabled() && isALsbCC(cc_num))?(
+  
+    // In high res midi, drop all messages comming from lsb channels
+    // They've been just stored for aggregation.
+    process_counter = 1;
+  ):(
+  
+    // Loop on all controls and see if we could find
+    // Some of them linked to that cc.
+    blk_control = 0; while(blk_control < CONTROL_COUNT)
+    (              
+      process_counter += tryProcessCCWithControl(mpos, msg1, cc_num, blk_control);
+      blk_control     += 1;
+    );
+  );
+  
+  process_counter;
+);
+
+function processNoteMessage(mpos,status,key,velocity) (
+
+  new_key       = key;
+              
+  // Transpose if needed
+  (KEYBOARD_TRANSPOSE_ENABLED[0])?(
+    new_key = key + KEYBOARD_TRANSPOSE_8VA[0]*12 + KEYBOARD_TRANSPOSE_SEMI_TONES[0];
+    
+    // Clamp the key if we're too low
+    (new_key<0)?(new_key=0);
+  );
+        
+  // Update key statuses, to be displayed in the gui
+  (statusHi == NOTE_OFF_MSG)?(
+    // For safety. I don't know if it's useful.
+    velocity=0;
+  );  
+  
+  KEY_VELOCITIES[key] = velocity;
+        
+  // Now forward or drop, and apply velocity curve
+  should_keep_note = !(isKeyboardFilteringEnabled() && shouldFilterOutKey(key));
+  should_keep_note?(
+        
+    // Caution : Note OFF can be either (NOTE_OFF_MSG) or (NOTE_ON_MSG + velocity zero)
+    // Thus, the following code should be tolerant :
+    // Velocity 0 should not be changed to something else.
+
+    has_velocity                  = (velocity!=0);  
+    velocity_01                   = 0;         
+     
+    // CALCULATE INPUT VALUE HI/LOW RES
+    (isHighResMidiInputEnabled())?(
+      (has_velocity)?(
+        // Seems to me we should sub 1 to the velocity (MSB)
+        // To be continuous starting from 0 (First non-null HR velocity starts at 0x0080, MSB is non null)
+        velocity_01 = midiVelocityHresI2F01(velocity-1, CC_RECEIVED_VALUES[88]); 
+        CC_RECEIVED_VALUES[88] = 0; // Clear the LSB. 
+      );
+    ):(
+      velocity_01 = velocity/127;
+    );
+          
+    // APPLY THE CURVE
+    out_velocity_01 = 0;
+    has_velocity?(
+    
+      CONTROL_ENABLED[CONTROL_VELOCITY]?(
+        out_velocity_01                     = applyCurve(CONTROL_VELOCITY,velocity_01);
+      
+        // Save for UI feedback (red circle).
+        // Do it only when there's some velocity, having the circle 
+        // going back to 0 each time we release a key is annoying
+        CONTROL_LAST_IN[CONTROL_VELOCITY]   = velocity;
+        CONTROL_LAST_OUT[CONTROL_VELOCITY]  = out_velocity_01*127;
+      ):(
+      
+        // Just keep the value as is (bypass any calculation)
+        out_velocity_01 = velocity_01;
+      )
+    );
+                 
+    // SEND THE FINAL RESULT HI/LOW RES
+    (isHighResMidiOutputEnabledForControl(CONTROL_VELOCITY))?(
+          
+      lsb_cc_msg = ((CC_MSG << 8) | statusLo);
+      (has_velocity)?(
+        // Send modified velocity
+        midiVelocityHresF012I(out_velocity_01);
+        midisend(mpos, lsb_cc_msg, 88, g_hres_l);
+        midisend(mpos, status, keyToMidiNote(new_key), g_hres_h);
+      ):(
+        // Send 0-velocity note.
+        midisend(mpos, lsb_cc_msg, 88, 0);
+        midisend(mpos, status, keyToMidiNote(new_key), 0);
+      );
+    ):
+    (   
+      // This is compatible with zero-velocity
+      midisend(mpos, status, keyToMidiNote(new_key), roundi(out_velocity_01 * 127) );
+    );
+    
+  );
+);
+
+
+while(midirecv(mpos, msg1, msg2, msg3))
+(
+    // status    = msg1;
+    // statusHi  = (status >> 4);
+    // statusLo  = (status & 0x0F);
+    
+    status = msg1;
+    statusHi = (msg1/16)|0;
+    statusLo = msg1-(statusHi*16);
+        
+    (statusHi == CC_MSG) ? (
+      
+      // Translate into "cc words" for more comprehensible code
+      cc_num = msg2; 
+      cc_val = msg3;
+      
+      // CC LEARN
+      (isCCLearning() && g_selected_control != -1 && isCCLearnable(cc_num))?(
+        CONTROL_SRCS[g_selected_control] = cc_num;
+        disableCCLearn();
+      );
+      
+      was_routed = processCCMessage(mpos, status, cc_num, cc_val);   
+      !was_routed && !shouldDropUnroutedCCMessages()?(
+        // Re-send message
+        midisend(mpos, msg1, msg2, msg3);
+      ); 
+    ):
+    (
+    
+      // NOTE MESSAGE
+      (statusHi == NOTE_ON_MSG || statusHi == NOTE_OFF_MSG)?(
+        
+        key           = midiNoteToKey(msg2);
+        velocity      = msg3;
+             
+        processNoteMessage(mpos, status, key, velocity);
+      ):
+      (
+        // Not a control event, send as is
+        midisend(mpos, msg1, msg2, msg3);
+      );
+    );
+);
+
