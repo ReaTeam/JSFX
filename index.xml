@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="00d34d232b27238a30e63e0659669fcbbcf75830">
+<index version="1" name="ReaTeam JSFX" commit="1a6a9d12a246aeab6a4a12e607f4de6bc556cabe">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -311,7 +311,7 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
         <source>https://github.com/ReaTeam/JSFX/raw/57388237549c19dff78537f769a414b3c0046a86/MIDI/mschnell_Slider%20to%20MIDI%20NRPM.jsfx</source>
       </version>
     </reapack>
-    <reapack name="talagan_Midi CC Mapper X.jsfx" type="effect" desc="Midi CC Mapper X">
+    <reapack name="talagan_MIDI CC Mapper X.jsfx" type="effect" desc="MIDI CC Mapper X">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
@@ -348,9 +348,9 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
 }
 ]]></description>
       </metadata>
-      <version name="3.1c" author="Talagan" time="2019-08-31T07:56:25Z">
+      <version name="3.1c" author="Talagan" time="2019-08-31T08:37:20Z">
         <changelog><![CDATA[First Reapack version.]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/00d34d232b27238a30e63e0659669fcbbcf75830/MIDI/talagan_Midi%20CC%20Mapper%20X.jsfx</source>
+        <source>https://github.com/BenTalagan/JSFX/raw/1a6a9d12a246aeab6a4a12e607f4de6bc556cabe/MIDI/talagan_MIDI%20CC%20Mapper%20X.jsfx</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI note-banked CC multiplier.jsfx" type="effect" desc="MIDI note-banked CC multiplier">
