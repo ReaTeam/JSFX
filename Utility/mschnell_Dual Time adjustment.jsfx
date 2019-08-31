@@ -1,16 +1,18 @@
 desc: Dual Time adjustment +/- Delay
 author: Michael Schnell (mschnell@bschnell.de)
-version: 1.2
-changelog: add temperature slider and display in cm
+version: 1.3
+changelog: add negative Midi delay option
 donation: United Nations Foundation http://www.unfoundation.org/
 about:
   ## Description
 
-  Apply a positive or negative delay to up tp two channel in a track
+  Apply a positive or negative delay to up to two channel in a track
   modes:
 
-   - Stereo: All Sliders ar coupled
+   - Stereo: All Sliders are coupled
    - Dual: Two channels with two coupled sliders each 
+    - Midi delay: defines if or if not also Midi input to this channel should be handled (preliminary implementation)
+
 
   ## Acknowlages: 
 
@@ -36,8 +38,10 @@ slider1:0<-100,100,0.01>Delay L (ms)
 slider2:0<-100,100,0.01>Delay R (ms)
 slider3:0<-1000,1000,1>Delay L (spls)
 slider4:0<-1000,1000,1>Delay R (spls)
-slider5: 0<0,1,1{,Stereo,Dual}>Mode
+slider5: 0<0,1,1{Stereo,Dual}>Mode
 slider6:22<-10,30,1>°C (1 bar)
+slider7: 0<0,1,1{No,only negative}>Midi delay
+//slider7: 0<0,2,1{No,only negative,negative and positive}>Midi delay   //positive Midi delay not yet implemented
 
 in_pin:left input
 in_pin:right input
@@ -96,6 +100,7 @@ s3 >= 0 && s4 >= 0 ? (
   pdc_delay = min(-min(s3,s4),50000);
   pdc_bot_ch=0;
   pdc_top_ch=2;
+  pdc_midi  = slider7 ? 1 : 0;
 );
 
 @sample
@@ -110,7 +115,7 @@ bufRpos >= buflR ? bufRpos = buflL+1;
 spl0 = bufLpos[0] ; 
 spl1 = bufRpos[0] ;
 
-@gfx 650 20   
+@gfx 650 150   
   gfx_r=gfx_g=gfx_b=0.95; gfx_a=1;
   gfx_x=gfx_y=0;
   gfx_rectto(gfx_w,gfx_h);
