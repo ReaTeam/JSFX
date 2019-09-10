@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="30238bbd5d99b56e277e6759e700c946bf78e5c9">
+<index version="1" name="ReaTeam JSFX" commit="5178a1b63d48a568a0b6d600d2fdf308b5043822">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1510,6 +1510,21 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       <version name="1.0" author="Corey Scogin" time="2018-06-13T05:09:19Z">
         <changelog><![CDATA[initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/7f2f0c085b27393a6c642f3f6cffd8197aa4f262/Utility/CoreyScogin_TimeDelayByDistance.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="jw_gfxscope-beat-retrigger.jsfx" type="effect" desc="Oscilloscope w/ beat retrigger">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Oscilloscope with beat retrigger\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This is exactly the same as the default Cockos oscilloscope meter that comes with Reaper, but with an additional retrigger mode called "beat." This stabilizes the oscilloscope such that the far right edge is always the last sample of the beat that just finished. It is especially useful for designing EDM kick drums and observing kick/bass phase interaction patterns in real-time. Be sure to zoom correctly so that you can see the entire beat in the scope, as the initial zoom setting may not capture it.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="jwhiting" time="2019-09-10T14:11:03Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/5178a1b63d48a568a0b6d600d2fdf308b5043822/Utility/jw_gfxscope-beat-retrigger.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Dual Time adjustment.jsfx" type="effect" desc="Dual Time adjustment +/- Delay">
