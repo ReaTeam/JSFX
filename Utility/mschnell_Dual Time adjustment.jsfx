@@ -1,25 +1,26 @@
 desc: Dual Time adjustment +/- Delay
 author: Michael Schnell (mschnell@bschnell.de)
 version: 2.0
-changelog: add negative Midi delay option
+changelog: add positive Midi delay
 donation: United Nations Foundation http://www.unfoundation.org/
 about:
   ## Description
 
-  Apply a positive or negative delay to up to two channel in a track
-  modes:
+  Apply a positive or negative delay to up to two audio channel in a track and optionally to Midi
 
+     modes:
    - Stereo: All Sliders are coupled
    - Dual: Two channels with two coupled sliders each 
-   - Midi delay: defines if or if not also Midi input to this channel should be handled (preliminary implementation)
+
+  Midi delay: defines if or if not also Midi input to this channel should be handled 
 
 
   ## Acknowlages: 
 
     Audio part based on "Channel Time Delayer [LOSER]" by Michael Gruhn, 2007
+
     Midi positive delay part based on Cockos "Midi Delay"
 
-tags: stero audio and Midi positiuve and negative delay
 
 // (C) 2007, Michael Gruhn, 2019, Michael Schnell, 2018, Paweł Łyżwa
 
