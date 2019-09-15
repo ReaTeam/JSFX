@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="16a6c26920c16d9416b536ba3a0689e957ca9e27">
+<index version="1" name="ReaTeam JSFX" commit="4d0e7e7b08904da4764a331348b45fb1c8995dab">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1534,12 +1534,14 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
 \widowctrl\hyphauto
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Apply a positive or negative delay to up to two channel in a track modes:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Apply a positive or negative delay to up to two audio channel in a track and optionally to Midi\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 modes:\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Stereo: All Sliders are coupled\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Dual: Two channels with two coupled sliders each\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Midi delay: defines if or if not also Midi input to this channel should be handled (preliminary implementation)\sa180\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Dual: Two channels with two coupled sliders each\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Midi delay: defines if or if not also Midi input to this channel should be handled\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Acknowlages:\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Audio part based on "Channel Time Delayer [LOSER]" by Michael Gruhn, 2007 Midi positive delay part based on Cockos "Midi Delay"\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Audio part based on "Channel Time Delayer [LOSER]" by Michael Gruhn, 2007\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Midi positive delay part based on Cockos "Midi Delay"\par}
 }
 ]]></description>
         <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
@@ -1561,8 +1563,8 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/30238bbd5d99b56e277e6759e700c946bf78e5c9/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
       </version>
       <version name="2.0" author="Michael Schnell (mschnell@bschnell.de)" time="2019-09-14T16:21:09Z">
-        <changelog><![CDATA[add negative Midi delay option]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/16a6c26920c16d9416b536ba3a0689e957ca9e27/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
+        <changelog><![CDATA[add positive Midi delay]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/4d0e7e7b08904da4764a331348b45fb1c8995dab/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Midi Auto Engage.jsfx" type="effect" desc="Midi Auto Engage">
