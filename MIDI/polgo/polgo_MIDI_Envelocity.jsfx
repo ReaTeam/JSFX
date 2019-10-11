@@ -1,0 +1,62 @@
+desc: MIDI FX Envelocity (polgo)
+author: polgo
+version: 1.0
+screenshot: Envelope setup https://stash.reaper.fm/37292/polgo_MIDI_Envelocity.png
+about:
+  # Envelocity
+
+  'Envelocity' is a simple JS effect that eases envelope control over midi velocity.  It was made to add gradual velocity changes to looped midi items such as drums. 
+
+  Add the effect to a midi track
+  - Show track envelope for ~Offset velocity for envelope~ (Defaults to +/-32 for a more subtle/readable envelope)
+  - ~Offset factor~ to multiply (x4 will result in a +/-127 range)
+  - ~Offset constant~ to shift
+  - ~Limit Max/Min~ to clamp
+
+slider7:0<-32,32,1>Offset velocity for envelope   -+
+slider8:1<0,4>Offset factor   -+
+slider9:0<-127,127,1>Offset constant   -+
+
+slider20:0<0,127,1>Limit Min    [-
+slider21:127<0,127,1>Limit Max    -]
+
+in_pin:none
+out_pin:none
+
+@init
+ext_noinit = 1.0;
+statNoteOn = $x90;
+NOTE_ON = 9;
+NOTE_OFF = 8;
+AFTERTCH = 10;
+
+@slider
+slider9 = min(max(slider9 | 0, -127), 127);
+slider7 = min(max(slider7 | 0, -32), 32);
+slider20 = min(max(slider20 | 0, 0), 127);
+slider21 = min(max(slider21 | 0, 0), 127);
+
+offsetv = slider9;
+offsetenv = slider7;
+offsetFactor = slider8;
+minv = slider20;
+maxv = slider21;
+
+@block
+while (
+	midirecv(_offset, _msg1, _note, _velocity) ? (
+		_status = _msg1 & $xF0;
+		  _status == statNoteOn && _velocity > 0 ?
+		  (
+			_velocityAdd = offsetv + (offsetenv * offsetFactor);
+			_velocityNew = _velocity + _velocityAdd;
+
+			_velocityNew = max(minv, _velocityNew);
+			_velocityNew = min(_velocityNew, maxv);
+			_velocityNew |= 0;
+		  );
+		midisend(_offset, _msg1, _note, _velocityNew);
+
+		1;
+	);
+);
