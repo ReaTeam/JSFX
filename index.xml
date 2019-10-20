@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="5a4946fe1aa9b585ef1283c27fb59e313ebab0a0">
+<index version="1" name="ReaTeam JSFX" commit="de50332c6e1fa8a186430c83e11ca3e29aa8bdac">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -334,6 +334,34 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
       <version name="1.1" author="polgo" time="2019-10-11T15:29:51Z">
         <changelog><![CDATA[Integer conversion pushed to end for more precise factoring]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/5a4946fe1aa9b585ef1283c27fb59e313ebab0a0/MIDI/polgo_MIDI%20Envelocity.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="polgo_MIDI Varocity.jsfx" type="effect" desc="MIDI Varocity">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Varocity\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Varocity offers tools and visual feedback to help shape random variations of incoming velocity values.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Note/Velocity Min/Max: Limits for velocity and silencing notes\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Velocity Limit/Cut: Remove or push velocity to Min/Max limits\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Vary Positive/Negative: Sets the upper and lower range of random variation\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Vary Dampen: Weight the variations towards the centre\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Vary Resolution: Space the output velocity to a specified resolution\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Vary Seed: 'Fix' the randomisation to the track time\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Vary Stepping/Max Step: Limit the velocity change possible from note to note\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Offset Velocity: Shift the output velocity with an envelope\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Offset Factor: Offset Velocity x Offset factor\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Fade Balance: Balances the offset and/or variation across the velocity range\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Fade on Vary/Offset: What is influenced by the 'Fade Balance' slider\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Graphic blend out rate: Sets how long the markers on the display take to disappear\sa180\par}
+}
+]]></description>
+        <link rel="screenshot">https://stash.reaper.fm/37351/polgo_MIDI_Varocity.png</link>
+      </metadata>
+      <version name="1.0" author="polgo" time="2019-10-20T21:16:08Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/de50332c6e1fa8a186430c83e11ca3e29aa8bdac/MIDI/polgo_MIDI%20Varocity.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI CC Mapper X.jsfx" type="effect" desc="MIDI CC Mapper X">
