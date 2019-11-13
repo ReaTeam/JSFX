@@ -1,13 +1,19 @@
 desc: MIDI CC Mapper X
 author: Talagan
-version: 3.1c
-changelog: First Reapack version.
+version: 3.2
+changelog:
+  Added theme system, with two themes, Dark and Light.
+  Reworked contrasts on Dark Theme.
+  Bug fix : red curve feedback circle was a bit shifted if the CC was set to High Res.
+screenshot:
+  Dark Theme https://stash.reaper.fm/37471/CCMapperX-Dark.png
+  Light Theme https://stash.reaper.fm/37472/CCMapperX-Light.png
 about:
   # Midi CC Mapper X
 
   This JSFX  is an extended version of the original plugin called "MIDI CC Mapper" with many more features. It allows to modify the behavior and the real-time feel of a MIDI controller, by acting as a pre-filter on the MIDI input. It can : 
 
-  - Filter in/out keyboard keys 
+  - Filter in/out keyboard keys
   - Transpose keyboard keys
   - Re-route CCs
   - Tweak CC response curves, either by using predefined curves, or by pen-drawing/smoothing custom curves.
@@ -20,6 +26,8 @@ about:
   ## Keyboard Filtering Module
 
   Located in the top left of the main window. This module can be enabled or bypassed with the button located in the module title bar. If enabled, all keys colorized in red are filtered out. The keys can be colorized by click/moving the mouse on them. The UI provides feedback for currently pressed keys.
+
+  This module can be of great help for defining regions on the keyboard. By reusing it on multiple tracks at the same time, you can easily achieve keyboard split (left hand/right hand or more) and/or multi-instruments combinations.
 
   ## Keyboard Transposition Module
 
@@ -37,7 +45,7 @@ about:
   - This output CC can be copied from the input CC
   - The response curve can be pendrawn by hand with the mouse
   - The response curve can be defined from one of the templates on the right
-  - The response curve can be smoothed with the smoothe button
+  - The response curve can be smoothed with the smooth button
 
   ## Reaper forum thread
 
@@ -64,7 +72,6 @@ options:want_all_kb
 NOTE_OFF_MSG              = 8;
 NOTE_ON_MSG               = 9;
 CC_MSG                    = 11; // 0x0B
-
 
 // Plugin Controls parameters
 CONTROL_COUNT             = 36;  // mod wh + 4 peds + 10 Sliders + 10 knobs + 10 pads + velo
@@ -97,6 +104,13 @@ KEYBOARD_FILTERING_TOP   = 0;
 GUI_CONTROL_PARAMS_TOP   = 220;
 KEYBOARD_PANNEL_WIDTH    = 670;
 
+// Pseudo-Object that contains pointer to colors
+TH            = 0;
+
+// Theme nums
+DARK_THEME    = 0;
+LIGHT_THEME   = 1;
+
 // Helper function for memory allocation.
 MEM_PTR  = 0;
 function malloc(msize)
@@ -125,7 +139,6 @@ KEYBOARD_TRANSPOSE_SEMI_TONES   = malloc(1);
 HIGHRES_INPUT_ENABLED           = malloc(1); // Global option              
 DROP_UNROUTED_CC_MESSAGES       = malloc(1); // Global option
 
-
 /////////////////////////////////
 // Buffers, used for computation
 /////////////////////////////////
@@ -153,6 +166,8 @@ KEY_VELOCITIES            = malloc(88);
 CC_RECEIVED_VALUES        = malloc(128); 
 
 GUI_MODE                  = malloc(1);
+
+CURRENT_THEME_NUM         = malloc(1);
 
 /////////////////////////
 //    MEMORY ACCESS    //
@@ -771,6 +786,200 @@ function initOctaveLookups() (
   OCTAVE_TOP_KEY_OFFSETS[11] = 6.5; // G#/Ab 
 );
 
+function switchToDarkTheme() (
+
+  TH.LIGHTGREEN = 0x80E580;
+  TH.MIDGREEN   = 0x20A020;
+  TH.LOWGREEN   = 0x10A010;
+  
+  TH.BACKGROUND          = 0x000000;
+  TH.DEFAULT_FONT        = 0xCCCCCC; // Default font color
+  
+  TH.HEADER              = 0x202066;
+  TH.HEADER_TEXT         = TH.DEFAULT_FONT;
+
+  // Enable/Disable button colors (Green/Grey)
+  TH.EN_B_ON             = TH.MIDGREEN; // Toggle button on
+  TH.EN_B_ON_H           = TH.LIGHTGREEN; // Toggle button on+hover
+  TH.EN_B_ON_TEXT        = 0xFFFFFF;
+  TH.EN_B_OFF            = 0x303030; // Toggle button off
+  TH.EN_B_OFF_H          = 0x606060; // Toggle button off+hover
+  TH.EN_B_OFF_TEXT       = TH.DEFAULT_FONT;
+  
+  // Switch button (Bistate button, but does not change color)
+  // Used for changing tabs for example
+  TH.SW_B_ON             = 0x202020; 
+  TH.SW_B_ON_H           = 0x505050; 
+  TH.SW_B_ON_TEXT        = TH.DEFAULT_FONT;
+  TH.SW_B_OFF            = 0x202020;
+  TH.SW_B_OFF_H          = 0x505050;
+  TH.SW_B_OFF_TEXT       = TH.DEFAULT_FONT;
+  
+  // Mono state button (cannot be toggled)
+  TH.MONO_B              = 0x202020; 
+  TH.MONO_B_H            = 0x505050;
+  TH.MONO_B_TEXT         = 0xAAAAFF; 
+  TH.MONO_B_CURVE        = 0xFF5050;
+  
+  TH.CC_LEARN_ON         = 0x666600;
+  TH.CC_LEARN_ON_H       = 0x888800;
+  TH.CC_LEARN_ON_TEXT    = 0xFFFF00;
+  
+  // Dynamic labels (Control information display)
+  TH.DYN_LABEL           = 0x8080FF;
+  TH.DYN_LABEL_HIGHLIGHT = 0xFFFFFF;
+  TH.DYN_LABEL_NEUTRAL   = 0x808080;
+  TH.DYN_LABEL_DISABLED  = 0x505050;
+  
+  // Curve
+  TH.CURVE               = 0x6060FF;
+  TH.CURVE_BG            = 0x191919;
+  TH.CURVE_GRID          = 0x353535;
+  TH.CURVE_BORDER        = 0x474747;
+  TH.CURVE_CURRENT_VALUE = 0xFF4040;
+  
+  // Controls
+  TH.CONTROL_HIGHLIGHT              = 0x7070F0;
+  TH.CONTROL_HIGHLIGHT_H            = 0xA0A000;
+  
+  TH.CONTROL_ENABLED_CONTRAST_HIGH  = 0xF0F0F0;
+  TH.CONTROL_ENABLED_CONTRAST_MID   = 0xB0B0B0;
+  TH.CONTROL_ENABLED_CONTRAST_LOW   = 0x6C6C6C;
+  
+  TH.CONTROL_DISABLED_CONTRAST_HIGH = 0x505050;
+  TH.CONTROL_DISABLED_CONTRAST_MID  = 0x454545;
+  TH.CONTROL_DISABLED_CONTRAST_LOW  = 0x202020;
+  
+  // Edit input lines
+  TH.INPUTLINE_BG        = TH.MONO_B;
+  TH.INPUTLINE_BG_H      = TH.MONO_B_H;
+  TH.INPUTLINE_TEXT      = TH.MONO_B_TEXT;
+  
+  TH.INPUTLINE_EDIT_BG   = TH.CC_LEARN_ON;
+  TH.INPUTLINE_EDIT_BG_H = TH.CC_LEARN_ON_H;
+  TH.INPUTLINE_EDIT_TEXT = TH.CC_LEARN_ON_TEXT;
+  
+  // Src/Dst labels
+  TH.ROUTING_INFO_CCNAME = TH.DYN_LABEL;
+  TH.ROUTING_INFO_NOT_OK = 0xFF0000;
+  TH.ROUTING_INFO_OK     = 0x00FF00;
+  
+  // Keyboard
+  TH.KEY_MARKER_BORDER  = 0x000000;
+  TH.KEY_MARKER_BG      = 0xFFFFFF; 
+  TH.KEY_BLACK_DISABLED = 0x202020;
+  TH.KEY_WHITE_DISABLED = 0x4C4C4C;
+  
+  TH.KEY_WHITE_FILTERED_IN  = TH.LIGHTGREEN;
+  TH.KEY_BLACK_FILTERED_IN  = TH.MIDGREEN;
+  TH.KEY_BLACK_FILTERED_OUT = 0xB24C4C;
+  TH.KEY_WHITE_FILTERED_OUT = 0xE58080;
+);
+
+function switchToLightTheme() (
+
+  TH.LIGHTGREEN = 0x80E580;
+  TH.MIDGREEN   = 0x20A020;
+  TH.LOWGREEN   = 0x10A010;
+  
+  TH.BACKGROUND          = 0xE0E0E0;
+  TH.DEFAULT_FONT        = 0x101010; // Default font color
+  
+  TH.HEADER              = 0xC0C0C0;
+  TH.HEADER_TEXT         = TH.DEFAULT_FONT;
+
+  // Enable/Disable button colors (Green/Grey)
+  TH.EN_B_ON             = TH.MIDGREEN; // Toggle button on
+  TH.EN_B_ON_H           = TH.LIGHTGREEN; // Toggle button on+hover
+  TH.EN_B_ON_TEXT        = 0xFFFFFF;
+  TH.EN_B_OFF            = 0xA0A0A0; // Toggle button off
+  TH.EN_B_OFF_H          = 0xD0D0D0; // Toggle button off+hover
+  TH.EN_B_OFF_TEXT       = TH.DEFAULT_FONT;
+  
+  // Switch button (Bistate button, but does not change color)
+  // Used for changing tabs for example
+  TH.SW_B_ON             = 0xA0A0A0; 
+  TH.SW_B_ON_H           = 0xD0D0D0; 
+  TH.SW_B_ON_TEXT        = TH.DEFAULT_FONT;
+  TH.SW_B_OFF            = 0xA0A0A0;
+  TH.SW_B_OFF_H          = 0xD0D0D0;
+  TH.SW_B_OFF_TEXT       = TH.DEFAULT_FONT;
+  
+  // Mono state button (cannot be toggled)
+  TH.MONO_B              = 0xA0A0A0; 
+  TH.MONO_B_H            = 0xD0D0D0;
+  TH.MONO_B_TEXT         = 0xFFFFFF; 
+  TH.MONO_B_CURVE        = 0xFF5050;
+  
+  TH.CC_LEARN_ON         = 0x666600;
+  TH.CC_LEARN_ON_H       = 0x888800;
+  TH.CC_LEARN_ON_TEXT    = 0xFFFF00;
+  
+  // Dynamic labels (Control information display)
+  TH.DYN_LABEL           = 0x8080FF;
+  TH.DYN_LABEL_HIGHLIGHT = 0x000000;
+  TH.DYN_LABEL_NEUTRAL   = 0x808080;
+  TH.DYN_LABEL_DISABLED  = 0x505050;
+  
+  // Curve
+  TH.CURVE               = 0x6060FF;
+  TH.CURVE_BG            = 0x393939;
+  TH.CURVE_GRID          = 0x555555;
+  TH.CURVE_BORDER        = 0x676767;
+  TH.CURVE_CURRENT_VALUE = 0xFF4040;
+  
+  // Controls
+  TH.CONTROL_HIGHLIGHT              = 0xC7C7FF;
+  TH.CONTROL_HIGHLIGHT_H            = 0xA0A000;
+  
+  TH.CONTROL_ENABLED_CONTRAST_HIGH  = 0xA0A0A0;//0xF0F0F0;
+  TH.CONTROL_ENABLED_CONTRAST_MID   = 0x808080;//0x909090;
+  TH.CONTROL_ENABLED_CONTRAST_LOW   = 0x707070;//0x4C4C4C;
+  
+  TH.CONTROL_DISABLED_CONTRAST_HIGH = 0xD3D3D3;
+  TH.CONTROL_DISABLED_CONTRAST_MID  = 0xD3D3D3;
+  TH.CONTROL_DISABLED_CONTRAST_LOW  = 0xC7C7C7;
+  
+  
+  // Edit input lines
+  TH.INPUTLINE_BG        = TH.MONO_B;
+  TH.INPUTLINE_BG_H      = TH.MONO_B_H;
+  TH.INPUTLINE_TEXT      = TH.MONO_B_TEXT;
+  
+  TH.INPUTLINE_EDIT_BG   = TH.CC_LEARN_ON;
+  TH.INPUTLINE_EDIT_BG_H = TH.CC_LEARN_ON_H;
+  TH.INPUTLINE_EDIT_TEXT = TH.CC_LEARN_ON_TEXT;
+  
+  // Src/Dst labels
+  TH.ROUTING_INFO_CCNAME = TH.DYN_LABEL;
+  TH.ROUTING_INFO_NOT_OK = 0xFF0000;
+  TH.ROUTING_INFO_OK     = 0x00CF00;
+  
+  // Keyboard
+  TH.KEY_MARKER_BORDER  = 0x000000;
+  TH.KEY_MARKER_BG      = 0xFFFFFF; 
+  TH.KEY_BLACK_DISABLED = 0x202020;
+  TH.KEY_WHITE_DISABLED = 0x4C4C4C;
+  
+  TH.KEY_WHITE_FILTERED_IN  = TH.LIGHTGREEN;
+  TH.KEY_BLACK_FILTERED_IN  = TH.MIDGREEN;
+  TH.KEY_BLACK_FILTERED_OUT = 0xB24C4C;
+  TH.KEY_WHITE_FILTERED_OUT = 0xE58080;
+);
+
+function switchToTheme(theme_num) (
+  (theme_num == DARK_THEME)?(switchToDarkTheme()):(switchToLightTheme());
+);
+
+function updateTheme() (
+  switchToTheme(CURRENT_THEME_NUM[0]);
+);
+
+function initThemes() (
+  CURRENT_THEME_NUM[0] = DARK_THEME;
+  updateTheme();
+);
+
 ////////////////////////
 //     UI HELPERS     //
 ////////////////////////
@@ -834,6 +1043,9 @@ function firstInit()
   initMidiControlNames();
   initPluginControlNames();
 
+  // Init theme colors
+  initThemes();
+  
   // Init knob tics
   initKnobTics();
   
@@ -1011,6 +1223,8 @@ function memwr(is_saving, ver) (
   file_mem(0,HIGHRES_INPUT_ENABLED,1);
   file_mem(0,DROP_UNROUTED_CC_MESSAGES,1);
   
+  // Introduced in V3.1d
+  file_mem(0,CURRENT_THEME_NUM,1);
 );
 
 function backupOrRestore() (
@@ -1062,11 +1276,21 @@ function gfx_rgb(hex_col) (
   gfx_b = ((hex_col>>0)&0xFF)/255;
 );
 
+function gfx_rgb_control_high(control_num) (
+ gfx_rgb( (CONTROL_ENABLED[control_num] == 1)?(TH.CONTROL_ENABLED_CONTRAST_HIGH):(TH.CONTROL_DISABLED_CONTRAST_HIGH) );
+);
+function gfx_rgb_control_mid(control_num) (
+ gfx_rgb( (CONTROL_ENABLED[control_num] == 1)?(TH.CONTROL_ENABLED_CONTRAST_MID):(TH.CONTROL_DISABLED_CONTRAST_MID) );
+);
+function gfx_rgb_control_low(control_num) (
+ gfx_rgb( (CONTROL_ENABLED[control_num] == 1)?(TH.CONTROL_ENABLED_CONTRAST_LOW):(TH.CONTROL_DISABLED_CONTRAST_LOW) );
+);
+
 // Draws a enable/disable button
 // This button is linked to an adress in memory : flag_address[flag_local_address].
 // The only way I had found in EEL to use "pointers" was an array trick.
 // I've just discovered pseudo objects, it could be a solution too.
-function drawBistateButton(flag_address,flag_local_address,t,l,ontext,offtext,color_on,color_off,color_on_hover,color_off_hover) (
+function drawBistateButton(flag_address,flag_local_address,t,l,ontext,offtext,color_on,color_off,color_on_hover,color_off_hover,text_color_on,text_color_off) (
 
   tmp = 0; ontextw = 0; offtextw = 0;
   gfx_measurestr(ontext, ontextw,tmp);
@@ -1098,7 +1322,8 @@ function drawBistateButton(flag_address,flag_local_address,t,l,ontext,offtext,co
   );
   gfx_rect(bl,bt,bw,bh); 
   
-  gfx_r = gfx_g = gfx_b = 0.8;
+  // Text color
+  gfx_rgb((enabled)?(text_color_on):(text_color_off));
   gfx_y = t + 4;
   enabled?(
     gfx_x = l+(bw-ontextw)/2; 
@@ -1109,19 +1334,28 @@ function drawBistateButton(flag_address,flag_local_address,t,l,ontext,offtext,co
   );
 );
 
+function drawStandardBistateButton(flag_address,flag_local_address,t,l,on_text,off_text) (
+  drawBistateButton(flag_address,flag_local_address,t,l,on_text,off_text, TH.EN_B_ON ,TH.EN_B_OFF, TH.EN_B_ON_H, TH.EN_B_OFF_H, TH.EN_B_ON_TEXT, TH.EN_B_OFF_TEXT);
+);
+
+function drawSwitchButton(flag_address,flag_local_address,t,l,on_text,off_text) (
+ drawBistateButton (flag_address,flag_local_address,t,l,on_text,off_text, TH.SW_B_ON ,TH.SW_B_OFF, TH.SW_B_ON_H, TH.SW_B_OFF_H, TH.SW_B_ON_TEXT, TH.SW_B_OFF_TEXT); 
+);
+
+
 // ShortCut for a OnOff button with "Enabled"/"Bypass" texts
 function drawEnableDisableButton(flag_address,flag_local_address,t,l) (
-  drawBistateButton(flag_address,flag_local_address,t,l,"Enabled","Bypass",0x207020,0x303030,0x20C020,0x606060);
+  drawStandardBistateButton(flag_address,flag_local_address,t,l,"Enabled","Disabled");
 );
 
 // ShortCut for a OnOff button with "Yes"/"No" texts
 function drawYesNobutton(flag_address,flag_local_address,t,l) (
-  drawBistateButton(flag_address,flag_local_address,t,l,"Yes","No",0x207020,0x202020,0x20C020,0x606060);
+  drawStandardBistateButton(flag_address,flag_local_address,t,l,"Yes","No");
 );
 
 // ShortCut for a OnOff button with "On"/"Off" texts
 function drawOnOffButton(flag_address,flag_local_address,t,l) (
-  drawBistateButton(flag_address,flag_local_address,t,l,"On","Off",0x207020,0x303030,0x20C020,0x606060);
+  drawStandardBistateButton(flag_address,flag_local_address,t,l,"On","Off");
 );
 
 // - or + button for a spinbox
@@ -1141,7 +1375,7 @@ function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_s
    
   in_rect  ?
   (
-    gfx_r = gfx_g = gfx_b = 0.3;   
+    gfx_rgb(TH.MONO_B_H);   
     val_shift = 0;
    
     // Handle the callback in the draw function... erm
@@ -1166,15 +1400,17 @@ function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_s
       val_address[val_local_address] = min(max(val_address[val_local_address],minval),maxval);    
     );
   
-  ):(gfx_r = gfx_g = gfx_b = 0.15;);  
-  
+  ):( gfx_rgb(TH.MONO_B) );  
+ 
+  // Button background 
   gfx_x   = bl;
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
+ 
+  // Button text
   gfx_x   = bl+3;
   gfx_y   = bt+4;
-  gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;  
-  
+  gfx_rgb(TH.MONO_B_TEXT);  
   add_or_sub == 0?(gfx_drawstr("-")):(gfx_drawstr("+"));  
 );
 
@@ -1188,8 +1424,10 @@ function drawAddOrSubWidget(widget_id,val_address,val_local_address,l,t,minval,m
   drawAddOrSubButton(tmp,val_address,val_local_address,l,t,0,minval,maxval);
   sprintf(tmp,"%s_add",widget_id);
   drawAddOrSubButton(tmp,val_address,val_local_address,l+50,t,1,minval,maxval);
-  
-  gfx_r = gfx_g = 0.5; gfx_b = 1;
+
+  // Value between - and +
+  gfx_rgb(TH.DYN_LABEL);
+ 
   gfx_x = l+23; gfx_y = t+4;
   
   // Value at the center
@@ -1247,13 +1485,13 @@ function mousePenCallback()
   );
 );
 
-function smootheButtonCallback()
+function smoothButtonCallback()
 (
   curve = selectedControlCurveAddress();
   
   // Limit this to 20 calls / seconds
-  new_smoothe_time = time_precise();
-  (new_smoothe_time - last_smoothe_time > 0.05) ? (
+  new_smooth_time = time_precise();
+  (new_smooth_time - last_smooth_time > 0.05) ? (
     
     SCURVE[0]           = curve[0];
     SCURVE[CURVESIZE-1] = curve[CURVESIZE-1];
@@ -1267,7 +1505,7 @@ function smootheButtonCallback()
     );
     
     i=0; while(i<CURVESIZE) ( CURVE[i] = SCURVE[i]; i+=1 );
-    last_smoothe_time = new_smoothe_time;
+    last_smooth_time = new_smooth_time;
   );
 );
 
@@ -1282,34 +1520,34 @@ function curveButtonCallback(row_num, button_num)
   );
 );
 
-// Smoothe button
-function drawSmootheButton()
+// Smooth button
+function drawSmoothButton()
 (
   bl = 110+gzone_l;
   bt = gzone_b;
-  br = bl + 95;
+  br = bl + 88;
   bb = bt + 20;
    
   mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt ?
   (
-   gfx_r = gfx_g = gfx_b = 0.3;   
+   gfx_rgb(TH.MONO_B_H);
    // Handle the callback in the draw function... erm
    // Let's have another one.
    
-   mouse_click == 1 ? ( mouse_capturator = "smoothebutton" );
+   mouse_click == 1 ? ( mouse_capturator = "smoothbutton" );
    
-   mouse_cap == 1 && mouse_capturator == "smoothebutton" ? (
-     smootheButtonCallback();
+   mouse_cap == 1 && mouse_capturator == "smoothbutton" ? (
+     smoothButtonCallback();
    ); 
-  ):(gfx_r = gfx_g = gfx_b = 0.15;);  
+  ):(gfx_rgb(TH.MONO_B));  
   
   gfx_x   = bl;
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
   gfx_x   = bl+20;
   gfx_y   = bt+7;
-  gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;  
-  gfx_drawstr("Smoothe");  
+  gfx_rgb(TH.MONO_B_TEXT);
+  gfx_drawstr("Smooth");  
 );
 
 // Draw buttons
@@ -1318,21 +1556,21 @@ function drawCurveButton(row_num, button_num)
   // Adress of the row
   points  = buttonDataAddress(row_num,button_num);
   
-  bl = bzone_margin + 15 + bzone_l + button_num*42;
+  bl = bzone_margin + 20 + bzone_l + button_num*42;
   bt = bzone_margin + 7 + bzone_t + row_num*42;
   br = bl + 32;
   bb = bt + 32;
    
   mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt ?
   (
-   gfx_r = gfx_g = gfx_b = 0.2;   
+   gfx_rgb(TH.MONO_B_H);   
    // Handle the callback in the draw function... erm
    (mouse_click==1) ? (
      curveButtonCallback(row_num,button_num);
    ); 
   ):
   ( 
-    gfx_r = gfx_g = gfx_b = 0.1;
+    gfx_rgb(TH.MONO_B);
   );
   
   // Draw the button rect
@@ -1340,8 +1578,8 @@ function drawCurveButton(row_num, button_num)
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
      
-  // Draw the button points   
-  gfx_r = 1; gfx_g = 0.35; gfx_b = 0.35;
+  // Draw the button points
+  gfx_rgb(TH.MONO_B_CURVE);
   gfx_x = bl; gfx_y = floor(bb- 31*points[0]-0.5);  
   i = 1;
   while(i<32)
@@ -1355,7 +1593,7 @@ function drawCurveButton(row_num, button_num)
 function drawCurveButtons()
 (
   // Draw headers
-  gfx_r   = gfx_g = gfx_b = 1;
+  gfx_rgb(TH.DEFAULT_FONT);
   by      = bzone_t+bzone_margin+20;
   gfx_x   = bzone_l;
   gfx_y   = by;
@@ -1422,11 +1660,11 @@ function drawCurvezone()
     bzone_t   = gzone_t;
      
     // Draw background
-    gfx_r=gfx_g=gfx_b=0.1;
+    gfx_rgb(TH.CURVE_BG);
     gfx_rect(left,top,right-left,bottom-top);
       
     // Draw grid
-    gfx_r=gfx_g=gfx_b=0.2;
+    gfx_rgb(TH.CURVE_GRID);
     gridstep = (CURVESIZE/4)*RESOLUTION;
     gfx_line(left+1*gridstep,top,left+1*gridstep,bottom);
     gfx_line(left+2*gridstep,top,left+2*gridstep,bottom);
@@ -1436,7 +1674,7 @@ function drawCurvezone()
     gfx_line(left,top+3*gridstep,right,top+3*gridstep);
       
     // Draw border
-    gfx_r=gfx_g=gfx_b=0.3;
+    gfx_rgb(TH.CURVE_BORDER);
     gfx_x = left;
     gfx_y = top;
     gfx_lineto(right,top);
@@ -1445,9 +1683,7 @@ function drawCurvezone()
     gfx_lineto(left,top);
      
     // Draw curve
-    gfx_r = 0.35;
-    gfx_g = 0.35;
-    gfx_b = 1;
+    gfx_rgb(TH.CURVE);
     gfx_x = left;
     gfx_y = bottom-floor(0.5+RESOLUTION*curve[0]);
       
@@ -1456,17 +1692,14 @@ function drawCurvezone()
       i+=1; 
     );
       
-    gfx_r = 1;
-    gfx_g = 0.1;
-    gfx_b = 0.1;
-       
+    gfx_rgb(TH.CURVE_CURRENT_VALUE);   
     // Draw last event
     gfx_circle(left + CONTROL_LAST_IN[g_selected_control]*RESOLUTION ,bottom-floor(1.5 + RESOLUTION*CONTROL_LAST_OUT[g_selected_control]),3);
         
     mousePenCallback();    
         
     drawCurveButtons();
-    drawSmootheButton();
+    drawSmoothButton();
 );
 
 
@@ -1512,17 +1745,17 @@ function drawWheel(wh_num)
   // Draw background
   g_selected_control == control_num ?
   (
-    gfx_r=0.4;gfx_g=0.4;gfx_b=0;
+    gfx_rgb(TH.CONTROL_HIGHLIGHT);
     gfx_rect(slider_l-5,slider_t-5,slider_w+10,slider_h+10);
   );
   
-  // Draw wheel body
-  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=0.8;):(gfx_r=gfx_g=gfx_b=0.3;);
+  // Draw wheel body 
+  gfx_rgb_control_high(control_num);
   gfx_rect(slider_l,slider_t,slider_w,slider_h);
     
   // Draw Cursor
   cval = CONTROL_LAST_IN[control_num]/127.0;
-  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=0.3;):(gfx_r=gfx_g=gfx_b=0.1;);
+  gfx_rgb_control_low(control_num);
   rect_x = slider_l;
   rect_y = slider_b - cval*65 - 10;
   gfx_rect(rect_x, rect_y, slider_w,10);
@@ -1557,35 +1790,56 @@ function drawPad(pad_num, is_pedal)
     onControlSelect();
   );
   
-  // Draw background
+  // Draw highlight
   g_selected_control == control_num ?
   (
-    gfx_r=0.4;gfx_g=0.4;gfx_b=0;  
+    gfx_rgb(TH.CONTROL_HIGHLIGHT);  
     gfx_rect(slider_l-3,slider_t-3,slider_w+6,slider_h+((is_pedal==1)?(7):(17)) );
   );
   
-  // Draw body
   cval = CONTROL_LAST_IN[control_num]/127.0;
-  CONTROL_ENABLED[control_num] == 1?(
-    gfx_r=gfx_g=0.7;
-    gfx_b=0.7+cval*0.3;
-  ):
-  (
-    gfx_r=gfx_g=gfx_b=0.15;
-  );
-  gfx_rect(slider_l,slider_t,slider_w,slider_h);
-    
-  is_pedal == 1?
-  (
-    gfx_r=gfx_g=gfx_b=0;
+
+  // Draw body
+  (is_pedal)?(
+    (CONTROL_ENABLED[control_num] == 1)?(
+      (cval>0.5)?(
+        gfx_rgb_control_high(control_num);
+      ):(
+        gfx_rgb_control_mid(control_num);
+      );
+    ):(
+      gfx_rgb_control_mid(control_num);
+    );
+    gfx_rect(slider_l,slider_t,slider_w,slider_h);
+     
+    // Draw small line pattern that make this look like a pedal
+    gfx_rgb( (g_selected_control == control_num)?(TH.CONTROL_HIGHLIGHT):(TH.BACKGROUND) );
     gfx_line(slider_l,slider_t+4,slider_r,slider_t+4);  
     gfx_line(slider_l+3,slider_t,slider_l+3,slider_t+4);  
     gfx_line(slider_l+7,slider_t,slider_l+7,slider_t+4);  
     gfx_line(slider_l+11,slider_t,slider_l+11,slider_t+4);  
-  ):
-  (
+     
+  ):(
+   
+    gfx_rgb_control_mid(control_num);
+    gfx_rect(slider_l,slider_t,slider_w,slider_h);
+    
+    // Growing center rect
+    (CONTROL_ENABLED[control_num] == 1)?(
+      slider_w_inner = roundi(slider_w * cval / 2)*2;
+      slider_h_inner = roundi(slider_h * cval / 2)*2;
+      slider_aaa     = cval;
+      slider_aaa_w   = slider_w;
+      slider_aaa_w_inner = slider_w_inner;
+      slider_l_inner = slider_l + (slider_w - slider_w_inner) * 0.5;
+      slider_t_inner = slider_t + (slider_h - slider_h_inner) * 0.5;
+            
+      gfx_rgb_control_high(control_num);
+      gfx_rect(slider_l_inner,slider_t_inner,slider_w_inner,slider_h_inner);
+    );  
+  
     // Draw Label
-    gfx_r=gfx_g=gfx_b=(CONTROL_ENABLED[control_num] == 1)?(0.7):(0.25);
+    gfx_rgb_control_high(control_num);
     gfx_setfont(1);
     str_w = 0; str_h = 0;
     str = controlLabelWithFallback(control_num);
@@ -1593,7 +1847,7 @@ function drawPad(pad_num, is_pedal)
     gfx_x = slider_l + slider_w/2 - str_w/2; gfx_y = slider_b+1;
     gfx_drawstr(str);
     gfx_setfont(0);
-  );
+  ); 
 );
 
 function drawPedal(ped_num)
@@ -1626,12 +1880,12 @@ function drawFader(sl_num)
   // Draw background
   g_selected_control == control_num ?
   (
-    gfx_r=0.4;gfx_g=0.4;gfx_b=0;    
+    gfx_rgb(TH.CONTROL_HIGHLIGHT); 
     gfx_rect(slider_l,slider_t,slider_w,slider_h+12);
   );
   
   // Draw tics
-  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=0.5;):(gfx_r=gfx_g=gfx_b=0.15;);
+  gfx_rgb_control_mid(control_num);
   s = 0;
   while(s<11)
   (
@@ -1641,13 +1895,13 @@ function drawFader(sl_num)
   
   // Draw Cursor
   cval = CONTROL_LAST_IN[control_num]/127.0;
-  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=0.8;):(gfx_r=gfx_g=gfx_b=0.2;);
+  gfx_rgb_control_high(control_num);
   rect_x = slider_l;
   rect_y = slider_b - cval*slider_inter*10-5;
   gfx_rect(rect_x, rect_y, slider_w,5);
   
   // Draw Label
-  gfx_r=gfx_g=gfx_b=(CONTROL_ENABLED[control_num] == 1)?(0.7):(0.25);
+  gfx_rgb_control_high(control_num);
   gfx_setfont(1);
   str_w = 0; str_h = 0;
   str = controlLabelWithFallback(control_num);
@@ -1685,14 +1939,14 @@ function drawVelocityWidget() (
   // Draw background
   is_control_selected ?
   (
-    gfx_r=0.4;gfx_g=0.4;gfx_b=0;
+    gfx_rgb(TH.CONTROL_HIGHLIGHT); 
     gfx_rect(slider_l-5,slider_t-5,slider_w+10,slider_full_h+10);
   );
   
   // Icon
   icon_top = slider_t + 17;
-  gfx_r=gfx_g=gfx_b=(is_control_enabled)?(0.8):(0.2);
-  
+  gfx_rgb_control_high(control_num);
+    
   // White keys
   gfx_rect(slider_l,    icon_top + 14, 18, 3);
   gfx_rect(slider_l+20, icon_top + 14, 18, 3);
@@ -1703,11 +1957,12 @@ function drawVelocityWidget() (
   gfx_rect(slider_l+40, icon_top + 19, 16, 11); 
   
   // Black keys
-  gfx_r=gfx_g=gfx_b=(is_control_enabled)?(0.15):(0.1);
+  gfx_rgb_control_low(control_num);  
   gfx_rect(slider_l+11, icon_top+1, 14, 11); 
   gfx_rect(slider_l+33, icon_top+1, 14, 11); 
 
-  gfx_r=gfx_g=gfx_b=(is_control_enabled)?(0.8):(0.2);
+  // Label
+  gfx_rgb_control_high(control_num);  
   gfx_setfont(1);
   gfx_x = slider_l+9; gfx_y = icon_top + 35;
   gfx_drawstr("Velocity");
@@ -1742,12 +1997,12 @@ function drawKnob(knob_num)
   // Draw background
   g_selected_control == control_num ?
   (
-    gfx_r=0.4;gfx_g=0.4;gfx_b=0;    
+    gfx_rgb(TH.CONTROL_HIGHLIGHT);  
     gfx_rect(kb_l,kb_t,33,43);
   );
   
   // KB Tics
-  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=1;):(gfx_r=gfx_g=gfx_b=0.3);
+  gfx_rgb_control_high(control_num);
   t = 0;
   while(t<11)
   (
@@ -1756,15 +2011,15 @@ function drawKnob(knob_num)
   ); 
   
   // KB Background
-  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=0.5;):(gfx_r=gfx_g=gfx_b=0.15;);
+  gfx_rgb_control_mid(control_num);
   gfx_circle(kb_center_x,kb_center_y,12,1,0);
   
   // KB Border
-  gfx_r=gfx_g=gfx_b=0;
+  gfx_rgb((g_selected_control == control_num)?(TH.CONTROL_HIGHLIGHT):(TH.BACKGROUND));
   gfx_circle(kb_center_x,kb_center_y,12,0,1);
   
   // Cursor
-  CONTROL_ENABLED[control_num] == 1?(gfx_r=gfx_g=gfx_b=1;):(gfx_r=gfx_g=gfx_b=0.4;);
+  gfx_rgb_control_high(control_num);
   
   cval = CONTROL_LAST_IN[control_num]/127.0;
   x = floor(knobTic(cval,1)*12 + 0.5);
@@ -1773,7 +2028,7 @@ function drawKnob(knob_num)
   gfx_line(kb_center_x, kb_center_y, kb_center_x + x, kb_center_y + y);
   
   // Draw Label
-  gfx_r=gfx_g=gfx_b=(CONTROL_ENABLED[control_num] == 1)?(0.7):(0.25);
+  gfx_rgb_control_high(control_num);
   gfx_setfont(1);
   str_w = 0; str_h = 0;
   str = controlLabelWithFallback(control_num);
@@ -1782,6 +2037,7 @@ function drawKnob(knob_num)
   gfx_drawstr(str);
   gfx_setfont(0);
 );
+
 // CC Learn widget
 function drawCCLearnButton(cnum)
 (
@@ -1793,7 +2049,7 @@ function drawCCLearnButton(cnum)
   in_rect = (mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt);
   in_rect ? 
   (
-    (isCCLearning())?(gfx_r=0.6;gfx_g=0.6;gfx_b=0):(gfx_r=gfx_g=gfx_b=0.3);   
+    (isCCLearning())?(gfx_rgb(TH.CC_LEARN_ON_H)):(gfx_rgb(TH.MONO_B_H));   
     // Handle the callback in the draw function... erm
     // Let's have another one.
     mouse_click == 1 ? (
@@ -1801,15 +2057,16 @@ function drawCCLearnButton(cnum)
     ); 
   ):
   (
-    (isCCLearning())?(gfx_r=0.4;gfx_g=0.4;gfx_b=0):(gfx_r=gfx_g=gfx_b=0.15);   
+    (isCCLearning())?(gfx_rgb(TH.CC_LEARN_ON)):(gfx_rgb(TH.MONO_B));   
   );  
-  
   gfx_x   = bl;
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
+  
+  // Now the text
   gfx_x   = bl+3;
   gfx_y   = bt+4;
-  gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;  
+  (isCCLearning())?(gfx_rgb(TH.CC_LEARN_ON_TEXT)):(gfx_rgb(TH.MONO_B_TEXT));  
   gfx_drawstr("CC Learn");
 );
 
@@ -1825,7 +2082,7 @@ function drawCopySrcButton(cnum)
   in_rect ?
   (
     // Hover in color
-    gfx_r=gfx_g=gfx_b=0.3;   
+    gfx_rgb(TH.MONO_B_H); 
     // Handle the callback in the draw function... erm
     mouse_click == 1 ? (
       CONTROL_DSTS[cnum] = CONTROL_SRCS[cnum];
@@ -1833,15 +2090,17 @@ function drawCopySrcButton(cnum)
   ):
   (
     // Hover out color
-    gfx_r=gfx_g=gfx_b=0.15;
+    gfx_rgb(TH.MONO_B);
   );  
   
   gfx_x   = bl;
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
+ 
+  // Now the text
   gfx_x   = bl+3;
   gfx_y   = bt+4;
-  gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;  
+  gfx_rgb(TH.MONO_B_TEXT);
   gfx_drawstr("Copy Src");
 );
 
@@ -1857,7 +2116,7 @@ function drawDescriptionInputLine()
   in_rect = ( mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt ); 
   in_rect ?
   (
-    (edit_description==1)?(gfx_r=0.6;gfx_g=0.6;gfx_b=0):(gfx_r=gfx_g=gfx_b=0.3);   
+    gfx_rgb( (edit_description==1)?(TH.INPUTLINE_EDIT_BG_H):(TH.INPUTLINE_BG_H));   
    
     // Handle the callback in the draw function... erm
     // Let's have another one.
@@ -1873,7 +2132,7 @@ function drawDescriptionInputLine()
     ); 
   ):
   (
-    (edit_description==1)?(gfx_r=0.4;gfx_g=0.4;gfx_b=0):(gfx_r=gfx_g=gfx_b=0.15);   
+    gfx_rgb( (edit_description==1)?(TH.INPUTLINE_EDIT_BG):(TH.INPUTLINE_BG) )
   );  
   
   edit_description == 1?
@@ -1896,7 +2155,7 @@ function drawDescriptionInputLine()
   gfx_rect(bl,bt,br-bl,bb-bt);
   gfx_x   = bl+3;
   gfx_y   = bt+4;
-  (edit_description==1)?(gfx_r = 1; gfx_g = 1; gfx_b = 1;):(gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;); 
+  gfx_rgb((edit_description==1)?(TH.INPUTLINE_EDIT_TEXT):(TH.INPUTLINE_TEXT));
   gfx_drawstr(controlDescription(g_selected_control));
 );
 
@@ -1911,7 +2170,7 @@ function drawSmallLabelInputLine()
   in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
   in_rect ?
   (
-    (edit_label==1)?(gfx_r=0.6;gfx_g=0.6;gfx_b=0):(gfx_r=gfx_g=gfx_b=0.3);   
+    gfx_rgb( (edit_label==1)?(TH.INPUTLINE_EDIT_BG_H):(TH.INPUTLINE_BG_H));   
     // Handle the callback in the draw function... erm
     // Let's have another one.
     mouse_click == 1 ? (
@@ -1923,7 +2182,7 @@ function drawSmallLabelInputLine()
     ); 
   ):
   (
-    (edit_label==1)?(gfx_r=0.4;gfx_g=0.4;gfx_b=0):(gfx_r=gfx_g=gfx_b=0.15);   
+    gfx_rgb( (edit_label==1)?(TH.INPUTLINE_EDIT_BG):(TH.INPUTLINE_BG) )
   );  
   
   edit_label == 1?
@@ -1946,16 +2205,15 @@ function drawSmallLabelInputLine()
   gfx_rect(bl,bt,br-bl,bb-bt);
   gfx_x   = bl+3;
   gfx_y   = bt+4;
-  (edit_label==1)?(gfx_r = 1; gfx_g = 1; gfx_b = 1;):(gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;); 
+  gfx_rgb((edit_label==1)?(TH.INPUTLINE_EDIT_TEXT):(TH.INPUTLINE_TEXT));
   gfx_drawstr(controlLabel(g_selected_control));
 );
 
 // Control editor sub pannel for midi cc assignment
 function drawAssignZone()
 (
-  gfx_r = gfx_g = gfx_b = 0.8;
-   
-   
+  gfx_rgb(TH.DEFAULT_FONT);
+    
   gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+14;
   gfx_drawStr("Description");
   
@@ -1979,7 +2237,7 @@ function drawAssignZone()
     drawAddOrSubWidget("cc_dst_spinbox",CONTROL_DSTS,  g_selected_control,217,GUI_CONTROL_PARAMS_TOP+50,0,127);
  
     // Name of the src CC
-    gfx_r = gfx_g = 0.5; gfx_b = 1;
+    gfx_rgb(TH.ROUTING_INFO_CCNAME);
     gfx_x = 295;  gfx_y = GUI_CONTROL_PARAMS_TOP+34;
     src_cc     = CONTROL_SRCS[g_selected_control];
     src_name   = midiControlName(src_cc);
@@ -1990,7 +2248,7 @@ function drawAssignZone()
     
     (src_is_lsb)?(
       (isHighResMidiInputEnabled())?(
-        gfx_r = 1; gfx_g = 0; gfx_b = 0;
+        gfx_rgb(TH.ROUTING_INFO_NOT_OK);
         gfx_drawStr(" [LSB not routable in High-Res]");
       ):(
         gfx_drawStr(" (LSB)");
@@ -1999,7 +2257,7 @@ function drawAssignZone()
     
     (src_is_msb)?(
       (isHighResMidiInputEnabled())?(
-        gfx_r = 0; gfx_g = 1; gfx_b = 0;
+        gfx_rgb(TH.ROUTING_INFO_OK);
         gfx_drawStr(" [High Res]");
       ):(
         gfx_drawStr(" (MSB)");
@@ -2007,7 +2265,7 @@ function drawAssignZone()
     );
     
     // Name of the dst CC
-    gfx_r = gfx_g = 0.5; gfx_b = 1;
+    gfx_rgb(TH.ROUTING_INFO_CCNAME);
     gfx_x = 295;  gfx_y = GUI_CONTROL_PARAMS_TOP+54;
     dst_cc     = CONTROL_DSTS[g_selected_control];
     dst_name   = midiControlName(dst_cc);
@@ -2018,7 +2276,7 @@ function drawAssignZone()
     
     (dst_is_msb)?(
       (isHighResMidiOutputEnabledForControl(g_selected_control))?(
-        gfx_r = 0; gfx_g = 1; gfx_b = 0;
+       gfx_rgb(TH.ROUTING_INFO_OK);
         gfx_drawStr(" [High Res]");
       ):(
         gfx_drawStr(" (MSB)");
@@ -2030,31 +2288,34 @@ function drawAssignZone()
     );
     
   ):(
-    // Keyboard Velocity special case
   
-    gfx_r = 0.35; gfx_g = 0.35; gfx_b = 1;
+    // Keyboard Velocity special case
+    gfx_rgb(TH.DYN_LABEL);
     gfx_x = 140; gfx_y = GUI_CONTROL_PARAMS_TOP+14;
     gfx_drawStr("Keyboard velocity");  
     
-    gfx_r = 0.35; gfx_g = 0.35; gfx_b = 0.35;
+    // Src
+    gfx_rgb(TH.DYN_LABEL_DISABLED);
     gfx_x = 140; gfx_y = GUI_CONTROL_PARAMS_TOP+34;
     gfx_drawStr("Keyboard velocity");  
     (isHighResMidiInputEnabled())?(
-      gfx_r = 0; gfx_g = 1; gfx_b = 0;
+      gfx_rgb(TH.ROUTING_INFO_OK);
       gfx_drawStr(" [High Res]");
     );
     
-    gfx_r = 0.35; gfx_g = 0.35; gfx_b = 0.35;
+    // Dst
+    gfx_rgb(TH.DYN_LABEL_DISABLED);
     gfx_x = 140; gfx_y = GUI_CONTROL_PARAMS_TOP+54;
     gfx_drawStr("Keyboard velocity");    
     (isHighResMidiOutputEnabledForControl(g_selected_control))?(
-      gfx_r = 0; gfx_g = 1; gfx_b = 0;
+      gfx_rgb(TH.ROUTING_INFO_OK);
       gfx_drawStr(" [High Res]");
     );
   ); 
   
   (g_selected_control == CONTROL_VELOCITY || ccLsbCounterpart(CONTROL_DSTS[g_selected_control])!=-1)?(
-    gfx_r = gfx_g = gfx_b = 0.8;
+    // High Res Control
+    gfx_rgb(TH.DEFAULT_FONT);
     gfx_x = 455; gfx_y = GUI_CONTROL_PARAMS_TOP+14;
     gfx_drawStr("High res output");  
     drawYesNobutton(CONTROL_HIGHRES_OUTPUT_ENABLED,g_selected_control,GUI_CONTROL_PARAMS_TOP+11,590);
@@ -2064,13 +2325,13 @@ function drawAssignZone()
 function drawControlPannel()
 (
   // Header Background
-  gfx_r = 0.1; gfx_g = 0.1; gfx_b = 0.4;
+  gfx_rgb(TH.HEADER);
   gfx_rect(0,CONTROL_PANNEL_TOP,gfx_w,20);
        
   (g_selected_control != -1)?(
   
     // Header text
-    gfx_r = gfx_g = gfx_b = 0.8;
+    gfx_rgb(TH.HEADER_TEXT);
     gfx_x = 88; gfx_y = CONTROL_PANNEL_TOP+7;
     str = #;
     sprintf(str,"%s / %s", controlName(g_selected_control), controlDescription(g_selected_control));
@@ -2079,7 +2340,7 @@ function drawControlPannel()
     // Enable / Disable
     drawEnableDisableButtonForControl(g_selected_control);
   ):(
-    gfx_r = gfx_g = gfx_b = 0.8;
+    gfx_rgb(TH.HEADER_TEXT);
     gfx_x = 10; gfx_y = CONTROL_PANNEL_TOP+7;  
     gfx_drawstr("Select a control to edit it."); 
   );
@@ -2122,16 +2383,16 @@ function drawControlPannel()
 
 function drawKeyboardKeyMarker(x,y)
 (
-  gfx_r = 1; gfx_g = 1; gfx_b = 1;
+  gfx_rgb(TH.KEY_MARKER_BG);
   gfx_circle(x,y,4,1,0);
-  gfx_r = 0; gfx_g = 0; gfx_b = 0;
+  gfx_rgb(TH.KEY_MARKER_BORDER);
   gfx_circle(x,y,4,0,0);
 );
 
 function drawTransposePannel() (
 
   // Header Background
-  gfx_r = 0.1; gfx_g = 0.1; gfx_b = 0.4;
+  gfx_rgb(TH.HEADER);
   gfx_rect(KEYBOARD_PANNEL_WIDTH+2,KEYBOARD_FILTERING_TOP,gfx_w - KEYBOARD_PANNEL_WIDTH-2,20);
 
   // Button 
@@ -2139,14 +2400,20 @@ function drawTransposePannel() (
   
   // Title
   gfx_x = 88 + KEYBOARD_PANNEL_WIDTH; gfx_y = KEYBOARD_FILTERING_TOP + 7;
+ 
+  gfx_rgb(TH.HEADER_TEXT);
   gfx_drawstr("Transpose"); 
   
   enabled = KEYBOARD_TRANSPOSE_ENABLED[0];
   
   enabled?(
+
     gfx_x = KEYBOARD_PANNEL_WIDTH+10; gfx_y = KEYBOARD_FILTERING_TOP+45;
+    gfx_rgb(TH.DEFAULT_FONT);
     gfx_drawstr("8vi");
+
     gfx_x = KEYBOARD_PANNEL_WIDTH+10; gfx_y = KEYBOARD_FILTERING_TOP+65;
+    gfx_rgb(TH.DEFAULT_FONT);
     gfx_drawstr("Semitones");
     
     drawAddOrSubWidget("8va"     , KEYBOARD_TRANSPOSE_8VA,0,KEYBOARD_PANNEL_WIDTH+90,KEYBOARD_FILTERING_TOP+41,-2,2);
@@ -2159,14 +2426,14 @@ function drawKeyboardPannel()
   kf_enabled = KEYBOARD_FILTERING_ENABLED[0];
 
   // Header Background
-  gfx_r = 0.1; gfx_g = 0.1; gfx_b = 0.4;
+  gfx_rgb(TH.HEADER);
   gfx_rect(0,KEYBOARD_FILTERING_TOP,KEYBOARD_PANNEL_WIDTH,20);
   
   // Enable/Disable
   drawEnableDisableButton(KEYBOARD_FILTERING_ENABLED,0,KEYBOARD_FILTERING_TOP + 3,10);
 
   // Header text
-  gfx_r = gfx_g = gfx_b = 0.8;
+  gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 87; gfx_y = KEYBOARD_FILTERING_TOP+7;
   (kf_enabled)?
   (
@@ -2222,17 +2489,17 @@ function drawKeyboardPannel()
       // Draw white keys
       (!kf_enabled)?(
         // Keyboard filtering not enabled, all keys are grayed out
-        gfx_r = gfx_g = gfx_b = ((bk)?(0.1):(0.3));
+        gfx_rgb((bk)?(TH.KEY_BLACK_DISABLED):(TH.KEY_WHITE_DISABLED));
         gfx_rect(left,top,key_width,key_height_top);
       ):(
       
         // Keyboard filtering enabled, color depends on key conf
         (KEYBOARD_FILTERED_NOTES[i] == 1)?(
           // The Key is disabled
-          gfx_g = gfx_b = ((bk)?(0.3):(0.5)); gfx_r = ((bk)?(0.7):(0.9));
+          gfx_rgb((bk)?(TH.KEY_BLACK_FILTERED_OUT):(TH.KEY_WHITE_FILTERED_OUT));
         ):(
           // The Key is enabled 
-          gfx_r = gfx_b = ((bk)?(0.3):(0.5)); gfx_g = ((bk)?(0.7):(0.9))
+          gfx_rgb((bk)?(TH.KEY_BLACK_FILTERED_IN):(TH.KEY_WHITE_FILTERED_IN));
         );
         gfx_rect(left,top,key_width,key_height_top);
         
@@ -2257,7 +2524,7 @@ function drawKeyboardPannel()
       );
 
       // Black separation lines
-      gfx_r = gfx_g = gfx_b = 0;
+      gfx_rgb(TH.BACKGROUND);
       gfx_line(left+key_width-1,top,left+key_width-1,top+key_height_top-1);
       
       (bk)?(
@@ -2272,7 +2539,6 @@ function drawKeyboardPannel()
     
     i+=1;
   );
-  
 
   // Bottom part of the keyboard
   wkcount = 0; i = 0; 
@@ -2287,17 +2553,17 @@ function drawKeyboardPannel()
       // Draw white keys
       (!kf_enabled)?(
         // Keyboard filtering not enabled, all keys are grayed out
-        gfx_r = gfx_g = gfx_b = 0.3;
+        gfx_rgb(TH.KEY_WHITE_DISABLED);
         gfx_rect(left,top,white_key_width,key_height_bottom);
       ):
       (
         // Keyboard filtering enabled, color depends on key conf
         (KEYBOARD_FILTERED_NOTES[i] == 1)?(
           // The Key is disabled
-          gfx_g = gfx_b = 0.5; gfx_r = 0.9;
+          gfx_rgb(TH.KEY_WHITE_FILTERED_OUT);
         ):(
           // The Key is enabled 
-          gfx_r = gfx_b = 0.5; gfx_g = 0.9;
+          gfx_rgb(TH.KEY_WHITE_FILTERED_IN);
         );
         
         gfx_rect(left,top,white_key_width,key_height_bottom); 
@@ -2322,7 +2588,7 @@ function drawKeyboardPannel()
       );  
             
       // Black separation line
-      gfx_r = gfx_g = gfx_b = 0;
+      gfx_rgb(TH.BACKGROUND);
       gfx_line(left+white_key_width-1,top,left+white_key_width-1,top+key_height_bottom-1);
       
       // Key press marker
@@ -2343,36 +2609,36 @@ function drawKeyboardPannel()
 function drawBottomBanner()
 (
   // Header Background
-  gfx_r = 0.1; gfx_g = 0.1; gfx_b = 0.4;
+  gfx_rgb(TH.HEADER);
   gfx_rect(0,gfx_h-20,gfx_w,20);
       
   // Header text
-  gfx_r = gfx_g = gfx_b = 0.8;
+  gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("Midi CC Mapper X (3.1c) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai"); 
+  gfx_drawstr("Midi CC Mapper X (3.2) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai"); 
 
-  drawBistateButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin",0x202020,0x202020,0x505050,0x505050);
+  drawSwitchButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin");
 );
 
 function drawGlobalSettingsPannel() (
   // Header Background
-  gfx_r = 0.1; gfx_g = 0.1; gfx_b = 0.4;
+  gfx_rgb(TH.HEADER);
   gfx_rect(0,0,gfx_w,20);
   
-  gfx_r = gfx_g = gfx_b = 0.8;
+  gfx_rgb(TH.HEADER_TEXT);
   gfx_x= 10; gfx_y = 7;
   gfx_drawstr("Global Settings"); 
   
   // Add an additional button for going back (one never knows)
-  drawBistateButton(GUI_MODE,0,4,gfx_w - 134,"Global settings","Back to plugin",0x202020,0x202020,0x505050,0x505050);
+  drawSwitchButton(GUI_MODE,0,4,gfx_w - 134,"Global settings","Back to plugin");
 
-  // 
+  // High Res input option
   drawOnOffButton(HIGHRES_INPUT_ENABLED,0,50,50);
-  gfx_r = gfx_g = gfx_b = 0.9;
+  gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
   gfx_x= 100; gfx_y = 54;
   gfx_drawstr("High-Res midi input"); 
   
-  gfx_r = gfx_b = gfx_g = 0.5;
+  gfx_rgb(TH.DYN_LABEL_NEUTRAL);
   gfx_x= 100; gfx_y = 74;
   gfx_drawstr("If this option is on, all LSB CCs become 'unroutable' : they are aggregated"); 
   gfx_x= 100; gfx_y = 88;
@@ -2380,20 +2646,29 @@ function drawGlobalSettingsPannel() (
   gfx_x= 100; gfx_y = 102;
   gfx_drawstr("values in that configuration, you should route the MSB CC."); 
     
+  // Firewall option 
   drawOnOffButton(DROP_UNROUTED_CC_MESSAGES,0,120,50);
-  gfx_r = gfx_g = gfx_b = 0.9;
+  gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
   gfx_x= 100; gfx_y = 124;
   gfx_drawstr("Drop unrouted CC messages"); 
   
-  gfx_r = gfx_b = gfx_g = 0.5;
+  gfx_rgb(TH.DYN_LABEL_NEUTRAL);
   gfx_x= 100; gfx_y = 144;
   gfx_drawstr("If this option is on, all CC messages from unrouted controls are dropped."); 
   gfx_x= 100; gfx_y = 158;
   gfx_drawstr("This makes the plugin acts as a firewall for the CC controls."); 
+  
+  // Theme option 
+  drawSwitchButton(CURRENT_THEME_NUM,0,180,35,"Dark","Light");
+  gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
+  gfx_x= 100; gfx_y = 184;
+  gfx_drawstr("Theme"); 
 );
 
 function drawGui()
 (
+  updateTheme();
+  gfx_clear = (TH.BACKGROUND & 0xFF) << 16 + (TH.BACKGROUND & 0x00FF00) + (TH.BACKGROUND >> 16) ;
   (GUI_MODE[0] == 1)?(
     drawKeyboardPannel();
     drawControlPannel();
@@ -2600,7 +2875,7 @@ function processNoteMessage(mpos,status,key,velocity) (
         // Save for UI feedback (red circle).
         // Do it only when there's some velocity, having the circle 
         // going back to 0 each time we release a key is annoying
-        CONTROL_LAST_IN[CONTROL_VELOCITY]   = velocity;
+        CONTROL_LAST_IN[CONTROL_VELOCITY]   = velocity_01*127;
         CONTROL_LAST_OUT[CONTROL_VELOCITY]  = out_velocity_01*127;
       ):(
       
@@ -2677,4 +2952,3 @@ while(midirecv(mpos, msg1, msg2, msg3))
       );
     );
 );
-
