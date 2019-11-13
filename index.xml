@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="de50332c6e1fa8a186430c83e11ca3e29aa8bdac">
+<index version="1" name="ReaTeam JSFX" commit="c425da2edaf11c92606350b3facbb81ca2df11a9">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -381,6 +381,7 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
 {\pard \ql \f0 \sa180 \li0 \fi0 High-Res MIDI input can be enabled via a global parameter, and High-Res MIDI output can be enabled on CCs individually.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Keyboard Filtering Module\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Located in the top left of the main window. This module can be enabled or bypassed with the button located in the module title bar. If enabled, all keys colorized in red are filtered out. The keys can be colorized by click/moving the mouse on them. The UI provides feedback for currently pressed keys.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This module can be of great help for defining regions on the keyboard. By reusing it on multiple tracks at the same time, you can easily achieve keyboard split (left hand/right hand or more) and/or multi-instruments combinations.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Keyboard Transposition Module\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Located in the top right of the main window. This module can be enabled or bypassed with the button located in the module title bar. If enabled, applies the sum of two parameters, one for transposing by octaves, one for transposing by semitones.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 CC Routing/Curve tweaking\par}
@@ -393,17 +394,25 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab This output CC can be copied from the input CC\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The response curve can be pendrawn by hand with the mouse\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The response curve can be defined from one of the templates on the right\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The response curve can be smoothed with the smoothe button\sa180\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The response curve can be smoothed with the smooth button\sa180\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Reaper forum thread\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 https://forum.cockos.com/showthread.php?t=172630\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Notes\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Older versions (v1 and v2) can be found on the forum thread.\par}
 }
 ]]></description>
+        <link rel="screenshot" href="https://stash.reaper.fm/37471/CCMapperX-Dark.png">Dark Theme</link>
+        <link rel="screenshot" href="https://stash.reaper.fm/37472/CCMapperX-Light.png">Light Theme</link>
       </metadata>
       <version name="3.1c" author="Talagan" time="2019-08-31T09:56:28Z">
         <changelog><![CDATA[First Reapack version.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/6e0f398c6f124432d04cbd90daf736e26152d505/MIDI/talagan_MIDI%20CC%20Mapper%20X.jsfx</source>
+      </version>
+      <version name="3.2" author="Talagan" time="2019-11-13T12:19:39Z">
+        <changelog><![CDATA[Added theme system, with two themes, Dark and Light.
+Reworked contrasts on Dark Theme.
+Bug fix : red curve feedback circle was a bit shifted if the CC was set to High Res.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/c425da2edaf11c92606350b3facbb81ca2df11a9/MIDI/talagan_MIDI%20CC%20Mapper%20X.jsfx</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI note-banked CC multiplier.jsfx" type="effect" desc="MIDI note-banked CC multiplier">
