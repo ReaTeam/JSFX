@@ -1,0 +1,627 @@
+desc: MIDI glissando
+author: Michael Schnell (mschnell@bschnell.de)
+version: 1.0
+changelog: Initial Release
+about:
+  ## Description  
+    MIDI glissando provides a means to make use of the velocity of legato played notes to define a glide pattern in semitone steps. 
+  
+    Some monophonic VST instruments use the velocity of the second legato played note to determine the portamento time to be applied when doing the transition between the previous and the latest note: the lower the velocity the last note, the slower the portamento will be. Such instruments use an additional CC as "expression" to define the volume of each note instead of deriving it from the Note on velocity. As with wide moves such portamento might not be the most appropriate style for a given instrument, this JSFX converts certain legato transitions to a series of halftone steps creating a glissando. 
+  
+    The semitone glide run is created as a sequence of legato notes, so that the VST instruments can perform the appropriate note transitions. Currently the velocity of the generated semitones is fixed to 127.
+  
+    The plugin works on Note on/off events in any Midi channel.
+  
+    Setable Parameters: 
+  
+    "Velocity -> Glissando time (msec)": Speed of the Glissando depending on the velocity of the second legato note.
+
+    "lowest note": Lowest note to be recognized (to allow for e.g. keyswitches to pass through)
+
+    "highest note": Highest note to be recognized  (to allow for e.g. keyswitches to pass through)
+
+    "minimum legato interval": Minimum interval to convert to a glide (to allow the VST instrument do the legato transition e.g. by imposing a portamento)
+
+    "maximum legato interval": Maximum interval to convert to a glide (to allow the VST instrument do the legato transition e.g. by performing an overblowing jump to the second note)
+
+    "minimum glissando velocity": Minimum velocity of the second legato note to initialize a glide (to allow the VST instrument do the legato transition)
+
+    "maximum glissando velocity": Maximum velocity of the second legato note to initialize a glide (to allow the VST instrument do the legato transition e.g. by performing an direct stepping to the second note)
+
+    "minimum Glissando step (msec)": Maximum step speed to do a glide, avoiding an unrealistically fast run. If a higher speed would be necessary, the second note is just passed though, having the VST instrument handle the legato transition.
+
+    "Bypass": switch the semitone glide effect on or off
+  
+  
+     Graphics: 
+   
+     Several states are shown in the graphics window: 
+  
+     "Running Notes": count of notes currently held down at the keyboard 
+   
+     "Glide Width": width of the legato transition (in semitones), whenever a legato is detected
+   
+     "Glide Timing (mSec per semitone)": Milliseconds between the semitone in a glide run (i.e. the glide speed)
+   
+     "Last Note   Played    Glide Start -> End : Current": start note of the legato transition, note currently played in the glide run , start note number of the legato transition, target note number of the legato transition, currently played note number in a glide run
+   
+     "Remaining Semitones (+ up / - down)"
+   
+     "Glide Progress (%)"
+
+//tags: MIDI processing filter
+//author: MSchnell
+
+slider1:100<0,1000,10>Velocity -> Glissando time (msec)
+slider2: 52<1,127,1>lowest note
+slider3: 84<1,127,1>higest note
+slider4: 3<0,48,1> minimum legato interval
+slider5: 48<0,48,1>maximum legato interval
+slider6: 1<0,127,1>minimum glissando velocity
+slider7: 64<0,127,1>maximum glissando velocity
+slider8:100<0,200,1>minimum Glissando step (msec)
+slider64:0<0,1,1{Active,Bypass}>Bypass
+
+// these lines tell Reaper the effect has no audio input/output,
+// which enables processing optimizations.
+// MIDI-only FX should always have these lines.
+in_pin:none
+out_pin:none
+
+
+@init
+
+CC_MSG      =  0xB0; // 11;
+PS_MSG      =  0xC0;
+EXPRESSION  =  2;
+NOTE_ON     =  0x90;
+NOTE_OFF    =  0x80;
+ALL_NOTES_OFF =0x7B;
+running     =   0;                               // keyboard note running
+runcount    =   0;                               // count of pressed keys
+width       =   0;
+glideslope  =   0;
+glivel      = 127;
+glivel_off  =   0;
+
+last3       = 10; //???
+
+@slider
+glisec      = slider1 / 1000;
+minnote     = slider2;
+maxnote     = slider3;
+minnote <   1     ? minnote = 1;
+minnote > 127     ? minnote = 127;
+//maxnote < minnote ? maxnote = minnote;
+maxnote > 127     ? maxnote = 127;
+minnote > maxnote - 10 ? (
+  minnote = 1;
+  maxnote = 127;
+);  
+slider2 = minnote;
+slider3 = maxnote;
+
+minleg     = slider4;
+maxleg     = slider5;
+minleg <  0     ? minleg = 0;
+minleg > 48     ? minleg = 48;
+//maxleg < minleg ? maxleg = minleg;
+maxleg > 48     ? maxleg = 48;
+minleg > maxleg ? (
+  minleg = 0;
+  maxleg = 48;
+);  
+slider4 = minleg;
+slider5 = maxleg;
+
+mingli     = slider6;
+maxgli     = slider7;
+mingli <   0    ? mingli = 0;
+mingli > 127    ? mingli = 127;
+//maxgli < mingli ? maxgli = mingli;
+maxgli > 127    ? maxleg = 127;
+mingli > maxgli ? (
+  mingli = 0;
+  maxgli = 127;
+);  
+slider6 = mingli;
+slider7 = maxgli;
+mingli += 1;
+diffgli = maxgli - mingli;
+minstep = (slider8 / 2) / 1000;
+
+@block 
+/*  Multiple pressed keys have been handled by the previous plugin (Midi SM Sax Filter) (NOT necessarily ) */
+function calc_running(nn, vv) local(i, vel, nmax, v7F) (
+    i    = 0;
+    nmax = 0;
+    loop (runcount,
+      vel = notes[i];
+      vel ? (
+        v7F = vel & 0x7F;
+        v7F == nn ? (
+          notes[i] = 0;                     // delete this array element (mnight be re-added later) 
+         ) : (   
+          nmax = v7F;                       // last note that exists (!= 0, != this note) in array  
+        );
+      );  
+      i += 1;
+    );
+    i = runcount;
+    while (i) (
+      i -= 1;
+      !notes[i] ? (                          // strip empty element at top
+        runcount = i;
+       ) : ( 
+        i = 0; 
+      );      
+    );
+    vv ? (                                // Note On
+      notes[runcount] = vv << 8 + nn;     // add to top
+      runcount += 1;
+      running = nn;
+     ) : (                                // Note Off
+      running = nmax;                     // might be 0
+    );
+);    
+    
+function get_vel(nn) (
+  runcount ? (
+    i = 0;
+    while (((notes[i] & 0x7F) != nn) && (i < runcount)) (
+      i += 1;;
+    );
+    i >= runcount ? (
+      0;
+     ) : ( 
+      notes[i] >> 8;
+    );  
+   ) : (                                     // array empty
+    0;   
+  );
+);
+/**/
+
+function calcwidth (target, start, vel) (
+  width = target - start;
+  width >= 0 ? (
+    dir = 1;
+   ) : ( 
+    dir = -1;
+    width = -width;
+  );                
+  (width >= minleg) && (width <= maxleg) ? (
+    (vel >= mingli) && (vel <= maxgli) ? (
+      startnote  = start+dir;                      // played as soon as possible
+      endnote    = target+dir;                     // not played
+      startglide = c_block + mpos;
+      sl = diffgli / (vel - mingli);
+      sl /= width;
+      sl *= glisec;
+      minstep < sl ? (
+        glideslope = sl * srate;
+        glidepos = mpos;
+        actpos = 0;
+        c_block   = 0;      
+        mute = 1;
+        to_be_killed   = 0;
+        to_be_killed_1 = 0;
+        actnote = startnote;
+       ) : ( 
+        glideslope = 0;
+        startnote  = 0;
+        endnote    = 0;
+        startglide = 0;
+      );  
+     ) : (  
+      glideslope = 0;
+      startnote  = 0;
+      endnote    = 0;
+      startglide = 0;
+    );
+   ) : (  
+    glideslope = 0;
+    startnote  = 0;
+    endnote    = 0;
+    startglide = 0;
+  );  
+);
+
+function calc_running_last(nn, vv) local(i, vel, nmax, v7F) (
+/*
+  !vv ? (
+    running_last0 = running;
+    calc_running(nn, vv);
+    running ? (
+      running_last0 != running ? running_last = running_last0;
+     ) : ( 
+      running_last = 0;
+    );   
+   ) : ( 
+    calc_running(nn, vv);
+  )  
+*/
+  running_last_1 = running; 
+  calc_running(nn, vv);
+  !running ? ( 
+    running_last = 0;
+    running_last_1 ? (
+      running_off  = 1;
+    );  
+  );    
+  running_last_1 != running ? (
+    running_last = running_last_1;  
+   ) : ( 
+    running_last = 0; 
+  );  
+); 
+
+
+!slider64 ? (
+  while (midirecv(mpos, msg1, msg2, msg3) ) (         
+    mute = 0;
+    statusHi = msg1 & 0xF0;
+    channel  = msg1 & 0xF;
+    (statusHi!=0xF0) && statusHi ? (             // Time code etc
+/*    
+      statusHi == CC_MSG ? (                     // CC Message
+      
+        msg2 ==  EXPRESSION ? (
+          expr = msg3;
+          msg3 ? (                               // Expression > 0
+            0
+           ) : (                                 // Expression == 0
+            0;
+          ); 
+        );
+       ) : */ statusHi == NOTE_OFF ? (
+        (msg2 >= minnote) && (msg2 <= maxnote) ? (     // not a key switch
+          calc_running_last(msg2, 0);
+          running && running_last ? (
+            calcwidth(running, running_last, last3);
+          );  
+        );  
+       ) : statusHi == NOTE_ON ? (
+        (msg2 >= minnote) && (msg2 <= maxnote) ? (     // not a key switch
+          calc_running_last(msg2, msg3);
+          running && running_last ? (
+            msg3 ? (
+              calcwidth(running, running_last, msg3);
+              last3 = msg3;                             // ???
+             ) : ( 
+              calcwidth(running, running_last, last3);
+            );  
+          );  
+        );    
+       ) : statusHi == PS_MSG ? (
+        runcount = 0;
+        running  = 0; 
+      );
+      !(runcount > 0) ? (
+        width      = 0;
+        startnote  = 0;
+        endnote    = 0;
+        glideslope = 0;
+        actnote    = 0;
+      );  
+      !mute ? midisend(mpos, msg1, msg2, msg3);
+    );  
+  );
+  !running ? (
+    glideslope = 0;
+    c_block = 0;
+    to_be_killed_1 ? (
+      midisend(mpos, NOTE_OFF | channel, to_be_killed_1, glivel_off);                  
+      to_be_killed_1 = 0;            
+    );
+    to_be_killed ? (
+      midisend(mpos, NOTE_OFF | channel, to_be_killed, glivel_off);                  
+      to_be_killed = 0;            
+    );
+  ); 
+  glideslope ? (
+    maxact = c_block + samplesblock;
+    while (actpos < maxact) (
+      actpos < glidepos ? 
+        mpos = glidepos % samplesblock;
+        glidepos += glideslope;
+        to_be_killed_1 ? (
+          actnote == endnote ? (       
+            maxact = 0;
+            glideslope = 0;                        // stop
+            to_be_killed = 0;
+          );  
+          midisend(mpos, NOTE_OFF | channel, to_be_killed_1, glivel_off);                  
+          to_be_killed_1 = 0;            
+         ) : (
+          midisend(mpos, NOTE_ON | channel, actnote, glivel);        
+          _actnote = actnote;
+          to_be_killed_1 = to_be_killed;
+          to_be_killed = actnote;
+          to_be_killed = actnote;
+          actnote += dir;
+        );
+      actpos += glideslope;
+      actpos |= 0;
+    );  
+    c_block = maxact;
+  );
+  running_off ? (
+    mpos < samplesblock -1 ? mpos += 1;
+    midisend(mpos, CC_MSG | channel, ALL_NOTES_OFF, 0);        
+    running_off = 0;
+  );
+);
+
+
+/* test 
+___0  = runcount;
+___1  = running;
+___n0 = notes[0] & 0x7F;
+___n1 = notes[1] & 0x7F;
+___n2 = notes[2] & 0x7F;
+___n3 = notes[3] & 0x7F;
+___n4 = notes[4] & 0x7F;
+___n5 = notes[5] & 0x7F;
+*/
+
+
+@gfx 640 400
+
+function _calcsm(_rrr) (
+_rrr ? (
+  _m = (_rrr / 12) | 0;
+  _n = _rrr - 12 * _m;
+ ) : ( 
+  _n = -1;
+);   
+
+#_s  = "--";
+#_sm = "--";
+_n == 0 ? (
+  #_s = "C ";
+ ) : _n == 1 ? ( 
+  #_s = "C#";
+ ) : _n == 2 ? ( 
+  #_s = "D ";
+ ) : _n == 3 ? ( 
+  #_s = "D#";
+ ) : _n == 4 ? ( 
+  #_s = "E ";
+ ) : _n == 5 ? ( 
+  #_s = "F ";
+ ) : _n == 6 ? ( 
+  #_s = "F#";
+ ) : _n == 7 ? ( 
+  #_s = "G ";
+ ) : _n == 8 ? ( 
+  #_s = "G#";
+ ) : _n == 9 ? ( 
+  #_s = "A ";
+ ) : _n == 10 ? ( 
+  #_s = "Bb";
+ ) : _n == 11 ? ( 
+  #_s = "Bb";
+);  
+
+_n >= 0 ? (  
+  _m == 0 ? (
+    #_sm = "-1";
+   ) :  _m == 1 ? (
+    #_sm = "0 ";
+   ) :  _m == 2 ? (
+    #_sm = "1 ";
+   ) :  _m == 3 ? (
+    #_sm = "2 ";
+   ) :  _m == 4 ? (
+    #_sm = "3 ";
+   ) :  _m == 5 ? (
+    #_sm = "4 ";
+   ) :  _m == 6 ? (
+    #_sm = "5 ";
+   ) :  _m == 7 ? (
+    #_sm = "6 ";
+   ) :  _m == 8 ? (
+    #_sm = "7 ";
+   ) : ( 
+    #_sm = "??";
+  );  
+);   
+
+);
+
+
+//expr=127;
+//runcount = 10;
+
+/*
+_v = expr     / 127 ;
+_i = 0;
+_r = 0;
+loop(runcount, 
+  notes[_i] ? _r += 1;
+  _i += 1;
+);
+*/
+
+_r  = runcount;
+_v  = width/50;
+_gs = glideslope/20000;
+__a = glideslope * (width-1) * 2; 
+__a ? (
+  _a  = actpos / __a;
+ ) : ( 
+  _a = 0;
+);   
+_a > 1 ? _a = 1;
+glideslope ? (
+  __b = endnote-dir-_actnote;
+ ) : ( 
+  __b = 0;  
+); 
+
+_b  = __b / width;
+_b  *= dir;
+_b < 0 ? b = 0;
+
+_r10 = _r / 10;
+_rrr = running;
+
+gfx_r=gfx_g=gfx_b=0; gfx_a=1;
+gfx_x=gfx_y=0;
+gfx_rectto(gfx_w,gfx_h);
+
+_x0 = 40;
+_y0 = 80;
+
+
+gfx_x=1;
+gfx_y=_y0-10;
+gfx_r=gfx_g=gfx_b=0.5;
+gfx_printf("Glide Width");
+_v ? (
+  gfx_r=gfx_g=gfx_b=1;
+  gfx_x=_x0;
+  gfx_y=_y0;;
+  _y = _y0+20;
+  _w = gfx_w-_x0-20;
+  _x = _x0 + _v*_w;
+  gfx_rectto(_x,_y);
+ ) : ( 
+  gfx_r=1;
+  gfx_g=gfx_b=0;
+  gfx_x=0;
+  gfx_y=_y0;
+  gfx_rectto(_x0,_y0+20);
+);  
+gfx_r=gfx_g=gfx_b=1;
+gfx_x=1;
+gfx_y=_y0+8;
+gfx_printf("%d", width);
+  
+
+//_x0 = 20;
+_y0 = 20;
+gfx_x=1;
+gfx_y=_y0-10;
+gfx_r=gfx_g=gfx_b=0.5;
+gfx_printf("Running Notes");
+_r ? (
+  gfx_r=gfx_g=1;
+  gfx_b=0;
+  gfx_x=_x0;
+  gfx_y=_y0;;
+  _y = _y0+20;
+  _w = gfx_w-_x0-20;
+  _x = _x0 + _r10*_w;
+  gfx_rectto(_x,_y);
+ ) : ( 
+  gfx_r=1;
+  gfx_g=gfx_b=0;
+  gfx_x=0;
+  gfx_y=_y0;
+  gfx_rectto(_x0,_y0+20);
+);  
+gfx_r=gfx_g=gfx_b=1;
+gfx_x=1;
+gfx_y=_y0+8;
+gfx_printf("%d", _r);
+
+
+
+_y0 = 120;
+gfx_x=1;
+gfx_y=_y0-10;
+gfx_r=gfx_g=gfx_b=0.5;
+gfx_printf("Glide Timing (mSec per semitone) ");
+glideslope ? (
+  gfx_r=gfx_g=0;
+  gfx_b=1;
+  gfx_x=_x0;
+  gfx_y=_y0;;
+  _y = _y0+20;
+  _w = gfx_w-_x0-20;
+  _x = _x0 + _gs*_w;
+  gfx_rectto(_x,_y);
+ ) : ( 
+  gfx_r=1;
+  gfx_g=gfx_b=0;
+  gfx_x=0;
+  gfx_y=_y0;
+  gfx_rectto(_x0,_y0+20);
+);  
+gfx_r=gfx_g=gfx_b=1;
+gfx_x=1;
+gfx_y=_y0+8;
+gfx_printf("%d", glideslope*2/srate*1000);
+
+
+_calcsm(running);
+_y0 = 160;
+gfx_x=1;
+gfx_y=_y0-10;
+gfx_r=gfx_g=gfx_b=0.5;
+gfx_printf("Last Note   Played    Glide Start -> End : Current");
+gfx_r=gfx_g=1;
+gfx_b=0;
+gfx_x=1;
+gfx_y=_y0+8;
+gfx_printf("%s%s        ", #_s, #_sm);
+startnote ? (
+  _calcsm(_actnote);
+  gfx_printf("%s%s            ", #_s, #_sm);
+  gfx_printf("%d    ->  %d : %d", startnote, endnote-dir, _actnote);
+);  
+
+
+_y0 = 200;
+gfx_x=1;
+gfx_y=_y0-10;
+gfx_r=gfx_g=gfx_b=0.5;
+gfx_printf("Remaining Semitones (+ up / - down)");
+_b ? (
+  gfx_r=gfx_g=gfx_b=1;
+  gfx_x=_x0;
+  gfx_y=_y0;;
+  _y = _y0+20;
+  _w = gfx_w-_x0-20;
+  _x = _x0 + _b*_w;
+  gfx_rectto(_x,_y);
+ ) : ( 
+  gfx_r=1;
+  gfx_g=gfx_b=0;
+  gfx_x=0;
+  gfx_y=_y0;
+  gfx_rectto(_x0,_y0+20);
+);  
+gfx_r=gfx_g=gfx_b=1;
+gfx_x=1;
+gfx_y=_y0+8;
+gfx_printf("%d", __b);
+
+
+_y0 = 260;
+gfx_x=1;
+gfx_y=_y0-10;
+gfx_r=gfx_g=gfx_b=0.5;
+gfx_printf("Glide Progress (%%)");
+_a ? (
+  gfx_r=gfx_g=gfx_b=1;
+  gfx_x=_x0;
+  gfx_y=_y0;;
+  _y = _y0+20;
+  _w = gfx_w-_x0-20;
+  _x = _x0 + _a*_w;
+  gfx_rectto(_x,_y);
+ ) : ( 
+  gfx_r=1;
+  gfx_g=gfx_b=0;
+  gfx_x=0;
+  gfx_y=_y0;
+  gfx_rectto(_x0,_y0+20);
+);  
+gfx_r=gfx_g=gfx_b=1;
+gfx_x=1;
+gfx_y=_y0+8;
+gfx_printf("%d", (_a*100)|0);
+
