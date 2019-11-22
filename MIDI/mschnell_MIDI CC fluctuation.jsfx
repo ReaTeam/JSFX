@@ -1,9 +1,9 @@
 desc: MIDI CC fluctuation
 author: Michael Schnell (mschnell@bschnell.de)
-version: 1.0
+version: 1.1
 changelog:
   Improved Graphics
-  Add  FX chain file for voice doubling
+  Add FX chain file for voice doubling
 provides: [data] mschnell_MIDI CC fluctuation/Voice Doubling.RfxChain
 about:
   ## Description 
