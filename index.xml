@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="4da3eba9052d281145433c4e0bed04c98f2deb21">
+<index version="1" name="ReaTeam JSFX" commit="fc7a60513f126529567ca6677e1097f918b03d43">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -229,6 +229,12 @@ here
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2019-11-16T09:21:00Z">
         <changelog><![CDATA[initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/f2a163f0ac7a928d4c4857593aa36d872132e73a/MIDI/mschnell_MIDI%20CC%20fluctuation.jsfx</source>
+      </version>
+      <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2019-11-22T21:41:19Z">
+        <changelog><![CDATA[Improved Graphics
+Add FX chain file for voice doubling]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/fc7a60513f126529567ca6677e1097f918b03d43/MIDI/mschnell_MIDI%20CC%20fluctuation.jsfx</source>
+        <source type="data" file="mschnell_MIDI CC fluctuation/Voice Doubling.RfxChain">https://github.com/ReaTeam/JSFX/raw/fc7a60513f126529567ca6677e1097f918b03d43/MIDI/mschnell_MIDI%20CC%20fluctuation/Voice%20Doubling.RfxChain</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI glissando.jsfx" type="effect" desc="MIDI glissando">
