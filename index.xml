@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="017d960c39c064ad2b1abf42e8bea02087debf1c">
+<index version="1" name="ReaTeam JSFX" commit="858d4f12135aab486255d28b5eef6cd711e3661d">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -512,6 +512,10 @@ Bug fix : red curve feedback circle was a bit shifted if the CC was set to High 
       <version name="0.1.1" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-02-07T22:42:41Z">
         <changelog><![CDATA[Stops latch mode sending unnecessary note-ons]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/da50c468ef9e62d19973fd55abf8959c77248482/MIDI/TJA_MIDI%20note-banked%20CC%20multiplier.jsfx</source>
+      </version>
+      <version name="0.1.2" author="Kevin Morrison (ThrashJazzAssassin)" time="2020-01-01T07:19:04Z">
+        <changelog><![CDATA[Increase max bank size to 64]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/858d4f12135aab486255d28b5eef6cd711e3661d/MIDI/TJA_MIDI%20note-banked%20CC%20multiplier.jsfx</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI Performer2.jsfx" type="effect" desc="MIDI Performer2">
