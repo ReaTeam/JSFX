@@ -1,24 +1,23 @@
-desc: Midi Display Patch Name
+desc: MIDI Display Patch Name
 author: mschnell
 version: 1.0
 changelog: intial release
 about:
-  Midi Display Patchname is intended to show the name of the currently selected patch in the embedded FX window of the track in the mixer.
-  
-    It reads a file that is formatted as a Reaper *.reabank file, containing multiple banks of up to 128 patch names each.
-  
-    Incoming Midi bank select (CC# 32) and program chane / patch select are used to control the display. 
-  
-    The patch names are formatted to fit best in the three lines of display.
-  
-    "Input Channel" selects the Midi channel to be listen to or "all".
-  
-    "Font size" defines the character size to display the patch name {12, 18, or 24}
-  
-    "Patchname File" selects a file in the .../Data/Display Patchname directory. The file needs to feature a ".txt" extension. 
-  
-    "Display" selects if the beginning of the list of patch names is shown (for debugging purpose) or if the currently selected patch is displayed. In embedded mode, always the currently selected patch is displayed.
+  MIDI Display Patch Name is intended to show the name of the currently selected patch in the embedded FX window of the track in the mixer.
 
+  It reads a file that is formatted as a Reaper *.reabank file, containing multiple banks of up to 128 patch names each.
+
+  Incoming MIDI bank select (CC# 32) and program chane / patch select are used to control the display. 
+
+  The patch names are formatted to fit best in the three lines of display.
+
+  "Input Channel" selects the MIDI channel to be listen to or "all".
+
+  "Font size" defines the character size to display the patch name {12, 18, or 24}
+
+  "Patchname File" selects a file in the .../Data/Display Patchname directory. The file needs to feature a ".txt" extension. 
+
+  "Display" selects if the beginning of the list of patch names is shown (for debugging purpose) or if the currently selected patch is displayed. In embedded mode, always the currently selected patch is displayed.
 
 slider1:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,all}>Input Channel
 slider2:1<0,2,1{12,18,24}>Font size
