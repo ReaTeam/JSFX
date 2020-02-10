@@ -1,13 +1,16 @@
 desc: MIDI Display Patch Name
 author: mschnell
-version: 1.0
-changelog: intial release
+version: 1.1
+changelog:
+  allow for bank no > 7
+  Explicitly disallow more than 1024 patch names (due to limitation of JSFX/EEL)
+  Bug fixes
 about:
   MIDI Display Patch Name is intended to show the name of the currently selected patch in the embedded FX window of the track in the mixer.
 
-  It reads a file that is formatted as a Reaper *.reabank file, containing multiple banks of up to 128 patch names each.
+  It reads a file that is formatted as a Reaper *.reabank file, containing multiple banks of up to 128 patch names each. In sum 1024 patch names can be handled. 
 
-  Incoming MIDI bank select (CC# 32) and program chane / patch select are used to control the display. 
+  Incoming MIDI bank select (CC# 32) and program chanfe / patch select are used to control the display. 
 
   The patch names are formatted to fit best in the three lines of display.
 
@@ -19,13 +22,14 @@ about:
 
   "Display" selects if the beginning of the list of patch names is shown (for debugging purpose) or if the currently selected patch is displayed. In embedded mode, always the currently selected patch is displayed.
 
+
 slider1:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,all}>Input Channel
 slider2:1<0,2,1{12,18,24}>Font size
 slider3:/Display Patchname::Patchname File
-slider4:0<0,1,1{Current,File}>Display
+slider4:0<0,1,1{Current,0...,50...,100...,150...,200...,250...,300...,350...,400...,450...}>Display
 
 @init
-maxlines  = 2048;
+maxlines  = 1024;
 file_old  = -1;
 statPC    = $xC0;
 statCC    = $xB0;
@@ -34,6 +38,8 @@ cur_patch = -1;
 cur_bank  = 0;
 old_patch = -2;
 old_bank  = -1;
+banks     = 0;
+patches   = 1024;          // only 1024 strbgs allowen in jsfx
 
 @slider
 filenr_old != slider3 ? (  // Multiple file use would kill the programm permanently !
@@ -93,11 +99,11 @@ filenr_old != slider3 ? (  // Multiple file use would kill the programm permanen
         );
       );  
       c0 > 0 ? (
-        nn = c0 - 0x30;
+        patch = c0 - 0x30;
         c1 > 0 ? (
-          nn = nn * 10 + c1 -0x30;
+          patch = patch * 10 + c1 -0x30;
           c2 > 0 ? (
-            nn = nn * 10 + c2 -0x30;
+            patch = patch * 10 + c2 -0x30;
           );
         );    
         c2 > 0 ? (
@@ -134,7 +140,11 @@ filenr_old != slider3 ? (  // Multiple file use would kill the programm permanen
 */
       
 //      strcpy(offset, #s);
-        nn += 128 * bank;
+//        nn += 128 * bank;
+        nn = lines;
+        banks[nn]   = bank;
+        patches[nn] = patch;
+        
         nn <= maxlines ? (      
           strcpy(nn, #s);
         );
@@ -150,11 +160,21 @@ filenr_old != slider3 ? (  // Multiple file use would kill the programm permanen
           i += 1;
           c = str_getchar(#s, i, 'c');     
         );  
+
+/*
+        ___ia = i;
+*/
+
         c = '0';
         while (c != ' ') (
           i += 1;
           c = str_getchar(#s, i, 'c');     
         );  
+/*        
+        strcpy(#___s, #s);
+        ___ib = i;
+*/        
+        
         c1 = str_getchar(#s, i+1, 'c');     
         c2 = str_getchar(#s, i+2, 'c');     
         c3 = str_getchar(#s, i+3, 'c');     
@@ -215,7 +235,8 @@ while (midirecv(offset, msg1, msg23))  (
 //    handle >= 0 && lines ? (
     lines ? (
       _row = 0;
-      _n   = 0;
+//      _n   = 0;
+      _n = (display-1) * 50;
       loop(maxlines,
         gfx_x=10;
         gfx_y=40 + 20 * _row;
@@ -223,7 +244,7 @@ while (midirecv(offset, msg1, msg23))  (
         gfx_r=gfx_g=gfx_b=1;
 //        gfx_drawstr(#s);
         strlen(#s) ? (
-          gfx_printf("%d:%s", _n, #s);
+          gfx_printf("%d:/%d %s", banks[_n], patches[_n], #s);
           _row += 1;
         );
         _n += 1;
@@ -260,7 +281,14 @@ while (midirecv(offset, msg1, msg23))  (
       gfx_setfont(2,#font,_fontsize);
 
       gfx_r=1; gfx_g=gfx_b=1;
-      _n = cur_patch + 128 * cur_bank;
+//      _n = cur_patch + 128 * cur_bank;
+      _ii = 0;
+      _n = 9999;
+      while (_ii<lines && _n >= 9999) (
+        _ii += 1;
+        (banks[_ii] == cur_bank) && (patches[_ii] == cur_patch) ? _n = _ii;
+      );
+
 /*    
       strcpy_substr(#_s1,_n,0,10);  
       strcpy_substr(#_s2,_n,10,10);  
@@ -364,10 +392,11 @@ while (midirecv(offset, msg1, msg23))  (
       gfx_y += _fontheight;
       gfx_drawstr(#_s3);
       
+/*
       ___1 = strlen(#_s1);
       ___2 = strlen(#_s2);
       ___3 = strlen(#_s3);
+*/      
       
     );
   );  
-
