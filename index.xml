@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="54284f1a2903c0a93754a5a2a3ea11e90549cc8a">
+<index version="1" name="ReaTeam JSFX" commit="ab05b2e8278eb4f01e761571a77d641a10de58ef">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1872,8 +1872,8 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
 \widowctrl\hyphauto
 
 {\pard \ql \f0 \sa180 \li0 \fi0 MIDI Display Patch Name is intended to show the name of the currently selected patch in the embedded FX window of the track in the mixer.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 It reads a file that is formatted as a Reaper *.reabank file, containing multiple banks of up to 128 patch names each.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Incoming MIDI bank select (CC# 32) and program chane / patch select are used to control the display.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 It reads a file that is formatted as a Reaper *.reabank file, containing multiple banks of up to 128 patch names each. In sum 1024 patch names can be handled.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Incoming MIDI bank select (CC# 32) and program chanfe / patch select are used to control the display.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The patch names are formatted to fit best in the three lines of display.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 "Input Channel" selects the MIDI channel to be listen to or "all".\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 "Font size" defines the character size to display the patch name \{12, 18, or 24\}\par}
@@ -1885,6 +1885,12 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       <version name="1.0" author="mschnell" time="2020-02-09T05:58:33Z">
         <changelog><![CDATA[intial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/54284f1a2903c0a93754a5a2a3ea11e90549cc8a/Utility/mschnell_MIDI%20Display%20Patch%20Name.jsfx</source>
+      </version>
+      <version name="1.1" author="mschnell" time="2020-02-10T21:06:27Z">
+        <changelog><![CDATA[allow for bank no > 7
+Explicitly disallow more than 1024 patch names (due to limitation of JSFX/EEL)
+Bug fixes]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/ab05b2e8278eb4f01e761571a77d641a10de58ef/Utility/mschnell_MIDI%20Display%20Patch%20Name.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Midi Fade.jsfx" type="effect" desc="Midi Fade X">
