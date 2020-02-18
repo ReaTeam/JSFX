@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="309b157b0ccec32a4129d50258569c813b05e538">
+<index version="1" name="ReaTeam JSFX" commit="3c503994c16154d73e26db2677886e50d73d2d52">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -597,6 +597,55 @@ Bug fix : red curve feedback circle was a bit shifted if the CC was set to High 
       <version name="0.1" author="urtzurd (Urtzi Urdapilleta Roy)" time="2017-10-07T23:49:35Z">
         <changelog><![CDATA[Initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/e7ed9a1ccc661d901153d5e07d8357142d864a4b/MIDI/urtzurd_MIDI%20Glissando.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="willdevelop_MIDI Note Repeater [Default Key Map B1 - A4].jsfx" type="effect" desc="MIDI Note Repeater [Default Key Map B1 - A4]">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MIDI Note Repeater [Default Key Map B1 - A4]\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This is a Modification from the MIDI Note Repeater. Used scripts MIDI Arpeggiator, rye_MIDI_FilterNotesIndividually. The Script is for making snare and hi-hats rolls.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Parameters:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Root Note: This MIDI note will be sent to the instrument at the end.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Root MIDI Channel: The MIDI note is sent on this channel. All = the same as the input channel\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Root MIDI Length: This parameter controls the length of the MIDI note sent to the instrument\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Root MIDI Length Sync to Beat: This parameter does the same as the Root MIDI Length, only the rate is rasterized to the beat\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Oneshot-Rate: Controls the repeat time for the One-Shot-Key\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Oneshot-Rate Sync to Beat: Controls the repeat time for the One-Shot-Key in Beats (useful for MIDI-learn and Automation)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Start Trigger Zone: At this note, the trigger notes begin\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Default Key Map:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 B1 -> Oneshot\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 {\b straight:}\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab C2->1/4\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab D2->1/8\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab E2->1/16\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab F2->1/32\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab G2->1/64\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab A2->1/128\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 {\b triplet:}\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab C3->1/4\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab D3->1/8\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab E3->1/16\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab F3->1/32\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab G3->1/64\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab A3->1/128\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 {\b dotted:}\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab C4->1/4\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab D4->1/8\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab E4->1/16\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab F4->1/32\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab G4->1/64\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab A4->1/128\sa180\par}
+}
+]]></description>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?p=2239428#post2239428">Forum thread</link>
+        <link rel="website" href="https://will-records.tk/">My Website</link>
+        <link rel="screenshot" href="https://will-records.tk/site/img/site_projekte_will_develop/MIDI_Note_Repeater_interface.png">MIDI_Note_Repeater_interface.png</link>
+      </metadata>
+      <version name="2.0" author="Will Develop" time="2020-02-18T16:53:48Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/3c503994c16154d73e26db2677886e50d73d2d52/MIDI/willdevelop_MIDI%20Note%20Repeater%20%5BDefault%20Key%20Map%20B1%20-%20A4%5D.jsfx</source>
       </version>
     </reapack>
     <reapack name="XQ_Drum Converter.jsfx" type="effect" desc="Drum Converter">
