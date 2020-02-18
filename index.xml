@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="ab05b2e8278eb4f01e761571a77d641a10de58ef">
+<index version="1" name="ReaTeam JSFX" commit="309b157b0ccec32a4129d50258569c813b05e538">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -577,6 +577,11 @@ Bug fix : red curve feedback circle was a bit shifted if the CC was set to High 
       <version name="0.5.7" author="Kevin Morrison (ThrashJazzAssassin)" time="2019-07-31T14:06:23Z">
         <changelog><![CDATA[- Fix for transpose passing to subsequent zones]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/e87a95b096969893a8cccfc90bf84d99c9f29e2e/MIDI/TJA_MIDI%20Performer2.jsfx</source>
+      </version>
+      <version name="0.5.8" author="Kevin Morrison (ThrashJazzAssassin)" time="2020-02-18T16:43:32Z">
+        <changelog><![CDATA[- Add Program Change input support
+- Colour note zone sliders to match note zones]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/309b157b0ccec32a4129d50258569c813b05e538/MIDI/TJA_MIDI%20Performer2.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
@@ -1863,6 +1868,21 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       <version name="4.2" author="Michael Schnell (mschnell@bschnell.de)" time="2019-01-12T04:38:07Z">
         <changelog><![CDATA[Small Fixes]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/92a49eb8985a295979dd35947fc24f7a440cec2b/Utility/mschnell_MIDI%20Convert%20to%20CC.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_MIDI Display 3 CCs.jsfx" type="effect" desc="MIDI Display 3 CCs">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Three selectable CC values are shown. Especially useful in embedded view\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2020-02-18T16:42:59Z">
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/71ee3a3be10296f069c3505aaecaf22974306a8e/Utility/mschnell_MIDI%20Display%203%20CCs.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI Display Patch Name.jsfx" type="effect" desc="MIDI Display Patch Name">
