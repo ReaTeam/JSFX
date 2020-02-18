@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="3c503994c16154d73e26db2677886e50d73d2d52">
+<index version="1" name="ReaTeam JSFX" commit="3e570290e5b6736ddd2a31acde5c3229fa0df2a4">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -372,6 +372,21 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2019-05-26T23:06:04Z">
         <changelog><![CDATA[allow for setting vel = 0 -> pass through]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/8df4d36e6338cfda5684790552f0c71530504e63/MIDI/mschnell_Note%20On%20under%20X%20velocity%20to%20Note%20Off%20and%20send%20All%20Notes%20Off.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_Send All Notes Off.jsfx" type="effect" desc="Send All Notes Off">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Send Hold Pedal Off and All Notes Off on all Midi Channels to a selectable Midi Bus, when a selectable CC message is detected on a selectable Channel in a selectable Midi Bus\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2020-02-18T16:59:52Z">
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/3e570290e5b6736ddd2a31acde5c3229fa0df2a4/MIDI/mschnell_Send%20All%20Notes%20Off.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Slider to MIDI NRPM.jsfx" type="effect" desc="Slider to MIDI NRPM">
