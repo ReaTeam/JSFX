@@ -2,7 +2,6 @@ desc: Send All Notes Off
 author: Michael Schnell (mschnell@bschnell.de)
 version: 1.0
 changelog: Initial Release
-provides: . > mschnell_MIDI Send All Notes Off.ksfx
 about: Send Hold Pedal Off and All Notes Off on all Midi Channels to a selectable Midi Bus, when a selectable CC message is detected on a selectable Channel in a selectable Midi Bus
 
 slider1: 15<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>In Midi Bus 
