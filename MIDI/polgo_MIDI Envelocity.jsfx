@@ -1,18 +1,20 @@
 desc: MIDI Envelocity
 author: polgo
-version: 1.1
-changelog: Integer conversion pushed to end for more precise factoring
+version: 1.2
+changelog:
+  1.1 Integer conversion pushed to end for more precise factoring
+  1.2 Fixed note off problem
 screenshot: Envelope setup https://stash.reaper.fm/37292/polgo_MIDI_Envelocity.png
 about:
   # Envelocity
 
-  'Envelocity' is a simple JS effect to ease envelope control over midi velocity.  Made to add gradual velocity changes to looped midi items such as drums. 
+    'Envelocity' is a simple JS effect to ease envelope control over midi velocity.  Made to add gradual velocity changes to looped midi items such as drums. 
 
-  Add the effect 'JS:MIDI_Envelocity' to a midi track
-  - Show track envelope for ~Offset velocity for envelope~ (Defaults to +/-32 for a more subtle/readable envelope)
-  - ~Offset factor~ to multiply (x4 will result in a +/-127 range)
-  - ~Offset constant~ to shift
-  - ~Limit Max/Min~ to clamp
+    Add the effect 'JS:MIDI_Envelocity' to a midi track
+    - Show track envelope for ~Offset velocity for envelope~ (Defaults to +/-32 for a more subtle/readable envelope)
+    - ~Offset factor~ to multiply (x4 will result in a +/-127 range)
+    - ~Offset constant~ to shift
+    - ~Limit Max/Min~ to clamp
 
 slider7:0<-32,32>Offset velocity for envelope   -+
 slider8:1<0,4>Offset factor   -+
@@ -26,7 +28,8 @@ out_pin:none
 
 @init
 ext_noinit = 1.0;
-noteOn = $x90;
+NOTE_OFF = $x80;
+NOTE_ON = $x90;
 
 @slider
 slider7 = min(max(slider7, -32), 32);
@@ -42,19 +45,21 @@ minv = slider20;
 maxv = slider21;
 
 @block
-while (
-	midirecv(_offset, _msg1, _note, _velocity) ? (
-		_status = _msg1 & $xF0;
-		  _status == noteOn && _velocity > 0 ?
-		  (
+while(midirecv(_offset, _msg1, _note, _velocity) ? (
+		event = _msg1&$xF0;
+		event == NOTE_ON ? (
 			_velocityAdd = offsetv + (offsetenv * offsetFactor);
 			_velocityNew = _velocity + _velocityAdd;
 			_velocityNew |= 0;
 			_velocityNew = max(minv, _velocityNew);
 			_velocityNew = min(_velocityNew, maxv);
-		  );
-		midisend(_offset, _msg1, _note, _velocityNew);
+			_velocityNew > 0 ? (
+				midisend(_offset, _msg1, _note, _velocityNew);
+			);
 
+		):(
+			midisend(_offset, _msg1, _note);
+		);
 		1;
 	);
 );
