@@ -1,9 +1,7 @@
 desc: MIDI Envelocity
 author: polgo
 version: 1.2
-changelog:
-  1.1 Integer conversion pushed to end for more precise factoring
-  1.2 Fixed note off problem
+changelog: Fixed note off problem
 screenshot: Envelope setup https://stash.reaper.fm/37292/polgo_MIDI_Envelocity.png
 about:
   # Envelocity
