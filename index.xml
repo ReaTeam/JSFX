@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="5c62576226d6de42da39944835c291d2610a1f80">
+<index version="1" name="ReaTeam JSFX" commit="dc696ce7fd3f82721192c20a540c395664be3f40">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -604,6 +604,11 @@ Bug fix : red curve feedback circle was a bit shifted if the CC was set to High 
         <changelog><![CDATA[- Add Program Change input support
 - Colour note zone sliders to match note zones]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/309b157b0ccec32a4129d50258569c813b05e538/MIDI/TJA_MIDI%20Performer2.jsfx</source>
+      </version>
+      <version name="0.5.9" author="Kevin Morrison (ThrashJazzAssassin)" time="2020-03-01T22:21:20Z">
+        <changelog><![CDATA[- Add Program Change on/off toggle per row
+- Recolour note zones to always be red-green-blue-repeat]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/dc696ce7fd3f82721192c20a540c395664be3f40/MIDI/TJA_MIDI%20Performer2.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
