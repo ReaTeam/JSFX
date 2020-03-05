@@ -1,9 +1,7 @@
 desc: MIDI Performer2
 author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.5.9
-changelog:
-  - Add Program Change on/off toggle per row
-  - Recolour note zones to always be red-green-blue-repeat
+version: 0.5.9.1
+changelog: - Fix colour logic
 link: Forum thread https://forum.cockos.com/showthread.php?t=216034
 screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
@@ -543,7 +541,7 @@ function numSlide(label, zeroStr, oneStr, num, x, y, w, h, default, mini, maxi, 
 
     type == "note" ? (
 
-      outBus[g] && isRow(g) ? (
+      outBus[g] && filter[g]&4 && isRow(g) ? (
         gfx_set(0.5);
         e%3==0 ? gfx_r=0.8;
         e%3==1 ? gfx_g=0.8;
