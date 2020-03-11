@@ -1,37 +1,34 @@
 desc: MIDI convert to CC
 author: Michael Schnell (mschnell@bschnell.de)
-version: 4.2
-changelog: Small Fixes
+version: 5.1
+changelog: Enhanced pass-through functionality
 donation: United Nations Foundation http://www.unfoundation.org/
 about:
   ## Description
-  
+
     Midi CC, PC, Note On, Note Off, Pitch Bend or After Touch messages are converted to Midi CC messages with a predefined Channel and CC #. The CC value is calculated from the incoming value. 
-  
-    All midi messages that don't fit the "In" specifications are passed through.
-  
+
+  Midi messages that don't fit the "In" specifications are passed through according to the setting of the drop-down menu.
+
     The slider "In Channel" defines the channel the messages to be converted are expected in. "all" accepts any channel.
-  
+
     The slider "Midi Message" selects if CC, PC, Note on or Note Off (Note number), Note on or Note Off (velocity), or Pitch bend are to be converted. With Note off, also note on messages with velocity 0 are used. With "Note On Velocity" beware that some keyboards send Note On with velocity 0 as Note Off message, so set the Min Input Value to 1. 
-  
+
     The slider "In CC" is only used when "CC" is selected and defines the CC# of the eligible input messages.
-  
+
     The sliders "Min Input Value" and "Max Input Value" define the range of the eligible input values. When using Pitch Bend as an input, the full input rage is 0 .. 16383. This is shown as to 0 ... 127.9921875  (and 127 exactly is used as 127.9921875 for convenience), and it might make sense to type in an exact value.
-  
+
     The slider "Out Channel" defines the channel the converted messages are sent in. "same as received" reproduces the channel as received, as well dedicated in channel mode as when setting the in channel to "all" .
-  
+
     The slider "Out CC" defines the Midi CC message # to be sent
-  
+
     The slider "Min CC Value" defines the value to be sent when the Min Input Value is received. Hence there will be an offset of Min_Input_Value - Min_Outout_Value. 
-  
+
     The slider "Max CC Value" defines the value to be sent when the Max Input Value is received. Hence there will be an appropriate stretching of the input range. 
 
     TODO: hysteresis with Pitch Bend input; high resolution CC
 
     (When testing beware that the JS: Midi Pitch Wheel LFO erroneously outputs Databyte 1 values > 127 ! )
-
-
-
 
 slider1:0<0,16,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,all}>In Channel
 slider2:0<0,6,1{CC,PC,Note On,Note Off,Note On Velocity,Note Off Velocity,Pitch Bend,After Touch}>MIDI Message
@@ -170,6 +167,16 @@ function convert (mm) (
       );
       midisend(offset, m,    outCC,   m3); 
     );  
-    !slider10 ? msg11 = -1;
+    !slider10 ? (                                // no passthrough 
+      msg11 = -1;
+     ) :  slider10 == 1 ? (                      // pass through unconverted
+      0;     
+     ) :  slider10 == 2 ? (                      // pass though converted
+      msg11 < 0 ? msg11 = 0 : msg11 = -1;     
+     ) :  slider10 == 3 ? (                      // pass thoug all
+      msg11 = 0;     
+     ); 
+    msg11 >= 0 ?  midisend(offset, msg1, msg2,  msg3); // pass through  
+  );
     msg11 >= 0 ?  midisend(offset, msg1, msg2,  msg3); // pass through  
   );
