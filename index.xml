@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="c97b27ead982c0894161ff9057d7e43dfc4a523c">
+<index version="1" name="ReaTeam JSFX" commit="85692258e4055de25d9bd225d3ed59703946092b">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -475,18 +475,20 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Midi CC Mapper X\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 This JSFX is an extended version of the original plugin called "MIDI CC Mapper" with many more features. It allows to modify the behavior and the real-time feel of a MIDI controller, by acting as a pre-filter on the MIDI input. It can :\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Filter in/out keyboard keys\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Filter in/out keyboard keys, channel split and drop/re-route keyboard keys\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Transpose keyboard keys\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Re-route CCs\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Re-route CC channels\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Tweak CC response curves, either by using predefined curves, or by pen-drawing/smoothing custom curves.\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Tweak the keyboard velocity response curve\sa180\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The UI shows a virtual controller, on which CCs can be attributed to controls, allowing a user to visually map her/his real controller.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 High-Res MIDI input can be enabled via a global parameter, and High-Res MIDI output can be enabled on CCs individually.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Keyboard Filtering Module\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Located in the top left of the main window. This module can be enabled or bypassed with the button located in the module title bar. If enabled, all keys colorized in red are filtered out. The keys can be colorized by click/moving the mouse on them. The UI provides feedback for currently pressed keys.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Located in the top left of the main window, it can be used to achieve various configurations. You can enable/disable key colorizing with the button located in the module title bar. If key colorizing is enabled, the keys can be colorized in red/green by click/moving the mouse on them. The UI provides feedback for currently pressed keys.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 An input channel may be defined for the keyboard : all other channels will be ignored by the plugin. Output channels may be defined for the green/red parts of the keyboard to possibly reroute them, with the option to drop the red part (to filter them out).\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 This module can be of great help for defining regions on the keyboard. By reusing it on multiple tracks at the same time, you can easily achieve keyboard split (left hand/right hand or more) and/or multi-instruments combinations.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Keyboard Transposition Module\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Located in the top right of the main window. This module can be enabled or bypassed with the button located in the module title bar. If enabled, applies the sum of two parameters, one for transposing by octaves, one for transposing by semitones.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Located in the top right of the main window. This module can be enabled or bypassed with the button located in the module title bar. If enabled, applies the sum of two parameters, one for transposing by octaves, one for transposing by semitones. This module can be optionally applied to the red/green/both parts of the keyboard.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 CC Routing/Curve tweaking\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Located in the bottom of the main window. This module UI is contextual to the selected control. When selected, a control can be enabled or disabled individually with the button located in the module title bar. For each control :\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab A description can be given that will appear in the title bar\par}
@@ -497,7 +499,9 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab This output CC can be copied from the input CC\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The response curve can be pendrawn by hand with the mouse\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The response curve can be defined from one of the templates on the right\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The response curve can be smoothed with the smooth button\sa180\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The response curve can be smoothed with the smooth button\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The response curve may be restricted to a user-defined space by configuring MIDI min/max values.\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Additionally, channel input/output may be configured for the CC.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Reaper forum thread\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 https://forum.cockos.com/showthread.php?t=172630\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Notes\par}
@@ -516,6 +520,18 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
 Reworked contrasts on Dark Theme.
 Bug fix : red curve feedback circle was a bit shifted if the CC was set to High Res.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/c425da2edaf11c92606350b3facbb81ca2df11a9/MIDI/talagan_MIDI%20CC%20Mapper%20X.jsfx</source>
+      </version>
+      <version name="3.3" author="Talagan" time="2020-03-31T17:17:49Z">
+        <changelog><![CDATA[Fix : HighRes midi velocity was not properly handled for MSB 1, LSB 0.
+Fix : Highres midi velocity LSB was not sent on the proper CC (#88).
+Added a "pen" button to trigger pen mode, to avoid accidental clicks on the curve
+Added channel routing options for notes and ccs.
+Added firewall option for unrouted notes.
+Since red keys may now be kept due to channel re-routing, added an option to select what keys are transposed (All/Green/Red)
+Since red keys may now be kept due to channel re-routing, added an option to select what keys are affected by the velocity control (All/Green/Red)
+Added curve mih/max behaviours : the user can now set some min/max limits on the curve, so that the curve is clamped between those bounds. Predefined curves will be adapted to that range and pen drawing will be restricted to that range too.
+And a bit of source code cleaning.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/85692258e4055de25d9bd225d3ed59703946092b/MIDI/talagan_MIDI%20CC%20Mapper%20X.jsfx</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI note-banked CC multiplier.jsfx" type="effect" desc="MIDI note-banked CC multiplier">
