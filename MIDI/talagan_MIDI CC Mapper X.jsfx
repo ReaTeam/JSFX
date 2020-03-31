@@ -67,63 +67,6 @@ about:
 
   Older versions (v1 and v2) can be found on the forum thread.
 
-desc: MIDI CC Mapper X
-author: Talagan
-version: 3.3
-changelog:
-  Added theme system, with two themes, Dark and Light.
-  Reworked contrasts on Dark Theme.
-  Bug fix : red curve feedback circle was a bit shifted if the CC was set to High Res.
-screenshot:
-  Dark Theme https://stash.reaper.fm/37471/CCMapperX-Dark.png
-  Light Theme https://stash.reaper.fm/37472/CCMapperX-Light.png
-about:
-  # Midi CC Mapper X
-
-  This JSFX  is an extended version of the original plugin called "MIDI CC Mapper" with many more features. It allows to modify the behavior and the real-time feel of a MIDI controller, by acting as a pre-filter on the MIDI input. It can : 
-
-  - Filter in/out keyboard keys
-  - Transpose keyboard keys
-  - Re-route CCs
-  - Tweak CC response curves, either by using predefined curves, or by pen-drawing/smoothing custom curves.
-  - Tweak the keyboard velocity response curve
-
-  The UI shows a virtual controller, on which CCs can be attributed to controls, allowing a user to visually map her/his real controller.
-
-  High-Res MIDI input can be enabled via a global parameter, and High-Res MIDI output can be enabled on CCs individually.
-
-  ## Keyboard Filtering Module
-
-  Located in the top left of the main window. This module can be enabled or bypassed with the button located in the module title bar. If enabled, all keys colorized in red are filtered out. The keys can be colorized by click/moving the mouse on them. The UI provides feedback for currently pressed keys.
-
-  This module can be of great help for defining regions on the keyboard. By reusing it on multiple tracks at the same time, you can easily achieve keyboard split (left hand/right hand or more) and/or multi-instruments combinations.
-
-  ## Keyboard Transposition Module
-
-  Located in the top right of the main window. This module can be enabled or bypassed with the button located in the module title bar. If enabled, applies the sum of two parameters, one for transposing by octaves, one for transposing by semitones.
-
-  ## CC Routing/Curve tweaking
-
-  Located in the bottom of the main window. This module UI is contextual to the selected control. When selected, a control can be enabled or disabled individually with the button located in the module title bar. For each control :
-
-  - A description can be given that will appear in the title bar
-  - A short description can be given that will appear close to the control for convenience
-  - An input CC can be assigned (except for the velocity control which is tied to the keyboard velocity)
-  - This input CC can be CC learned
-  - An output CC can be assigned
-  - This output CC can be copied from the input CC
-  - The response curve can be pendrawn by hand with the mouse
-  - The response curve can be defined from one of the templates on the right
-  - The response curve can be smoothed with the smooth button
-
-  ## Reaper forum thread
-
-  https://forum.cockos.com/showthread.php?t=172630
-
-  ## Notes
-
-  Older versions (v1 and v2) can be found on the forum thread.
-
 license:
   MIT (Do whatever you like with this code).
 
