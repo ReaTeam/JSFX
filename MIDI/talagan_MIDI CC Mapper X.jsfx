@@ -1,29 +1,43 @@
 desc: MIDI CC Mapper X
 author: Talagan
-version: 3.3
+version: 3.5
 changelog:
-  Fix : HighRes midi velocity was not properly handled for MSB 1, LSB 0.
-  Fix : Highres midi velocity LSB was not sent on the proper CC (#88).
-  Added a "pen" button to trigger pen mode, to avoid accidental clicks on the curve
-  Added channel routing options for notes and ccs.
-  Added firewall option for unrouted notes.
-  Since red keys may now be kept due to channel re-routing, added an option to select what keys are transposed (All/Green/Red)
-  Since red keys may now be kept due to channel re-routing, added an option to select what keys are affected by the velocity control (All/Green/Red)
-  Added curve mih/max behaviours : the user can now set some min/max limits on the curve, so that the curve is clamped between those bounds. Predefined curves will be adapted to that range and pen drawing will be restricted to that range too.
-  And a bit of source code cleaning.
+  - Function library system : functions are stored in a function lib with sets that are extensible
+  - Parametric sets : some sets are parametric, they can be used to generate an infinite number of curves
+  - User sets : the user can now import her/his own curves in the library
+  - Function export : MIDI CC Mapper X is now shipped with a script that exports the current curve
+  - Added support for all notes within the MIDI range (0-127).
+  - Bug fix for notes that could be transposed outside of midi range.
 screenshot:
   Dark Theme https://stash.reaper.fm/37471/CCMapperX-Dark.png
   Light Theme https://stash.reaper.fm/37472/CCMapperX-Light.png
+provides:
+  [script main] talagan_MIDI CC Mapper X/MIDI CC Mapper X - Dump Current Function.lua
+  [data] talagan_MIDI CC Mapper X/README.md
+  [data] talagan_MIDI CC Mapper X/lib.txt
+  [data] talagan_MIDI CC Mapper X/_tools/*
+  [data] talagan_MIDI CC Mapper X/func/lib/*
+  [data] talagan_MIDI CC Mapper X/func/lib/circ/*
+  [data] talagan_MIDI CC Mapper X/func/lib/kawaik4/*
+  [data] talagan_MIDI CC Mapper X/func/lib/sin/*
+  [data] talagan_MIDI CC Mapper X/func/lib/sstep/*
+  [data] talagan_MIDI CC Mapper X/func/user_lib/*
 about:
   # Midi CC Mapper X
 
   This JSFX  is an extended version of the original plugin called "MIDI CC Mapper" with many more features. It allows to modify the behavior and the real-time feel of a MIDI controller, by acting as a pre-filter on the MIDI input. It can : 
 
+  - Tweak CC response curves :
+    - By using predefined curves, some of them being parametric
+    - By pen-drawing/prototyping custom curves
+    - By smoothing the current curve
+    - By restricting the range of values of your curve
+    - By extending the predefined curves with your own sets of functions (through lib files)
+    - The current curve can be exported and reused in your own sets
   - Filter in/out keyboard keys, channel split and drop/re-route keyboard keys
   - Transpose keyboard keys
   - Re-route CCs
   - Re-route CC channels
-  - Tweak CC response curves, either by using predefined curves, or by pen-drawing/smoothing custom curves.
   - Tweak the keyboard velocity response curve
 
   The UI shows a virtual controller, on which CCs can be attributed to controls, allowing a user to visually map her/his real controller.
@@ -36,7 +50,7 @@ about:
 
   An input channel may be defined for the keyboard : all other channels will be ignored by the plugin. Output channels may be defined for the green/red parts of the keyboard to possibly reroute them, with the option to drop the red part (to filter them out).
 
-  This module can be of great help for defining regions on the keyboard. By reusing it on multiple tracks at the same time, you can easily achieve keyboard split (left hand/right hand or more) and/or multi-instruments combinations.
+  This module can be of great help for defining regions on the keyboard. Also, by reusing it on multiple tracks at the same time, you can easily achieve keyboard split (left hand/right hand or more) and/or multi-instruments combinations.
 
   ## Keyboard Transposition Module
 
@@ -59,73 +73,43 @@ about:
 
   Additionally, channel input/output may be configured for the CC.
 
+  ## Customizing the function library
+  
+  The function library is customizable. You can rearrange things, remove sets and functions, and add your own functions after having generated them or having exported them from REAPER. Please refer to the library manual, which is located in <REAPER_RESOURCE_PATH>/Data/talagan_MIDI CC Mapper X/README.md .
+
   ## Reaper forum thread
 
   https://forum.cockos.com/showthread.php?t=172630
-
+  
   ## Notes
 
   Older versions (v1 and v2) can be found on the forum thread.
-
 license:
   MIT (Do whatever you like with this code).
-
-// Helpful Documentation
-//
-// Midi HR for Velocity : https://forum.cockos.com/showthread.php?t=83782
+docs:
+  Midi HR CC #88 for Velocity : https://forum.cockos.com/showthread.php?t=83782
 
 options:want_all_kb
+options:gmem=MIDICCMapperX
+
 
 //===========================================//
 //=============      INIT      ==============//
 //===========================================//
 @init
 
-NOTE_OFF_MSG              = 8;
-NOTE_ON_MSG               = 9;
-CC_MSG                    = 11; // 0x0B
+//////////////////////////
+//  GLOBAL VARS/UTILS   //
+//////////////////////////
+function roundi(valf) (
+  floor(valf+0.5) | 0;
+);
 
-// Plugin Controls parameters
-CONTROL_COUNT             = 36;  // mod wh + 4 peds + 10 Sliders + 10 knobs + 10 pads + velo
-
-CONTROL_WHEELS_START      = 0;
-CONTROL_PEDALS_START      = 1;
-CONTROL_FADERS_START      = 5;
-CONTROL_KNOBS_START       = 15;
-CONTROL_PADS_START        = 25;
-CONTROL_VELOCITY_START    = 35;
-CONTROL_MOD_WHEEL         = CONTROL_WHEELS_START;
-CONTROL_VELOCITY          = CONTROL_VELOCITY_START;
-
-// Curve parameters
-RESOLUTION                = 2;
-BUTTON_GRID_SIZE          = 10;
-CURVESIZE                 = 128; // 1:1 for control values going from 0 to 127 
-
-// Curve buttons params
-BUTTON_ROW_LINEAR = 0;
-BUTTON_ROW_POW2   = 1;
-BUTTON_ROW_POW3   = 2;
-BUTTON_ROW_CIRC   = 3;
-BUTTON_ROW_STEP   = 4;
-BUTTON_ROW_GATE   = 5;
-
-// Various UI dimensions
-KEYBOARD_FILTERING_TOP   = 0;
-CONTROL_PANEL_TOP        = 130;
-GUI_CONTROL_PARAMS_TOP   = 260;
-
-KEYBOARD_PANEL_WIDTH     = 670;
-
-// Pseudo-Object that contains pointer to colors
-TH            = 0;
-
-// Theme nums
-DARK_THEME    = 0;
-LIGHT_THEME   = 1;
+///////////////
+//  MEMORY   //
+///////////////
 
 // Helper function for memory allocation.
-MEM_PTR  = 0;
 function malloc(msize)
   local(ret)
 (
@@ -134,539 +118,193 @@ function malloc(msize)
   ret;
 );
 
-////////////////////////////////
-// Persistent data (user conf)
-////////////////////////////////
-
-CONTROL_ENABLED                 = malloc(CONTROL_COUNT);
-CONTROL_SRCS                    = malloc(CONTROL_COUNT);
-CONTROL_DSTS                    = malloc(CONTROL_COUNT);
-CONTROL_HIGHRES_OUTPUT_ENABLED  = malloc(CONTROL_COUNT);  // Per control option
-CURVES                          = malloc(CONTROL_COUNT*CURVESIZE);
-
-KEYBOARD_FILTERING_ENABLED      = malloc(1);
-KEYBOARD_FILTERED_NOTES         = malloc(88);
-KEYBOARD_TRANSPOSE_ENABLED      = malloc(1);
-KEYBOARD_TRANSPOSE_8VA          = malloc(1);
-KEYBOARD_TRANSPOSE_SEMI_TONES   = malloc(1);
-
-HIGHRES_INPUT_ENABLED           = malloc(1); // Global option              
-DROP_UNROUTED_CC_MESSAGES       = malloc(1); // Global option
-
-/////////////////////////////////
-// Buffers, used for computation
-/////////////////////////////////
-
-// Cosinus and sinus tables for all possible eleven angles
-KNOB_TICS_X               = malloc(11); // This is not spinal tap... 0..10 == 11 tics!
-KNOB_TICS_Y               = malloc(11); 
-
-BUTTON_GRID_PRESENCE      = malloc(BUTTON_GRID_SIZE * BUTTON_GRID_SIZE);  
-BUTTON_DATA               = malloc(32 * BUTTON_GRID_SIZE * BUTTON_GRID_SIZE);
-
-// Curve smoothing buffer
-SCURVE                    = malloc(CURVESIZE);
-
-// Control states memorization
-CONTROL_LAST_IN           = malloc(CONTROL_COUNT);
-CONTROL_LAST_OUT          = malloc(CONTROL_COUNT);
-
-OCTAVE_BLACK_KEY_LOOKUP   = malloc(12);
-OCTAVE_TOP_KEY_WIDTHS     = malloc(12);
-OCTAVE_TOP_KEY_OFFSETS    = malloc(12);
-OCTAVE_LOOKUP_BOTTOM      = malloc(7);
-
-KEY_VELOCITIES            = malloc(88);
-CC_RECEIVED_VALUES        = malloc(128); 
-
-GUI_MODE                  = malloc(1);
-
-CURRENT_THEME_NUM         = malloc(1);
-
-// Added 3.3
-CONTROL_CHAN_SRCS           = malloc(CONTROL_COUNT);
-CONTROL_CHAN_DSTS           = malloc(CONTROL_COUNT);
-KB_INPUT_CHANNEL            = malloc(1);
-KBG_OUTPUT_CHANNEL          = malloc(1); // Green keys
-KBR_OUTPUT_CHANNEL          = malloc(1); // Red keys
-KEYBOARD_TRANSPOSE_APPLY_TO = malloc(1);
-KEYBOARD_VELOCITY_APPLY_TO  = malloc(1);
-CONTROL_MAXS_MSB            = malloc(CONTROL_COUNT);         
-CONTROL_MAXS_LSB            = malloc(CONTROL_COUNT);
-CONTROL_MINS_MSB            = malloc(CONTROL_COUNT);
-CONTROL_MINS_LSB            = malloc(CONTROL_COUNT);
-DROP_UNROUTED_NOTE_MESSAGES = malloc(1);
-
-/////////////////////////
-//    MEMORY ACCESS    //
-/////////////////////////
-
-function curveAddress(cnum)
+// Same thing for gmem.
+function galloc(msize)
+  local(ret)
 (
-  (cnum <0 || cnum >= CONTROL_COUNT)?(-1):(
-    CURVES + (cnum * CURVESIZE)
-  );
-);
-
-function shouldDropUnroutedCCMessages() (
-  (DROP_UNROUTED_CC_MESSAGES[0] == 1);
-);
-
-function shouldDropUnroutedNoteMessages() (
-  (DROP_UNROUTED_NOTE_MESSAGES[0] == 1);
-);
-
-function isKeyboardFilteringEnabled() (
-  (KEYBOARD_FILTERING_ENABLED[0] == 1);
-);
-
-function isKeyboardTranspositionEnabled() (
-  (KEYBOARD_TRANSPOSE_ENABLED[0] == 1);
-);
-
-function isRedKey(k) (
-  (KEYBOARD_FILTERED_NOTES[k]==1)
-);
-
-
-/////////////////////////
-//        MATH         //
-/////////////////////////
-
-function roundi(valf) (
-  floor(valf+0.5) | 0;
-);
-
-// Applies a curve, returns a value from 0 to 1.
-
-// Internally, the curve values are 128 floating values, between 0 and 127, 
-// but this is historical (before midi high-res implementation).
-// And ideally, they should have been between 0 and 1,
-// Because what we want is a curve from [0..1] to [0..1].
-// We thus need to pass a reference for normalization
-// Telling what is the maximum value allowed for the reference space.
-// For example, low-res midi values are going from 0 to 127, so the max is 127.
-// But for high-res midi, values are going from 0 to 127.999 so the max is 128 ! Argh !
-
-function applyCurve(blk_control, x01) 
-  local(attached_curve, x01, sample_num_f, sample_num_il, sample_num_ir, sample_l, sample_r, curve_interp, alpha)
-(
-  attached_curve = curveAddress(blk_control);
-  
-  // Do some clamping cleanup first
-  x01 = min(max(x01,0),1);
-  
-  // Normalize reference space > Curve space
-  sample_num_f  = 127 * x01;
-  sample_num_il = floor(sample_num_f);
-  sample_num_ir = ceil(sample_num_f);
-  
-  // Get left sample, right sample, and linear interpolation factor
-  sample_l      = attached_curve[sample_num_il];
-  sample_r      = attached_curve[sample_num_ir];
-  alpha         = sample_num_f - sample_num_il;
-  
-  // Lerp : this will return a value between 0 and 127
-  curve_interp  = (1-alpha) * sample_l + alpha * sample_r;
-
-  // Return a value between 0 and 1.
-  (curve_interp/127.0);
-);
-
-// Calculate pre-defined curves
-function buttonEquate(row,col,x01) local(ret)
-(
-  ret = 0;
-  (row == BUTTON_ROW_LINEAR) ? (
-    (col == 0)? (
-      ret = x01;  
-    );
-    (col == 1)? (
-      ret = 1-x01;
-    );
-  );
-  
-  (row == BUTTON_ROW_CIRC) ? (
-    (col == 0)? (
-      ret = 1-sqrt(1-pow(x01,2));
-    ); 
-    (col == 1)? (
-      ret = 1-sqrt(1-pow(1-x01,2));
-    );
-    (col == 2)? (
-      ret = sqrt(1-pow(1-x01,2));
-    );
-    (col == 3)? (
-      ret = sqrt(1-pow(x01,2));
-    );   
-  );
-  
-  
-  (row == BUTTON_ROW_POW2) ? (
-    (col == 0)? (
-      ret = pow(x01,2);
-    );
-    (col == 1)? (
-      ret = pow(1-x01,2);
-    );
-    (col == 2)? (
-      ret = pow(x01,0.5);
-    );
-    (col == 3)? (
-    ret   = pow(1-x01,0.5);
-    );
-  );
-  
-  (row == BUTTON_ROW_POW3) ? (
-    (col == 0)? (
-      ret = pow(x01,3);
-    );
-    (col == 1)? (
-      ret = pow(1-x01,3);
-    );
-    (col == 2)? (
-      ret = pow(x01,1/3);
-    ); 
-    (col == 3)? (
-      ret = pow(1-x01,1/3);
-    );  
-  ); 
-   
-  (row == BUTTON_ROW_STEP) ? (
-    (col == 0)? (
-      // Smooth step
-      ret = 3*pow(x01,2) - 2*pow(x01,3);
-    );
-    (col == 1)? (
-      // Smooth step
-      ret = 1-(3*pow(x01,2) - 2*pow(x01,3));
-    );
-    (col == 2)? (
-      // Smoother step
-      ret = 6*pow(x01,5) - 15*pow(x01,4) + 10*pow(x01,3);
-    ); 
-    (col == 3)? (
-      // Smoother step
-      ret = 1-(6*pow(x01,5) - 15*pow(x01,4) + 10*pow(x01,3));
-    ); 
-    (col == 4)? (
-      // Discrete step
-      ret = (x01<=0.5)?(0):(1);
-    );
-    (col == 5)? (
-      // Discrete step
-      ret = (x01<=0.5)?(1):(0);
-    );
-  );
-  
-  (row == BUTTON_ROW_GATE) ? (
-    (col == 0)? (
-      // Smoother gatep
-      x01 = (x01 <= 0.5)?(2*x01):(2-2*x01);
-      ret = (6*pow(x01,5) - 15*pow(x01,4) + 10*pow(x01,3));
-    );
-    (col == 1)? (
-      // Smoother gatep
-      x01 = (x01 <= 0.5)?(2*x01):(2-2*x01);
-      ret = 1-(6*pow(x01,5) - 15*pow(x01,4) + 10*pow(x01,3));    
-    );
-    (col == 2)? (
-      // Triangle
-      x01 = (x01 <= 0.5)?(2*x01):(2-2*x01);
-      ret = x01;
-    );
-    (col == 3)? (
-      // Triangle
-      x01 = (x01 <= 0.5)?(2*x01):(2-2*x01);
-      ret = 1-x01;
-    );
-    (col == 4)? (
-      // Square
-      x01 = (x01 <= 0.25 || x01 > 0.75)?(0):(1);
-      ret = x01;
-    );
-    (col == 5)? (
-      // Square
-      x01 = (x01 <= 0.25 || x01 > 0.75)?(0):(1);
-      ret = 1-x01;
-    );
-  );
-  
+  ret = GMEM_PTR;
+  GMEM_PTR += msize;
   ret;
 );
 
-//////////////////////
-//       MIDI       //
-//////////////////////
-
-g_hres_h = 0;
-g_hres_l = 0;
-
-// Converts a floating value of a CC **between 0 and 1**
-// To high/low parts of a 14-bit hres
-// For CC #0 to #31 (with respective #32 to #63).
-function midiCCHresF012I(f01) 
-  local(ival) 
-(  
-  // Clamp to 0..1 for safety
-  f01  = max(min(f01,1),0);
-  
-  // Convert to 14-bit space
-  ival = roundi(f01 * 16383);
-  
-  // Floor to int for the high part
-  g_hres_h  = (ival >> 7);
-  g_hres_l  = ival & 0x7F;
-);
-
-// Inverse of midiCCHresF012I
-function midiCCHresI2F01(high,low)
-  local(val01, high, low, ival)
+function sharedGlobalVarInit()
 (
-  
-  // Sanitize
-  high = max(min(high,127),0);
-  low  = max(min(low,127),0);
-  
-  // 14-bit value
-  ival = (high << 7) + low;
-  
-  // Put it in 0-1 space
-  val01 = ival/16383;
+  CURVESIZE                 = 128; 
+  PREVIEWSIZE               = 32;
+  RESOLUTION                = 2;  
 );
 
-// Converts a floating value of a key velocity **between 0 and 1**
-// To high/low parts of a 14-bit hres
-//
-// Specification for this
-// https://forum.cockos.com/showthread.php?t=83782
-function midiVelocityHresF012I(f01) 
-  local(ival) 
+function instanceGlobalVarInit() 
 (
+  // Map PTR
+  MEM_PTR                   = 0;
   
-  // Clamp to 0..1 for safety
-  f01  = max(min(f01,1),0);
-
-  // Convert to 14-bit space
-  // Caution : only 16256+1 values are possible (127*128 non zero values + the zero case)
-  // (All LSB values for MSB=0 NOTE OFF are not allowed)
-  ival = roundi(f01 * 16256);
+  NOTE_OFF_MSG              = 8;
+  NOTE_ON_MSG               = 9;
+  CC_MSG                    = 11; // 0x0B
   
-  (ival==0)?(
-    g_hres_h = 0;
-    g_hres_l = 0;
-  ):(
-    // ival is in [1..16256] so put it in [0..16255]
-    ival -= 1; 
-    // Floor to int for the high part
-    // Add 1 for NOTE_ON
-    g_hres_h  = (ival >> 7)+1;
-    g_hres_l  = ival & 0x7F;
-  )
-);
-
-// Inverse of midiVelocityHresF012I
-function midiVelocityHresI2F01(high,low) 
-  local(val01, ival) 
-(
-
-  // Sanitize
-  high = max(min(high,127),0);
-  low  = max(min(low,127),0);
-    
-  high==0?(
-    // If high is equal to 0
-    // Low = 0 is not allowed for NOTE OFF compatibility
-    // So just return 0, it's a NOTE OFF, period.
-    0;
-  ):(
+  // Plugin Controls parameters
+  CONTROL_WHEELS_START      = 0;  // 1 wheel
+  CONTROL_PEDALS_START      = 1;  // 4 peds
+  CONTROL_FADERS_START      = 5;  // 10 faders
+  CONTROL_KNOBS_START       = 15; // 10 sliders
+  CONTROL_PADS_START        = 25; // 10 pads
+  CONTROL_VELOCITY_START    = 35; // 1 velo
+  CONTROL_COUNT             = 36;
   
-    // This said, we can start at 0.
-    high = high-1;
-    
-    // 14-bit value
-    ival = (high << 7) + low;
-    
-    // Avoid the zero case, ival is between [0..16255] so put all between [1..16256]
-    ival += 1;
-    
-    // Put it in 0-1 space
-    // Only 16256+1 values are available since we rejected all LSB values for MSB=0
-    val01 = ival/16256;
-    val01 = max(min(val01,1),0);
-  );
-);
-
-// Octave number for a floating x axis of white keys
-function octaveForBottomPos(keyboard_floating_pos) (
-  floor(keyboard_floating_pos/7);
-);
-
-// Octave note for a floating x axis of white keys
-// For the bottom row of the keyboard (only white keys here)
-function octaveNoteForBottomPos(keyboard_bottom_floating_pos) (
-  OCTAVE_LOOKUP_BOTTOM[floor(keyboard_bottom_floating_pos) % 7];
-);
-
-// Is key black? (keys are numbered from 0 to 87)
-function keyIsBlack(key_num) (
-  OCTAVE_BLACK_KEY_LOOKUP[key_num % 12] == 1;
-);
-
-// Key octave
-function octaveForKey(key_num) (
-  floor(key_num / 12);
-);
-
-// Key for midi note
-function midiNoteToKey(midi_note) (
-  midi_note - 21; // A0
-);
-
-// Midi note to key
-function keyToMidiNote(key) (
-  key + 21; // A0
-);
-
-
-// For a #CC, returns LSB counterpart or -1 if it hasn't.
-function ccLsbCounterpart(ccnum) local(ret) (
-  ret = -1;
+  CONTROL_MOD_WHEEL         = CONTROL_WHEELS_START;
+  CONTROL_VELOCITY          = CONTROL_VELOCITY_START;
   
-  (ccnum>=0 && ccnum < 32)?(
-    ret = ccnum + 32;
-  );
+  // Various UI dimensions
+  KEYBOARD_FILTERING_TOP    = 0;
+  CONTROL_PANEL_TOP         = 130;
+  GUI_CONTROL_PARAMS_TOP    = 260;
   
-  ret;
-);
-
-// For a #CC, returns MSB counterpart or -1 if it hasn't.
-function ccMsbCounterpart(ccnum) local(ret) (
-  ret = -1;
+  KEYBOARD_PANEL_WIDTH      = 670;
   
-  (ccnum>=32 && ccnum < 64)?(
-    ret = ccnum - 32;
-  );
+  // Pseudo-Object that contains pointer to colors
+  TH                        = 0;
   
-  ret;
+  // Theme nums
+  DARK_THEME                = 0;
+  LIGHT_THEME               = 1;
 );
 
-function isALsbCC(ccnum) (
-  // 88 is the LSB Channel for velocity.
-  (ccMsbCounterpart(ccnum) != -1 || ccnum == 88);
-);
 
-function isAMsbCC(ccnum) (
-  // 88 is the LSB Channel for velocity.
-  (ccLsbCounterpart(ccnum) != -1);
-);
-
-// High res midi input? (it's a global param)
-function isHighResMidiInputEnabled()
+function gmemGlobalVarInit()
 (
-  HIGHRES_INPUT_ENABLED[0];
-);
+  // Map PTR
+  GMEM_PTR                = 0;
 
-// High res output? (it's a local param)
-function isHighResMidiOutputEnabledForControl(control) 
-(
-  CONTROL_HIGHRES_OUTPUT_ENABLED[control];
-);
-
-function controlHasOperationalHighResOutput(control)
-  local(hr_is_legit_for_control, hr_is_enabled)
-(
-  hr_is_legit_for_control = (control == CONTROL_VELOCITY || ccLsbCounterpart(CONTROL_DSTS[control])!=-1);
-  hr_is_enabled           = isHighResMidiOutputEnabledForControl(control);
+  // FSETS : variables and offsets
+  FSET_MAX_COUNT          = 21; // 3 lines of 7 tabs
+  FSET_ROW_COUNT          = 5;
+  FSET_COL_COUNT          = 6;
   
-  (hr_is_legit_for_control && hr_is_enabled);
+  FSET_ID_MAXLEN          = 10;
+  FSET_TAB_MAXLEN         = 8;
+  FSET_DESC_MAXLEN        = 50;
 );
 
-function controlCurrentBound01(control,is_min)
-  local(lsb,msb)
+function gmemMemoryMapInit()
 (
-  msb = (is_min)?(CONTROL_MINS_MSB[control]):(CONTROL_MAXS_MSB[control]);
- 
-  (controlHasOperationalHighResOutput(control))?(
-    lsb = (is_min)?(CONTROL_MINS_LSB[control]):(CONTROL_MAXS_LSB[control]);
-    
-    (control == CONTROL_VELOCITY)?(
-      midiVelocityHresI2F01(msb,lsb);
-    ):(
-      midiCCHresI2F01(msb,lsb);
-    );
-  ):(
-    msb/127.0;
-  );
-);
-
-function controlCurrentMinBound01(control)
-(
-  controlCurrentBound01(control,1);
-);
-
-function controlCurrentMaxBound01(control)
-(
-  controlCurrentBound01(control,0);
-);
-
-
-// Is the CC learnable? (in high res, we don't allow LSB controls to be learnable)
-function isCCLearnable(ccnum) (
-  (!isHighResMidiInputEnabled())?(1):(!isALsbCC(ccnum););
-);
-
-function enableCCLearn()
-(
-  g_cc_learn = 1;
-);
-
-function disableCCLearn()
-(
-  g_cc_learn = 0;
-);
-
-function isCCLearning() 
-(
-  (g_cc_learn == 1);
-);
-
-
-/////////////////////
-//  INIT FUNCTIONS //
-/////////////////////
-
-function knobTic(val, x_or_y) local(ret, v1, v2)
-(
-  // Clamp val between 0 and 1
-  val = min(val,0.99999);
-  val = max(0,val);
+  /////////////////////////////////////////////////////////////
+  // GMEM Mapping : Shared memory between plugin instances   //
+  /////////////////////////////////////////////////////////////
+  FSET_ID_MAXSLOT         = roundi(FSET_ID_MAXLEN/4) + 1;
+  FSET_TAB_MAXSLOT        = roundi(FSET_TAB_MAXLEN/4) + 1;
+  FSET_DESC_MAXSLOT       = roundi(FSET_DESC_MAXLEN/4) + 1;
   
-  val = 10*val;
+  // FSETS : Function set memory mapping
+  FSET_OFFSET_ID            = 0; 
+  FSET_OFFSET_IS_PARAMETRIC = FSET_OFFSET_ID            + 1;  
+  FSET_OFFSET_PARAMETRIC_ID = FSET_OFFSET_IS_PARAMETRIC + 1;  
+  FSET_OFFSET_PARAM         = FSET_OFFSET_PARAMETRIC_ID + 1;
+  FSET_OFFSET_TAB           = FSET_OFFSET_PARAM         + FSET_ID_MAXSLOT;  
+  FSET_OFFSET_DESC          = FSET_OFFSET_TAB           + FSET_TAB_MAXSLOT;
+  FSET_OFFSET_FUNCTIONS     = FSET_OFFSET_DESC          + FSET_DESC_MAXSLOT;
   
-  v1 = floor(val) | 0; // intify, v1 between 0 and 9
-  v2 = (v1 + 1) | 0;
+  // FSETS : Function memory mapping
+  FSF_OFFSET_DEFINED      = 0;
+  FSF_OFFSET_CURVE        = FSF_OFFSET_DEFINED + 1;
+  FSF_OFFSET_PREVIEW      = FSF_OFFSET_CURVE   + CURVESIZE;
+  // Sub-Total size       ------
+  FSF_SIZE                = FSF_OFFSET_PREVIEW + PREVIEWSIZE;
   
-  (x_or_y == 1)?
-  ( 
-    ret = KNOB_TICS_X[v1] + (val-v1)*(KNOB_TICS_X[v2]-KNOB_TICS_X[v1]);
-  ):
-  (
-    ret = KNOB_TICS_Y[v1] + (val-v1)*(KNOB_TICS_Y[v2]-KNOB_TICS_Y[v1]); 
-  );
+  // Total size           -----
+  FSET_SIZE               = FSET_OFFSET_FUNCTIONS + (FSET_ROW_COUNT * FSET_COL_COUNT * FSF_SIZE);
+  
+  // Define some ids for the parametric sets
+  FSET_PARAMETRIC_LINEAR_ID = 40;
+  FSET_PARAMETRIC_XN_ID     = 41;
+  FSET_PARAMETRIC_EXPNX_ID  = 42;
+  
+  // (galloc does not write memory so this will 
+  // not squash memory from an instance to the other)
+  // But only realign the mem ptr
+  GMEM_LOADER_ID        = galloc(1); // The ID of the instance that loaded gmem
+  GMEM_CMD              = galloc(1); // Cmd num
+  GMEM_CMD_STATUS       = galloc(1); // Cmd status : 0 no cmd, 1 cmd ready, 2 cmd being treated, 3 cmd success, 4 cmd error
+  GMEM_CMD_ERROR        = galloc(1); // CMd Error code
+  GMEM_RESERVED         = galloc(6);
+  GMEM_DUMP_CURVE_BUF   = galloc(CURVESIZE);
+  GMEM_LOAD_CURVE_BUF   = galloc(CURVESIZE);
+  GMEM_FSET_COUNT       = galloc(1);
+  GMEM_FSET_START       = GMEM_PTR;
 );
 
-function initKnobTics() local(t, angle)
+function instanceMemoryMapInit() 
 (
-  t = 0;
-  while(t<11)
-  (
-    angle = 90 + 30 + t*(36-6);
-    angle *= $pi / 180;
-    KNOB_TICS_X[t] = cos(angle);
-    KNOB_TICS_Y[t] = sin(angle);
-    t += 1;
-  );
+  /////////////////////////////////
+  // Persistent data (user conf) //
+  /////////////////////////////////
+  LOADED_VERSION                  = malloc(1);
+  
+  CONTROL_ENABLED                 = malloc(CONTROL_COUNT);
+  CONTROL_SRCS                    = malloc(CONTROL_COUNT);
+  CONTROL_DSTS                    = malloc(CONTROL_COUNT);
+  CONTROL_HIGHRES_OUTPUT_ENABLED  = malloc(CONTROL_COUNT);  // Per control option
+  CURVES                          = malloc(CONTROL_COUNT*CURVESIZE);
+  
+  KEYBOARD_FILTERING_ENABLED      = malloc(1);
+  _OBSOLETE_RESERVED              = malloc(88); // was KEYBOARD_FILTERED_NOTES, now 128 long
+  KEYBOARD_TRANSPOSE_ENABLED      = malloc(1);
+  KEYBOARD_TRANSPOSE_8VA          = malloc(1);
+  KEYBOARD_TRANSPOSE_SEMI_TONES   = malloc(1);
+  
+  HIGHRES_INPUT_ENABLED           = malloc(1); // Global option              
+  DROP_UNROUTED_CC_MESSAGES       = malloc(1); // Global option
+  
+  /////////////////////////////////
+  // Buffers, used for computation
+  /////////////////////////////////
+  
+  // Cosinus and sinus tables for all possible eleven angles
+  KNOB_TICS_X                 = malloc(11); // This is not spinal tap... 0..10 == 11 tics!
+  KNOB_TICS_Y                 = malloc(11); 
+  
+  // Curve smoothing buffer
+  SCURVE                      = malloc(CURVESIZE);
+  
+  // Control states memorization
+  CONTROL_LAST_IN             = malloc(CONTROL_COUNT);
+  CONTROL_LAST_OUT            = malloc(CONTROL_COUNT);
+  
+  OCTAVE_BLACK_KEY_LOOKUP     = malloc(12);
+  OCTAVE_TOP_KEY_WIDTHS       = malloc(12);
+  OCTAVE_TOP_KEY_OFFSETS      = malloc(12);
+  OCTAVE_LOOKUP_BOTTOM        = malloc(7);
+  
+  _OBSOLETE_RESERVED          = malloc(88); // was KEY_VELOCITIES, now 128 long
+  CC_RECEIVED_VALUES          = malloc(128); 
+  
+  GUI_MODE                    = malloc(1);
+  
+  CURRENT_THEME_NUM           = malloc(1);
+  
+  // Added 3.3
+  CONTROL_CHAN_SRCS           = malloc(CONTROL_COUNT);
+  CONTROL_CHAN_DSTS           = malloc(CONTROL_COUNT);
+  KB_INPUT_CHANNEL            = malloc(1);
+  KBG_OUTPUT_CHANNEL          = malloc(1); // Green keys
+  KBR_OUTPUT_CHANNEL          = malloc(1); // Red keys
+  KEYBOARD_TRANSPOSE_APPLY_TO = malloc(1);
+  KEYBOARD_VELOCITY_APPLY_TO  = malloc(1);
+  CONTROL_MAXS_MSB            = malloc(CONTROL_COUNT);         
+  CONTROL_MAXS_LSB            = malloc(CONTROL_COUNT);
+  CONTROL_MINS_MSB            = malloc(CONTROL_COUNT);
+  CONTROL_MINS_LSB            = malloc(CONTROL_COUNT);
+  DROP_UNROUTED_NOTE_MESSAGES = malloc(1);
+  
+  // Added 3.4
+  CURRENT_FSET                = malloc(1);
+  
+  // Added 3.5 
+  // (these buffers have been extended but for update compatibility reasons
+  // old ones are kept in the mem map)
+  KEYBOARD_FILTERED_NOTES     = malloc(128);
+  KEY_VELOCITIES              = malloc(128);
+  CURRENT_OCTAVA_OFFSET       = malloc(1);
 );
 
 function initMidiControlNames()
@@ -822,53 +460,52 @@ function initPluginControlNames()
 
 function initOctaveLookups() (
   
-  OCTAVE_LOOKUP_BOTTOM[0] = 0; // A
-  OCTAVE_LOOKUP_BOTTOM[1] = 2; // B
-  OCTAVE_LOOKUP_BOTTOM[2] = 3; // C
-  OCTAVE_LOOKUP_BOTTOM[3] = 5; // D
-  OCTAVE_LOOKUP_BOTTOM[4] = 7; // E
-  OCTAVE_LOOKUP_BOTTOM[5] = 8; // F
-  OCTAVE_LOOKUP_BOTTOM[6] = 10; // G
+  OCTAVE_LOOKUP_BOTTOM[0] = 0; // C
+  OCTAVE_LOOKUP_BOTTOM[1] = 2; // D
+  OCTAVE_LOOKUP_BOTTOM[2] = 4; // E
+  OCTAVE_LOOKUP_BOTTOM[3] = 5; // F
+  OCTAVE_LOOKUP_BOTTOM[4] = 7; // G
+  OCTAVE_LOOKUP_BOTTOM[5] = 9; // A
+  OCTAVE_LOOKUP_BOTTOM[6] = 11; // B
   
-  // Starts at A (not C)
-  OCTAVE_BLACK_KEY_LOOKUP[0]  = 0; // A
-  OCTAVE_BLACK_KEY_LOOKUP[1]  = 1; // A#/Bb
-  OCTAVE_BLACK_KEY_LOOKUP[2]  = 0; // B
-  OCTAVE_BLACK_KEY_LOOKUP[3]  = 0; // C
-  OCTAVE_BLACK_KEY_LOOKUP[4]  = 1; // C#/Db
-  OCTAVE_BLACK_KEY_LOOKUP[5]  = 0; // D
-  OCTAVE_BLACK_KEY_LOOKUP[6]  = 1; // D#/Eb
-  OCTAVE_BLACK_KEY_LOOKUP[7]  = 0; // E
-  OCTAVE_BLACK_KEY_LOOKUP[8]  = 0; // F
-  OCTAVE_BLACK_KEY_LOOKUP[9]  = 1; // F#/Gb
-  OCTAVE_BLACK_KEY_LOOKUP[10] = 0; // G
-  OCTAVE_BLACK_KEY_LOOKUP[11] = 1; // G#/Ab     
+  OCTAVE_BLACK_KEY_LOOKUP[ 0] = 0; // C
+  OCTAVE_BLACK_KEY_LOOKUP[ 1] = 1; // C#/Db
+  OCTAVE_BLACK_KEY_LOOKUP[ 2] = 0; // D
+  OCTAVE_BLACK_KEY_LOOKUP[ 3] = 1; // D#/Eb
+  OCTAVE_BLACK_KEY_LOOKUP[ 4] = 0; // E
+  OCTAVE_BLACK_KEY_LOOKUP[ 5] = 0; // F
+  OCTAVE_BLACK_KEY_LOOKUP[ 6] = 1; // F#/Gb
+  OCTAVE_BLACK_KEY_LOOKUP[ 7] = 0; // G
+  OCTAVE_BLACK_KEY_LOOKUP[ 8] = 1; // G#/Ab     
+  OCTAVE_BLACK_KEY_LOOKUP[ 9] = 0; // A
+  OCTAVE_BLACK_KEY_LOOKUP[10] = 1; // A#/Bb
+  OCTAVE_BLACK_KEY_LOOKUP[11] = 0; // B
   
-  OCTAVE_TOP_KEY_WIDTHS[0]  = 0;   // A
-  OCTAVE_TOP_KEY_WIDTHS[1]  = 1;   // A#/Bb
-  OCTAVE_TOP_KEY_WIDTHS[2]  = 0.5; // B
-  OCTAVE_TOP_KEY_WIDTHS[3]  = 0.5; // C
-  OCTAVE_TOP_KEY_WIDTHS[4]  = 1;   // C#/Db
-  OCTAVE_TOP_KEY_WIDTHS[5]  = 0;   // D
-  OCTAVE_TOP_KEY_WIDTHS[6]  = 1;   // D#/Eb
-  OCTAVE_TOP_KEY_WIDTHS[7]  = 0.5; // E
-  OCTAVE_TOP_KEY_WIDTHS[8]  = 0.5; // F
-  OCTAVE_TOP_KEY_WIDTHS[9]  = 1;   // F#/Gb
-  OCTAVE_TOP_KEY_WIDTHS[10] = 0;   // G
-  OCTAVE_TOP_KEY_WIDTHS[11] = 1;   // G#/Ab  
+  OCTAVE_TOP_KEY_WIDTHS[ 0]   = 0.5; // C
+  OCTAVE_TOP_KEY_WIDTHS[ 1]   = 1;   // C#/Db
+  OCTAVE_TOP_KEY_WIDTHS[ 2]   = 0;   // D
+  OCTAVE_TOP_KEY_WIDTHS[ 3]   = 1;   // D#/Eb
+  OCTAVE_TOP_KEY_WIDTHS[ 4]   = 0.5; // E
+  OCTAVE_TOP_KEY_WIDTHS[ 5]   = 0.5; // F
+  OCTAVE_TOP_KEY_WIDTHS[ 6]   = 1;   // F#/Gb
+  OCTAVE_TOP_KEY_WIDTHS[ 7]   = 0;   // G
+  OCTAVE_TOP_KEY_WIDTHS[ 8]   = 1;   // G#/Ab  
+  OCTAVE_TOP_KEY_WIDTHS[ 9]   = 0;   // A
+  OCTAVE_TOP_KEY_WIDTHS[10]   = 1;   // A#/Bb
+  OCTAVE_TOP_KEY_WIDTHS[11]   = 0.5; // B
   
-  OCTAVE_TOP_KEY_OFFSETS[0]  = 0.5; // A
-  OCTAVE_TOP_KEY_OFFSETS[1]  = 0.5; // A#/Bb
-  OCTAVE_TOP_KEY_OFFSETS[2]  = 1.5; // B
-  OCTAVE_TOP_KEY_OFFSETS[3]  = 2;   // C
-  OCTAVE_TOP_KEY_OFFSETS[4]  = 2.5; // C#/Db
-  OCTAVE_TOP_KEY_OFFSETS[5]  = 3.5; // D
-  OCTAVE_TOP_KEY_OFFSETS[6]  = 3.5; // D#/Eb
-  OCTAVE_TOP_KEY_OFFSETS[7]  = 4.5; // E
-  OCTAVE_TOP_KEY_OFFSETS[8]  = 5;   // F
-  OCTAVE_TOP_KEY_OFFSETS[9]  = 5.5; // F#/Gb
-  OCTAVE_TOP_KEY_OFFSETS[10] = 6.5; // G
-  OCTAVE_TOP_KEY_OFFSETS[11] = 6.5; // G#/Ab 
+  OCTAVE_TOP_KEY_OFFSETS[ 0]  = 0;   // C
+  OCTAVE_TOP_KEY_OFFSETS[ 1]  = 0.5; // C#/Db
+  OCTAVE_TOP_KEY_OFFSETS[ 2]  = 1.5; // D
+  OCTAVE_TOP_KEY_OFFSETS[ 3]  = 1.5; // D#/Eb
+  OCTAVE_TOP_KEY_OFFSETS[ 4]  = 2.5; // E
+  OCTAVE_TOP_KEY_OFFSETS[ 5]  = 3;   // F
+  OCTAVE_TOP_KEY_OFFSETS[ 6]  = 3.5; // F#/Gb
+  OCTAVE_TOP_KEY_OFFSETS[ 7]  = 4.5; // G
+  OCTAVE_TOP_KEY_OFFSETS[ 8]  = 4.5; // G#/Ab 
+  OCTAVE_TOP_KEY_OFFSETS[ 9]  = 5.5; // A
+  OCTAVE_TOP_KEY_OFFSETS[10]  = 5.5; // A#/Bb
+  OCTAVE_TOP_KEY_OFFSETS[11]  = 6.5;   // B
 );
 
 function switchToDarkTheme() (
@@ -945,6 +582,14 @@ function switchToDarkTheme() (
   TH.INPUTLINE_EDIT_BG_H = TH.CC_LEARN_ON_H;
   TH.INPUTLINE_EDIT_TEXT = TH.CC_LEARN_ON_TEXT;
   
+  // Function tabs
+  TH.TAB_BG     = 0x181818;
+  TH.TAB_BG_H   = 0x303030;
+  TH.TAB_BG_S   = 0x404040;
+  TH.TAB_BG_S_H = 0x505050;
+  TH.TAB_TEXT   = 0x909090;
+  TH.TAB_TEXT_S = TH.DEFAULT_FONT;
+  
   // Src/Dst labels
   TH.ROUTING_INFO_CCNAME = TH.DYN_LABEL;
   TH.ROUTING_INFO_NOT_OK = 0xFF5533;
@@ -960,6 +605,8 @@ function switchToDarkTheme() (
   TH.KEY_BLACK_FILTERED_IN  = TH.MIDGREEN;
   TH.KEY_BLACK_FILTERED_OUT = 0xB24C4C;
   TH.KEY_WHITE_FILTERED_OUT = 0xE58080;
+  
+  TH.KEY_OCTAVA_NUMBER = 0x303030;
 );
 
 function switchToLightTheme() (
@@ -995,7 +642,7 @@ function switchToLightTheme() (
   TH.MONO_B              = 0xA0A0A0; 
   TH.MONO_B_H            = 0xD0D0D0;
   TH.MONO_B_TEXT         = 0xFFFFFF; 
-  TH.MONO_B_CURVE        = 0xFF5050;
+  TH.MONO_B_CURVE        = 0xFF2020;
   
   TH.CC_LEARN_ON         = 0x666600;
   TH.CC_LEARN_ON_H       = 0x888800;
@@ -1027,7 +674,6 @@ function switchToLightTheme() (
   TH.CONTROL_DISABLED_CONTRAST_MID  = 0xD3D3D3;
   TH.CONTROL_DISABLED_CONTRAST_LOW  = 0xC7C7C7;
   
-  
   // Edit input lines
   TH.INPUTLINE_BG        = TH.MONO_B;
   TH.INPUTLINE_BG_H      = TH.MONO_B_H;
@@ -1036,6 +682,14 @@ function switchToLightTheme() (
   TH.INPUTLINE_EDIT_BG   = TH.CC_LEARN_ON;
   TH.INPUTLINE_EDIT_BG_H = TH.CC_LEARN_ON_H;
   TH.INPUTLINE_EDIT_TEXT = TH.CC_LEARN_ON_TEXT;
+  
+  // Function tabs
+  TH.TAB_BG     = TH.MONO_B;
+  TH.TAB_BG_H   = TH.MONO_B_H;
+  TH.TAB_BG_S   = 0xC0C0C0;
+  TH.TAB_BG_S_H = 0xD0D0D0;
+  TH.TAB_TEXT   = TH.MONO_B_TEXT;
+  TH.TAB_TEXT_S = 0xFFFFFF;
   
   // Src/Dst labels
   TH.ROUTING_INFO_CCNAME = TH.DYN_LABEL;
@@ -1052,8 +706,1262 @@ function switchToLightTheme() (
   TH.KEY_BLACK_FILTERED_IN  = TH.MIDGREEN;
   TH.KEY_BLACK_FILTERED_OUT = 0xB24C4C;
   TH.KEY_WHITE_FILTERED_OUT = 0xE58080;
+  
+  TH.KEY_OCTAVA_NUMBER = 0x505050;
 );
 
+
+////////////////////////
+// FUNCTION SET TOOLS //
+////////////////////////
+
+// Applies a curve from gmem
+function applyGmemCurve(curve_address, x01) 
+  local(x01, sample_num_f, sample_num_il, sample_num_ir, sample_l, sample_r, curve_interp, alpha)
+( 
+  // Do some clamping cleanup first
+  x01 = min(max(x01,0),1);
+  
+  // Normalize reference space > Curve space
+  sample_num_f  = 127 * x01;
+  sample_num_il = floor(sample_num_f);
+  sample_num_ir = ceil(sample_num_f);
+  
+  // Get left sample, right sample, and linear interpolation factor
+  sample_l      = gmem[curve_address+sample_num_il];
+  sample_r      = gmem[curve_address+sample_num_ir];
+  alpha         = sample_num_f - sample_num_il;
+  
+  // Lerp : this will return a value between 0 and 127
+  curve_interp  = (1-alpha) * sample_l + alpha * sample_r;
+
+  // Return a value between 0 and 1.
+  (curve_interp);
+);
+
+function putStringInGmem(gmem_start_index, gmem_slots, str)
+  local(slen, max_len, i, si, bi, c)
+(
+  // Limit to 32 bits to avoid problems on old architectures.
+  slen    = strlen(str);        // We want to add \0
+  max_len = gmem_slots * 4 - 1; // Keep one byte for \0
+
+  si = 0;
+  while(si < gmem_slots)
+  (
+    gmem[gmem_start_index + si] = 0;
+    si += 1;
+  );
+
+  i = 0; bi = 0; si = gmem_start_index;
+  while(i<slen && i<max_len)
+  (
+    c = str_getchar(str,i);
+    
+    // Write byte.
+    gmem[si] = gmem[si] | (c<<bi);
+    
+    i   += 1;
+    bi  += 8;
+    (bi==32)?(
+      bi = 0;
+      si += 1;
+    );
+  );
+);
+
+function getStringFromGmem(gmem_start_index, gmem_slots)
+  local(c, max_len, i, bi, si, str)
+(
+  // Beware! It's specified in the doc that the string
+  // Initial value may be unpredictable. Initialize it!
+  str = #; strcpy(str,"");
+
+  max_len = gmem_slots * 4; // Keep one byte for \0
+   
+  i = 0; bi = 0; si = gmem_start_index; c = 1;
+
+  while(i<max_len && c!=0)
+  (
+    c = (gmem[si]>>bi) & 0xFF;
+  
+    (c!=0)?(
+      str_setchar(str,i,c);
+    );
+    
+    i   += 1;
+    bi  += 8;
+    (bi==32)?(
+      bi = 0;
+      si += 1;
+    );
+  );
+
+  str;
+);
+
+function getFSetAddress(set_num) (
+  GMEM_FSET_START + (FSET_SIZE * set_num);
+);
+function getFSetCount() (
+  gmem[GMEM_FSET_COUNT];
+);
+
+function getFSetId(set_num) (
+  getStringFromGmem(getFSetAddress(set_num) + FSET_OFFSET_ID, FSET_ID_MAXSLOT);
+);
+function getFSetTab(set_num) (
+  getStringFromGmem(getFSetAddress(set_num) + FSET_OFFSET_TAB, FSET_TAB_MAXSLOT);
+);
+function getFSetDescription(set_num) (
+  getStringFromGmem(getFSetAddress(set_num) + FSET_OFFSET_DESC, FSET_DESC_MAXSLOT);
+);
+
+function isFSetParametric(set_num) (
+ (gmem[getFSetAddress(set_num) + FSET_OFFSET_IS_PARAMETRIC] == 1);
+);
+function setFSetIsParametric(set_num, v) (
+  gmem[getFSetAddress(set_num) + FSET_OFFSET_IS_PARAMETRIC] = v;
+);
+function getFSetParametricID(set_num) (
+  gmem[getFSetAddress(set_num) + FSET_OFFSET_PARAMETRIC_ID];
+);
+function setFSetParametricID(set_num, id) (
+  gmem[getFSetAddress(set_num) + FSET_OFFSET_PARAMETRIC_ID] = id;
+);
+function getFSetParameter(set_num) (
+  gmem[getFSetAddress(set_num) + FSET_OFFSET_PARAM];
+);
+function setFSetParameter(set_num, param) (
+  gmem[getFSetAddress(set_num) + FSET_OFFSET_PARAM] = param;
+);
+
+
+function getFSetFunctionAddress(set_num, row_num, col_num) (
+  getFSetAddress(set_num) + FSET_OFFSET_FUNCTIONS + FSF_SIZE * (row_num * FSET_COL_COUNT + col_num);
+);
+function getFSetFunctionCurveAddress(set_num, row_num, col_num) (
+  getFSetFunctionAddress(set_num, row_num, col_num) + FSF_OFFSET_CURVE;
+);
+function getFSetFunctionPreviewAddress(set_num, row_num, col_num) (
+  getFSetFunctionAddress(set_num, row_num, col_num) + FSF_OFFSET_PREVIEW;
+);
+function isFSetFunctionDefined(set_num, row_num, col_num) (
+  (gmem[getFSetFunctionAddress(set_num, row_num, col_num) + FSF_OFFSET_DEFINED] == 1);
+);
+function setFSetFunctionDefined(set_num, row_num, col_num, is_defined)(
+  gmem[getFSetFunctionAddress(set_num, row_num, col_num) + FSF_OFFSET_DEFINED] = is_defined;
+);
+
+
+function findFSetById(set_id)
+  local(s,sn,si,found,fset_addr)
+(
+  s = #;
+  strncpy(s,set_id,FSET_ID_MAXLEN); // Limit to 4 chars      
+
+  si    = 0;
+  found = -1;
+  
+  while(si<gmem[GMEM_FSET_COUNT] && found == -1)
+  (
+  
+    fset_addr = getFSetAddress(si);
+    sn        = getStringFromGmem(fset_addr + FSET_OFFSET_ID, 2);
+    
+    (strcmp(sn,s) == 0)?(
+      found = si;
+    );
+    
+    si += 1;
+  );
+  
+  found;
+);
+
+function createFSet(fset_id, fset_tab, fset_desc) 
+  local(fset_addr, fset_num, s, mi)
+(
+  // Allocate set
+  fset_addr     = galloc(FSET_SIZE);
+ 
+  // Update counts
+  fset_num = gmem[GMEM_FSET_COUNT];
+  gmem[GMEM_FSET_COUNT] += 1;
+  
+  // Nullify everything. Full memory cleanup.
+  mi = 0;
+  while(mi < FSET_SIZE) (
+    gmem[fset_addr+mi]=0;
+    mi+=1;
+  );
+  
+  // Initialize name/tab/desc limit to max chars  
+  s = #;
+  strncpy(s, fset_id, FSET_ID_MAXLEN);     
+  putStringInGmem(fset_addr + FSET_OFFSET_ID, FSET_ID_MAXSLOT, s);
+  strncpy(s, fset_tab, FSET_TAB_MAXLEN);     
+  putStringInGmem(fset_addr + FSET_OFFSET_TAB, FSET_TAB_MAXSLOT, s);  
+  strncpy(s,fset_desc, FSET_DESC_MAXLEN);
+  putStringInGmem(fset_addr + FSET_OFFSET_DESC, FSET_DESC_MAXSLOT, s);
+  
+  fset_num;
+);
+
+function getCurrentFSet() (
+  CURRENT_FSET[0];
+);
+function setCurrentFSet(set_num) (
+  CURRENT_FSET[0] = set_num;
+);
+
+function getParametricFSetParamRounding(pid) (
+  (pid == FSET_PARAMETRIC_XN_ID || pid == FSET_PARAMETRIC_EXPNX_ID)?(
+    5;
+  ):(
+    1;
+  );
+);
+
+function getParametricFSetParameterName(pid) 
+  local(param_label)
+(
+  // Draw slider
+  param_label = "";
+  
+  (pid == FSET_PARAMETRIC_LINEAR_ID)?(param_label = "Cut");
+  (pid == FSET_PARAMETRIC_EXPNX_ID)?(param_label = "N");
+  (pid == FSET_PARAMETRIC_XN_ID)?(param_label = "N");
+  
+  param_label;
+);
+
+function getParametricFSetParameterMin(pid) 
+  local(mv)
+(
+  mv = 0;
+  
+  (pid == FSET_PARAMETRIC_LINEAR_ID)?(mv = 0);
+  (pid == FSET_PARAMETRIC_EXPNX_ID)?(mv = 1);
+  (pid == FSET_PARAMETRIC_XN_ID)?(mv = 1);
+  
+  mv;
+);
+
+function getParametricFSetParameterMax(pid) 
+  local(mv)
+(
+  mv = 0;
+  
+  (pid == FSET_PARAMETRIC_LINEAR_ID)?(mv = 1);
+  (pid == FSET_PARAMETRIC_EXPNX_ID)?(mv = 10);
+  (pid == FSET_PARAMETRIC_XN_ID)?(mv = 10);
+  
+  mv;
+);
+
+
+/////////////////////
+//  Parsing tools  //
+/////////////////////
+
+function isBlankChar(char) 
+(
+  (char == 0x20 || char == 0x0A || char == 0x0D || char == 0x09);
+);
+
+
+// Call on a ctx
+function FSCTX_EatBlank()
+  local(is_space, c)
+(
+  is_space = 1;
+  
+  while(is_space && this.cursor < this.len)
+  (
+    c         = str_getchar(this.str, this.cursor);
+    is_space  = isBlankChar(c);
+    (is_space)?(
+      this.cursor += 1;
+    );
+  );
+);
+
+// Call on a ctx
+function FSCTX_NextChar()
+(
+  str_getchar(this.str, this.cursor);
+);
+
+// Call on a ctx
+function FSCTX_AtEnd()
+(
+  (this.cursor >= this.len);
+);
+
+// Call on a ctx
+function FSCTX_EatNextToken()
+  local()
+(
+  ctx.tok_start = this.cursor;
+  
+  // 0x7C == '|', it's the pipe character
+  while(!ctx.FSCTX_AtEnd() && ctx.FSCTX_NextChar() != 0x7C)
+  (
+    this.cursor += 1;
+  );
+  
+  ctx.tok_len = this.cursor - ctx.tok_start;
+  
+  // Also eat separator
+  (ctx.FSCTX_NextChar() == 0x7C)?(
+    this.cursor += 1;
+  )
+);
+
+function FSCTX_BuildFromLine(str)
+  local(c, trimmed)
+(
+  this.str    = str;
+  this.len    = strlen(str);
+  this.cursor = 0;
+  
+  // Trim the line end
+  (this.len > 0)?(
+  
+    trimmed = 0;
+    while(this.len > 0 && !trimmed)
+    (
+      c = str_getchar(this.str, this.len-1);
+      (isBlankChar(c))?(
+        this.len -= 1;
+      ):(
+        trimmed = 1;
+      );
+    );
+  );
+  
+  // Trim the line start
+  this.FSCTX_EatBlank();
+);
+
+function FSCTX_ReadLibParam(p)
+(
+  (this.FSCTX_AtEnd())?(
+    // Refuse to read
+    strcpy(p,"");
+    -1;
+  ):(
+    this.FSCTX_EatNextToken();
+    strcpy_substr(p,this.str,this.tok_start,this.tok_len);
+    this.tok_len;
+  );
+);
+
+function precalcFSetFunctionPreview(set_num, row_num, col_num)
+  local(vi, off, curve_addr, preview_addr)
+(
+  vi = 0;
+  curve_addr    = getFSetFunctionCurveAddress(set_num, row_num, col_num);
+  preview_addr  = getFSetFunctionPreviewAddress(set_num, row_num, col_num);
+  while(vi < PREVIEWSIZE)
+  (
+    // off = curve_addr + 4*vi;
+    //gmem[preview_addr+vi] = (gmem[off] + gmem[off+1] + gmem[off+2] + gmem[off+3])/(4);
+    gmem[preview_addr+vi] = applyGmemCurve(curve_addr, vi/(PREVIEWSIZE-1));
+    vi += 1;
+  );
+);
+
+function addFunctionToFSet(set_num, row_num, col_num, func_path)
+  local(handle, ctx, set_addr, curve_addr, preview_addr, set_name, val, vcount, vi, fname, cnum, p1, str)
+(
+  set_addr = getFSetAddress(set_num);
+  
+  fname = #;
+  sprintf(fname,"talagan_MIDI CC Mapper X/func/%s.txt",func_path);
+  
+  handle = file_open(fname);
+    
+  (handle != -1)?(
+    vcount = 0;
+  
+    while(file_avail(handle)>0)
+    (
+      str = #;
+      file_string(handle,str);
+    
+      ctx = 0;
+      ctx.FSCTX_BuildFromLine(str);
+    
+      // Coments are available through # or @, ignore these lines.
+      // Also ignore blank lines.
+      // (reapack uses @ for some directives).
+      (!ctx.FSCTX_AtEnd() && ctx.FSCTX_NextChar() != 0x23 && ctx.FSCTX_NextChar() != 0x40)?(
+      
+        p1 = #;
+        ctx.FSCTX_ReadLibParam(p1);
+        match("%f",p1,val);
+      
+        (vcount < CURVESIZE)?(
+          gmem[GMEM_LOAD_CURVE_BUF + vcount] = val;
+        );
+      
+        vcount += 1;
+      );
+    );
+  
+    (vcount == CURVESIZE)?(
+  
+      // File is OK, accept curve
+      // Copy to destination.
+      vi         = 0;
+      curve_addr = getFSetFunctionCurveAddress(set_num, row_num, col_num);
+      
+      while(vi < CURVESIZE)
+      (
+        // Copy
+        gmem[curve_addr+vi] = gmem[GMEM_LOAD_CURVE_BUF+vi];
+        vi+=1;
+      );
+      
+      precalcFSetFunctionPreview(set_num, row_num, col_num);
+      setFSetFunctionDefined(set_num, row_num, col_num, 1);
+    );
+  
+    file_close(handle);
+  );
+);
+
+function xn(x01,n) (
+  pow(x01,n);
+);
+function ixn(x01,n) (
+  pow(x01, 1.0/n);
+);
+function expnx(x01,n) (
+  (exp(n * x01) - 1)/(exp(n)-1);
+);
+function iexpnx(x01, n) (
+  log( x01 * (exp(n) - 1) + 1)/n;
+);
+
+function xf(pid, x01, n) (
+  (pid == FSET_PARAMETRIC_XN_ID)?(xn(x01,n)):(expnx(x01,n));
+);
+function ixf(pid, x01, n) (
+  (pid == FSET_PARAMETRIC_XN_ID)?(ixn(x01,n)):(iexpnx(x01,n));
+);
+
+function xfStepBL(pid, x01, n) (
+  (x01 <= 0.5)?(
+    x01 = 2 * x01;
+    xf(pid, x01 , n)/2;
+  ):(
+    x01 = 2 * (1 - x01);
+    1 - xf(pid, x01, n)/2;
+  );
+);
+
+function xfStepBR(pid, x01, n) (
+  (x01 <= 0.5)?(
+    x01 = 2 * x01;
+    (1 - ixf(pid, 1 - x01, n))/2;
+  ):(
+    x01 = 2 * (1 - x01);
+    1 - (1 - ixf(pid, 1 - x01, n))/2;
+  );
+);
+
+function xfStepTR(pid, x01, n) (
+  (x01 <= 0.5)?(
+    x01 = 2 * x01;
+    (1 - xf(pid, 1 - x01, n))/2;
+  ):(
+    x01 = 2 * (1 - x01);
+    1 - (1 - xf(pid, 1 - x01, n))/2;
+  );
+);
+
+function xfStepTL(pid, x01, n) (
+  (x01 <= 0.5)?(
+    ixf(pid, 2 * x01, n)/2;
+  ):(
+    1 - ixf(pid, 2 * (1 - x01), n)/2;
+  );
+);
+
+function xnExpnxFamilyVal(pid, row_num, col_num, x01, n, point_count) 
+  local(ret)
+(
+  ret = -1;
+  (row_num == 0)?(
+    (col_num == 0)?(
+      ret = xf(pid, x01, n);
+    );
+    (col_num == 1)?(
+      x01 = 1 - x01;
+      ret = xf(pid, x01, n);
+    );
+    (col_num == 3)?(
+      x01 = 1 - x01;
+      ret = 1 - ixf(pid, x01, n);
+    );
+    (col_num == 4)?(
+      ret = 1 - ixf(pid, x01, n); 
+    );
+  );
+  (row_num == 1)?(
+    (col_num == 0)?(
+      x01 = 1 - x01;
+      ret = 1 - xf(pid, x01, n);
+    );
+    (col_num == 1)?(
+      ret = 1 - xf(pid, x01, n);
+    );
+    (col_num == 3)?(
+      ret = ixf(pid, x01, n);
+    );
+    (col_num == 4)?(
+      x01 = 1 - x01;
+      ret = ixf(pid, x01, n);
+    );
+  );
+  (row_num == 2)?(
+    (col_num == 0)?(
+      ret = xfStepBL(pid, x01, n);
+    );
+    (col_num == 1)?(
+      x01 = 1 - x01;
+      ret = xfStepBL(pid, x01, n);
+    );
+    (col_num == 3)?(
+      ret = xfStepBR(pid, x01, n);
+    );
+    (col_num == 4)?(
+      x01 = 1 - x01;
+      ret = xfStepBR(pid, x01, n);
+    );
+  );
+  (row_num == 3)?(
+    (col_num == 0)?(
+      ret = xfStepTR(pid, x01, n);
+    );
+    (col_num == 1)?(
+      x01 = 1 - x01;
+      ret = xfStepTR(pid, x01, n);
+    );
+  
+    (col_num == 3)?(
+      ret = xfStepTL(pid, x01, n);
+    );
+    (col_num == 4)?(
+      x01 = 1 - x01;
+      ret = xfStepTL(pid, x01, n);
+    );
+  );
+  (row_num == 4)?(
+    (col_num == 0)?(
+      ret = (x01 <= 0.5)?(
+        x01 = 2 * x01;
+        xf(pid, 1 - x01, n);
+      ):(
+        x01 = 2 * (1 - x01);
+        xf(pid, 1 - x01, n);
+      );
+    );
+    (col_num == 1)?(
+      ret = (x01 <= 0.5)?(
+        x01 = 2 * x01;
+        1 - xf(pid, 1 - x01, n);
+      ):(
+        x01 = 2 * (1 - x01);
+        1 - xf(pid, 1 - x01, n);
+      );
+    );
+    (col_num == 2)?(
+      ret = (x01 <= 0.5)?(
+        x01 = 2 * x01;
+        xfStepBL(pid, x01, n);
+      ):(
+        x01 = 2 * (1 - x01);
+        xfStepBL(pid, x01, n);
+      );
+    );
+    (col_num == 3)?(
+      ret = (x01 <= 0.5)?(
+        x01 = 2 * x01;
+        1 - xfStepBL(pid, x01, n);
+      ):(
+        x01 = 2 * (1 - x01);
+        1 - xfStepBL(pid, x01, n);
+      );
+    );
+  );
+  ret;
+);
+
+function linFamilyVal(row_num, col_num, x01, cut, point_count) 
+  local(ret, granu)
+(
+  // Because we generate some discontinuous functions
+  // Handle special cases where the "cut" param is very close to 0 or 1
+  granu = 1/(point_count-1);
+  (cut != 0 && cut !=1)?(
+    (cut < granu)?(
+      // Force rounding to first non-zero slot
+      cut = granu; 
+    ):(
+      (cut > (1 - granu))?(
+        // Force rounding to last non-1 slot
+        cut = 1-granu; 
+      ):(
+        // Round to closest slot
+        cut = granu * roundi(cut*(point_count-1));
+      );
+    );
+  );
+  
+  ret = -1;
+  (row_num == 0)?(
+  
+    (col_num == 0)?(
+      ret = x01;
+    );
+    (col_num == 1)?(
+      ret = 1 - x01;
+    );
+  );
+  
+  (row_num == 1)?(
+    (col_num == 0)?(
+      ret = (cut == 0)?(1):( (x01<=cut)?(x01/cut):(1));
+    );
+    (col_num == 1)?(
+      ret = (cut == 1)?(1):( (x01<=cut)?(1):(1 - (x01-cut)/(1-cut)));
+    );
+    (col_num == 2)?(
+      (cut > 0.5)?(cut = 1 - cut);
+      ret = (x01 < cut)?( x01/cut ):( (x01 > 1 - cut)?( (1 - x01)/cut ):( 1 ) );
+    );
+    (col_num == 3)?(
+      (cut > 0.5)?(cut = 1 - cut);
+      ret = ( (x01 < cut || x01 > (1-cut) )?(0):(1));
+    );
+    (col_num == 4)?(
+      (cut > 0.5)?(cut = 1 - cut);
+      ret = (x01 < cut)?(0):( (x01 > 1 - cut)?(1):( (x01-cut)/(1-2*cut)));
+    ); 
+    (col_num == 5)?(
+      ret = (cut == 1)?(0):( (x01<cut)?(0):(1));
+    );
+  );
+  
+  (row_num == 2)?(
+    (col_num == 1)?(
+      ret = (x01>=cut)?((x01-cut)/(1-cut)):(0);
+    );
+    (col_num == 0)?(
+      ret = (cut == 0)?(0):( (x01<=cut)?(1-(x01/cut)):(0) );
+    );
+    (col_num == 2)?(
+      (cut > 0.5)?(cut = 1 - cut);
+      ret = 1 -((x01 < cut)?( x01/cut ):( (x01 > 1 - cut)?( (1 - x01)/cut ):( 1 )));
+    ); 
+    (col_num == 3)?(
+      (cut > 0.5)?(cut = 1 - cut);
+      ret = ( (x01 < cut || x01 > (1-cut) )?(1):(0));
+    );     
+    (col_num == 4)?(
+      (cut > 0.5)?(cut = 1 - cut);
+      ret = 1 - ((x01 < cut)?(0):( (x01 > 1 - cut)?(1):( (x01-cut)/(1-2*cut))));
+    ); 
+    (col_num == 5)?(
+      ret = (cut == 1)?(1):( (x01>=cut)?(0):(1));
+    );   
+  );
+  
+  (row_num == 3)?(
+  
+    (col_num == 0)?(
+      ret = (cut == 0)?(0):( (x01<=cut)?(x01/cut):(0));
+    );
+    (col_num == 1)?(
+      ret = (cut == 1)?(0):( (x01>=cut)?(1 - (x01-cut)/(1-cut)):(0));
+    );
+    (col_num == 2)?(
+      ret = (cut == 0)?(0):( (x01<=cut)?(x01):(0));
+    );
+    (col_num == 3)?(
+      ret = (cut == 1)?(0):( (x01>=cut)?(1-x01):(0));
+    );
+    (col_num == 4)?(
+      ret = (cut == 1)?(0):( (x01>=cut)?(x01):(0));
+    );
+    (col_num == 5)?(
+      ret = (cut == 0)?(0):( (x01<=cut)?(1-x01):(0));
+    );
+  );
+  
+  (row_num == 4)?(
+    (col_num == 0)?(
+      ret = 1 - ((cut == 0)?(0):( (x01<=cut)?(x01/cut):(0)));
+    );
+    (col_num == 1)?(
+      ret = 1 - ((cut == 1)?(0):( (x01>=cut)?(1 - (x01-cut)/(1-cut)):(0)));
+    );
+    (col_num == 2)?(
+      ret = 1 - ((cut == 0)?(0):( (x01<=cut)?(x01):(0)));
+    );
+    (col_num == 3)?(
+      ret = 1 - ((cut == 1)?(0):( (x01>=cut)?(1-x01):(0)));
+    );
+    (col_num == 4)?(
+      ret = 1 - ((cut == 1)?(0):( (x01>=cut)?(x01):(0)));
+    );
+    (col_num == 5)?(
+      ret = 1 - ((cut == 0)?(0):( (x01<=cut)?(1-x01):(0)));
+    );
+  );
+  
+  ret;
+);
+
+function parametricSetVal(pid, row_num, col_num, x01, n, point_count) (
+  (pid == FSET_PARAMETRIC_XN_ID || pid == FSET_PARAMETRIC_EXPNX_ID)?(
+    xnExpnxFamilyVal(pid, row_num, col_num, x01, n, point_count);
+  ):(
+    linFamilyVal(row_num, col_num, x01, n, point_count);
+  );
+);
+
+function precalcParametricSet(set_num)
+  local(pid, ri, ci, si, param, x01, func_address, preview_address)
+(
+  param = getFSetParameter(set_num);
+  pid   = getFSetParametricID(set_num);
+    
+  ri = 0;
+  while(ri < FSET_ROW_COUNT) 
+  (
+    ci = 0;
+    while(ci < FSET_COL_COUNT) 
+    (
+      // Calculate value at 0. If -1, the col/row is not supported.
+      (parametricSetVal(pid, ri, ci, 0, param, CURVESIZE) != -1)?(
+      
+        func_address = getFSetFunctionCurveAddress(set_num, ri, ci);
+        si = 0;
+        
+        while(si < CURVESIZE) 
+        (  
+          x01 = si/(CURVESIZE - 1);
+          gmem[func_address + si] = parametricSetVal(pid, ri, ci, x01, param, CURVESIZE);
+          si += 1;
+        );  
+
+        // NO! Use fine-grained computation instead
+        // Previews of discontinuous functions are cleaner
+        // If computed directly with the equations
+        // precalcFSetFunctionPreview(set_num, ri, ci);
+        
+        preview_address = getFSetFunctionPreviewAddress(set_num, ri, ci);
+           
+        si = 0;   
+        while(si < PREVIEWSIZE) 
+        (  
+          x01 = si/(PREVIEWSIZE - 1);
+          gmem[preview_address + si] = parametricSetVal(pid, ri, ci, x01, param, PREVIEWSIZE);
+          si += 1;
+        );  
+        
+        setFSetFunctionDefined(set_num, ri, ci, 1);
+      );
+      ci += 1;
+    );
+    ri += 1;
+  );
+);
+
+function createLinearParametricFSet()
+  local(set_num)
+(
+  set_num = createFSet("|lin|",   "Linear",   "Parametric linear fset");  
+  setFSetIsParametric(set_num,1);
+  setFSetParametricID(set_num, FSET_PARAMETRIC_LINEAR_ID);
+  setFSetParameter(set_num, 0.5);
+  precalcParametricSet(set_num);       
+);
+     
+function createExpNXParametricFSet()
+  local(set_num)
+(
+  set_num = createFSet("|expnx|", "exp(n.x)", "Parametric exp(n^x) fset");
+  setFSetIsParametric(set_num,1);
+  setFSetParametricID(set_num, FSET_PARAMETRIC_EXPNX_ID);
+  setFSetParameter(set_num, 2);
+  precalcParametricSet(set_num);        
+);
+
+function createXNParametricFset()
+  local(set_num)
+(
+  set_num = createFSet("|xn|",    "x^n",      "Parametric x^n fset");
+  setFSetIsParametric(set_num,1);
+  setFSetParametricID(set_num, FSET_PARAMETRIC_XN_ID);
+  setFSetParameter(set_num, 2);
+  precalcParametricSet(set_num);       
+);        
+
+function readLibFile(lib_name) 
+  local(handle, lc, str, fset_num, p1, p2, p3, p4, p5, p6, row_num, col_num, file_ok)
+(
+  handle  = file_open(lib_name);
+  file_ok = (handle != -1);
+
+  lc = 0;
+  
+  while(file_avail(handle)>0)
+  (
+    str = #;
+    file_string(handle,str);
+    
+    ctx = 0;
+    ctx.FSCTX_BuildFromLine(str);
+    
+    // Coments are available through # or @ 
+    // (reapack uses @ for some directives)
+    (!ctx.FSCTX_AtEnd() && ctx.FSCTX_NextChar() != 0x23 && ctx.FSCTX_NextChar() != 0x40)?(
+
+      // Ok, this is a non commented line.
+      // Check it.
+      p1 = #; p2 = #; p3 = #; p4 = #; p5 = #; p6 = #;
+      
+      (!ctx.FSCTX_AtEnd())?(ctx.FSCTX_ReadLibParam(p1));
+      (!ctx.FSCTX_AtEnd())?(ctx.FSCTX_ReadLibParam(p2));
+      (!ctx.FSCTX_AtEnd())?(ctx.FSCTX_ReadLibParam(p3));
+      (!ctx.FSCTX_AtEnd())?(ctx.FSCTX_ReadLibParam(p4));
+      (!ctx.FSCTX_AtEnd())?(ctx.FSCTX_ReadLibParam(p5));
+      (!ctx.FSCTX_AtEnd())?(ctx.FSCTX_ReadLibParam(p6));
+      
+      (strcmp(p1, "addpset") == 0)?(
+  
+        (strcmp(p2,"linear") == 0)?(
+          createLinearParametricFSet();
+        );
+        
+        (strcmp(p2,"expnx") == 0)?(
+          createExpNXParametricFSet();
+        );
+        
+        (strcmp(p2,"xn") == 0)?(
+          createXNParametricFset();
+        );
+      );
+      
+      (strcmp(p1, "addset") == 0)?(
+        (strlen(p2)>0)?(           
+          fset_num = findFSetById(p2);
+          (fset_num == -1)?(
+            createFSet(p2, p3, p4);
+          );
+        );
+      );
+  
+      (strcmp(p1, "addfunc") == 0)?(
+        // p2 : set 
+        // p3 : row 
+        // p4 : col 
+        // p5 : subpath
+        (strlen(p2)>0 && strlen(p3)>0 && strlen(p4)>0 && strlen(p5)>0)?(
+        
+          fset_num = findFSetById(p2);
+          (fset_num != -1)?(
+            
+            row_num = 0;
+            col_num = 0;
+            match("%d",p3,row_num);
+            match("%d",p4,col_num);
+                                    
+            (row_num >= 1 && row_num <= FSET_ROW_COUNT && col_num >= 1 && col_num <= FSET_COL_COUNT)?(
+              row_num -= 1; // Human > Index
+              col_num -= 1; // Human > Index
+              
+              addFunctionToFset(fset_num, row_num, col_num, p5);
+            );
+          );
+        );
+      );
+       
+    );
+    
+    lc+=1;
+  );
+  file_Close(handle);
+  
+  (file_ok);
+);
+
+function clearLoadedLibs()
+(
+  gmem[GMEM_FSET_COUNT] = 0;
+  GMEM_PTR              = GMEM_FSET_START;
+  setCurrentFSet(-1);
+);
+
+function readLibFiles() 
+  local(success)
+(
+  clearLoadedLibs();
+   
+  success = readLibFile("talagan_MIDI CC Mapper X/user_lib.txt");
+  (!success)?(
+    readLibFile("talagan_MIDI CC Mapper X/lib.txt");
+  );
+  
+  (getFsetCount()>0)?(
+    setCurrentFSet(0);
+  );
+);
+
+
+/////////////////////////
+//    MEMORY ACCESS    //
+/////////////////////////
+
+function curveAddress(cnum)
+(
+  (cnum <0 || cnum >= CONTROL_COUNT)?(-1):(
+    CURVES + (cnum * CURVESIZE)
+  );
+);
+
+function shouldDropUnroutedCCMessages() (
+  (DROP_UNROUTED_CC_MESSAGES[0] == 1);
+);
+
+function shouldDropUnroutedNoteMessages() (
+  (DROP_UNROUTED_NOTE_MESSAGES[0] == 1);
+);
+
+function isKeyboardFilteringEnabled() (
+  (KEYBOARD_FILTERING_ENABLED[0] == 1);
+);
+
+function isKeyboardTranspositionEnabled() (
+  (KEYBOARD_TRANSPOSE_ENABLED[0] == 1);
+);
+
+function isRedKey(k) (
+  (KEYBOARD_FILTERED_NOTES[k]==1)
+);
+
+
+/////////////////////////
+//        MATH         //
+/////////////////////////
+
+// Applies a curve, returns a value from 0 to 1.
+
+function applyCurve(blk_control, x01) 
+  local(attached_curve, x01, sample_num_f, sample_num_il, sample_num_ir, sample_l, sample_r, curve_interp, alpha)
+(
+  attached_curve = curveAddress(blk_control);
+  
+  // Do some clamping cleanup first
+  x01 = min(max(x01,0),1);
+  
+  // Normalize reference space > Curve space
+  sample_num_f  = 127 * x01;
+  sample_num_il = floor(sample_num_f);
+  sample_num_ir = ceil(sample_num_f);
+  
+  // Get left sample, right sample, and linear interpolation factor
+  sample_l      = attached_curve[sample_num_il];
+  sample_r      = attached_curve[sample_num_ir];
+  alpha         = sample_num_f - sample_num_il;
+  
+  // Lerp : this will return a value between 0 and 127
+  curve_interp  = (1-alpha) * sample_l + alpha * sample_r;
+
+  // Return a value between 0 and 1.
+  (curve_interp/127.0);
+);
+
+//////////////////////
+//       MIDI       //
+//////////////////////
+
+g_hres_h = 0;
+g_hres_l = 0;
+
+// Converts a floating value of a CC **between 0 and 1**
+// To high/low parts of a 14-bit hres
+// For CC #0 to #31 (with respective #32 to #63).
+function midiCCHresF012I(f01) 
+  local(ival) 
+(  
+  // Clamp to 0..1 for safety
+  f01  = max(min(f01,1),0);
+  
+  // Convert to 14-bit space
+  ival = roundi(f01 * 16383);
+  
+  // Floor to int for the high part
+  g_hres_h  = (ival >> 7);
+  g_hres_l  = ival & 0x7F;
+);
+
+// Inverse of midiCCHresF012I
+function midiCCHresI2F01(high,low)
+  local(val01, high, low, ival)
+(
+  
+  // Sanitize
+  high = max(min(high,127),0);
+  low  = max(min(low,127),0);
+  
+  // 14-bit value
+  ival = (high << 7) + low;
+  
+  // Put it in 0-1 space
+  val01 = ival/16383;
+);
+
+// Converts a floating value of a key velocity **between 0 and 1**
+// To high/low parts of a 14-bit hres
+//
+// Specification for this
+// https://forum.cockos.com/showthread.php?t=83782
+function midiVelocityHresF012I(f01) 
+  local(ival) 
+(
+  
+  // Clamp to 0..1 for safety
+  f01  = max(min(f01,1),0);
+
+  // Convert to 14-bit space
+  // Caution : only 16256+1 values are possible (127*128 non zero values + the zero case)
+  // (All LSB values for MSB=0 NOTE OFF are not allowed)
+  ival = roundi(f01 * 16256);
+  
+  (ival==0)?(
+    g_hres_h = 0;
+    g_hres_l = 0;
+  ):(
+    // ival is in [1..16256] so put it in [0..16255]
+    ival -= 1; 
+    // Floor to int for the high part
+    // Add 1 for NOTE_ON
+    g_hres_h  = (ival >> 7)+1;
+    g_hres_l  = ival & 0x7F;
+  )
+);
+
+// Inverse of midiVelocityHresF012I
+function midiVelocityHresI2F01(high,low) 
+  local(val01, ival) 
+(
+
+  // Sanitize
+  high = max(min(high,127),0);
+  low  = max(min(low,127),0);
+    
+  high==0?(
+    // If high is equal to 0
+    // Low = 0 is not allowed for NOTE OFF compatibility
+    // So just return 0, it's a NOTE OFF, period.
+    0;
+  ):(
+  
+    // This said, we can start at 0.
+    high = high-1;
+    
+    // 14-bit value
+    ival = (high << 7) + low;
+    
+    // Avoid the zero case, ival is between [0..16255] so put all between [1..16256]
+    ival += 1;
+    
+    // Put it in 0-1 space
+    // Only 16256+1 values are available since we rejected all LSB values for MSB=0
+    val01 = ival/16256;
+    val01 = max(min(val01,1),0);
+  );
+);
+
+// Octave number for a floating x axis of white keys
+function octaveForBottomPos(keyboard_floating_pos) (
+  floor(keyboard_floating_pos/7);
+);
+
+// Octave note for a floating x axis of white keys
+// For the bottom row of the keyboard (only white keys here)
+function octaveNoteForBottomPos(keyboard_bottom_floating_pos) (
+  OCTAVE_LOOKUP_BOTTOM[floor(keyboard_bottom_floating_pos) % 7];
+);
+
+// Is key black? (keys are numbered from 0 to 87)
+function keyIsBlack(key_num) (
+  OCTAVE_BLACK_KEY_LOOKUP[key_num % 12] == 1;
+);
+
+// Key octave
+function octaveForKey(key_num) (
+  floor(key_num / 12);
+);
+
+// Key for midi note
+function midiNoteToKey(midi_note) (
+  midi_note; // A0
+);
+
+// Midi note to key
+function keyToMidiNote(key) (
+  key; // A0
+);
+
+
+// For a #CC, returns LSB counterpart or -1 if it hasn't.
+function ccLsbCounterpart(ccnum) local(ret) (
+  ret = -1;
+  
+  (ccnum>=0 && ccnum < 32)?(
+    ret = ccnum + 32;
+  );
+  
+  ret;
+);
+
+// For a #CC, returns MSB counterpart or -1 if it hasn't.
+function ccMsbCounterpart(ccnum) local(ret) (
+  ret = -1;
+  
+  (ccnum>=32 && ccnum < 64)?(
+    ret = ccnum - 32;
+  );
+  
+  ret;
+);
+
+function isALsbCC(ccnum) (
+  // 88 is the LSB Channel for velocity.
+  (ccMsbCounterpart(ccnum) != -1 || ccnum == 88);
+);
+
+function isAMsbCC(ccnum) (
+  // 88 is the LSB Channel for velocity.
+  (ccLsbCounterpart(ccnum) != -1);
+);
+
+// High res midi input? (it's a global param)
+function isHighResMidiInputEnabled()
+(
+  HIGHRES_INPUT_ENABLED[0];
+);
+
+// High res output? (it's a local param)
+function isHighResMidiOutputEnabledForControl(control) 
+(
+  CONTROL_HIGHRES_OUTPUT_ENABLED[control];
+);
+
+function controlHasOperationalHighResOutput(control)
+  local(hr_is_legit_for_control, hr_is_enabled)
+(
+  hr_is_legit_for_control = (control == CONTROL_VELOCITY || ccLsbCounterpart(CONTROL_DSTS[control])!=-1);
+  hr_is_enabled           = isHighResMidiOutputEnabledForControl(control);
+  
+  (hr_is_legit_for_control && hr_is_enabled);
+);
+
+function controlCurrentBound01(control,is_min)
+  local(lsb,msb)
+(
+  msb = (is_min)?(CONTROL_MINS_MSB[control]):(CONTROL_MAXS_MSB[control]);
+ 
+  (controlHasOperationalHighResOutput(control))?(
+    lsb = (is_min)?(CONTROL_MINS_LSB[control]):(CONTROL_MAXS_LSB[control]);
+    
+    (control == CONTROL_VELOCITY)?(
+      midiVelocityHresI2F01(msb,lsb);
+    ):(
+      midiCCHresI2F01(msb,lsb);
+    );
+  ):(
+    msb/127.0;
+  );
+);
+
+function controlCurrentMinBound01(control)
+(
+  controlCurrentBound01(control,1);
+);
+
+function controlCurrentMaxBound01(control)
+(
+  controlCurrentBound01(control,0);
+);
+
+
+// Is the CC learnable? (in high res, we don't allow LSB controls to be learnable)
+function isCCLearnable(ccnum) (
+  (!isHighResMidiInputEnabled())?(1):(!isALsbCC(ccnum););
+);
+
+function enableCCLearn()
+(
+  g_cc_learn = 1;
+);
+
+function disableCCLearn()
+(
+  g_cc_learn = 0;
+);
+
+function isCCLearning() 
+(
+  (g_cc_learn == 1);
+);
+
+
+/////////////////////
+//  INIT FUNCTIONS //
+/////////////////////
+
+function knobTic(val, x_or_y) 
+  local(ret, v1, v2)
+(
+  // Clamp val between 0 and 1
+  val = min(val,0.99999);
+  val = max(0,val);
+  
+  val = 10*val;
+  
+  v1 = floor(val) | 0; // intify, v1 between 0 and 9
+  v2 = (v1 + 1) | 0;
+  
+  (x_or_y == 1)?
+  ( 
+    ret = KNOB_TICS_X[v1] + (val-v1)*(KNOB_TICS_X[v2]-KNOB_TICS_X[v1]);
+  ):
+  (
+    ret = KNOB_TICS_Y[v1] + (val-v1)*(KNOB_TICS_Y[v2]-KNOB_TICS_Y[v1]); 
+  );
+);
+
+function initKnobTics() local(t, angle)
+(
+  t = 0;
+  while(t<11)
+  (
+    angle = 90 + 30 + t*(36-6);
+    angle *= $pi / 180;
+    KNOB_TICS_X[t] = cos(angle);
+    KNOB_TICS_Y[t] = sin(angle);
+    t += 1;
+  );
+);
 function switchToTheme(theme_num) (
   (theme_num == DARK_THEME)?(switchToDarkTheme()):(switchToLightTheme());
 );
@@ -1109,25 +2017,31 @@ function selectedControlCurveAddress()
   curveAddress(g_selected_control);
 );
 
-function initButton(row,col) 
-  local(points, i)
-(
-  BUTTON_GRID_PRESENCE[row*BUTTON_GRID_SIZE + col] = 1;
-  points = buttonDataAddress(row,col);
-  
-  i = 0;
-  while(i<32) ( points[i] = buttonEquate(row,col,i/31); i+=1);
-);
-
-
-
 ///////////////////////////////
 //     MAIN INIT FUNCTIONS   //
 ///////////////////////////////
 
+function definitionInit() 
+(
+  sharedGlobalVarInit();
+  instanceGlobalVarInit();
+  gmemGlobalVarInit();
+  instanceMemoryMapInit();
+  gmemMemoryMapInit();
+);
+
 function firstInit() 
   local(c, curve, i)
 ( 
+  // Draw actor id
+  g_actor_id = rand();
+  
+  (gmem[GMEM_LOADER_ID] == 0)?(
+    // Load lib files if not loaded.
+    gmem[GMEM_LOADER_ID] = g_actor_id;
+    readLibFiles();
+  );
+
   // Init midi control names
   initMidiControlNames();
   initPluginControlNames();
@@ -1141,7 +2055,7 @@ function firstInit()
   // Init octave lookups
   initOctaveLookups();
 
-  // Init curves
+  // Init curves for each control
   c = 0;
   while(c<CONTROL_COUNT) ( 
 
@@ -1200,43 +2114,8 @@ function firstInit()
   CONTROL_SRCS[CONTROL_PEDALS_START]    = 64; // Midi sustain pedal
   CONTROL_DSTS[CONTROL_PEDALS_START]    = 64; // Midi sustain pedal
   
-  // Init button presence grid
-  i = 0; while(i<BUTTON_GRID_SIZE*BUTTON_GRID_SIZE) ( BUTTON_GRID_PRESENCE[i] = 0; i+=1 );
-   
-  // Init buttons
-  initButton(BUTTON_ROW_LINEAR,0);
-  initButton(BUTTON_ROW_LINEAR,1);
-  
-  initButton(BUTTON_ROW_POW2,0);
-  initButton(BUTTON_ROW_POW2,1); 
-  initButton(BUTTON_ROW_POW2,2);
-  initButton(BUTTON_ROW_POW2,3);
-    
-  initButton(BUTTON_ROW_POW3,0);
-  initButton(BUTTON_ROW_POW3,1);
-  initButton(BUTTON_ROW_POW3,2);
-  initButton(BUTTON_ROW_POW3,3);
-   
-  initButton(BUTTON_ROW_CIRC,0);
-  initButton(BUTTON_ROW_CIRC,1);
-  initButton(BUTTON_ROW_CIRC,2);
-  initButton(BUTTON_ROW_CIRC,3);   
-  
-  initButton(BUTTON_ROW_STEP,0);
-  initButton(BUTTON_ROW_STEP,1);
-  initButton(BUTTON_ROW_STEP,2);
-  initButton(BUTTON_ROW_STEP,3);
-  initButton(BUTTON_ROW_STEP,4);
-  initButton(BUTTON_ROW_STEP,5);
-  
-  initButton(BUTTON_ROW_GATE,0);
-  initButton(BUTTON_ROW_GATE,1);
-  initButton(BUTTON_ROW_GATE,2);
-  initButton(BUTTON_ROW_GATE,3);
-  initButton(BUTTON_ROW_GATE,4);
-  initButton(BUTTON_ROW_GATE,5);   
-  
   GUI_MODE[0] = 1;
+  CURRENT_OCTAVA_OFFSET[0] = 0;
   
   // Configure font number 1
   gfx_setfont(1,"Arial",10,'b');           
@@ -1244,9 +2123,15 @@ function firstInit()
 );
 
 ext_noinit=1;
+
+// Reload memory map each time.
+// This may allow hot plug of new fx versions.
+definitionInit();
+
 !hasinit ? (
+  // Memory default values.
+  // Only do this once or reaper will destroy user data.
   firstInit();
-  
   last_modified = -1;
   g_selected_control = -1;
 );
@@ -1319,7 +2204,7 @@ function memwr(is_saving, ver)
   avail = file_avail(0);
   (is_saving || avail>0)?( // Avoid squashing default values if reading old format
     file_mem(0,KEYBOARD_FILTERING_ENABLED,1);
-    file_mem(0,KEYBOARD_FILTERED_NOTES,88);
+    file_mem(0,KEYBOARD_FILTERED_NOTES+21,88);
   );
   
   // Introduced in V3.1a (transpose / high res)
@@ -1354,6 +2239,14 @@ function memwr(is_saving, ver)
     file_mem(0,CONTROL_MAXS_MSB, ccount);
     file_mem(0,CONTROL_MAXS_LSB, ccount);
     file_mem(0,DROP_UNROUTED_NOTE_MESSAGES,1);
+  );
+  
+  // Introduced in V3.5 (full keyboard filtering)
+  avail = file_avail(0);
+  (is_saving || avail>0)?( // Avoid squashing default values if reading old format
+    file_mem(0,KEYBOARD_FILTERED_NOTES,21);       // 
+    file_mem(0,KEYBOARD_FILTERED_NOTES+109,29);   // Skipped 21+88
+    file_mem(0,CURRENT_OCTAVA_OFFSET,1);
   );
 );
 
@@ -1394,7 +2287,7 @@ backupOrRestore();
 //===========================================//
 //===============     GFX     ===============//
 //===========================================//
-@gfx 840 680
+@gfx 840 690
 
 //////////////////////////
 // GENERIC UI FUNCTIONS //
@@ -1447,16 +2340,18 @@ function textForComboBox(combo_id, val)
             )
           );
         ):(
-          tmp = #;
-          sprintf(tmp, "%d", val);
-          tmp;
+          (combo_id == "keyboard_offset")?(
+            ""
+          ):(
+            tmp = #;
+            sprintf(tmp, "%d", val);
+            tmp;
+          );
         );
       );
     );
   );
 );
-
-
 
 // Draws a enable/disable button
 // This button is linked to an adress in memory : flag_address[flag_local_address].
@@ -1534,7 +2429,7 @@ function drawOnOffButton(flag_address,flag_local_address,t,l) (
 );
 
 // - or + button for a spinbox
-function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_sub,minval,maxval)
+function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_sub,minval,maxval,should_wrap)
    local(bl,bt,br,bb,in_rect,val_shift,got_event)
 (
   got_event = 0;
@@ -1573,8 +2468,14 @@ function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_s
     */
     val_shift != 0 ? (  
       val_address[val_local_address] += val_shift;
-      val_address[val_local_address] = min(max(val_address[val_local_address],minval),maxval);   
-      got_event = 1; 
+      
+      (should_wrap)?(
+        (val_address[val_local_address]>maxval)?(val_address[val_local_address]=minval);   
+        (val_address[val_local_address]<minval)?(val_address[val_local_address]=maxval);        
+      ):(
+        val_address[val_local_address] = min(max(val_address[val_local_address],minval),maxval);         
+      );
+      got_event = val_shift;
     );
   
   ):( gfx_rgb(TH.MONO_B) );  
@@ -1588,13 +2489,18 @@ function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_s
   gfx_x   = bl+3;
   gfx_y   = bt+4;
   gfx_rgb(TH.MONO_B_TEXT);  
-  add_or_sub == 0?(gfx_drawstr("-")):(gfx_drawstr("+"));  
+  
+  (should_wrap)?(
+    add_or_sub == 0?(gfx_drawstr("<")):(gfx_drawstr(">"));  
+  ):(
+    add_or_sub == 0?(gfx_drawstr("-")):(gfx_drawstr("+"));    
+  );
   
   got_event;
 );
 
 // A Spinbox, with a int value and two +/- buttons
-function drawAddOrSubWidget(widget_id,val_address,val_local_address,l,t,minval,maxval,labelwidth)
+function drawAddOrSubWidget(widget_id, val_address, val_local_address, l, t, minval, maxval, labelwidth, should_wrap)
    local(tmp, roffset, got_event)
 (
   roffset = labelwidth + 20; 
@@ -1602,16 +2508,16 @@ function drawAddOrSubWidget(widget_id,val_address,val_local_address,l,t,minval,m
   got_event = 0;
   
   // Buttons -/+
-  got_event |= drawAddOrSubButton(widget_id,val_address,val_local_address,l,t,0,minval,maxval);
-  got_event |= drawAddOrSubButton(widget_id,val_address,val_local_address,l+roffset,t,1,minval,maxval);
+  got_event |= drawAddOrSubButton(widget_id,val_address,val_local_address,l,t,0,minval,maxval,should_wrap);
+  got_event |= drawAddOrSubButton(widget_id,val_address,val_local_address,l+roffset,t,1,minval,maxval,should_wrap);
 
-  // Value between - and +
-  gfx_rgb(TH.DYN_LABEL);
- 
-  gfx_x = l+23; gfx_y = t+4;
-  
-  tmp = textForComboBox(widget_id, val_address[val_local_address]);
-  gfx_drawStr(tmp);
+  (labelwidth > 0)?(
+    // Inner text
+    gfx_rgb(TH.DYN_LABEL); 
+    gfx_x = l+23; gfx_y = t+4;
+    tmp = textForComboBox(widget_id, val_address[val_local_address]);
+    gfx_drawStr(tmp);
+  );
   
   got_event;
 );
@@ -1761,20 +2667,6 @@ function smoothButtonCallback()
   );
 );
 
-function curveButtonCallback(row_num, button_num) 
-  local(i,curve,min_bound,max_bound)
-(
-  curve = selectedControlCurveAddress();
-
-  min_bound = controlCurrentMinBound01(g_selected_control);
-  max_bound = controlCurrentMaxBound01(g_selected_control);
-
-  i = 0;
-  while(i<CURVESIZE) (
-    curve[i] = (CURVESIZE-1) * (min_bound + (max_bound-min_bound) * buttonEquate(row_num, button_num, i/(CURVESIZE-1)));
-    i+=1;
-  );
-);
 
 function drawMousePenButton(gzone)
   local(in_rect,bl,bt,br,bb)
@@ -1841,15 +2733,31 @@ function drawSmoothButton(gzone)
   gfx_drawstr("Smooth");  
 );
 
-// Draw buttons
-function drawCurveButton(bzone, row_num, button_num) 
-  local(points,bl,bt,br,bb,i)
+// Gets the curve in GMEM cooresponding to button
+// And builds a curve for the user.
+function fsetCurveButtonCallback(set_num, row_num, col_num) 
+  local(i,curve,curve_addr,min_bound,max_bound)
 (
-  // Adress of the row
-  points  = buttonDataAddress(row_num,button_num);
-  
-  bl = bzone.margin + 20 + bzone.l + button_num*42;
-  bt = bzone.margin + 7 + bzone.t + row_num*42;
+  curve       = selectedControlCurveAddress();
+  curve_addr  = getFsetFunctionCurveAddress(set_num, row_num, col_num);
+
+  min_bound   = controlCurrentMinBound01(g_selected_control);
+  max_bound   = controlCurrentMaxBound01(g_selected_control);
+
+  i = 0;
+  while(i<CURVESIZE) (
+    curve[i] = (CURVESIZE-1) * (min_bound + (max_bound-min_bound) * gmem[curve_addr+i]);
+    i+=1;
+  );
+);
+
+function drawFsetCurveButton(bzone, voffset, set_num, row_num, col_num) 
+  local(preview_address,bl,bt,br,bb,i,curve_addr)
+( 
+  preview_address = getFSetFunctionPreviewAddress(set_num, row_num, col_num);
+
+  bl = bzone.margin + 5 + bzone.l + col_num*41;
+  bt = bzone.margin + bzone.t + row_num*42 + voffset + 10;
   br = bl + 32;
   bb = bt + 32;
    
@@ -1858,7 +2766,7 @@ function drawCurveButton(bzone, row_num, button_num)
    gfx_rgb(TH.MONO_B_H);   
    // Handle the callback in the draw function... erm
    (mouse_click==1) ? (
-     curveButtonCallback(row_num,button_num);
+      fsetCurveButtonCallback(set_num, row_num, col_num);
    ); 
   ):
   ( 
@@ -1872,110 +2780,214 @@ function drawCurveButton(bzone, row_num, button_num)
      
   // Draw the button points
   gfx_rgb(TH.MONO_B_CURVE);
-  gfx_x = bl; gfx_y = floor(bb- 31*points[0]-0.5);  
+  gfx_x = bl; gfx_y = bb -31*gmem[preview_address+0] - 0.5; 
+  
   i = 1;
-  while(i<32)
+  while(i<PREVIEWSIZE)
   (
-    gfx_lineto(bl+i ,floor(bb- 31*points[i]-0.5));
+    gfx_lineto(bl+i, bb - 31*gmem[preview_address+i] - 0.5);
     i+=1;
-  );
+  );  
 );
+
 
 // Curve buttons
 function drawCurveButtons(bzone) 
-  local(by,r,c)
+  local(bt, bb, bl, br, by, r, c, 
+    has_sets, cur_set_num, is_selected, 
+    cur_set_adr, cur_set_desc, got_event, ri, ci, in_rect,
+    w, h, bww, bwx, bwy, si, sc, loff, offx, offy, offr,
+    slider_l, slider_w, slider_t, sli_l, sli_r, sli_t, sli_b,
+    tabs_per_row, tab_width, tab_height, loff,
+    param_label, str, tab_text, to, voff,
+    pos, new_pos, pval, new_val, vmin, vmax, pid, rounding)
 (
-  // Draw headers
-  gfx_rgb(TH.DEFAULT_FONT);
-  by      = bzone.t+bzone.margin+20;
-  gfx_x   = bzone.l;
-  gfx_y   = by;
-  gfx_drawstr("Lin");
-  by      += 42;
-  gfx_x   = bzone.l;
-  gfx_y   = by;
-  gfx_drawstr("X^2"); 
-  by      += 42;
-  gfx_x   = bzone.l;
-  gfx_y   = by;
-  gfx_drawstr("X^3");  
-  by      += 42;
-  gfx_x   = bzone.l;
-  gfx_y   = by;
-  gfx_drawstr("Circ");
-  by      += 42;
-  gfx_x   = bzone.l;
-  gfx_y   = by;
-  gfx_drawstr("Step");  
-  by      += 42;
-  gfx_x   = bzone.l;
-  gfx_y   = by;
-  gfx_drawstr("Gate"); 
-
-  // Draw buttons
-  r=0; 
-  while(r<BUTTON_GRID_SIZE)
-  (
-    c=0;
-    while(c<BUTTON_GRID_SIZE)
-    (
-      hasButtonInGrid(r,c) ? (
-        drawCurveButton(bzone,r,c);
+  sc = getFSetCount();
+  cur_set_num = getCurrentFSet();
+     
+  tabs_per_row  = 7;
+  tab_width     = 70;
+  tab_height    = 16;
+  loff          = 6;
+  
+  (sc == 0)?(
+    gfx_rgb(TH.DEFAULT_FONT);
+    gfx_xy(bzone.l, bzone.t + bzone.margin + 50);
+    gfx_drawstr("Oops... It looks like your function");
+    gfx_x = bzone.l; gfx_y += 20;
+    gfx_drawstr("lib is empty. Be sure to install this");
+    gfx_x = bzone.l; gfx_y += 20;
+    gfx_drawstr("plugin through ReaPack and read the");
+    gfx_x = bzone.l; gfx_y += 20;
+    gfx_drawstr("README.md file in the Data folder of");    
+    gfx_x = bzone.l; gfx_y += 20;
+    gfx_drawstr("MIDI CC Mapper X located here :");   
+    gfx_x = bzone.l; gfx_y += 40;
+    gfx_drawstr("<RSRC>/Data/talagan_MIDI CC Mapper X");            
+  );
+    
+  si    = 0;
+  offy  = 0;
+  while(si < sc)
+  (   
+    is_selected = (si == cur_set_num);
+        
+    offx  = (si % tabs_per_row) * (tab_width + 1);
+    offy  = floor(si / tabs_per_row) * (tab_height + 1);
+    offr  = floor(si / tabs_per_row) * loff;
+        
+    bl = bzone.l + offx + offr;
+    br = bl + tab_width;
+    bt = bzone.t + bzone.margin + offy;
+    bb = bt + tab_height;
+    
+    in_rect = (mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt); 
+        
+    (in_rect)? (
+      gfx_rgb((is_selected)?(TH.TAB_BG_S_H):(TH.TAB_BG_H));
+      (mouse_click == 1)?(
+        setCurrentFset(si);
       );
-      c+=1; 
+    ):( 
+      gfx_rgb((is_selected)?(TH.TAB_BG_S):(TH.TAB_BG));
     );
-   r+=1;
+        
+    gfx_rect(bl,bt,br-bl,bb-bt);
+        
+    // Create a tab
+    gfx_rgb((is_selected)?(TH.TAB_TEXT_S):(TH.TAB_TEXT));
+        
+    tab_text = getFSetTab(si);
+    w = 0; h = 0; gfx_measurestr(tab_text,w,h);
+    to = (tab_width - w)/2;
+    gfx_x = bl+to+1;
+    gfx_y = bt+4;        
+    gfx_drawstr(tab_text);
+    si += 1;
+  );
+  
+  voff = offy+20;
+  (sc > 0)?(
+      
+    // Curve buttons
+    ri = 0;
+    while(ri < FSET_ROW_COUNT) (
+      ci = 0;
+      while(ci < FSET_COL_COUNT) (
+        (isFSetFunctionDefined(cur_set_num,ri,ci))?(
+          drawFSetCurveButton(bzone, voff, cur_set_num, ri, ci);
+        );
+        ci += 1;
+      );
+      ri += 1;
+    );
+    
+    (isFSetParametric(cur_set_num))?(
+                  
+      pid         = getFSetParametricID(cur_set_num);             
+      
+      param_label = getParametricFSetParameterName(pid);
+      vmin        = getParametricFSetParameterMin(pid);
+      vmax        = getParametricFSetParameterMax(pid);
+      rounding    = getParametricFSetParamRounding(pid);
+                  
+      bwx = bzone.l + 10;
+      bwy = bzone.t + voff + 5*50;
+      bww = 220;
+      
+      gfx_measurestr(param_label,w,h);
+      gfx_rgb(TH.DEFAULT_FONT);
+      gfx_x   = bwx; gfx_y = bwy;
+      gfx_drawstr(param_label); 
+      
+      slider_w = bww - w;
+      slider_l = bwx + w + 10;
+      slider_t = bwy + 2;
+      
+      gfx_rgb(TH.MONO_B);
+      gfx_rect(slider_l, slider_t, slider_w, 3);
+      
+      gfx_rgb(TH.DEFAULT_FONT);
+      gfx_xy(slider_l + slider_w + 10, bwy);
+      
+      pval = getFSetParameter(cur_set_num);
+      
+      pos = (pval - vmin)/(vmax - vmin);
+      
+      gfx_rect(slider_l + (pos * slider_w) - 4, slider_t - 4, 7, 11);
+      
+      sli_l = slider_l;
+      sli_r = slider_l + slider_w;
+      sli_t = slider_t - 4;
+      sli_b = slider_t + 7;
+      
+      in_rect = (mouse_x >= sli_l-5 && mouse_x <= sli_r+5 && mouse_y >= sli_t-5 && mouse_y <= sli_b+5);
+      
+      (in_rect)?(
+        (mouse_click == 1)?(
+          mouse_capturator = "fset_param_slider";
+        );
+      );
+      
+      (mouse_cap == 1 && mouse_capturator == "fset_param_slider")?(
+        new_pos = (mouse_x - sli_l)/(sli_r - sli_l);
+        new_val = vmin + new_pos * (vmax - vmin);
+        (new_val < vmin)?(new_val = vmin);
+        (new_val > vmax)?(new_val = vmax);
+        
+        new_val = (rounding * roundi((new_val * 100)/rounding))/100.0;
+        setFSetParameter(cur_set_num, new_val);
+        precalcParametricSet(cur_set_num);
+      );
+      
+      str = #;
+      sprintf(str, "%.2f", pval+0.0001);
+      gfx_drawstr(str);
+      
+    ):
+    (
+      gfx_rgb(TH.DEFAULT_FONT);
+      gfx_x   = bzone.l+10; gfx_y = bzone.t + voff + 5*50;
+      gfx_drawstr(getFSetDescription(cur_set_num)); 
+    );
   );
 );
 
-function drawMinInputLine()
-   local(bl,bt,br,bb,str)
-(
-  bl = 680;
-  bt = GUI_CONTROL_PARAMS_TOP+130;
-  br = bl + 80;
-  bb = bt + 15;
-  
-  str = #;
-  val = 0;
-  match("%f", "2.23", val);
-  sprintf(str, "%i", roundi(val*1000));
-  drawInputLine("min_bound", bl, bt, br, bb, str);
-  
-);
-
 function drawBoundariesPanel()
-  local(got_event,i,min_bound,max_bound,with_lsb,curve)
+  local(got_event,i,min_bound,max_bound,with_lsb,curve,left, top)
 (
   gfx_rgb(TH.DEFAULT_FONT);
 
   with_lsb = controlHasOperationalHighResOutput(g_selected_control);
   
-  gfx_xy(694, GUI_CONTROL_PARAMS_TOP + 102);
+  left = 610;
+  top  = 170;
+  
+  gfx_xy(left+74, GUI_CONTROL_PARAMS_TOP + top + 2);
   gfx_drawStr("Curve limits");
   
-  gfx_xy((with_lsb)?(692):(732), GUI_CONTROL_PARAMS_TOP + 142);
+  gfx_xy((with_lsb)?(left+152):(left+112), GUI_CONTROL_PARAMS_TOP + top + 42);
   gfx_drawStr("MSB");
   
   (with_lsb)?(
-    gfx_xy(770, GUI_CONTROL_PARAMS_TOP + 142);
+    gfx_xy(left+70, GUI_CONTROL_PARAMS_TOP + top + 42);
     gfx_drawStr("LSB");
   );
   
-  gfx_xy((with_lsb)?(620):(660), GUI_CONTROL_PARAMS_TOP + 172);
+  gfx_xy((with_lsb)?(left):(left+40), GUI_CONTROL_PARAMS_TOP + top + 72);
   gfx_drawStr("Min");
   
-  gfx_xy((with_lsb)?(620):(660), GUI_CONTROL_PARAMS_TOP + 202);
+  gfx_xy((with_lsb)?(left):(left+40), GUI_CONTROL_PARAMS_TOP + top + 102);
   gfx_drawStr("Max");
   
   got_event = 0;
   
-  got_event |= drawAddOrSubWidget("min_spinbox_msb",CONTROL_MINS_MSB,g_selected_control,(with_lsb)?(670):(710),GUI_CONTROL_PARAMS_TOP+170,0,127,35); 
-  got_event |= drawAddOrSubWidget("max_spinbox_msb",CONTROL_MAXS_MSB,g_selected_control,(with_lsb)?(670):(710),GUI_CONTROL_PARAMS_TOP+200,0,127,35); 
+  got_event |= drawAddOrSubWidget("min_spinbox_msb",CONTROL_MINS_MSB,g_selected_control,(with_lsb)?(left+50):(left+90),GUI_CONTROL_PARAMS_TOP+top+70,0,127,35,0); 
+  got_event |= drawAddOrSubWidget("max_spinbox_msb",CONTROL_MAXS_MSB,g_selected_control,(with_lsb)?(left+50):(left+90),GUI_CONTROL_PARAMS_TOP+top+100,0,127,35,0); 
   
   (with_lsb)?(
-    got_event |= drawAddOrSubWidget("min_spinbox_lsb",CONTROL_MINS_LSB,g_selected_control,750,GUI_CONTROL_PARAMS_TOP+170,0,127,35);
-    got_event |= drawAddOrSubWidget("max_spinbox_lsb",CONTROL_MAXS_LSB,g_selected_control,750,GUI_CONTROL_PARAMS_TOP+200,0,127,35); 
+    got_event |= drawAddOrSubWidget("min_spinbox_lsb",CONTROL_MINS_LSB,g_selected_control,left+130,GUI_CONTROL_PARAMS_TOP+top+70,0,127,35,0);
+    got_event |= drawAddOrSubWidget("max_spinbox_lsb",CONTROL_MAXS_LSB,g_selected_control,left+130,GUI_CONTROL_PARAMS_TOP+top+100,0,127,35,0); 
   );
 
   got_event?(
@@ -2560,8 +3572,8 @@ function drawAssignZone()
   gfx_drawStr("Chan");
   
   g_selected_control != CONTROL_VELOCITY ?(
-    drawAddOrSubWidget("chan_src_spinbox",CONTROL_CHAN_SRCS,g_selected_control,130,GUI_CONTROL_PARAMS_TOP+30,0,16,51);  
-    drawAddOrSubWidget("chan_dst_spinbox",CONTROL_CHAN_DSTS,g_selected_control,130,GUI_CONTROL_PARAMS_TOP+50,0,16,51);
+    drawAddOrSubWidget("chan_src_spinbox",CONTROL_CHAN_SRCS,g_selected_control,130,GUI_CONTROL_PARAMS_TOP+30,0,16,51,0);  
+    drawAddOrSubWidget("chan_dst_spinbox",CONTROL_CHAN_DSTS,g_selected_control,130,GUI_CONTROL_PARAMS_TOP+50,0,16,51,0);
   ):(
     gfx_rgb(TH.DYN_LABEL); 
     gfx_x=140; gfx_y = GUI_CONTROL_PARAMS_TOP+34;  
@@ -2588,8 +3600,8 @@ function drawAssignZone()
     drawCCLearnButton(g_selected_control);
     drawCopySrcButton(g_selected_control);
    
-    drawAddOrSubWidget("cc_src_spinbox",CONTROL_SRCS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+30,0,127,37);
-    drawAddOrSubWidget("cc_dst_spinbox",CONTROL_DSTS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+50,0,127,37);
+    drawAddOrSubWidget("cc_src_spinbox",CONTROL_SRCS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+30,0,127,37,0);
+    drawAddOrSubWidget("cc_dst_spinbox",CONTROL_DSTS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+50,0,127,37,0);
   
     // Name of the src CC
     gfx_rgb(TH.ROUTING_INFO_CCNAME);
@@ -2677,7 +3689,7 @@ function drawAssignZone()
     gfx_rgb(TH.DEFAULT_FONT); 
     gfx_x=312; gfx_y = GUI_CONTROL_PARAMS_TOP+14;  
     gfx_drawStr("Keys");
-    drawAddOrSubWidget("velo_applyto", KEYBOARD_VELOCITY_APPLY_TO,0,358,GUI_CONTROL_PARAMS_TOP+11,0,2,32);  
+    drawAddOrSubWidget("velo_applyto", KEYBOARD_VELOCITY_APPLY_TO,0,358,GUI_CONTROL_PARAMS_TOP+11,0,2,32,0);  
   );
   
   (g_selected_control == CONTROL_VELOCITY || ccLsbCounterpart(CONTROL_DSTS[g_selected_control])!=-1)?(
@@ -2796,9 +3808,9 @@ function drawTransposePanel()
     gfx_rgb(TH.DEFAULT_FONT);
     gfx_drawstr("Keys");
     
-    drawAddOrSubWidget("8va"     , KEYBOARD_TRANSPOSE_8VA,0,KEYBOARD_PANEL_WIDTH+90,KEYBOARD_FILTERING_TOP+46,-2,2,32);
-    drawAddOrSubWidget("semitone", KEYBOARD_TRANSPOSE_SEMI_TONES,0,KEYBOARD_PANEL_WIDTH+90,KEYBOARD_FILTERING_TOP+66,-12,12,32);
-    drawAddOrSubWidget("applyto",  KEYBOARD_TRANSPOSE_APPLY_TO,0,KEYBOARD_PANEL_WIDTH+90,KEYBOARD_FILTERING_TOP+86,0,2,32);
+    drawAddOrSubWidget("8va"     , KEYBOARD_TRANSPOSE_8VA,0,KEYBOARD_PANEL_WIDTH+90,KEYBOARD_FILTERING_TOP+46,-2,2,32,0);
+    drawAddOrSubWidget("semitone", KEYBOARD_TRANSPOSE_SEMI_TONES,0,KEYBOARD_PANEL_WIDTH+90,KEYBOARD_FILTERING_TOP+66,-12,12,32,0);
+    drawAddOrSubWidget("applyto",  KEYBOARD_TRANSPOSE_APPLY_TO,0,KEYBOARD_PANEL_WIDTH+90,KEYBOARD_FILTERING_TOP+86,0,2,32,0);
   );
 );
 
@@ -2815,28 +3827,27 @@ function drawKeyboardChannelsPanel()
   gfx_rgb(TH.DEFAULT_FONT);
   gfx_drawstr("In");
 
-
-  drawAddOrSubWidget("chan_in_keyboard_spinbox",KB_INPUT_CHANNEL,0,155,KEYBOARD_PANEL_TOP+102,0,16,35);
+  drawAddOrSubWidget("chan_in_keyboard_spinbox",KB_INPUT_CHANNEL,0,155,KEYBOARD_PANEL_TOP+102,0,16,35,0);
 
   gfx_x = 260; gfx_y = KEYBOARD_PANEL_TOP + 106;
   gfx_rgb(TH.ROUTING_INFO_OK);
   gfx_drawstr("Green out");
   
-  drawAddOrSubWidget("chan_out_green_spinbox",KBG_OUTPUT_CHANNEL,0,342,KEYBOARD_PANEL_TOP+102,0,16,51);  
+  drawAddOrSubWidget("chan_out_green_spinbox",KBG_OUTPUT_CHANNEL,0,342,KEYBOARD_PANEL_TOP+102,0,16,51,0);  
   
   (kf_enabled)?(
     gfx_x = 470; gfx_y = KEYBOARD_PANEL_TOP + 106;
     gfx_rgb(TH.ROUTING_INFO_NOT_OK);
     gfx_drawstr("Red out");
  
-    drawAddOrSubWidget("chan_out_red_spinbox",KBR_OUTPUT_CHANNEL,0,537,KEYBOARD_PANEL_TOP+102,-1,16,51);  
+    drawAddOrSubWidget("chan_out_red_spinbox",KBR_OUTPUT_CHANNEL,0,537,KEYBOARD_PANEL_TOP+102,-1,16,51,0);  
   );
 );
 
 function drawKeyboardPanel() 
    local(kf_enabled, loff, left, top, white_key_width, key_height_top, key_height_bottom, key_height_full, 
-         bk, key_top, key_offset, key_width, oct, in_oct_pos, in_rect, i,
-         normalized_key_offset, normalized_key_width,
+         bk, key_top, key_offset, key_width, oct, octoff, in_oct_pos, in_rect, i, imax,
+         normalized_key_offset, normalized_key_width, str,
          wkcount)
 (
   kf_enabled = KEYBOARD_FILTERING_ENABLED[0];
@@ -2854,12 +3865,15 @@ function drawKeyboardPanel()
   
   gfx_drawstr((kf_enabled)?("Keyboard splitting"):("Keyboard splitting (All keys are green)"));
   
+  // Octava offset 
+  drawAddOrSubWidget("keyboard_offset",CURRENT_OCTAVA_OFFSET,0,12,KEYBOARD_FILTERING_TOP+50,-1,2,616,1); 
+    
   // 88 keys keyboard
   // A0 : midi note 21
   // C8 : midi note 108
   
   loff              = 30;
-  white_key_width   = 12;
+  white_key_width   = 11;
   key_height_top    = 35;
   key_height_bottom = 25;
   key_height_full   = key_height_top + key_height_bottom;
@@ -2867,8 +3881,10 @@ function drawKeyboardPanel()
   key_top           = KEYBOARD_FILTERING_TOP + 30; // Header skip
   
   // Top part of the keyboard
-  i = 0; 
-  while(i<88) (
+  octoff = CURRENT_OCTAVA_OFFSET[0];
+  i      = (octoff * 12) + 12; 
+  imax   = i + (12 * 8); (imax > 128)?(imax = 128);
+  while(i<imax) (
     bk = keyIsBlack(i);
       
     oct         = floor(i / 12);
@@ -2877,18 +3893,10 @@ function drawKeyboardPanel()
     normalized_key_offset = OCTAVE_TOP_KEY_OFFSETS[in_oct_pos];
     normalized_key_width  = OCTAVE_TOP_KEY_WIDTHS[in_oct_pos];
     
-    (i==0)?(
-      // A0 patch
-      normalized_key_offset = 0;
-      normalized_key_width  = 0.5;
-    );
+    // G9
+    (i == 127)?(normalized_key_width = 0.5);
     
-    (i==87)?(
-      // C8 patch
-      normalized_key_width = 1;
-    );
-    
-    key_offset = loff + (normalized_key_offset + oct * 7) * white_key_width; 
+    key_offset = loff + (normalized_key_offset + (oct - octoff - 1) * 7) * white_key_width; 
     key_width  = normalized_key_width * white_key_width;
     
     (key_width != 0)?(
@@ -2952,10 +3960,13 @@ function drawKeyboardPanel()
   );
 
   // Bottom part of the keyboard
-  wkcount = 0; i = 0; 
-  while(i<88) (
+  wkcount = 0; 
+  i       = (CURRENT_OCTAVA_OFFSET[0] * 12) + 12; 
+  imax  = i + (12 * 8); (imax > 128)?(imax = 128);
+  while(i<imax) (
   
-    bk = keyIsBlack(i);
+    oct = floor(i / 12);
+    bk  = keyIsBlack(i);
     
     (!bk)?(
       left = loff+wkcount*white_key_width;
@@ -3007,6 +4018,14 @@ function drawKeyboardPanel()
         drawKeyboardKeyMarker(left + floor(white_key_width/2) -1,top+floor(key_height_bottom/2));
       );
       
+      (i%12 == 0)?(
+        gfx_rgb(TH.KEY_OCTAVA_NUMBER);
+        gfx_xy(left+1,top+14);
+        str = #;
+        sprintf(str, "%d", oct-1);
+        gfx_drawstr(str);
+      );
+      
       // Increment white key counter
       wkcount += 1;
     );
@@ -3028,12 +4047,14 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("Midi CC Mapper X (3.3) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai"); 
+  gfx_drawstr("Midi CC Mapper X (3.5) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai"); 
 
   drawSwitchButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin");
 );
 
-function drawGlobalSettingsPanel() (
+function drawGlobalSettingsPanel() 
+  local(l ,t, r, b, w, in_rect)
+(
   // Header Background
   gfx_rgb(TH.HEADER);
   gfx_rect(0,0,gfx_w,20);
@@ -3088,6 +4109,21 @@ function drawGlobalSettingsPanel() (
   gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
   gfx_x= 100; gfx_y = 244;
   gfx_drawstr("Theme"); 
+  
+  // Reload function library
+  w = 204; l = (gfx_w - w)/2; t = 550; r = l + 204; b = t + 15;
+  in_rect = (mouse_x >= l && mouse_x <= r && mouse_y >= t && mouse_y <= b);
+  
+  gfx_rgb((in_rect)?(TH.MONO_B_H):(TH.MONO_B));
+  gfx_rect(l,t,r-l,b-t);
+  
+  gfx_x = l + 10; gfx_y = t+4;
+  gfx_rgb(TH.MONO_B_TEXT);
+  gfx_drawstr("Reload function library");  
+  
+  (in_rect && mouse_click == 1)?(
+    readLibFiles();
+  );
 );
 
 function drawGui()
@@ -3104,6 +4140,38 @@ function drawGui()
   drawBottomBanner();
 );
 
+function listenToGmemCommands()
+  local(si, addr, min_bound, max_bound)
+(
+  (gmem[GMEM_CMD_STATUS] == 1)?(
+    // Take the command
+    gmem[GMEM_CMD_STATUS] = 2;
+    
+    (g_selected_control == -1)?(
+      gmem[GMEM_CMD_ERROR]  = 600;
+      gmem[GMEM_CMD_STATUS] = 4;
+    ):(
+      (!CONTROL_ENABLED[g_selected_control])?(
+        gmem[GMEM_CMD_ERROR]  = 601;
+        gmem[GMEM_CMD_STATUS] = 4;
+      ):
+      (
+        si        = 0; 
+        addr      = selectedControlCurveAddress();
+        min_bound = controlCurrentMinBound01(g_selected_control);
+        max_bound = controlCurrentMaxBound01(g_selected_control);
+        
+        while(si < CURVESIZE)
+        (
+          gmem[GMEM_DUMP_CURVE_BUF + si] = ((addr[si]/127.0) - min_bound)/(max_bound - min_bound);
+          si += 1;
+        );
+        gmem[GMEM_CMD_STATUS] = 3;
+      );
+    );      
+  );
+);
+
 ///////////////////////////////////
 // MOUSE EVENT ADDITIONAL LOGIC  //
 ///////////////////////////////////
@@ -3111,9 +4179,9 @@ function drawGui()
 function mouseClickAddOn()
 (
   // Create a mouse_click event
-  (mouse_cap != last_mouse_cap)?(
+  (mouse_cap != g_last_mouse_cap)?(
     (mouse_cap == 1)?(mouse_click = 1):(mouse_click = 0);
-    last_mouse_cap = mouse_cap;    
+    g_last_mouse_cap = mouse_cap;    
   ):(
     mouse_click = 0;
   );
@@ -3145,10 +4213,23 @@ function ui_main() (
   mouseClickAddon();
   mouseWheelAddon();
   drawGui();
+  listenToGmemCommands();
 );
 
 ui_main();
 
+// TEST LIB LOADING
+ 
+/*
+zzz_set_count   = gmem[GMEM_FSET_COUNT];
+zzz_test_ben = isFSetFunctionDefined(0,0,0);
+zzz_t00 = getFSetFunctionAddress(0,0,0);
+zzz_t01 = getFSetFunctionAddress(0,0,1);
+zzz_t10 = getFSetFunctionAddress(0,1,0);
+
+#aaa_test = getFSetId(7);
+#aaa_test2 = getFSetTab(7);
+*/
 
 // TESTS : Convert to i and back
 /*
@@ -3302,88 +4383,89 @@ function processNoteMessage(evt)
       // Transpose if asked to.
       (should_transpose)?(
         (KEYBOARD_TRANSPOSE_ENABLED[0])?(
-          new_key = evt.key + KEYBOARD_TRANSPOSE_8VA[0]*12 + KEYBOARD_TRANSPOSE_SEMI_TONES[0];
-      
-          // Clamp the key if we're too low
-          (new_key<0)?(new_key=0);
+          new_key = evt.key + KEYBOARD_TRANSPOSE_8VA[0]*12 + KEYBOARD_TRANSPOSE_SEMI_TONES[0];      
         );
       );
       
-      // Caution : Note OFF can be either (NOTE_OFF_MSG) or (NOTE_ON_MSG + velocity zero)
-      // Thus, the following code should be tolerant :
-      // Velocity 0 should not be changed to something else.
+      // Transposition should not be outside midi range
+      (new_key >= 0 && new_key <= 127)?(
       
-      has_velocity                  = (evt.velocity!=0);  
-      velocity_01                   = 0;         
-       
-      // CALCULATE INPUT VALUE HI/LOW RES
-      (isHighResMidiInputEnabled())?(
-        (has_velocity)?(
-          // Seems to me we should sub 1 to the velocity (MSB)
-          // To be continuous starting from 0 (First non-null HR velocity starts at 0x0080, MSB is non null)
-          velocity_01 = midiVelocityHresI2F01(evt.velocity-1, CC_RECEIVED_VALUES[88]); 
-          CC_RECEIVED_VALUES[88] = 0; // Clear the LSB. 
-        );
-      ):(
-        velocity_01 = evt.velocity/127;
-      );
-            
-     
-      // APPLY THE CURVE
-      out_velocity_01 = 0;
-      has_velocity?(
-       
-        // Apply velocity curve if needed
-        velocity_control_enabled      = CONTROL_ENABLED[CONTROL_VELOCITY];
-        velocity_tgt                  = KEYBOARD_VELOCITY_APPLY_TO[0];
-        should_apply_velocity_to_key  = (velocity_tgt == 0 || (!is_red_key && velocity_tgt == 1) || (is_red_key && velocity_tgt == 2));
-       
-        (velocity_control_enabled && should_apply_velocity_to_key)?(
-          out_velocity_01                     = applyCurve(CONTROL_VELOCITY, velocity_01);
+        // Caution : Note OFF can be either (NOTE_OFF_MSG) or (NOTE_ON_MSG + velocity zero)
+        // Thus, the following code should be tolerant :
+        // Velocity 0 should not be changed to something else.
         
-          // Save for UI feedback (red circle).
-          // Do it only when there's some velocity, having the circle 
-          // going back to 0 each time we release a key is annoying
-          CONTROL_LAST_IN[CONTROL_VELOCITY]   = velocity_01*127;
-          CONTROL_LAST_OUT[CONTROL_VELOCITY]  = out_velocity_01*127;
-        ):(
-        
-          // Just keep the value as is (bypass any calculation)
-          out_velocity_01 = velocity_01;
-        )
-      );
-      
-      // Create out status, remap chan to to 0-15
-      dst_status = (evt.type << 4) | (dst_chan-1);
-                   
-      // SEND THE FINAL RESULT HI/LOW RES
-      (isHighResMidiOutputEnabledForControl(CONTROL_VELOCITY))?(
+        has_velocity                  = (evt.velocity!=0);  
+        velocity_01                   = 0;         
          
-        lsb_cc_msg = ((CC_MSG << 4) | evt.chan);
-        (has_velocity)?(
-          // Send modified velocity
-          midiVelocityHresF012I(out_velocity_01);
-        
-          // Note : if pen drawn
-          // g_hres_l will always be = 127 due to the drawing resolution
-          midisend(evt.mpos, lsb_cc_msg, 88, g_hres_l);
-          midisend(evt.mpos, dst_status, keyToMidiNote(new_key), g_hres_h);
+        // CALCULATE INPUT VALUE HI/LOW RES
+        (isHighResMidiInputEnabled())?(
+          (has_velocity)?(
+            // Seems to me we should sub 1 to the velocity (MSB)
+            // To be continuous starting from 0 (First non-null HR velocity starts at 0x0080, MSB is non null)
+            velocity_01 = midiVelocityHresI2F01(evt.velocity-1, CC_RECEIVED_VALUES[88]); 
+            CC_RECEIVED_VALUES[88] = 0; // Clear the LSB. 
+          );
         ):(
-          // Send 0-velocity note.
-          midisend(evt.mpos, lsb_cc_msg, 88, 0);
-          midisend(evt.mpos, dst_status, keyToMidiNote(new_key), 0);
+          velocity_01 = evt.velocity/127;
         );
-      ):
-      (   
-        // This is compatible with zero-velocity
-        midisend(evt.mpos, dst_status, keyToMidiNote(new_key), roundi(out_velocity_01 * 127) );
-      );
-    );
+      
+        // APPLY THE CURVE
+        out_velocity_01 = 0;
+        has_velocity?(    
+          // Apply velocity curve if needed
+          velocity_control_enabled      = CONTROL_ENABLED[CONTROL_VELOCITY];
+          velocity_tgt                  = KEYBOARD_VELOCITY_APPLY_TO[0];
+          should_apply_velocity_to_key  = (velocity_tgt == 0 || (!is_red_key && velocity_tgt == 1) || (is_red_key && velocity_tgt == 2));
+       
+          (velocity_control_enabled && should_apply_velocity_to_key)?(
+            out_velocity_01                     = applyCurve(CONTROL_VELOCITY, velocity_01);
+        
+            // Save for UI feedback (red circle).
+            // Do it only when there's some velocity, having the circle 
+            // going back to 0 each time we release a key is annoying
+            CONTROL_LAST_IN[CONTROL_VELOCITY]   = velocity_01*127;
+            CONTROL_LAST_OUT[CONTROL_VELOCITY]  = out_velocity_01*127;
+          ):(
+            // Just keep the value as is (bypass any calculation)
+            out_velocity_01 = velocity_01;
+          )   
+        );
+      
+        // Create out status, remap chan to to 0-15
+        dst_status = (evt.type << 4) | (dst_chan-1);
+                   
+        // SEND THE FINAL RESULT HI/LOW RES
+        (isHighResMidiOutputEnabledForControl(CONTROL_VELOCITY))?(
+         
+          lsb_cc_msg = ((CC_MSG << 4) | evt.chan);
+          (has_velocity)?(
+            // Send modified velocity
+            midiVelocityHresF012I(out_velocity_01);
+        
+            // Note : if pen drawn
+            // g_hres_l will always be = 127 due to the drawing resolution
+            midisend(evt.mpos, lsb_cc_msg, 88, g_hres_l);
+            midisend(evt.mpos, dst_status, keyToMidiNote(new_key), g_hres_h);
+          ):(
+            // Send 0-velocity note.
+            midisend(evt.mpos, lsb_cc_msg, 88, 0);
+            midisend(evt.mpos, dst_status, keyToMidiNote(new_key), 0);
+          );
+        ):
+        (   
+          // This is compatible with zero-velocity
+          midisend(evt.mpos, dst_status, keyToMidiNote(new_key), roundi(out_velocity_01 * 127) );
+        );
+      
+      ); // <- Transposition is not outside range 
+      
+    ); // <- dst chan is not drop
   
     // As long as the input channel is concerned
     // Consider the event as treated.
     was_processed = 1;
-  );  
+    
+  ); // <- src chan matches  
 );
 
 function mainLoop() 
