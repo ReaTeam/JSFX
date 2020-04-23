@@ -178,5 +178,3 @@ function convert (mm) (
      ); 
     msg11 >= 0 ?  midisend(offset, msg1, msg2,  msg3); // pass through  
   );
-    msg11 >= 0 ?  midisend(offset, msg1, msg2,  msg3); // pass through  
-  );
