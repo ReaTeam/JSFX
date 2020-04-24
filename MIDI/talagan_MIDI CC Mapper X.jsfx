@@ -2245,7 +2245,7 @@ function memwr(is_saving, ver)
   avail = file_avail(0);
   (is_saving || avail>0)?( // Avoid squashing default values if reading old format
     file_mem(0,KEYBOARD_FILTERED_NOTES,21);       // 
-    file_mem(0,KEYBOARD_FILTERED_NOTES+109,29);   // Skipped 21+88
+    file_mem(0,KEYBOARD_FILTERED_NOTES+109,19);   // Skipped 21+88
     file_mem(0,CURRENT_OCTAVA_OFFSET,1);
   );
 );
