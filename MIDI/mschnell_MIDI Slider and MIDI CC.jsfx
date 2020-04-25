@@ -7,13 +7,13 @@ about:
 
   One or both of the following functions can be selected: 
 
-  - Sends a CC message according to the channel and CC # setting whenever the CC value slider (Slider 3) is modified manually or by automation
+  - Sends a CC message according to the channel and CC # setting whenever the CC value slider (Slider 1) is modified manually or by automation
 
   - moves the slider according to the the value of an appropriate MIDI CC message received. The Slider value can be written in an automation line. 
 
   Slider 1 can be used to read or write track envelopes. 
 
-  "Resolution CC" selects normal or high resolution CC messages as well for receiving as for sending. The low significant CC# is 32 steps higher than the normal (most signoficant) CC#.
+  "Resolution CC" selects normal or high resolution CC messages as well for receiving as for sending. The low significant CC# is 32 steps higher than the normal (most significant) CC#.
 
 slider1:0<0,16,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,all}>In Channel
 slider2:0<0,6,1{CC,PC,Note On,Note Off,Note On Velocity,Note Off Velocity,Pitch Bend,After Touch}>MIDI Message
