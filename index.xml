@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="6578a9648aa21318941c4987c973033506ecc8fc">
+<index version="1" name="ReaTeam JSFX" commit="54e99fe943ef4ebdf44c71c4afb703b8846a127b">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -347,6 +347,26 @@ The "Factor" slider can be moved in steps of one between 1 and 16, but of course
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2019-04-14T11:01:26Z">
         <changelog><![CDATA[Bugfix, add Bypass]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/ab319c74a46f2e4f724b21d9de6fb14843100732/MIDI/mschnell_MIDI%20PB%20x%20X.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_MIDI Slider and MIDI CC.jsfx" type="effect" desc="Slider and MIDI CC">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 One or both of the following functions can be selected:\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Sends a CC message according to the channel and CC # setting whenever the CC value slider (Slider 3) is modified manually or by automation\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab moves the slider according to the the value of an appropriate MIDI CC message received. The Slider value can be written in an automation line.\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Slider 1 can be used to read or write track envelopes.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Resolution CC" selects normal or high resolution CC messages as well for receiving as for sending. The low significant CC# is 32 steps higher than the normal (most signoficant) CC#.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2020-04-25T16:42:42Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/54e99fe943ef4ebdf44c71c4afb703b8846a127b/MIDI/mschnell_MIDI%20Slider%20and%20MIDI%20CC.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Note On under X velocity to Note Off and send All Notes Off.jsfx" type="effect" desc="Note On under X velocity to Note Off and send All Notes Off">
