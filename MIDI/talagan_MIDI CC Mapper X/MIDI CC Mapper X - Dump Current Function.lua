@@ -1,13 +1,14 @@
 -- @noindex
 -- @description Dumps the currently displayed curve from MIDI CC Mapper X.
 -- @about 
--- @author Benjamin Talagan BAbut
+-- @author Benjamin "Talagan" Babut
 -- @version 1.0
 -- Licence: MIT
 -- REAPER: 5.0+
 -- Extensions: none
 
-local user_lib_path = "Data/talagan_MIDI CC Mapper X/func/user_lib"; 
+local cc_mapper_data_path = "Data/talagan_MIDI CC Mapper X";
+local user_lib_path       = cc_mapper_data_path .. "/func/user_lib"; 
 
 -- Split function
 local function csplit(str,sep)
@@ -18,6 +19,10 @@ local function csplit(str,sep)
       n = n + 1
    end
    return ret
+end
+
+local function isSWSInstalledAndUsableForShellExecution()
+  return reaper.APIExists("CF_LocateInExplorer");
 end
 
 local function getSaveParams(func)
@@ -42,16 +47,8 @@ local function file_exists(name)
 end
 
 local function open_file_manager_on_path(path)
-  local OS = reaper.GetOS()
-
-  if OS == "OSX32" or OS == "OSX64" then
-    os.execute('open "' .. path .. '"',2000)
-  else
-    os.execute('start "" "' .. path .. '"')
-  end
+  reaper.CF_LocateInExplorer(path);
 end
-
-
 
 local function finish_after_cmd(data)
 
@@ -85,7 +82,7 @@ local function finish_after_cmd(data)
         export_file_name = export_folder .. "/" .. func_id .. ".txt" ;
       
         if file_exists(export_file_name) then
-          ow = reaper.ShowMessageBox("\nA file already exists for the same path : \n\n" .. "<RESOURCE>/" .. user_lib_path .. "/" .. sub_path .. "/" .. func_id .. ".txt\n\nOverwrite?","Warning!", 4);
+          ow = reaper.ShowMessageBox("\nA file already exists at the same path : \n\n" .. "<RESOURCE>/" .. user_lib_path .. "/" .. sub_path .. "/" .. func_id .. ".txt\n\nOverwrite?","Warning!", 4);
           if ow == 6 then -- yes
             things_are_ok = true;
           end
@@ -107,10 +104,8 @@ local function finish_after_cmd(data)
             "Make sure the target path is accessible (all subfolders should exist) :\n" ..
             "\n" ..
             export_file_name ..
-            "\n\n" ..
-            "Press OK to open the export folder.","Failed to save file!", 0);
-        
-    
+            "\n",
+            "Failed to save file!", 0);
     else
       -- appends a word test to the last line of the file
       file:write("@noindex\n");
@@ -121,31 +116,39 @@ local function finish_after_cmd(data)
       end
       
       -- closes the open file
-      file:close()
+      file:close();
+      
+      local sws_available = isSWSInstalledAndUsableForShellExecution();
+      
+      local open_or_do_it_by_yourself_msg = (sws_available) and ("Press OK to open the export folder.") or ("Please go to\n\n" .. export_folder .. "\n\n to find your export.");
     
       reaper.ShowMessageBox("\nYour function was exported successfully!\n\n" ..
         "" ..
-        "To make it available in Reaper, please follow the README.md file.\n\n" ..
+        "To make it available in Reaper, please follow the README.md file located at:\n\n<RESOURCE>/" .. cc_mapper_data_path .. "\n\n" ..
         ""..
-        "Press OK to open the export folder.","Success!", 0);
+        open_or_do_it_by_yourself_msg,"Success!", 0);
     
-      open_file_manager_on_path(export_folder .. "/");
-      
+      if sws_available then
+        open_file_manager_on_path(export_folder .. "/");
+      end
+        
     end
-    
 end
 
 cmd_start = nil;
 local function second_step_retrieve_cmd_result()
   
-  local res = reaper.gmem_read(2);
+  local cmd_res_val_addr    = 2;
+  local cmd_res_buffer_addr = 10;
+  
+  local res = reaper.gmem_read(cmd_res_val_addr);
     
   if res == 3 then
     
     local si = 0;
     data = {};
     while(si < 128) do
-      data[si+1] = reaper.gmem_read(10+si);
+      data[si+1] = reaper.gmem_read(cmd_res_buffer_addr + si);
       si = si + 1;
     end
   
@@ -176,7 +179,7 @@ local function first_step_explain()
       "<RESOURCE>/" .. user_lib_path .. "\n\n" ..
       "" ..
       "folder that you will have to reference from a file called 'user_lib.txt'.\n\n" .. 
-      "A README.md file explaining how to proceed in details is located in that folder, which will be opened after save.\n\n",
+      "A README.md file explaining how to proceed in details at:\n\n<RESOURCE>/" .. cc_mapper_data_path,
       "Midi CC Mapper X : Info", 0);
 
     reaper.gmem_attach('MIDICCMapperX');
@@ -187,6 +190,4 @@ local function first_step_explain()
     second_step_retrieve_cmd_result();
 end
 
-
 first_step_explain();
-
