@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="cd889d12d109ff2885e4ab4edd1951417d2ec664">
+<index version="1" name="ReaTeam JSFX" commit="8c976cc0c5ff4ea1e8112c9931eae8f5ad598519">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -495,18 +495,24 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Midi CC Mapper X\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 This JSFX is an extended version of the original plugin called "MIDI CC Mapper" with many more features. It allows to modify the behavior and the real-time feel of a MIDI controller, by acting as a pre-filter on the MIDI input. It can :\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Tweak CC response curves :\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab By using predefined curves, some of them being parametric\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab By pen-drawing/prototyping custom curves\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab By smoothing the current curve\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab By restricting the range of values of your curve\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab By extending the predefined curves with your own sets of functions (through lib files)\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab The current curve can be exported and reused in your own sets\sa180\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Filter in/out keyboard keys, channel split and drop/re-route keyboard keys\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Transpose keyboard keys\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Re-route CCs\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Re-route CC channels\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Tweak CC response curves, either by using predefined curves, or by pen-drawing/smoothing custom curves.\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Tweak the keyboard velocity response curve\sa180\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The UI shows a virtual controller, on which CCs can be attributed to controls, allowing a user to visually map her/his real controller.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 High-Res MIDI input can be enabled via a global parameter, and High-Res MIDI output can be enabled on CCs individually.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Keyboard Filtering Module\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Located in the top left of the main window, it can be used to achieve various configurations. You can enable/disable key colorizing with the button located in the module title bar. If key colorizing is enabled, the keys can be colorized in red/green by click/moving the mouse on them. The UI provides feedback for currently pressed keys.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 An input channel may be defined for the keyboard : all other channels will be ignored by the plugin. Output channels may be defined for the green/red parts of the keyboard to possibly reroute them, with the option to drop the red part (to filter them out).\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 This module can be of great help for defining regions on the keyboard. By reusing it on multiple tracks at the same time, you can easily achieve keyboard split (left hand/right hand or more) and/or multi-instruments combinations.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This module can be of great help for defining regions on the keyboard. Also, by reusing it on multiple tracks at the same time, you can easily achieve keyboard split (left hand/right hand or more) and/or multi-instruments combinations.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Keyboard Transposition Module\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Located in the top right of the main window. This module can be enabled or bypassed with the button located in the module title bar. If enabled, applies the sum of two parameters, one for transposing by octaves, one for transposing by semitones. This module can be optionally applied to the red/green/both parts of the keyboard.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 CC Routing/Curve tweaking\par}
@@ -522,6 +528,8 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The response curve can be smoothed with the smooth button\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The response curve may be restricted to a user-defined space by configuring MIDI min/max values.\sa180\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Additionally, channel input/output may be configured for the CC.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Customizing the function library\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The function library is customizable. You can rearrange things, remove sets and functions, and add your own functions after having generated them or having exported them from REAPER. Please refer to the library manual, which is located in <REAPER_RESOURCE_PATH>/Data/talagan_MIDI CC Mapper X/README.md .\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Reaper forum thread\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 https://forum.cockos.com/showthread.php?t=172630\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Notes\par}
@@ -552,6 +560,88 @@ Since red keys may now be kept due to channel re-routing, added an option to sel
 Added curve mih/max behaviours : the user can now set some min/max limits on the curve, so that the curve is clamped between those bounds. Predefined curves will be adapted to that range and pen drawing will be restricted to that range too.
 And a bit of source code cleaning.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/85692258e4055de25d9bd225d3ed59703946092b/MIDI/talagan_MIDI%20CC%20Mapper%20X.jsfx</source>
+      </version>
+      <version name="3.5" author="Talagan" time="2020-04-26T17:58:12Z">
+        <changelog><![CDATA[- Function library system : functions are stored in a function lib with sets that are extensible
+- Parametric sets : some sets are parametric, they can be used to generate an infinite number of curves
+- User sets : the user can now import her/his own curves in the library
+- Function export : MIDI CC Mapper X is now shipped with a script that exports the current curve
+- Added support for all notes within the MIDI range (0-127).
+- Bug fix for notes that could be transposed outside of midi range.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X.jsfx</source>
+        <source main="main" type="script" file="talagan_MIDI CC Mapper X/MIDI CC Mapper X - Dump Current Function.lua">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/MIDI%20CC%20Mapper%20X%20-%20Dump%20Current%20Function.lua</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/README.md">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/README.md</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/lib.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/lib.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/_tools/make_curves.rb">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/_tools/make_curves.rb</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/LIB_FILES_GO_HERE.md">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/LIB_FILES_GO_HERE.md</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_m_gate.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_m_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_r.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_r.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_rm.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_rm.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_rm_gate.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_rm_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_gate.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_m_gate.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_m_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_r.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_r.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_rm.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_rm.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/exp2_classic.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/exp2_classic.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/exp_classic.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/exp_classic.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/lin_clamp_hi.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/lin_clamp_hi.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/lin_clamp_lo.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/lin_clamp_lo.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/lin_classic.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/lin_classic.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_m_gate.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_m_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_r.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_r.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_rm.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_rm.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_rm_gate.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_rm_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_r.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_r.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_rm.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_rm.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_step.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_step.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_step_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_step_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_step_r.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_step_r.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_step_rm.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_step_rm.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_gate.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_m_gate.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_m_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_r.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_r.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_rm.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_rm.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s0.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s0.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s0_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s0_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s1.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s1.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s10.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s10.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s10_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s10_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s11.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s11.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s11_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s11_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s12.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s12.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s12_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s12_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s13.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s13.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s13_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s13_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s14.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s14.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s14_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s14_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s1_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s1_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s2.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s2.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s2_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s2_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s3.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s3.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s3_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s3_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s4.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s4.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s4_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s4_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s5.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s5.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s5_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s5_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s6.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s6.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s6_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s6_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s7.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s7.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s7_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s7_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s8.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s8.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s8_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s8_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s9.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s9.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s9_m.txt">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s9_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/user_lib/USER_LIB_FILES_GO_HERE.md">https://github.com/ReaTeam/JSFX/raw/8c976cc0c5ff4ea1e8112c9931eae8f5ad598519/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/user_lib/USER_LIB_FILES_GO_HERE.md</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI note-banked CC multiplier.jsfx" type="effect" desc="MIDI note-banked CC multiplier">
