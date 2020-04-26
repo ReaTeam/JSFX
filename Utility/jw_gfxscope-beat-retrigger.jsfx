@@ -1,6 +1,7 @@
 desc: Oscilloscope w/ beat retrigger
 author: jwhiting
-version: 1.0
+version: 1.1
+changelog: Increase time window
 about:
   # Oscilloscope with beat retrigger
 
@@ -13,7 +14,7 @@ Copyright (C) 2007 Cockos Incorporated
 License: LGPL - http://www.gnu.org/licenses/lgpl.html
 */
 
-slider1:view_msec=100<1,2000,1>-view size (ms)
+slider1:view_msec=8000<1,16000,1>-view size (ms)
 slider2:view_maxdb=0<-450,36,.1>-vzoom
 slider3:view_retrig=0<0,4,1{instant,beat,any,ascending,descending}>-retrig // JW added 'beat'
 
@@ -26,7 +27,7 @@ gfx_ext_retina=1;
 ext_nodenorm=1;
 recpos=0;
 gfx_clear=-1;
-g_maxlen_ms=2000;
+g_maxlen_ms=16000;
 histsize=((srate*2.0*g_maxlen_ms/1000)|0)*2;
 g_hold=-1;
 need_view_update=1;
@@ -260,7 +261,7 @@ mouse_wheel ? (
     g_hold  > histsize*.5-viewsize_spls ? g_hold = histsize*.5-viewsize_spls : g_hold < 0 ? g_hold=0;  
   ) : (
     g_hold >= 0 ? ovhold = g_hold + (gfx_w-mouse_x)*view_msec*0.001/gfx_w*srate;
-    view_msec = min(2000,max(1,view_msec*exp(-mouse_wheel*0.0003)));
+    view_msec = min(16000,max(1,view_msec*exp(-mouse_wheel*0.0003)));
     slider_automate(view_msec);
     g_hold >= 0 ? (
       // zoom at mouse cursor
