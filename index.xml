@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="8c976cc0c5ff4ea1e8112c9931eae8f5ad598519">
+<index version="1" name="ReaTeam JSFX" commit="71f572fac33bb78f8a156d8544d630eaf6d7d746">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1901,6 +1901,10 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       </metadata>
       <version name="1.0" author="jwhiting" time="2019-09-10T14:11:03Z">
         <source>https://github.com/ReaTeam/JSFX/raw/5178a1b63d48a568a0b6d600d2fdf308b5043822/Utility/jw_gfxscope-beat-retrigger.jsfx</source>
+      </version>
+      <version name="1.1" author="jwhiting" time="2020-04-26T18:36:22Z">
+        <changelog><![CDATA[Increase time window]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/71f572fac33bb78f8a156d8544d630eaf6d7d746/Utility/jw_gfxscope-beat-retrigger.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Dual Time adjustment.jsfx" type="effect" desc="Dual Time adjustment +/- Delay">
