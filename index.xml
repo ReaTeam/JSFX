@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="dc6755b0f46a6538a04d27ae01045fe3079d5bd1">
+<index version="1" name="ReaTeam JSFX" commit="e406e613bd9be4e08806d32c7ea607513caa0430">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -2100,13 +2100,17 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 Three selectable CC values are shown. Especially useful in embedded view\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Three selectable CC or HiRes CC values are shown. Especially useful in embedded view\par}
 }
 ]]></description>
       </metadata>
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2020-02-18T16:42:59Z">
         <changelog><![CDATA[Initial Release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/71ee3a3be10296f069c3505aaecaf22974306a8e/Utility/mschnell_MIDI%20Display%203%20CCs.jsfx</source>
+      </version>
+      <version name="2.0" author="Michael Schnell (mschnell@bschnell.de)" time="2020-05-06T17:25:08Z">
+        <changelog><![CDATA[HiRes support added]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/e406e613bd9be4e08806d32c7ea607513caa0430/Utility/mschnell_MIDI%20Display%203%20CCs.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI Display Patch Name.jsfx" type="effect" desc="MIDI Display Patch Name">
