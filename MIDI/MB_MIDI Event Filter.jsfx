@@ -1,9 +1,9 @@
-desc: MIDI Event Filter
+desc: MB MIDI Event Filter
 author: mabian
 version: 2.0
 changelog: - First version (same as classic MB_Filter2) added to Reapack
 about:
-  # MIDI Event Filter
+  # MB MIDI Event Filter
 
   Simple but flexible MIDI plugin that allows filtering out (suppressing) specific MIDI events in the FX chain on which it is added.
 
