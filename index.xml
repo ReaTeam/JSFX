@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="e406e613bd9be4e08806d32c7ea607513caa0430">
+<index version="1" name="ReaTeam JSFX" commit="0d26f30c50af08b8a4182a06224d9d551972fad0">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -157,6 +157,25 @@ here
       <version name="2.0" author="Matt Horn" time="2017-06-14T00:59:38Z">
         <changelog><![CDATA[- Added "Next Pattern" for better automation of pattern switching]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/c007e71f7caeed0d85a3bb665fd092540e228798/MIDI/mathphreak_Learningbaby.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="MB_MIDI Event Filter.jsfx" type="effect" desc="MB MIDI Event Filter">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MB MIDI Event Filter\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Simple but flexible MIDI plugin that allows filtering out (suppressing) specific MIDI events in the FX chain on which it is added.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 It can be used to prevent recording unwanted MIDI messages by using the \u8220"record (output)\u8221" REAPER track recording mode (if in track FX chain) or to discard them right at the source (if in Input FX chain).\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Additionally, event \u8220"rechannelization\u8221" option is available, to route to a specified MIDI channel all events that aren't filtered out.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Different filter settings are available per MIDI message category (pitch bend, poly aftertouch, channel aftertouch and up to 4 control changes).\par}
+}
+]]></description>
+      </metadata>
+      <version name="2.0" author="mabian" time="2020-05-14T20:42:11Z">
+        <changelog><![CDATA[- First version (same as classic MB_Filter2) added to Reapack]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/0d26f30c50af08b8a4182a06224d9d551972fad0/MIDI/MB_MIDI%20Event%20Filter.jsfx</source>
       </version>
     </reapack>
     <reapack name="mbncp_Legato Control.jsfx" type="effect" desc="Legato control">
