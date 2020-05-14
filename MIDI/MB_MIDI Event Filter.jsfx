@@ -1,0 +1,107 @@
+desc: MB MIDI Event Filter
+author: mabian
+version: 2.0
+changelog: - First version (same as classic MB_Filter2) added to Reapack
+about:
+  # MB MIDI Event Filter
+
+  Simple but flexible MIDI plugin that allows filtering out (suppressing) specific MIDI events in the FX chain on which it is added.
+
+  It can be used to prevent recording unwanted MIDI messages by using the “record (output)” REAPER track recording mode (if in track FX chain) or to discard them right at the source (if in Input FX chain).
+
+  Additionally, event “rechannelization” option is available, to route to a specified MIDI channel all events that aren't filtered out.
+
+  Different filter settings are available per MIDI message category (pitch bend, poly aftertouch, channel aftertouch and up to 4 control changes).
+
+// MB MIDI Event Filter2
+// 16.05.2010
+
+slider1:0<0,17,1{Off,All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Channel for filters
+slider2:0<0,16,1{Same as input,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Channel for output
+slider3:0<0,1,1{Off,On}>Pitch Wheel filter
+slider4:0<0,1,1{Off,On}>Polyphonic Aftertouch filter
+slider5:0<0,1,1{Off,On}>Channel Aftertouch filter
+slider6:0<0,1,1{Off,On}>Program Change filter
+slider7:0<0,129,1{Off,All,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>Control Change filter #1
+slider8:0<0,129,1{Off,All,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>Control Change filter #2
+slider9:0<0,129,1{Off,All,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>Control Change filter #3
+slider10:0<0,129,1{Off,All,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>Control Change filter #4
+
+
+in_pin:none
+out_pin:none
+
+@init
+    NOTE_OFF = $x80;           // note off MIDI message code
+    NOTE_ON = $x90;            // note on MIDI message code
+    AFTERTOUCH_POLY = $xA0;   // poly aftertouch MIDI message code
+    CONTROL_CHANGE = $xB0;    // control change MIDI message code
+    PROGRAM_CHANGE = $xC0;    // program change MIDI message code
+    AFTERTOUCH_CHANNEL = $xD0;    // channel aftertouch MIDI message code
+    PITCH_BEND = $xE0;        // pitch bend MIDI message code
+    OTHER = $xF0;
+
+@block
+while
+(
+  midirecv(mpos, msg1, msg23) ?
+  (
+    // get message components
+    msg = (msg1 & $xf0);             // message type nibble
+    channel = (msg1 & $x0f) + 1;    // channel nibble
+    eat = 0;
+  
+    (
+     ((msg != 0) && (msg != OTHER) && ((slider1 == 1) || (slider1 == channel + 1)))) ?
+    (
+      lastmsg = msg;
+      
+      (msg == CONTROL_CHANGE)  ?              // control change filter
+      (
+        cnum = (msg23 & $xff);
+        (
+        ((slider7 == 1) || (slider7 == cnum + 2)) ||
+        ((slider8 == 1) || (slider8 == cnum + 2)) ||
+        ((slider9 == 1) || (slider9 == cnum + 2)) ||
+        ((slider10 == 1) || (slider10 == cnum + 2))
+        ) ?
+        (
+          eat = 1;
+        );
+      );
+      
+      ((msg == PITCH_BEND) && (slider3 == 1)) ?      // pitch bend filter
+      (
+        eat = 1;
+      );
+      
+      ((msg == AFTERTOUCH_POLY) && (slider4 == 1)) ?    // polyphonic aftertouch filter
+      (
+        eat = 1;
+      );
+      
+      ((msg == AFTERTOUCH_CHANNEL) && (slider5 == 1)) ?  // polyphonic aftertouch filter
+      (
+        eat = 1;
+      );
+      
+      ((msg == PROGRAM_CHANGE) && (slider6 == 1)) ?    // program changes
+      (
+        eat = 1;
+      );      
+    );
+      
+    (eat == 0) ?
+    (
+      // channel remap
+      ((msg != OTHER) && (slider2 > 0)) ?
+      (
+        msg1 = msg | (slider2 - 1);
+      );
+
+      midisend(mpos, msg1, msg23);
+    );
+  );
+  
+  msg1;
+);
