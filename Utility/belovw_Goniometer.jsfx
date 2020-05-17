@@ -2,10 +2,7 @@ desc: Goniometer
 author: Belovw
 version: 0.16alpha
 
-desc:Goniometer
-// V 0.16alpha
 //tags: analysis visualization
-//author: Belovw
 
 slider1:Led=1<1,4,1>-Led
 slider2:Corr=1<-1,1,0.001>-Corr
