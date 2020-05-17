@@ -1,6 +1,7 @@
 desc: Goniometer
 author: Belovw
-version: 0.16alpha
+version: 0.17alpha
+changelog: Corrections in the brightness of the display of the scale of the correlometer.
 
 //tags: analysis visualization
 
@@ -312,7 +313,7 @@ gfx_lineto(X03+size2Q+sizeQ*k,size2Q,1);
 
 size>150 ? (
 
-gfx_r=gfx_g=gfx_b=0.25; gfx_a=1;
+gfx_r=gfx_g=gfx_b=0.3; gfx_a=1;
 gfx_x = gx0+Sizeh*(1/44+0.007-1)-12; gfx_y = size-10;
 gfx_drawnumber(-1,0);
 gfx_x = gx2+SizeH*(1/44+0.007)-3; gfx_y = size-10;
@@ -320,6 +321,7 @@ gfx_drawnumber(0,0);
 gfx_x = gx2+sizi*(1+1/45+0.007)-3; gfx_y = size-10;
 gfx_drawnumber(1,0);
 
+gfx_r=gfx_g=gfx_b=0.25; gfx_a=1;
 gfx_x = gx0-sizeh; gfx_y = 10;
 gfx_drawstr("Led - ");
 gfx_drawnumber(Led,0);
