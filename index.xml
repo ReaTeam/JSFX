@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="0d26f30c50af08b8a4182a06224d9d551972fad0">
+<index version="1" name="ReaTeam JSFX" commit="52e08b257d44b6184ecccc117a9ad026cf163148">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1836,6 +1836,11 @@ channel).]]></changelog>
     </reapack>
   </category>
   <category name="Utility">
+    <reapack name="belovw_Goniometer.jsfx" type="effect" desc="Goniometer">
+      <version name="0.16alpha" author="Belovw" time="2020-05-17T02:29:36Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/52e08b257d44b6184ecccc117a9ad026cf163148/Utility/belovw_Goniometer.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="CoreyScogin_AutoMixer.jsfx" type="effect" desc="AutoMixer">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
