@@ -7,8 +7,8 @@ changelog:
 
 //tags: analysis visualization
 
-slider1:led=1<1,5,1>Led
-slider2:gon=0<0,1,1>Goniometr
+slider1:led=1<1,5,1>-Led
+slider2:gon=0<0,1,1>-Goniometr
 
 options:no_meter,
 in_pin:left input
