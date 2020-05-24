@@ -3,7 +3,8 @@ author: Vladimir Belov
 version: 0.18alpha
 changelog:
   *0.18 New goniometer visualization mode.
-  *0.17 Corrections in the brightness of the display of the scale of the correlometer.
+  
+//*0.17 Corrections in the brightness of the display of the scale of the correlometer.
 
 //tags: analysis visualization
 
