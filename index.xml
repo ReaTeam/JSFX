@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="ded7922517af029b02884ed4944b84e0ba162975">
+<index version="1" name="ReaTeam JSFX" commit="9cb5b4314d06a3061d9dc7c3cb84498eaf63f399">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1843,6 +1843,10 @@ channel).]]></changelog>
       <version name="0.17alpha" author="Belovw" time="2020-05-17T15:37:19Z">
         <changelog><![CDATA[Corrections in the brightness of the display of the scale of the correlometer.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/ded7922517af029b02884ed4944b84e0ba162975/Utility/belovw_Goniometer.jsfx</source>
+      </version>
+      <version name="0.18alpha" author="Vladimir Belov" time="2020-05-25T18:22:53Z">
+        <changelog><![CDATA[New goniometer visualization mode.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/9cb5b4314d06a3061d9dc7c3cb84498eaf63f399/Utility/belovw_Goniometer.jsfx</source>
       </version>
     </reapack>
     <reapack name="CoreyScogin_AutoMixer.jsfx" type="effect" desc="AutoMixer">
