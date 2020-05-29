@@ -1,13 +1,8 @@
 desc: MIDI CC Mapper X
 author: Talagan
-version: 3.5
+version: 3.6
 changelog:
-  - Function library system : functions are stored in a function lib with sets that are extensible
-  - Parametric sets : some sets are parametric, they can be used to generate an infinite number of curves
-  - User sets : the user can now import her/his own curves in the library
-  - Function export : MIDI CC Mapper X is now shipped with a script that exports the current curve
-  - Added support for all notes within the MIDI range (0-127).
-  - Bug fix for notes that could be transposed outside of midi range.
+  - Added MIDI Bus routing support as global setting.
 screenshot:
   Dark Theme https://stash.reaper.fm/37471/CCMapperX-Dark.png
   Light Theme https://stash.reaper.fm/37472/CCMapperX-Light.png
@@ -305,6 +300,10 @@ function instanceMemoryMapInit()
   KEYBOARD_FILTERED_NOTES     = malloc(128);
   KEY_VELOCITIES              = malloc(128);
   CURRENT_OCTAVA_OFFSET       = malloc(1);
+  
+  // Added 3.6
+  MIDI_BUS_INPUT              = malloc(1);
+  MIDI_BUS_OUTPUT             = malloc(1);
 );
 
 function initMidiControlNames()
@@ -1656,6 +1655,13 @@ function isRedKey(k) (
   (KEYBOARD_FILTERED_NOTES[k]==1)
 );
 
+function midiBusInput() (
+  (MIDI_BUS_INPUT[0]);
+);
+
+function midiBusOutput() (
+  (MIDI_BUS_OUTPUT[0]);
+);
 
 /////////////////////////
 //        MATH         //
@@ -2114,15 +2120,25 @@ function firstInit()
   CONTROL_SRCS[CONTROL_PEDALS_START]    = 64; // Midi sustain pedal
   CONTROL_DSTS[CONTROL_PEDALS_START]    = 64; // Midi sustain pedal
   
+  // Init BUS Routing options
+  MIDI_BUS_INPUT[0] = 1;  // Set to 1, because it's what REAPER does by default 
+  MIDI_BUS_OUTPUT[0] = 0; // As Src
+  
   GUI_MODE[0] = 1;
   CURRENT_OCTAVA_OFFSET[0] = 0;
-  
+);
+
+function fontInit() (
   // Configure font number 1
   gfx_setfont(1,"Arial",10,'b');           
   gfx_setfont(0);
 );
 
+
+// Do not reload plugin on each play/stop
 ext_noinit=1;
+// Enabled midi bus support
+ext_midi_bus=1;
 
 // Reload memory map each time.
 // This may allow hot plug of new fx versions.
@@ -2132,6 +2148,7 @@ definitionInit();
   // Memory default values.
   // Only do this once or reaper will destroy user data.
   firstInit();
+  fontInit();
   last_modified = -1;
   g_selected_control = -1;
 );
@@ -2248,6 +2265,13 @@ function memwr(is_saving, ver)
     file_mem(0,KEYBOARD_FILTERED_NOTES+109,19);   // Skipped 21+88
     file_mem(0,CURRENT_OCTAVA_OFFSET,1);
   );
+  
+  // Introduced in V3.6
+  avail = file_avail(0);
+  (is_saving || avail>0)?( // Avoid squashing default values if reading old format
+    file_mem(0,MIDI_BUS_INPUT,1);
+    file_mem(0,MIDI_BUS_OUTPUT,1);
+  );
 );
 
 function backupOrRestore() local(is_saving, check_ver, old_format) (
@@ -2318,10 +2342,10 @@ function gfx_rgb_control_low(control_num) (
 function textForComboBox(combo_id, val)
   local(tmp)
 (
-  ( (combo_id == "chan_dst_spinbox" || combo_id == "chan_out_green_spinbox" || combo_id == "chan_out_red_spinbox") && val == 0) ? (
+  ( (combo_id == "chan_dst_spinbox" || combo_id == "chan_out_green_spinbox" || combo_id == "chan_out_red_spinbox" || combo_id == "midi_bus_output_widget") && val == 0) ? (
     "As In";
   ):(
-    ( (combo_id == "chan_src_spinbox" || combo_id == "chan_in_keyboard_spinbox") && val == 0) ? (
+    ( (combo_id == "chan_src_spinbox" || combo_id == "chan_in_keyboard_spinbox" || combo_id == "midi_bus_input_widget") && val == 0) ? (
       "Any";
     ):(
       (combo_id == "chan_out_red_spinbox" && val == -1)?(
@@ -4107,8 +4131,31 @@ function drawGlobalSettingsPanel()
   // Theme option 
   drawSwitchButton(CURRENT_THEME_NUM,0,240,35,"Dark","Light");
   gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
-  gfx_x= 100; gfx_y = 244;
+  gfx_xy(100,244);
   gfx_drawstr("Theme"); 
+  gfx_rgb(TH.DYN_LABEL_NEUTRAL);
+  gfx_xy(100,264);
+  gfx_drawstr("Home is behind, the world ahead, many paths to tread");
+  gfx_xy(100,278);
+  gfx_drawstr("Through shadows to the edge of night, until the stars are all alight."); 
+  
+  gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
+  gfx_xy(100,304);
+  gfx_drawstr("MIDI Bus Routing"); 
+  
+  gfx_rgb(TH.DYN_LABEL_NEUTRAL);
+  gfx_xy(100,326);
+  gfx_drawstr("In"); 
+  gfx_xy(250,326);
+  gfx_drawstr("Out");
+
+  drawAddOrSubWidget("midi_bus_input_widget",MIDI_BUS_INPUT,0,133,322,0,16,51,0);
+  drawAddOrSubWidget("midi_bus_output_widget",MIDI_BUS_OUTPUT,0,293,322,0,16,51,0);
+  
+  gfx_rgb(TH.DYN_LABEL_NEUTRAL);
+  gfx_xy(100,348);
+  gfx_drawstr("MIDI events not matching the input bus will pass through."); 
+  
   
   // Reload function library
   w = 204; l = (gfx_w - w)/2; t = 550; r = l + 204; b = t + 15;
@@ -4469,13 +4516,14 @@ function processNoteMessage(evt)
 );
 
 function mainLoop() 
-  local(mpos,msg1,msg2,msg3,was_routed)
+  local(mpos,msg1,msg2,msg3,was_routed,bus_matches)
 (
 
   while(midirecv(mpos, msg1, msg2, msg3))
   (
   
     evt = 0;
+    evt.bus    = midi_bus + 1; // 1-16, not 0-15
     evt.mpos   = mpos;
     evt.msg1   = msg1;
     evt.msg2   = msg2;
@@ -4486,50 +4534,50 @@ function mainLoop()
     evt.cc_num = 0;
     evt.cc_val = 0;
      
-    // status    = msg1;
-    // statusHi  = (status >> 4) & 0x0F;   // Type of message
-    // statusLo  = (status & 0x0F);        // Channel
+    bus_matches = (midiBusInput()==0 || midiBusInput() == evt.bus);
     
-    // status = msg1;
-    // statusHi = (msg1/16)|0;
-    // statusLo = msg1-(statusHi*16);
-        
-    (evt.type == CC_MSG) ? (
+    bus_matches?(
+      midi_bus = (midiBusOutput()==0)?(evt.bus-1):(midiBusOutput()-1);  
+      (evt.type == CC_MSG) ? (
       
-      // Translate into "cc words" for more comprehensible code
-      evt.cc_num = msg2; 
-      evt.cc_val = msg3;
+        // Translate into "cc words" for more comprehensible code
+        evt.cc_num = msg2; 
+        evt.cc_val = msg3;
         
-      // CC LEARN
-      (isCCLearning() && g_selected_control != -1 && isCCLearnable(evt.cc_num))?(
-        CONTROL_SRCS[g_selected_control] = evt.cc_num;
-        disableCCLearn();
-      );
-        
-      was_routed = processCCMessage(evt);   
-      !was_routed && !shouldDropUnroutedCCMessages()?(
-        // Re-send message
-        midisend(mpos, msg1, msg2, msg3);
-      ); 
-    ):
-    (
-      // NOTE MESSAGE
-      (evt.type == NOTE_ON_MSG || evt.type == NOTE_OFF_MSG)?(
-        
-        evt.note      = msg2;
-        evt.key       = midiNoteToKey(evt.note);
-        evt.velocity  = msg3;
-           
-        was_routed    = processNoteMessage(evt);
-        !was_routed && !shouldDropUnroutedNoteMessages()?(
+        // CC LEARN
+        (isCCLearning() && g_selected_control != -1 && isCCLearnable(evt.cc_num))?(
+          CONTROL_SRCS[g_selected_control] = evt.cc_num;
+          disableCCLearn();
+        );
+      
+        was_routed = processCCMessage(evt);   
+        !was_routed && !shouldDropUnroutedCCMessages()?(
           // Re-send message
           midisend(mpos, msg1, msg2, msg3);
-        );
+        ); 
       ):
       (
-        // Not a control event, send as is
-        midisend(mpos, msg1, msg2, msg3);
-      );
+        // NOTE MESSAGE
+        (evt.type == NOTE_ON_MSG || evt.type == NOTE_OFF_MSG)?(
+        
+          evt.note      = msg2;
+          evt.key       = midiNoteToKey(evt.note);
+          evt.velocity  = msg3;
+         
+          was_routed    = processNoteMessage(evt);
+          !was_routed && !shouldDropUnroutedNoteMessages()?(
+            // Re-send message
+            midisend(mpos, msg1, msg2, msg3);
+          );
+        ):
+        (
+          // Not a note or CC message
+          midisend(mpos, msg1, msg2, msg3);
+        );
+      );    
+    ):(
+      // Bus not matching leave untouched 
+      midisend(mpos, msg1, msg2, msg3);
     );
   );
 );
