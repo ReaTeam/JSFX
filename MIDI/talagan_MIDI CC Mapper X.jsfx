@@ -4071,7 +4071,7 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("Midi CC Mapper X (3.5) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai"); 
+  gfx_drawstr("Midi CC Mapper X (3.6) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai"); 
 
   drawSwitchButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin");
 );
