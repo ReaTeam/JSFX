@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="77538993c50c9444ca8015c9cba8e94bfe72a993">
+<index version="1" name="ReaTeam JSFX" commit="72921661cd3a4d03b880bde1b1c44e7d22e8175e">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -392,6 +392,10 @@ The "Factor" slider can be moved in steps of one between 1 and 16, but of course
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2020-04-25T16:42:42Z">
         <changelog><![CDATA[initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/cd889d12d109ff2885e4ab4edd1951417d2ec664/MIDI/mschnell_MIDI%20Slider%20and%20MIDI%20CC.jsfx</source>
+      </version>
+      <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2020-05-31T02:32:59Z">
+        <changelog><![CDATA[v 1.0. had wrong file content]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/72921661cd3a4d03b880bde1b1c44e7d22e8175e/MIDI/mschnell_MIDI%20Slider%20and%20MIDI%20CC.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Note On under X velocity to Note Off and send All Notes Off.jsfx" type="effect" desc="Note On under X velocity to Note Off and send All Notes Off">
