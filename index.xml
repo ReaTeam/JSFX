@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="e565b4a1766f69e896aa249bcf08a6c5e19d1777">
+<index version="1" name="ReaTeam JSFX" commit="e48b95eadd8085ada7bc40c8279fba170d47da03">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -382,10 +382,10 @@ The "Factor" slider can be moved in steps of one between 1 and 16, but of course
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 One or both of the following functions can be selected:\par}
-{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Sends a CC message according to the channel and CC # setting whenever the CC value slider (Slider 1) is modified manually or by automation\par}
-{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab moves the slider according to the the value of an appropriate MIDI CC message received. The Slider value can be written in an automation line.\sa180\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Sends a CC or Pitchbend message according to the channel and CC # setting whenever the value slider (Slider 1) is modified manually or by automation\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab moves the slider according to the the value of an appropriate MIDI CC or Pitchbend message received. The Slider value can be written in an automation lane.\sa180\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Slider 1 can be used to read or write track envelopes.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 "Resolution CC" selects normal or high resolution CC messages as well for receiving as for sending. The low significant CC# is 32 steps higher than the normal (most significant) CC#.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Resolution" selects normal or high resolution CC messages as well for receiving as for sending. The low significant CC# is 32 steps higher than the normal (most significant) CC#.\par}
 }
 ]]></description>
       </metadata>
@@ -396,6 +396,11 @@ The "Factor" slider can be moved in steps of one between 1 and 16, but of course
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2020-05-31T02:32:59Z">
         <changelog><![CDATA[v 1.0. had wrong file content]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/72921661cd3a4d03b880bde1b1c44e7d22e8175e/MIDI/mschnell_MIDI%20Slider%20and%20MIDI%20CC.jsfx</source>
+      </version>
+      <version name="1.2" author="Michael Schnell (mschnell@bschnell.de)" time="2020-06-05T00:01:29Z">
+        <changelog><![CDATA[add Pitchbend handling
+bugfix]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/e48b95eadd8085ada7bc40c8279fba170d47da03/MIDI/mschnell_MIDI%20Slider%20and%20MIDI%20CC.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Note On under X velocity to Note Off and send All Notes Off.jsfx" type="effect" desc="Note On under X velocity to Note Off and send All Notes Off">
