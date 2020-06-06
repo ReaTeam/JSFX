@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="27f0f1d2a578e5a992f6ea52f928f983090a7d1b">
+<index version="1" name="ReaTeam JSFX" commit="0902d3658b9d2fe5b9ce6b488927dee45444f6c5">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -871,6 +871,15 @@ And a bit of source code cleaning.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/e7ed9a1ccc661d901153d5e07d8357142d864a4b/MIDI/urtzurd_MIDI%20Glissando.jsfx</source>
       </version>
     </reapack>
+    <reapack name="willdevelop_MIDI every note the same.jsfx" type="effect" desc="MIDI every note the same">
+      <metadata>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?p=2297569#post2297569">Forum Thread</link>
+        <link rel="website" href="http://will-records.tk/">My Website</link>
+      </metadata>
+      <version name="1.0" author="Will Develop" time="2020-06-06T02:39:23Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/900b9f750753d98decc94d4ecf2f13eed2763065/MIDI/willdevelop_MIDI%20every%20note%20the%20same.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="willdevelop_MIDI Note Repeater [Default Key Map B1 - A4].jsfx" type="effect" desc="MIDI Note Repeater [Default Key Map B1 - A4]">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
@@ -918,6 +927,15 @@ And a bit of source code cleaning.]]></changelog>
       </metadata>
       <version name="2.0" author="Will Develop" time="2020-02-18T16:53:48Z">
         <source>https://github.com/ReaTeam/JSFX/raw/3c503994c16154d73e26db2677886e50d73d2d52/MIDI/willdevelop_MIDI%20Note%20Repeater%20%5BDefault%20Key%20Map%20B1%20-%20A4%5D.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="willdevelop_MIDI Velocity Filter.jsfx" type="effect" desc="MIDI Velocity Filter">
+      <metadata>
+        <link rel="website" href="http://will-records.tk/">My Website</link>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?p=2297585#post2297585">Forum Thread</link>
+      </metadata>
+      <version name="1.0" author="Will-Develop" time="2020-06-06T02:39:33Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/0902d3658b9d2fe5b9ce6b488927dee45444f6c5/MIDI/willdevelop_MIDI%20Velocity%20Filter.jsfx</source>
       </version>
     </reapack>
     <reapack name="XQ_Drum Converter.jsfx" type="effect" desc="Drum Converter">
