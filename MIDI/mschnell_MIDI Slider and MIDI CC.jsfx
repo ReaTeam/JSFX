@@ -1,9 +1,7 @@
 desc: Slider and MIDI CC
 author: Michael Schnell (mschnell@bschnell.de)
-version: 1.2
-changelog:
-  add Pitchbend handling
-  bugfix
+version: 1.3
+changelog: correctly auto set High Res for Pitchbend
 about:
   ## Description
 
@@ -78,21 +76,16 @@ function calc () (
   cch         = slider2|0;
   ccl         = slider3|0;
   direction   = slider6+1;
-  hhr         = ccnr == 128 ? 1 : slider7;
-  hr != slider7 ? (
-    hr        = hhr;
-    slider7   = hr;
-    hr ? (
-      factor  = 128*128-1 
-     ) : (
-      factor  = 127;
-    );
-    old = oldl = oldh = 0;
-  );  
-  !hr ? (
+  hr          = ccnr == 128 ? 1 : slider7;
+  slider7     = hr;
+  hr ? (
+    factor  = 128*128-1 
+   ) : (
+    factor  = 127;
     slider3 = 0;
     oldl   = 0;
   );
+  old = oldl = oldh = 0;
   calc(); 
    
 
@@ -153,4 +146,3 @@ function calc () (
      midisend(0, msg1, msg2, msg3);  // pass throug everything
    );        
  );
-
