@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="0902d3658b9d2fe5b9ce6b488927dee45444f6c5">
+<index version="1" name="ReaTeam JSFX" commit="a33250bb83914a450788e84b5c27885d5dc99531">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1102,6 +1102,12 @@ And a bit of source code cleaning.]]></changelog>
         <changelog><![CDATA[Added Features
 - Continuous Loop Length Change Slider. Map this one to a rotary encoder in relative mode. When used the loop length transitions will happen immediately while repeat mode is on. When repeat mode switches back to off the plugin automatically goes back to stepped mode.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/82b75d5d4f9f09aec9a4260c0718bbf0bd0cc651/Misc/brumbear_LiveBeatRepeater.jsfx</source>
+      </version>
+      <version name="1.03" author="brumbear" time="2020-06-11T05:30:30Z">
+        <changelog><![CDATA[Added Features
+- Additional Loop Lengths ("Tripplets" and as short as 1/128)
+- Logarithmic scaling of continuous loop length slider]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/a33250bb83914a450788e84b5c27885d5dc99531/Misc/brumbear_LiveBeatRepeater.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_PM_Resynth.jsfx" type="effect" desc="MIDI PM Resynth">
