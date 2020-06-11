@@ -1,9 +1,10 @@
 desc: LiveBeatRepeater
 author: brumbear
-version: 1.02
+version: 1.03
 changelog:
   Added Features
-  - Continuous Loop Length Change Slider. Map this one to a rotary encoder in relative mode. When used the loop length transitions will happen immediately while repeat mode is on. When repeat mode switches back to off the plugin automatically goes back to stepped mode.
+  - Additional Loop Lengths ("Tripplets" and as short as 1/128)
+  - Logarithmic scaling of continuous loop length slider
 link: Forum thread https://forum.cockos.com/showthread.php?t=211834
 about:
   # LiveBeatRepeater
@@ -20,14 +21,14 @@ about:
 // License: GPLv3 - http://www.gnu.org/licenses/gpl
 // desc: LiveBeatRepeater (brumbear@pacific_peaks)
 // author: brumbear @ pacific peaks
-// 2018-10-12: Release V1.02
+// 2020-06-09: Release V1.03
 
 
 //------------------------------------------------------------------------------------------------
 slider1:0<0,1,1{Off,On}>Repeat
-slider2:3<0,6,1{2,1,1/2,1/4,1/8,1/16,1/32}>Loop Length [bars] (Stepped Mode)
+slider2:5<0,13,1{2,1,1T(=2/3),1/2,1/2T(=1/3),1/4,1/4T(=1/6),1/8,1/8T(=1/12),1/16,1/16T(=1/24),1/32, 1/64, 1/128}>Loop Length [bars] (Stepped Mode)
 // Continuous Loop Length will be reset to closest stepped Loop Length when Repeat is switched from ON to OFF unless Transition is set to "Immediately"
-slider3:48<0,96,1>Loop Length (Continuous Mode)
+slider3:48<0,128,0.5>Loop Length (Continuous Mode)
 slider4:1<0,3,1{Immediately,At Next Beat,At Next Bar}>Loop Start
 slider5:2<0,2,1{Immediately,At Next Beat,At Loop End}>Length Transitions (Stepped Mode)
 slider6:1<0,1,1{Immediately,Soft Fade Out}>Repeat Ending  
@@ -44,6 +45,54 @@ out_pin:right loop fx output
 
 //------------------------------------------------------------------------------------------------
 @init
+
+log2 = log(2);
+
+function loop_length_slider2(n) // returns the inverse of the fractional loop length of a bar (e.g. 4 for 1/4bar), see values for slider2
+(
+ n == 0 ? 0.5 // slider3 = 0
+ : n == 1 ? 1 // slider3 = 16
+  : n == 2 ? 1.5 // slider3 = 25.36
+   : n == 3 ? 2 // slider3 = 32
+    : n == 4 ? 3 // etc... calculation as per below function slider3_from_slider2
+     : n == 5 ? 4 
+      : n == 6 ? 6
+       : n == 7 ? 8 
+        : n == 8 ? 12
+         : n == 9 ? 16 
+          : n == 10 ? 24
+           : n == 11 ? 32 
+            : n == 12 ? 64 
+             : n == 13 ? 128 // 128
+             : 0;
+);
+
+function slider3_from_slider2(x) 
+// calculate the exact value for continuous loop length with double float precision
+// the exact value of slider 3 will later be used to calculated the loop size [samples]
+(
+ (log(loop_length_slider2(x))/log2 + 1) * 16;
+);
+
+
+function Nearest_Loop_Length(i) // aka "slider2_from_slider3", returns slider2 index from slider3 value
+(
+ i <= 8 ? 0 // midpoint between slider3 = 0 and slider3 = 16
+ : i <= 20.68 ? 1 //  midpoint between slider3 = 16 and slider3 = 25.36
+  : i <= 28.68 ? 2 // etc...
+   : i <= 36.68 ? 3
+    : i <= 44.68 ? 4
+     : i <= 52.68 ? 5  
+      : i <= 60.68 ? 6
+       : i <= 68.68 ? 7
+        : i <= 76.68 ? 8
+         : i <= 84.68 ? 9
+          : i <= 92.68 ? 10
+           : i <= 104 ? 11
+            : i <= 120 ? 12
+           : 13;
+);
+
 // need some defaults when sliders have not been touched yet, no playback or just input monitoring
 
   default_samples_per_bar = 96000; // default values at 120bpm, 4/4 signature and 48kHz sample rate
@@ -74,7 +123,7 @@ next_loop_overflow = 0;
 next_loop_trigger_beat_pos = 0;
 
 last_slider1 = 0;
-last_slider2 = 3;
+last_slider2 = 5;
 last_slider3 = 48;
 
 immediate_transition_override = 0; // flag to indicate if we are in Continuos Mode (NOT discrete loop length)
@@ -93,13 +142,13 @@ loop_copy_offset = 2 * buf_size;
 
 // synchronize loop length sliders
 (last_slider3 != slider3) && (last_slider2 == slider2) ? (
-  slider2 = floor(slider3/16 + 0.5);
+  slider2 = Nearest_Loop_Length(slider3);
   last_slider2 = slider2;
   last_slider3 = slider3;
   immediate_transition_override = 1;
 ):(
   last_slider2 != slider2 ? (
-    slider3 = slider2 * 16;
+    slider3 = slider3_from_slider2(slider2);
     last_slider2 = slider2;
     last_slider3 = slider3;
     immediate_transition_override = 0;
@@ -107,7 +156,7 @@ loop_copy_offset = 2 * buf_size;
 );    
 
 // adjust loop start position when loop length changes
-loop_size = floor(1/2^(slider3/16 - 1)*samples_per_bar);
+loop_size = floor(samples_per_bar /(2^(slider3/16-1)));
 (slider5 == 1) && (immediate_transition_override == 0) ? (
   // loop start point may only be updated at next beat
   next_loop_trigger_beat_pos = floor(beat_position + 1);
@@ -131,7 +180,7 @@ slider1 < last_slider1 ? (
   immediate_transition_override = 0;
   slider5 != 0 ? (
     // revert back to Stepped Mode and set slider 3 to closest stepped length unless transition was set to "Immediately"
-    slider3 = slider2 * 16;
+    slider3 = slider3_from_slider2(slider2);
     last_slider2 = slider2;
     last_slider3 = slider3;
   );
