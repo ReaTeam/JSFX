@@ -3,25 +3,6 @@ author: brumbear
 version: 1.03
 changelog:
   Added Features
-    - Additional Loop Lengths ("Tripplets" and as short as 1/128)
-    - Logarithmic scaling of continuous loop length slider
-link: Forum thread https://forum.cockos.com/showthread.php?t=211834
-about:
-  # LiveBeatRepeater
-
-  JSFX for live performance stutter effects. Zero latency. Synchronized to project tempo and time signature. Works well with linear songs as well as loop based material. Mashes up nicely your rhythms on drum tracks/percussion. Great toy on voices.
-
-  What makes this fx different from the classical looper or "instant" samplers is the fact that it constantly samples the input and repeats what you just heard when you trigger the repeat mode. I.e. you do not have to trigger recording a loop blindly hoping it will be what you want, but you repeat what was just played.
-
-  Most fun if controlled via a MIDI/OSC hardware device (pad controller, touch screen device). E.g. Repeat On-Off to a pad, continuous Loop Length to a rotary encoder (relative mode) and stepped Loop Length to dedicated pads (one for each loop length).
-
-  Separate loop audio routing allows to feed the repeating loop into any custom fx chain. Resonant HP/LP filters with variable cut off frequency, ping pong delays, distortion etc work particularly well with the stutter and allow spontaneous live (or automated) build ups.
-
-desc: LiveBeatRepeater
-author: brumbear
-version: 1.03
-changelog:
-  Added Features
   - Additional Loop Lengths ("Tripplets" and as short as 1/128)
   - Logarithmic scaling of continuous loop length slider
 link: Forum thread https://forum.cockos.com/showthread.php?t=211834
