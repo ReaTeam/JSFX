@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="58c37d7bb85d47f3c57b96b1c50c8e85ed7b3135">
+<index version="1" name="ReaTeam JSFX" commit="5191a2e9953caaccb7f2b9710ddf7d03170528d0">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1200,6 +1200,30 @@ And a bit of source code cleaning.]]></changelog>
 - Additional Loop Lengths ("Tripplets" and as short as 1/128)
 - Logarithmic scaling of continuous loop length slider]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/a33250bb83914a450788e84b5c27885d5dc99531/Misc/brumbear_LiveBeatRepeater.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="brumbear_LiveScrubberDucky.jsfx" type="effect" desc="LiveScrubberDucky">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 LiveScrubberDucky\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \f1 JSFX for real time scratching, scrubbing and tape stop effects.\line
+\line
+Allows classic scratching (two turntable style -> use two tracks), Eigen-scratching (song scratches onto itself -> single track use) and rythmic scratching (e.g. beat synchronized with LiveBeatRepeater, via parameter automation etc).\line
+\line
+Most fun if controlled via a MIDI/OSC hardware device (touch screen device, fader, rotary encoder & pads).\line
+\line
+Note: Audio device buffer should be within reason for best audio quality when scrubbing.\line
+E.g. at 44.1/48kHz audio interface sample rate the recommended buffer size is <= 512samples and at 96kHz < 1024 samples (smaller values are better). Buffer sizes above these values may lead to "flutter" while scrubbing due to the longer delay.\par}
+}
+]]></description>
+      </metadata>
+      <version name="0.7" author="brumbear" time="2020-06-21T10:21:43Z">
+        <changelog><![CDATA[- Improved X-fade algorithm (less crackle)
+- Fix bug when switching to "Off": Do not reset scrub start position, instead allow restarting scrubbing from any position]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/5191a2e9953caaccb7f2b9710ddf7d03170528d0/Misc/brumbear_LiveScrubberDucky.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_PM_Resynth.jsfx" type="effect" desc="MIDI PM Resynth">
