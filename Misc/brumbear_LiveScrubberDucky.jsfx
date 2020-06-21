@@ -1,0 +1,335 @@
+desc: LiveScrubberDucky
+author: brumbear
+version: 0.7
+changelog:
+  - Improved X-fade algorithm (less crackle)
+  - Fix bug when switching to "Off": Do not reset scrub start position, instead allow restarting scrubbing from any position
+about:
+  # LiveScrubberDucky
+  
+      JSFX for real time scratching, scrubbing and tape stop effects.
+      
+      Allows classic scratching (two turntable style -> use two tracks), Eigen-scratching (song scratches onto itself -> single track use) and rythmic scratching (e.g. beat synchronized with LiveBeatRepeater, via parameter automation etc).
+      
+      Most fun if controlled via a MIDI/OSC hardware device (touch screen device, fader, rotary encoder & pads).
+      
+      Note: Audio device buffer should be within reason for best audio quality when scrubbing.
+      E.g. at 44.1/48kHz audio interface sample rate the recommended buffer size is <= 512samples and at 96kHz < 1024 samples (smaller values are better). Buffer sizes above these values may lead to "flutter" while scrubbing due to the longer delay.
+
+
+// This effect Copyright (C) 2020 and later Pacific Peaks Studio
+// License: GPLv3 - http://www.gnu.org/licenses/gpl
+// desc: LiveScrubberDucky (brumbear@pacific_peaks)
+// author: brumbear @ pacific peaks
+// 2020-06-21: Release V0.7
+
+
+//------------------------------------------------------------------------------------------------
+slider11:scrub_target=0<-100,0,0.05>SCRUB ME!! (Position [%])
+slider12:mode=2<0,2,1{Off,On,Auto}>ScrubMode
+slider13:x_fade=0<0,1,1{Off,On}>Eigen-X-Fade
+
+slider20:alpha_smooth=0.08<0.2,0.02,0.01>Inertia
+slider21:beta=0<0,0.1,0.01>Rubber Band
+
+
+slider30:scrub_buf_length=2<12,1,1>Buffer length [beats]
+slider31:auto_off_sense=150<0,1000,5>Auto-Off Detection Time [ms]
+slider32:x_fade_limit=0.5<2,0.1,0.01>Eigen-X-Fade Threshold
+
+// TODO: slider40:channel_routing=0<0,1,1{Combined Main Output,Loop on Separate Fx Output only}>Fx Channel Routing
+// DEBUG only: slider50:visual_indicator=0<-150,50,0.05>DEBUG: Playhead
+
+
+in_pin:left input
+in_pin:right input
+out_pin:left main output
+out_pin:right main output
+out_pin:left loop fx output
+out_pin:right loop fx output
+
+//------------------------------------------------------------------------------------------------
+@init
+
+function reset_loop()
+(
+  loop_end = buf_pos_WRITE;
+  loop_start = loop_end - loop_size;
+  loop_start <0 ? (loop_start += buf_size; loop_overflow = 1;) : loop_overflow = 0;
+  loop_pos_READ = loop_end + loop_size * scrub_target/100;
+  loop_pos_READ < 0 ? loop_pos_READ += buf_size;
+  loop_pos_COPY = loop_end - MAXBUF*samples_per_beat; // start copy at max length that the looping section can have
+  loop_pos_COPY <0 ? (loop_pos_COPY += buf_size; loop_COPY_overflow = 1;) : loop_COPY_overflow = 0;
+  loop_pos_COPYMAX = loop_pos_COPY;
+  loop_copied = 0;
+);
+
+
+// CONSTANTS
+MAXBUF = 12; // maximum size of scrub_buf_length in [beat], must be equal to slider configuration above!
+OVERBUF = 0; // TODO: Make OVERBUF = 2 beats to allow for "overswing" in positive direction (rubberband effect) beyond loop_end. Requires more code changes in other places too, notably loop copying, loop overflow handling, boundary checks...
+AUTO_OFF_POS = -1; // threshold where automatic off mode will be triggered. Auto off is executed when auto_off_sense timer expires.
+ACQUISITION_INTERVAL = floor(srate/48000*600); // acquisition interval of 12.5ms (80 Hz) for scrub position tracking and motion estimator
+XFADE_FACTOR = 0.1*0.2;
+
+// need some defaults when sliders have not been touched yet, no playback or just input monitoring
+  default_samples_per_beat = 24000; // default values at 120bpm, 4/4 signature and 48kHz sample rate
+  samples_per_beat = default_samples_per_beat;
+
+  // create a buffer hosting 2 sections: track ring buffer and loop copy buffer
+  buf_size = (2*(MAXBUF+OVERBUF) + 1) * samples_per_beat; //track ring buffer has to be > 2x max loop length, i.e. > 2*12 beats.
+  buf0 = 0; buf1 = buf0 + buf_size;
+  buf_pos_WRITE = 0; // position in track ring buffer that is being filled with current track samples
+
+  // buf0[loop_copy_offset + pos] and buf1[loop_copy_offset + pos] store a copy of the max length loop portion from track ring buffer. 
+  loop_copy_offset = 2 * buf_size; 
+  loop_pos_COPY = 0;
+  loop_copied = 0; // flag to indicate that the max length loop portion (= 12 beats) has been fully copied
+
+// end of default values
+
+loop_start = 0; // start position of loop within track ring buffer
+loop_end = buf_size; // end position of loop within track ring buffer. Frozen when scrubbing is switched on.
+loop_size = buf_size; // loop length
+loop_overflow = 0; // flag to indicate if loop stretches beyond buffer end, i.e. loop_end < loop_start
+loop_pos_READ = loop_end; // position in buffer that will be played back when scrubbing is on
+scrub_loop = 0;
+
+last_mode = -1;
+last_scrub_buf_length = -1;
+last_scrub_target = 0;
+
+auto_off_trigger_time = -1; // neagtive value means "not auto triggered"
+
+motion_estimate_timer = 0;
+
+itm0=itm1=otm0=otm1=0; // DC Filter
+
+input_vol = 1;
+scrub_vol = 0;
+
+//------------------------------------------------------------------------------------------------
+@slider
+// adjust buffer size to follow tempo changes. TBD: should this be updated in @block rather than here?
+(ts_num > 0) && (tempo > 0) ? (
+  samples_per_beat = floor((srate/tempo)*60 + 0.5);
+):(
+  samples_per_beat = default_samples_per_beat;
+);
+buf_size = (2*(MAXBUF+OVERBUF) + 1) * samples_per_beat; 
+buf0 = 0; buf1 = buf0 + buf_size;
+loop_copy_offset = 2 * buf_size; 
+
+// adjust loop start position when scrub_buf_length changes
+scrub_buf_length != last_scrub_buf_length ? (
+  loop_size = floor(samples_per_beat*scrub_buf_length);
+  loop_start = loop_end - loop_size;
+  loop_start <0 ? (loop_start += buf_size; loop_overflow = 1;) : (loop_overflow = 0);
+  // loop_pos_READ needs to be recalculated to correspond to new loop size and scrub_target if scrubbing is currently ON
+  scrub_loop == 1 ? (
+    loop_pos_READ = loop_end + loop_size * scrub_target/100;
+    loop_pos_READ < 0 ? loop_pos_READ += buf_size;
+  );
+);
+
+// check if mode switched to OFF
+(mode == 0) && (mode != last_mode) ? (
+  scrub_loop = 0;
+  auto_off_trigger_time = -1;
+); 
+
+// check if mode switched to ON
+(mode == 1) && (mode != last_mode) ? (
+  scrub_loop = 1;
+  // If previous mode was OFF we need to create a new loop. Keep current loop if previous mode was automatic.
+  last_mode == 0 ? reset_loop();
+); 
+
+// check if mode switched to Auto from a previous OFF mode
+(mode == 2) && (last_mode == 0) ? reset_loop();
+  
+// automatic mode: ON detection
+(mode == 2) && (scrub_loop == 0) ? (
+  (scrub_target < AUTO_OFF_POS) && (scrub_target != last_scrub_target) ? (
+    reset_loop();
+    scrub_loop = 1;
+    auto_off_trigger_time = -1;
+  );
+);
+  
+// automatic mode: OFF trigger detection
+(mode == 2) && (scrub_loop == 1) ? (
+  (scrub_target >= AUTO_OFF_POS) && (scrub_target != last_scrub_target) ? ( 
+    auto_off_trigger_time = time_precise();
+  );
+);
+
+// automatic mode: Cancel OFF trigger
+(mode == 2) && (auto_off_trigger_time > 0) ? (
+  scrub_target < AUTO_OFF_POS ? auto_off_trigger_time = -1;
+);
+
+last_mode = mode;
+last_scrub_buf_length = scrub_buf_length;
+
+
+@sample
+//------------------------------------------------------------------------------------------------
+// Continously fill the track ring buffer with the audio input
+buf0[buf_pos_WRITE] = spl0; buf1[buf_pos_WRITE] = spl1;
+
+//------------------------------------------------------------------------------------------------
+// Motion estimation of scrub target slider
+motion_estimate_timer +=1;
+motion_estimate_timer > ACQUISITION_INTERVAL ? (
+  motion_estimate_timer = 0;
+  scrub_target != last_scrub_target ? (
+    // calculate slider "speed" in [samples/ACQUISITION_INTERVAL], i.e. the step size requested during a period of ACQUISITION_INTERVAL
+    scrub_slider_speed = (scrub_target - last_scrub_target)/100*loop_size/ACQUISITION_INTERVAL;
+  ):(
+    scrub_slider_speed = 0;
+  );
+    
+  loop_COPY_overflow == 0 ? (
+    relative_loop_pos_READ = (loop_pos_READ - loop_end)/loop_size*100;
+  ):(
+    loop_pos_READ >= loop_pos_COPYMAX ? (
+      relative_loop_pos_READ = (loop_pos_READ - (loop_end + buf_size))/loop_size*100;
+    ):(
+      relative_loop_pos_READ = (loop_pos_READ - loop_end)/loop_size*100;
+    );  
+  );
+  delta_target = (scrub_target - relative_loop_pos_READ)/100*loop_size;
+  catch_up_speed = beta*delta_target/ACQUISITION_INTERVAL;
+  
+  // abs(catch_up_speed) > 2 ? catch_up_speed = sign(catch_up_speed) * 2; // speed limit
+  
+  // apply smoothing via single pole IIR filter y += a * (x - y)
+  smooth_speed += alpha_smooth * (scrub_slider_speed + catch_up_speed - smooth_speed);
+  
+  // cut off movement if very slow and small
+  (abs(smooth_speed) < 0.005) && (abs(delta_target) < ACQUISITION_INTERVAL) ? (
+    smooth_speed = 0;
+  );
+  
+  // Cross Fade
+    (x_fade) && (abs(smooth_speed) <= x_fade_limit) ? (
+      mix_input = 1 - abs(smooth_speed)/x_fade_limit;
+      input_vol_t = sqrt(mix_input);
+      scrub_vol_t = sqrt(1 - mix_input);
+    ):(
+      input_vol_t = 0;
+      scrub_vol_t = 1;
+    );
+  // smoothe x-fade change  
+  xfade_smooth = XFADE_FACTOR/alpha_smooth;
+  input_vol += xfade_smooth * (input_vol_t - input_vol);
+  scrub_vol += xfade_smooth * (scrub_vol_t - scrub_vol);
+  
+  last_scrub_target = scrub_target;
+  visual_indicator = relative_loop_pos_READ;
+);
+
+//------------------------------------------------------------------------------------------------
+// Automatically turn of scrubbing if criteria met
+auto_off_trigger_time > 0 ? (
+  current_time = time_precise();
+  (current_time - auto_off_trigger_time)*1000 >= auto_off_sense ? (
+    scrub_loop = 0;
+    scrub_target = 0; last_scrub_target = 0;
+    auto_off_trigger_time = -1;
+  );
+);
+//------------------------------------------------------------------------------------------------
+// Calculate the next sample position
+loop_pos_READ += smooth_speed;
+  
+//Boundary checks allowing to exceed loop_size for rubberband effect
+// TODO: consider allowing additional 2 beats after loop end to allow "overshoot" also in positive direction 
+smooth_speed > 0 ? (
+  loop_COPY_overflow == 0 ? (
+    loop_pos_READ > loop_end ? loop_pos_READ = loop_end;
+  ):(
+    (loop_pos_READ > loop_end) && (loop_pos_READ < loop_pos_COPYMAX) ? loop_pos_READ = loop_end;
+    loop_pos_READ >= buf_size ? loop_pos_READ -= buf_size;
+  );
+):(
+  loop_COPY_overflow == 0 ? ( 
+    loop_pos_READ < loop_pos_COPYMAX ? loop_pos_READ = loop_pos_COPYMAX;
+  ):(
+    (loop_pos_READ > loop_end) && (loop_pos_READ < loop_pos_COPYMAX) ? loop_pos_READ = loop_pos_COPYMAX;
+    loop_pos_READ < 0 ? loop_pos_READ += buf_size;
+  ); 
+);
+
+
+//------------------------------------------------------------------------------------------------
+// Scrubbing
+scrub_loop ? (  
+  // Copy the max length loop portion (12 beats) of the track ring section to the loop_copy section of the buffer
+  // TODO: consider storing additional 2 beats after loop end to allow "overswing" also in positive direction 
+  loop_copied == 0 ? (
+    buf0[loop_copy_offset + loop_pos_COPY] = buf0[loop_pos_COPY];
+    buf1[loop_copy_offset + loop_pos_COPY] = buf1[loop_pos_COPY];
+    loop_pos_COPY += 1; loop_pos_COPY >= buf_size ? loop_pos_COPY = 0;
+    loop_pos_COPY == loop_end ? loop_copied = 1;
+  );
+
+   
+  // Inter-sample linear interpolation
+  spl_index = loop_copied*loop_copy_offset + loop_pos_READ;
+  (loop_pos_READ == loop_end) || (loop_pos_READ == buf_size - 1) ? (
+    // no interpolation if we are sitting right on the edge
+    spl2 = buf0[spl_index];
+    spl3 = buf1[spl_index];
+  ):(
+    // calculate weighted average between adjacent samples
+    spl_index_previous = floor(spl_index);
+    spl_index_next = spl_index_previous + 1;
+    spl_weight_next = spl_index - spl_index_previous;
+    spl_weight_previous = 1 - spl_weight_next;
+    spl2 = (buf0[spl_index_previous]*spl_weight_previous + buf0[spl_index_next]*spl_weight_next);
+    spl3 = (buf1[spl_index_previous]*spl_weight_previous + buf1[spl_index_next]*spl_weight_next);
+  );  
+  
+  // TODO: consider adding volume/gain control of scrubbed samples
+  
+  // DC Filter
+  otm0=0.999*otm0 + spl2 - itm0; itm0=spl2; spl2=otm0;
+  otm1=0.999*otm1 + spl3 - itm1; itm1=spl3; spl3=otm1;
+  
+   
+  spl0 = spl0*input_vol + spl2*scrub_vol;
+  spl1 = spl1*input_vol + spl3*scrub_vol;
+  
+  /*
+  // TODO: Fx channel routing
+  channel_routing ? (
+    spl0 = 0; spl1 = 0;
+  ):(
+    spl0 = spl2;  spl1 = spl3;
+  );  
+  */
+  
+  
+//------------------------------------------------------------------------------------------------  
+):(
+  // No scrubbing
+  loop_pos_READ = loop_end + loop_size * scrub_target/100;
+  loop_pos_READ < 0 ? loop_pos_READ += buf_size;
+);
+//------------------------------------------------------------------------------------------------  
+
+// Move buffer write position forward
+buf_pos_WRITE += 1; buf_pos_WRITE >= buf_size ? buf_pos_WRITE = 0;
+
+//------------------------------------------------------------------------------------------------
+  
+  
+  
+
+
+
+
+
+
