@@ -1,18 +1,11 @@
 desc: MIDI CC Mapper X
 author: Talagan
-version: 4.0
+version: 4.1
 changelog:
-  - Reworked keyboard splitting : up to five ranges may be defined, each with its own routing, transpose parameters, velocity curve, after touch curve
-  - Added color blind highlighting
-  - Added support for Pitch Bend (symmetrical) 
-  - Added support for After Touch
-  - Added support for Channel Pressure
-  - Added "firewall" params accordingly
-  - Added copy/paste curve
-  - Minor bug fixes
+  - Reworked Channel Pressure (breaking change) : treat Channel Pressure as Virtual CC#128 in the UI to allow painless CC<>CP conversion.
 screenshot:
-  Dark Theme https://stash.reaper.fm/39683/MIDICCMapperX-4-0-Dark.png
-  Light Theme https://stash.reaper.fm/39684/MIDICCMapperX-4-0-Light.png
+  Dark Theme https://stash.reaper.fm/39718/MIDICCMapperX-4-1-Dark.png
+  Light Theme https://stash.reaper.fm/39719/MIDICCMapperX-4-1-Light.png
 provides:
   [script main] talagan_MIDI CC Mapper X/MIDI CC Mapper X - Dump Current Function.lua
   [data] talagan_MIDI CC Mapper X/README.md
@@ -62,13 +55,12 @@ about:
 
   Located in the bottom of the main window. This module UI is contextual to the selected control. When selected, a control can be enabled or disabled individually with the button located in the module title bar. 
   
-  There are 5 types of control, depending on the MIDI feature, which can be (from left to right) :
+  There are 4 types of control, depending on the MIDI feature, which can be (from left to right) :
   
   - Pitch Bend (1 pitch wheel)
-  - CC (1 mod wheel, 4 pedals, 10 faders, 10 knobs, 10 pads)
+  - CC or Channel Pressure (1 mod wheel, 4 pedals, 10 faders, 10 knobs, 10 pads)
   - Velocity (5 Velocity controls, one for each keyboard color range)
   - After-Touch (5 AfterTouch controls, one for each keyboard color range)
-  - Channel Pressure (tied to one of the 5 AfterTouch control)
   
   For each control, the response curve :
   
@@ -77,7 +69,7 @@ about:
   - can be smoothed with the smooth button
   - may be restricted to a user-defined space by configuring MIDI min/max values.
 
-  For CC controls :
+  For CC (or CP) controls :
   
   - A description can be given that will appear in the title bar
   - A short description can be given that will appear close to the control for convenience
@@ -85,6 +77,8 @@ about:
   - This input CC can be CC learned
   - An output CC can be assigned
   - This output CC can be copied from the input CC
+  
+  Note that MIDI Channel Pressure is not technically a MIDI CC# and uses a different type of MIDI message. However, MIDI CC Mapper X unifies CC and CP by proposing a virtual "Channel Pressure" CC #128. If selected as input and routing is ok, messages of type Channel Pressure will be converted to CC messages and reversely if selected as output.
   
   Additionally, for Pitch Bend and CC controls, channel routing may be achieved.
 
@@ -195,6 +189,9 @@ function instanceGlobalVarInit()
   
   // Number of color ranges
   KB_RANGE_COUNT            = 5;
+  
+  // Attribute cc 128 for channel pressure
+  CHANNEL_PRESSURE_FAKE_CC_NUM = 128;
 );
 
 
@@ -310,7 +307,7 @@ function instanceMemoryMapInit()
   _OBS_KEY_VELOCITIES         = malloc(88); // Replaced, now 128 long
   
   // CC state memorization
-  CC_RECEIVED_VALUES          = malloc(128); 
+  CC_RECEIVED_VALUES          = malloc(128+1); // 128 CCs + Channel Pressure
   
   // Conf/Global settings mode
   GUI_MODE                    = malloc(1);
@@ -352,10 +349,10 @@ function instanceMemoryMapInit()
   KB_RANGE_TRANSPOSE_SEMI_TONES           = malloc(KB_RANGE_COUNT);
   KB_RANGE_OUTPUT_CHANNEL                 = malloc(KB_RANGE_COUNT);
   DROP_UNROUTED_PITCH_BEND_MESSAGES       = malloc(1);
-  DROP_UNROUTED_CHANNEL_PRESSURE_MESSAGES = malloc(1);
+  _OBS_DROP_UNROUTED_CP_MESSAGES          = malloc(1);
   DROP_UNROUTED_AT_POLY_MESSAGES          = malloc(1);
-  CHANNEL_PRESSURE_ASSOCIATED_KB_RANGE    = malloc(1);
- 
+  _OBS_CP_ASSOCIATED_KB_RANGE             = malloc(1);
+
 );
 
 function initMidiCCNames()
@@ -1909,7 +1906,7 @@ function ccMsbCounterpart(ccnum) local(ret) (
 );
 
 function midiCCName(midi_cnum) (
-  midi_cnum;
+  (midi_cnum == 128)?("Channel Pressure (virtual CC)"):(midi_cnum);
 );
 function isALsbCC(ccnum) (
   // 88 is the LSB Channel for velocity.
@@ -1955,9 +1952,6 @@ function shouldDropUnroutedNoteMessages() (
 );
 function shouldDropUnroutedPitchBendMessages() (
   (DROP_UNROUTED_PITCH_BEND_MESSAGES[0] == 1);
-);
-function shouldDropUnroutedChannelPressureMessages() (
-  (DROP_UNROUTED_CHANNEL_PRESSURE_MESSAGES[0] == 1);
 );
 function shouldDropUnroutedPolyphonicAfterTouchMessages() (
   (DROP_UNROUTED_AT_POLY_MESSAGES[0] == 1);
@@ -2131,20 +2125,6 @@ function kbRangeTransposition(cr) (
 function kbRangeOutputChannel(cr) (
   KB_RANGE_OUTPUT_CHANNEL[cr];
 );
-function channelPressureKBRange() (
-  CHANNEL_PRESSURE_ASSOCIATED_KB_RANGE[0];
-);
-function setChannelPressureKBRange(kbr) (
-  CHANNEL_PRESSURE_ASSOCIATED_KB_RANGE[0] = kbr;
-);
-function controlForChannelPressure()
-  local(kbr)  
-(
-  kbr = channelPressureKBRange();
-  (kbr == NONE)?(NONE):(
-    afterTouchControlForKBRange(kbr);
-  );
-);
 
 
 /////////////////////
@@ -2286,13 +2266,13 @@ function firstInit()
   );
   
   // Init channel pressure range
-  CHANNEL_PRESSURE_ASSOCIATED_KB_RANGE[0] = NONE;
+  _OBS_CP_ASSOCIATED_KB_RANGE[0] = NONE;
   
   // Init other global params
   HIGHRES_INPUT_ENABLED[0]                    = 0;
   DROP_UNROUTED_CC_MESSAGES[0]                = 0;
   DROP_UNROUTED_NOTE_MESSAGES[0]              = 0;
-  DROP_UNROUTED_CHANNEL_PRESSURE_MESSAGES[0]  = 0;
+  _OBS_DROP_UNROUTED_CP_MESSAGES[0]           = 0;
   DROP_UNROUTED_PITCH_BEND_MESSAGES[0]        = 0;
   DROP_UNROUTED_AT_POLY_MESSAGES[0]           = 0;
   
@@ -2527,9 +2507,9 @@ function memwr(is_saving, ver)
     file_mem(0,KB_RANGE_TRANSPOSE_SEMI_TONES, KB_RANGE_COUNT);
     file_mem(0,KB_RANGE_OUTPUT_CHANNEL, KB_RANGE_COUNT);
     file_mem(0,DROP_UNROUTED_PITCH_BEND_MESSAGES, 1);
-    file_mem(0,DROP_UNROUTED_CHANNEL_PRESSURE_MESSAGES, 1);
+    file_mem(0,_OBS_DROP_UNROUTED_CP_MESSAGES, 1);
     file_mem(0,DROP_UNROUTED_AT_POLY_MESSAGES, 1);
-    file_mem(0,CHANNEL_PRESSURE_ASSOCIATED_KB_RANGE, 1);
+    file_mem(0,_OBS_CP_ASSOCIATED_KB_RANGE, 1);
   );
 );
 
@@ -2670,6 +2650,10 @@ function textForChannelOut(val)
   ));
 );
 
+function textForCC(val) (
+  (val == CHANNEL_PRESSURE_FAKE_CC_NUM)?("CP"):(defaultTextForCombo(val));
+);
+
 function isInputChannelSpinbox(combo_id)
 (
   ( combo_id == "chan_src_spinbox" ||
@@ -2691,12 +2675,17 @@ function isOutputChannelSpinbox(combo_id)
   );
 );
 
+function isCCSpinbox(combo_id) (
+  (combo_id == "cc_src_spinbox" || combo_id == "cc_dst_spinbox");
+);
+
 function textForComboBox(combo_id, val)
 (
   (isInputChannelSpinbox(combo_id)?(textForChannelIn(val)):(
   (isOutputChannelSpinbox(combo_id)?(textForChannelOut(val)):(
+  (isCCSpinbox(combo_id)?(textForCC(val)):(
     defaultTextForCombo(val);
-  ))));
+  ))))));
 );
 
 // Draws a enable/disable button
@@ -3842,7 +3831,7 @@ function drawVelAtWidget(kbr,isVel)
   
   // Icon
   drawKeyIcon(control_num, kbr, slider_l, slider_t+2, 
-    ((isVel)?("Vel"):( (kbr==channelPressureKBRange())?("AT/CP"):("AT")))
+    (isVel)?("Vel"):("AT");
   );
 );
 
@@ -4017,47 +4006,6 @@ function drawSmallLabelInputLine()
   drawInputLine("input_sl", bl, bt, br, bb, str);
 );
 
-function drawChannelPressureButton(kbr,l,t)
-   local(cpkbr, bgcol,bl,bt,br,bb, in_rect)
-(
-  cpkbr = channelPressureKBRange();
-  
-  bl = l+295;
-  bt = t;
-  br = bl + 30;
-  bb = bt + 15;
-   
-  // Event callback
-  (in_rect && mouse_click == 1) ? (
-    setChannelPressureKBRange( (kbr == cpkbr)?(NONE):(kbr) );
-  );
-  
-  in_rect = (mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt);
-  
-  (in_rect)?(
-    gfx_rgb_kbr_low(cpkbr,0);
-  ):(
-    gfx_rgb_kbr_low(cpkbr,1);
-  ); 
-  
-  gfx_rect(bl,bt,br-bl,bb-bt);
-  
-  gfx_rgb( (cpkbr == NONE)?(TH.SW_B_OFF_TEXT):(TH.KEY_COLOR_RANGE_TEXT) );
-  
-  (kbr == cpkbr)?(
-    gfx_xy(bl+3,bt+4);
-    gfx_drawstr("Yes");
-  ):(
-    gfx_xy(bl+7,bt+4);
-    gfx_drawstr("No");
-  );
-  
-  gfx_rgb(TH.DEFAULT_FONT);
-  gfx_xy(l,bt+4);
-  gfx_drawstr("Use this curve for Channel Pressure");
-);
-
-
 // Control editor sub panel for midi cc assignment
 function drawAssignZone() 
    local(src_cc, src_name, src_is_lsb, src_is_msb,
@@ -4149,10 +4097,6 @@ function drawAssignZone()
 
   );
   
-  (isControlAfterTouch(g_selected_control))?(
-    drawChannelPressureButton(controlKBRange(g_selected_control), 380, GUI_CONTROL_PARAMS_TOP+14-4);
-  );
-  
   // Standard CC Routing / Renaming
   (isControlARealCC(g_selected_control))?(
     gfx_x = 295; gfx_y = GUI_CONTROL_PARAMS_TOP+14;
@@ -4164,8 +4108,8 @@ function drawAssignZone()
     drawCCLearnButton(g_selected_control);
     drawCopySrcButton(g_selected_control);
    
-    drawAddOrSubWidget("cc_src_spinbox",CONTROL_SRCS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+30,0,127,42,0);
-    drawAddOrSubWidget("cc_dst_spinbox",CONTROL_DSTS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+50,0,127,42,0);
+    drawAddOrSubWidget("cc_src_spinbox",CONTROL_SRCS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+30,0,128,42,0);
+    drawAddOrSubWidget("cc_dst_spinbox",CONTROL_DSTS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+50,0,128,42,0);
   
     // Name of the src CC
     gfx_rgb(TH.ROUTING_INFO_CCNAME);
@@ -4653,7 +4597,7 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("Midi CC Mapper X (4.0) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai"); 
+  gfx_drawstr("Midi CC Mapper X (4.1) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai"); 
 
   drawSwitchButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin");
 );
@@ -4748,18 +4692,6 @@ function drawGlobalSettingsPanel()
   gfx_drawstr("If this option is on, all PAT messages that do not match the keyboard input channel are dropped."); 
   gfx_xy(100, hh+34);
   gfx_drawstr("This makes the plugin acts as a firewall for polyphonic AfterTouch."); 
-  hh += 55; // 354
-  
-  // Firewall Channel Pressure
-  drawOnOffButton(DROP_UNROUTED_CHANNEL_PRESSURE_MESSAGES,0,hh-4,50);
-  gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
-  gfx_xy(100, hh);
-  gfx_drawstr("Drop unrouted Channel Pressure messages"); 
-  gfx_rgb(TH.DYN_LABEL_NEUTRAL);
-  gfx_xy(100, hh+20);
-  gfx_drawstr("If this option is on, all Channel Pressure messages that are not expressly handled are dropped."); 
-  gfx_xy(100, hh+34);
-  gfx_drawstr("This makes the plugin acts as a firewall for Channel Pressure."); 
   hh += 75; // 354
   
   // Theme option 
@@ -4778,7 +4710,7 @@ function drawGlobalSettingsPanel()
     "Through shadows to the edge of night, until the stars are all alight."):(
     "A new day will come. And when the sun shines it will shine out the clearer.")
   );
-  hh += 95;
+  hh += 125;
   
   // Reload function library
   w = 204; l = (gfx_w - w)/2; t = hh; r = l + 204; b = t + 15;
@@ -4976,8 +4908,16 @@ function tryProcessCCWithControl(evt, blk_control)
       midiSend(evt.mpos, out_status, ccLsbCounterpart(out_cc_num),  g_hres_l);
       midiSend(evt.mpos, out_status, out_cc_num,                    g_hres_h);
     ):(
-      // Output low res, normalize by 127 (max is 127).
-      midiSend(evt.mpos, out_status, out_cc_num, roundi(out_val_01 * 127) );
+      
+      (out_cc_num == CHANNEL_PRESSURE_FAKE_CC_NUM)?(
+        // Channel pressure conversion
+        out_status = (MSG_CHAN_PRESSURE<<4)|(dst_chan-1);
+        midiSend(evt.mpos, out_status, roundi(out_val_01 * 127), 0);
+      )
+      :(
+        // Output low res, normalize by 127 (max is 127).
+        midiSend(evt.mpos, out_status, out_cc_num, roundi(out_val_01 * 127) );
+      );
     );
     
     was_processed = 1;
@@ -5247,57 +5187,6 @@ function processPitchBendMessage(evt)
   was_processed;
 );
 
-function processChannelPressureMessage(evt) 
-  local(was_processed, blk_control, kbr,
-        src_chan, dst_chan,
-        src_chan_matches,ctrl_is_enabled,
-        in_val_01, out_val_01,
-        out_chan, out_status, out_val)
-(
-
-  was_processed = 0;
-  blk_control   = controlForChannelPressure();
-  
-  (blk_control != NONE)?(
-    
-    ctrl_is_enabled   = isControlEnabled(blk_control);
-    src_chan          = keyboardInputChannel();
-    src_chan_matches  = (src_chan == ANY || src_chan == evt.chan );
-    
-    (src_chan_matches && ctrl_is_enabled)?(
-      
-      kbr               = controlKBRange(blk_control);
-      dst_chan          = kbRangeOutputChannel(kbr);  
-      dst_chan          = (dst_chan == AS_SRC)?(evt.chan):(dst_chan);
-         
-      // Pitch bend goes from 0 to 0x3FFF, center value is 0x2000.
-      // This is not symetrical, so merge 0 and 1.
-      in_val_01   = evt.chan_pressure/127.0; 
-     
-      // Apply the curve on the absolute val
-      out_val_01  = applyCurve(blk_control, in_val_01);
-     
-      // Save some values for UI feedback (small red circle)
-      CONTROL_LAST_IN[blk_control]  = in_val_01 * 127;
-      CONTROL_LAST_OUT[blk_control] = out_val_01 * 127;
-  
-      // Convert back
-      out_val = roundi(out_val_01 * 127);
-     
-      // Send result
-      out_status          = (MSG_CHAN_PRESSURE<<4)|(dst_chan-1); // Chan : 1-16 ->> 0-15
-      
-      // Output low res, normalize by 127 (max is 127).
-      midiSend(evt.mpos, out_status, out_val , evt.msg3 );
-      
-      // Consider the event as treated.
-      was_processed = 1;
-    ); // <- src chan matches and ctrl is enabled
-  ); // <- CP is set on an AT control
-  
-  was_processed;
-);
-
 
 function mainLoop() 
   local(mpos,msg1,msg2,msg3,was_routed,bus_matches)
@@ -5369,11 +5258,19 @@ function mainLoop()
         );
       ):(
       (evt.type == MSG_CHAN_PRESSURE)?(
-      
+        
         evt.chan_pressure = msg2;
+        evt.cc_num        = CHANNEL_PRESSURE_FAKE_CC_NUM;
+        evt.cc_val        = evt.chan_pressure;
+        
+        // CC LEARN
+        (isCCLearning() && g_selected_control != NONE)?(
+          CONTROL_SRCS[g_selected_control] = evt.cc_num;
+          disableCCLearn();
+        );
       
-        was_routed      = processChannelPressureMessage(evt);
-        !was_routed && !shouldDropUnroutedChannelPressureMessages()?(
+        was_routed      = processCCMessage(evt);
+        !was_routed && !shouldDropUnroutedCCMessages()?(
           // Re-send message
           midisend(mpos, msg1, msg2, msg3);
         );
