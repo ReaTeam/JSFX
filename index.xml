@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="fa8b8df11210a0c629764312a4bca45e297b6067">
+<index version="1" name="ReaTeam JSFX" commit="5658bba94a67a0ead7c7d3b3ea749037310f095d">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -523,6 +523,27 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
       <version name="1.1" author="polgo" time="2020-02-29T01:53:39Z">
         <changelog><![CDATA[Fixed note off problem]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/9df9682cee8e1bcceac9b3d3f273c3641fee9065/MIDI/polgo_MIDI%20Varocity.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="talagan_MIDI CC Bistate Button.jsfx" type="effect" desc="MIDI CC Bistate Button">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Listens to a CC on a specific route (Bus+Channel+CC), and transforms it into a "bistate button". Re-routing is possible.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Two modes are possible :\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab In "Push Button" mode, a MIDI Message is emitted when the input CC value passes across the threshold in both directions (if it's upwards, the "On" value is emitted on the output CC, and if it's downwards, the "Off" value is emitted).\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab In "Toggle" mode, a MIDI Message is emitted when the input CC value passes across the threshold but only upwards. It the memorized state was "Off", the "On" value is emitted, and reversely.\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Reaper forum thread\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 https://forum.cockos.com/showthread.php?t=238532\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Ben 'Talagan' Babut" time="2020-06-23T10:08:42Z">
+        <changelog><![CDATA[- Initial version]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/5658bba94a67a0ead7c7d3b3ea749037310f095d/MIDI/talagan_MIDI%20CC%20Bistate%20Button.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI CC Mapper X.jsfx" type="effect" desc="MIDI CC Mapper X">
