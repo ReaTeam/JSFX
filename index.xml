@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="dd1b433e61f10919d9c9d897a63415f417ba75a0">
+<index version="1" name="ReaTeam JSFX" commit="896c2b86bcd951a3a262442b2b5aff6d2068c879">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -467,6 +467,22 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2019-08-16T10:43:16Z">
         <changelog><![CDATA[initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/57388237549c19dff78537f769a414b3c0046a86/MIDI/mschnell_Slider%20to%20MIDI%20NRPM.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_XY Pad.jsfx" type="effect" desc="XY Pad">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 XY Pad\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 sends out high resolution CC messages when the circle is dragged\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="mschnell" time="2020-06-30T22:54:23Z">
+        <changelog><![CDATA[Initial Realease]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/896c2b86bcd951a3a262442b2b5aff6d2068c879/MIDI/mschnell_XY%20Pad.jsfx</source>
       </version>
     </reapack>
     <reapack name="polgo_MIDI Envelocity.jsfx" type="effect" desc="MIDI Envelocity">
