@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="5658bba94a67a0ead7c7d3b3ea749037310f095d">
+<index version="1" name="ReaTeam JSFX" commit="dd1b433e61f10919d9c9d897a63415f417ba75a0">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -405,6 +405,10 @@ bugfix]]></changelog>
       <version name="1.3" author="Michael Schnell (mschnell@bschnell.de)" time="2020-06-06T02:14:30Z">
         <changelog><![CDATA[correctly auto set High Res for Pitchbend]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/27f0f1d2a578e5a992f6ea52f928f983090a7d1b/MIDI/mschnell_MIDI%20Slider%20and%20MIDI%20CC.jsfx</source>
+      </version>
+      <version name="1.4" author="Michael Schnell (mschnell@bschnell.de)" time="2020-06-30T19:00:55Z">
+        <changelog><![CDATA[bugfix]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/dd1b433e61f10919d9c9d897a63415f417ba75a0/MIDI/mschnell_MIDI%20Slider%20and%20MIDI%20CC.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Note On under X velocity to Note Off and send All Notes Off.jsfx" type="effect" desc="Note On under X velocity to Note Off and send All Notes Off">
