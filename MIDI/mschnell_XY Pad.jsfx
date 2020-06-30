@@ -6,7 +6,6 @@ about:
   # XY Pad 
   sends out high resolution CC messages when the circle is dragged
 
-desc:XY Pad
 slider1:0<0,16,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Channel
 slider2:1<0,31,1{0 Bank Sel,1 Mod Wheel,2 Breath,3,4 Foot P,5 Porta,6 Data Entry,7 Vol,8 Balance,9,10 Pan,11 Expression,12 Ctrl 1,13 Ctrl 2,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,}>X CC # (Hi Res)
 slider3:1<0,31,1{0 Bank Sel,1 Mod Wheel,2 Breath,3,4 Foot P,5 Porta,6 Data Entry,7 Vol,8 Balance,9,10 Pan,11 Expression,12 Ctrl 1,13 Ctrl 2,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,}>Y CC # (Hi Res)
