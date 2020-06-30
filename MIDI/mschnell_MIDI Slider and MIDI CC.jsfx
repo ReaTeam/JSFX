@@ -15,7 +15,6 @@ about:
 
   "Resolution" selects normal or high resolution CC messages as well for receiving as for sending. The low significant CC# is 32 steps higher than the normal (most significant) CC#.
 
-
 slider1:0<0,1,0.0001>Value 0..1
 slider2:1<0,127,1>Value MSB
 slider3:1<0,127,1>Value LSB
@@ -152,4 +151,5 @@ function calc () (
      midisend(0, msg1, msg2, msg3);  // pass throug everything
    );        
  );
+
 
