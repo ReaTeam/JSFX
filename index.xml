@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="896c2b86bcd951a3a262442b2b5aff6d2068c879">
+<index version="1" name="ReaTeam JSFX" commit="3d9293eb094edaa11ce24e125dc9832f3e1fac2d">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -476,13 +476,18 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
 \widowctrl\hyphauto
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 XY Pad\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 sends out high resolution CC messages when the circle is dragged\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \f1 Sends out high resolution CC messages when the circle is dragged\line
+Moreover DAW-Parameters (hidden sliders) "x" and "Y" are provided for being directly linked from other plugins\par}
 }
 ]]></description>
       </metadata>
       <version name="1.0" author="mschnell" time="2020-06-30T22:54:23Z">
         <changelog><![CDATA[Initial Realease]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/896c2b86bcd951a3a262442b2b5aff6d2068c879/MIDI/mschnell_XY%20Pad.jsfx</source>
+      </version>
+      <version name="2.0" author="mschnell" time="2020-07-08T20:41:03Z">
+        <changelog><![CDATA[add x and y hidden gader]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/3d9293eb094edaa11ce24e125dc9832f3e1fac2d/MIDI/mschnell_XY%20Pad.jsfx</source>
       </version>
     </reapack>
     <reapack name="polgo_MIDI Envelocity.jsfx" type="effect" desc="MIDI Envelocity">
