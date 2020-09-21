@@ -1,15 +1,14 @@
 desc: LiveBeatRepeater
 author: brumbear
-version: 1.03
+version: 1.04
 changelog:
-  Added Features
-  - Additional Loop Lengths ("Tripplets" and as short as 1/128)
-  - Logarithmic scaling of continuous loop length slider
+  - Sample accurate time sync: Loop Start at next beat or bar now sample accurate in time
+  - Fade in: Loop starts with fade-in on interpolated slope from loop end to reduce audio artefacts
 link: Forum thread https://forum.cockos.com/showthread.php?t=211834
 about:
   # LiveBeatRepeater
 
-  JSFX for live performance stutter effects. Zero latency. Synchronized to project tempo and time signature. Works well with linear songs as well as loop based material. Mashes up nicely your rhythms on drum tracks/percussion. Great toy on voices.
+  JSFX for live performance stutter effects. Zero latency. Synchronized (sample accurate!) to project tempo and time signature. Works well with linear songs as well as loop based material. Mashes up nicely your rhythms on drum tracks/percussion. Great toy on voices.
 
   What makes this fx different from the classical looper or "instant" samplers is the fact that it constantly samples the input and repeats what you just heard when you trigger the repeat mode. I.e. you do not have to trigger recording a loop blindly hoping it will be what you want, but you repeat what was just played.
 
@@ -17,11 +16,12 @@ about:
 
   Separate loop audio routing allows to feed the repeating loop into any custom fx chain. Resonant HP/LP filters with variable cut off frequency, ping pong delays, distortion etc work particularly well with the stutter and allow spontaneous live (or automated) build ups.
 
+
 // This effect Copyright (C) 2018 and later Pacific Peaks Studio
 // License: GPLv3 - http://www.gnu.org/licenses/gpl
 // desc: LiveBeatRepeater (brumbear@pacific_peaks)
 // author: brumbear @ pacific peaks
-// 2020-06-09: Release V1.03
+// 2020-09-19: Release V1.04
 
 
 //------------------------------------------------------------------------------------------------
@@ -128,18 +128,19 @@ last_slider3 = 48;
 
 immediate_transition_override = 0; // flag to indicate if we are in Continuos Mode (NOT discrete loop length)
 
+// Loop fade-in interpolation
+infade_size = floor(srate*0.01); // no of samples for 10ms fade-in
+slope_factor = 0.825; // quarter wave of a 1kHz sine = 12 samples @ 48kHz SR. 10% slope steepness after 12 interpolation steps: 0.10^(1/12)=0.825
+infade_relative_pos = 0;
+last_spl_played_L = 0;
+last_spl_played_R = 0;
+llast_spl_played_L = 0;
+llast_spl_played_R = 0;
+next_spl_intpol_L = 0;
+next_spl_intpol_R = 0;
+
 //------------------------------------------------------------------------------------------------
 @slider
-// adjust buffer size to follow tempo changes
-(ts_num > 0) && (tempo > 0) ? (
-  samples_per_bar = floor(ts_num*(srate/tempo)*60 + 0.5); // ts_num is equal to beats per bar)
-):(
-  samples_per_bar = default_samples_per_bar;
-);
-buf_size = 5*samples_per_bar; 
-buf0 = 0; buf1 = buf0 + buf_size;
-loop_copy_offset = 2 * buf_size; 
-
 // synchronize loop length sliders
 (last_slider3 != slider3) && (last_slider2 == slider2) ? (
   slider2 = Nearest_Loop_Length(slider3);
@@ -156,7 +157,7 @@ loop_copy_offset = 2 * buf_size;
 );    
 
 // adjust loop start position when loop length changes
-loop_size = floor(samples_per_bar /(2^(slider3/16-1)));
+loop_size = floor(samples_per_bar /(2^(slider3/16-1)) + 0.5) - 1;
 (slider5 == 1) && (immediate_transition_override == 0) ? (
   // loop start point may only be updated at next beat
   next_loop_trigger_beat_pos = floor(beat_position + 1);
@@ -201,7 +202,28 @@ slider1 < last_slider1 ? (
 last_slider1 = slider1;
 
 
+@block
+// adjust buffer size to follow tempo changes
+(ts_num > 0) && (tempo > 0) ? (
+  samples_per_beat = floor((srate/tempo)*60 + 0.5);
+  samples_per_bar = ts_num * samples_per_beat; // ts_num is equal to beats per bar)
+):(
+  samples_per_bar = default_samples_per_bar;
+  samples_per_beat = floor( default_samples_per_bar/ts_num + 0.5);
+);
+buf_size = 5*samples_per_bar; 
+buf0 = 0; buf1 = buf0 + buf_size;
+loop_copy_offset = 2 * buf_size; 
+
+beat_offset = 0;
+
+
 @sample
+//------------------------------------------------------------------------------------------------
+// Calculate the exact current beat position
+beat_offset += 1;
+exact_beat_position = beat_position + (beat_offset/samples_per_beat);
+
 //------------------------------------------------------------------------------------------------
 // Continously fill the track ring buffer with the audio input
 buf0[buf_pos_WRITE] = spl0; buf1[buf_pos_WRITE] = spl1;
@@ -212,64 +234,97 @@ play_loop ? (
   loop_copied == 0 ? (
     buf0[loop_copy_offset + loop_pos_COPY] = buf0[loop_pos_COPY];
     buf1[loop_copy_offset + loop_pos_COPY] = buf1[loop_pos_COPY];
-    loop_pos_COPY += 1; loop_pos_COPY >= buf_size ? loop_pos_COPY = 0;
     loop_pos_COPY == loop_end ? loop_copied = 1;
+    loop_pos_COPY += 1; loop_pos_COPY >= buf_size ? loop_pos_COPY = 0;
   );
 
   // check if there is the need to update the loop start position
   (slider5 == 1) && (immediate_transition_override == 0) ? (
     loop_start != next_loop_start ? (
-      beat_position >= next_loop_trigger_beat_pos ? (
+      exact_beat_position >= next_loop_trigger_beat_pos ? (
         loop_start = next_loop_start;
         loop_overflow = next_loop_overflow;
         loop_pos_READ = loop_start;
+        infade_relative_pos = 0;
       );
     );
   );      
   
+   
   // play back the loop & mute what is coming from the input channels
-  spl2 = buf0[loop_copied*loop_copy_offset + loop_pos_READ];  spl3 = buf1[loop_copied*loop_copy_offset + loop_pos_READ];
+  loop_spl_L = buf0[loop_copied*(loop_copy_offset) + loop_pos_READ];  loop_spl_R = buf1[loop_copied*(loop_copy_offset) + loop_pos_READ];
+  infade_relative_pos < infade_size ? (
+    // gradual loop fade-in starting at interpolated slope originating from loop end
+    infade_ratio = infade_relative_pos / infade_size;
+    next_spl_intpol_L = last_spl_played_L + slope_factor * (last_spl_played_L - llast_spl_played_L);
+    next_spl_intpol_R = last_spl_played_R + slope_factor * (last_spl_played_R - llast_spl_played_R);
+    spl2 = loop_spl_L * infade_ratio + next_spl_intpol_L * (1 - infade_ratio);
+    spl3 = loop_spl_R * infade_ratio + next_spl_intpol_R * (1 - infade_ratio);
+    // spl3 = next_spl_intpol_R; // DEBUG PURPOSES ONLY - visualize sloping
+    infade_relative_pos += 1;
+  ):(
+    spl2 = loop_spl_L;  spl3 = loop_spl_R;
+  );  
+    
+  // Fx channel routing
   Slider7 ? (
     spl0 = 0; spl1 = 0;
   ):(
     spl0 = spl2;  spl1 = spl3;
-  );  
+  );
+   
+  
+  // store last samples played for interpolation when needed at loop start
+  llast_spl_played_L = last_spl_played_L; llast_spl_played_R = last_spl_played_R;
+  last_spl_played_L = spl2; last_spl_played_R = spl3;
   
   // advancing the loop READ position depending on specific settings
   (slider5 == 2) && (immediate_transition_override == 0) ? (
-    //loop must play till end before READ position may be set to current loop start position
-    loop_pos_READ == loop_end ? (
-      loop_pos_READ = loop_start;
-    ):(
-      loop_pos_READ += 1; loop_pos_READ >= buf_size ? loop_pos_READ = 0;
-    );  
+      //loop must play till end before READ position may be set to current loop start position
+      loop_pos_READ == loop_end ? (
+        loop_pos_READ = loop_start;
+        infade_relative_pos = 0;
+      ):(
+        loop_pos_READ += 1; loop_pos_READ >= buf_size ? loop_pos_READ = 0;
+      );  
   ):(
-    // loop READ position moves to (new) start position immediately if it has reached the loop end or if loop length has been shortened while playing
-    loop_pos_READ += 1; loop_pos_READ >= buf_size ? loop_pos_READ = 0;  
-    loop_overflow == 0 ? (
-      (loop_pos_READ > loop_end)||(loop_pos_READ < loop_start) ? loop_pos_READ = loop_start;
-    ):(
-      (loop_pos_READ > loop_end)&&(loop_pos_READ < loop_start) ? loop_pos_READ = loop_start;
-    );
-  ); 
+      // loop READ position moves to (new) start position immediately if it has reached the loop end or if loop length has been shortened while playing
+      loop_pos_READ += 1; loop_pos_READ >= buf_size ? loop_pos_READ = 0;  
+      loop_overflow == 0 ? (
+        (loop_pos_READ > loop_end)||(loop_pos_READ < loop_start) ? (
+          loop_pos_READ = loop_start;
+          infade_relative_pos = 0;
+        ); 
+      ):(
+        (loop_pos_READ > loop_end)&&(loop_pos_READ < loop_start) ? (
+          loop_pos_READ = loop_start;
+          infade_relative_pos = 0;
+        );  
+      );
+  );   
+  
+  
 //------------------------------------------------------------------------------------------------  
 ):(
   // No continuous loop playback from here
   // check if loop playback requested and we are ready to go
   slider1 ? (
-    beat_position >= loop_trigger_beat_pos ? (
+    exact_beat_position >= loop_trigger_beat_pos ? (
       // freeze the loop end point at the current position, set loop start point and flag to play the loop
       loop_end = buf_pos_WRITE;
       loop_start = loop_end - loop_size;
       loop_start <0 ? (loop_start += buf_size; loop_overflow = 1;) : (loop_overflow = 0);
       next_loop_start = loop_start; next_loop_overflow = loop_overflow;
       loop_pos_READ = loop_start;
-      loop_pos_COPY = loop_end - 2*samples_per_bar; // start copy at max length that the looping section can have
+      infade_relative_pos = 0;
+      loop_pos_COPY = loop_end - (2*samples_per_bar); // start copy at max length that the looping section can have
       loop_pos_COPY <0 ? loop_pos_COPY += buf_size;
       loop_copied = 0;
       play_loop = 1;
     );
   );
+  
+  llast_spl_played_L = last_spl_played_L; llast_spl_played_R = last_spl_played_R;
 
   // is there a loop fading out?
   fade_vol > 0 ? (
@@ -277,11 +332,15 @@ play_loop ? (
     spl2 = buf0[loop_copied*loop_copy_offset+loop_pos_READ]*loop_X_vol; spl3 = buf1[loop_copied*loop_copy_offset+loop_pos_READ]*loop_X_vol;
     slider7 ? (
       spl0 = spl0*track_X_vol; spl1 = spl1*track_X_vol;
+      last_spl_played_L = spl2; last_spl_played_R = spl3;
     ):(
       spl0 = spl0*track_X_vol + spl2; spl1 = spl1*track_X_vol + spl3;
+      last_spl_played_L = spl0; last_spl_played_R = spl1;
     );
     fade_vol -= fade_step;
     loop_pos_READ += 1; loop_pos_READ >= buf_size ? loop_pos_READ = 0;
+  ):(
+    last_spl_played_L = spl0; last_spl_played_R = spl1;
   );    
 );
 //------------------------------------------------------------------------------------------------  
