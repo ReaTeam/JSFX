@@ -1,10 +1,11 @@
 desc: Multichannel Volume Trim
 //desc: Faders to trim 32-channels by same amount in stereo pairs
-//Version: 1.0
+//Version: 1.0.1
+//Changelog: fix slider 12 assigned to the wrong channels
 //Author: REAPER Blog
 //Links:
 // https://forum.cockos.com/showthread.php?t=205533
-// https://reaperblog.net/2018/04/multichannel-volume-trimming/ ‎
+// https://reaperblog.net/2018/04/multichannel-volume-trimming/
 
 slider1:dB1=0.0<-144.0, 18.0, 0.1>1/2 Volume (dB)
 slider2:dB2=0.0<-144.0, 18.0, 0.1>3/4 Volume (dB)
@@ -35,7 +36,7 @@ vol8 = 10 ^ (dB8 / 20);
 vol9 = 10 ^ (dB9 / 20);
 vol10 = 10 ^ (dB10 / 20);
 vol11 = 10 ^ (dB11 / 20);
-vol12 = 10 ^ (dB11 / 20);
+vol12 = 10 ^ (dB12 / 20);
 vol13 = 10 ^ (dB13 / 20);
 vol14 = 10 ^ (dB14 / 20);
 vol15 = 10 ^ (dB15 / 20);
