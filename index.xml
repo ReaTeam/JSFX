@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="14d15ec7fb0c42c43f304713feb42d31c7aed10c">
+<index version="1" name="ReaTeam JSFX" commit="97f175123242999015f31214326b8d5d6d488352">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -2737,10 +2737,14 @@ Bug fixes]]></changelog>
     <reapack name="ReaperBlog_Multichannel Volume Trim.jsfx" type="effect" desc="Faders to trim 32-channels by same amount in stereo pairs">
       <metadata>
         <link rel="website">https://forum.cockos.com/showthread.php?t=205533</link>
-        <link rel="website">https://reaperblog.net/2018/04/multichannel-volume-trimming/ ‎</link>
+        <link rel="website">https://reaperblog.net/2018/04/multichannel-volume-trimming/</link>
       </metadata>
       <version name="1.0" author="REAPER Blog" time="2018-04-27T16:20:04Z">
         <source>https://github.com/ReaTeam/JSFX/raw/4d2c42a984bd4d4ee5aadf068b643041b2868855/Utility/ReaperBlog_Multichannel%20Volume%20Trim.jsfx</source>
+      </version>
+      <version name="1.0.1" author="REAPER Blog" time="2020-09-22T00:56:19Z">
+        <changelog><![CDATA[fix slider 12 assigned to the wrong channels]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/97f175123242999015f31214326b8d5d6d488352/Utility/ReaperBlog_Multichannel%20Volume%20Trim.jsfx</source>
       </version>
     </reapack>
   </category>
