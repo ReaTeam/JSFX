@@ -1,9 +1,11 @@
 desc: LiveBeatRepeater
 author: brumbear
-version: 1.04
+version: 1.10
 changelog:
-  - Sample accurate time sync: Loop Start at next beat or bar now sample accurate in time
-  - Fade in: Loop starts with fade-in on interpolated slope from loop end to reduce audio artefacts
+  New features:
+    - Loop Direction: Forward or Reverse
+    Improvements:
+    - Loop fade in: Better slope extrapolation algorithm to reduce high frequency artefacts in spectrum
 link: Forum thread https://forum.cockos.com/showthread.php?t=211834
 about:
   # LiveBeatRepeater
@@ -21,20 +23,20 @@ about:
 // License: GPLv3 - http://www.gnu.org/licenses/gpl
 // desc: LiveBeatRepeater (brumbear@pacific_peaks)
 // author: brumbear @ pacific peaks
-// 2020-09-19: Release V1.04
+// 2020-09-23: Release V1.10
 
 
 //------------------------------------------------------------------------------------------------
-slider1:0<0,1,1{Off,On}>Repeat
-slider2:5<0,13,1{2,1,1T(=2/3),1/2,1/2T(=1/3),1/4,1/4T(=1/6),1/8,1/8T(=1/12),1/16,1/16T(=1/24),1/32, 1/64, 1/128}>Loop Length [bars] (Stepped Mode)
+slider1:SL_repeat=0<0,1,1{Off,On}>Repeat
+slider2:SL_direction=0<0,1,1{Forward,Reverse}>Direction
+slider3:SL_loop_length_STP=5<0,13,1{2,1,1T(=2/3),1/2,1/2T(=1/3),1/4,1/4T(=1/6),1/8,1/8T(=1/12),1/16,1/16T(=1/24),1/32, 1/64, 1/128}>Loop Length [bars] (Stepped Mode)
 // Continuous Loop Length will be reset to closest stepped Loop Length when Repeat is switched from ON to OFF unless Transition is set to "Immediately"
-slider3:48<0,128,0.5>Loop Length (Continuous Mode)
-slider4:1<0,3,1{Immediately,At Next Beat,At Next Bar}>Loop Start
-slider5:2<0,2,1{Immediately,At Next Beat,At Loop End}>Length Transitions (Stepped Mode)
-slider6:1<0,1,1{Immediately,Soft Fade Out}>Repeat Ending  
+slider4:SL_loop_length_CTN=48<0,128,0.5>Loop Length (Continuous Mode)
+slider5:SL_loop_start=1<0,3,1{Immediately,At Next Beat,At Next Bar}>Loop Start
+slider6:SL_length_transitions=2<0,2,1{Immediately,At Next Beat,At Loop End}>Length Transitions (Stepped Mode - FWD)
+slider7:SL_repeat_ending=1<0,1,1{Immediately,Soft Fade Out}>Repeat Ending  
 // chose "Separate Loop Channels" to route loop via other (external) effect plugins
-slider7:0<0,1,1{Combined Main Output,Loop on Separate Fx Output only}>Fx Channel Routing
-
+slider8:SL_fx_routing=0<0,1,1{Combined Main Output,Loop on Separate Fx Output only}>Fx Channel Routing
 
 in_pin:left input
 in_pin:right input
@@ -48,13 +50,13 @@ out_pin:right loop fx output
 
 log2 = log(2);
 
-function loop_length_slider2(n) // returns the inverse of the fractional loop length of a bar (e.g. 4 for 1/4bar), see values for slider2
+function loop_length_SL_loop_length_STP(n) // returns the inverse of the fractional loop length of a bar (e.g. 4 for 1/4bar), see values for SL_loop_length_STP
 (
- n == 0 ? 0.5 // slider3 = 0
- : n == 1 ? 1 // slider3 = 16
-  : n == 2 ? 1.5 // slider3 = 25.36
-   : n == 3 ? 2 // slider3 = 32
-    : n == 4 ? 3 // etc... calculation as per below function slider3_from_slider2
+ n == 0 ? 0.5 // SL_loop_length_CTN = 0
+ : n == 1 ? 1 // SL_loop_length_CTN = 16
+  : n == 2 ? 1.5 // SL_loop_length_CTN = 25.36
+   : n == 3 ? 2 // SL_loop_length_CTN = 32
+    : n == 4 ? 3 // etc... calculation as per below function SL_loop_length_CTN_from_SL_loop_length_STP
      : n == 5 ? 4 
       : n == 6 ? 6
        : n == 7 ? 8 
@@ -67,18 +69,18 @@ function loop_length_slider2(n) // returns the inverse of the fractional loop le
              : 0;
 );
 
-function slider3_from_slider2(x) 
+function SL_loop_length_CTN_from_SL_loop_length_STP(x) 
 // calculate the exact value for continuous loop length with double float precision
 // the exact value of slider 3 will later be used to calculated the loop size [samples]
 (
- (log(loop_length_slider2(x))/log2 + 1) * 16;
+ (log(loop_length_SL_loop_length_STP(x))/log2 + 1) * 16;
 );
 
 
-function Nearest_Loop_Length(i) // aka "slider2_from_slider3", returns slider2 index from slider3 value
+function Nearest_Loop_Length(i) // aka "SL_loop_length_STP_from_SL_loop_length_CTN", returns SL_loop_length_STP index from SL_loop_length_CTN value
 (
- i <= 8 ? 0 // midpoint between slider3 = 0 and slider3 = 16
- : i <= 20.68 ? 1 //  midpoint between slider3 = 16 and slider3 = 25.36
+ i <= 8 ? 0 // midpoint between SL_loop_length_CTN = 0 and SL_loop_length_CTN = 16
+ : i <= 20.68 ? 1 //  midpoint between SL_loop_length_CTN = 16 and SL_loop_length_CTN = 25.36
   : i <= 28.68 ? 2 // etc...
    : i <= 36.68 ? 3
     : i <= 44.68 ? 4
@@ -122,15 +124,17 @@ next_loop_start = 0;
 next_loop_overflow = 0;
 next_loop_trigger_beat_pos = 0;
 
-last_slider1 = 0;
-last_slider2 = 5;
-last_slider3 = 48;
+last_SL_repeat = 0;
+last_SL_loop_length_STP = 5;
+last_SL_loop_length_CTN = 48;
 
 immediate_transition_override = 0; // flag to indicate if we are in Continuos Mode (NOT discrete loop length)
 
-// Loop fade-in interpolation
-infade_size = floor(srate*0.01); // no of samples for 10ms fade-in
-slope_factor = 0.825; // quarter wave of a 1kHz sine = 12 samples @ 48kHz SR. 10% slope steepness after 12 interpolation steps: 0.10^(1/12)=0.825
+// Loop fade-in extra- & interpolation
+infade_time = 0.01; // 10ms fade-in
+infade_size = floor(srate*infade_time); 
+slope_factor = 0.7;
+max_slope = 0.13;
 infade_relative_pos = 0;
 last_spl_played_L = 0;
 last_spl_played_R = 0;
@@ -142,23 +146,23 @@ next_spl_intpol_R = 0;
 //------------------------------------------------------------------------------------------------
 @slider
 // synchronize loop length sliders
-(last_slider3 != slider3) && (last_slider2 == slider2) ? (
-  slider2 = Nearest_Loop_Length(slider3);
-  last_slider2 = slider2;
-  last_slider3 = slider3;
+(last_SL_loop_length_CTN != SL_loop_length_CTN) && (last_SL_loop_length_STP == SL_loop_length_STP) ? (
+  SL_loop_length_STP = Nearest_Loop_Length(SL_loop_length_CTN);
+  last_SL_loop_length_STP = SL_loop_length_STP;
+  last_SL_loop_length_CTN = SL_loop_length_CTN;
   immediate_transition_override = 1;
 ):(
-  last_slider2 != slider2 ? (
-    slider3 = slider3_from_slider2(slider2);
-    last_slider2 = slider2;
-    last_slider3 = slider3;
+  last_SL_loop_length_STP != SL_loop_length_STP ? (
+    SL_loop_length_CTN = SL_loop_length_CTN_from_SL_loop_length_STP(SL_loop_length_STP);
+    last_SL_loop_length_STP = SL_loop_length_STP;
+    last_SL_loop_length_CTN = SL_loop_length_CTN;
     immediate_transition_override = 0;
   );  
 );    
 
 // adjust loop start position when loop length changes
-loop_size = floor(samples_per_bar /(2^(slider3/16-1)) + 0.5) - 1;
-(slider5 == 1) && (immediate_transition_override == 0) ? (
+loop_size = floor(samples_per_bar /(2^(SL_loop_length_CTN/16-1)) + 0.5) - 1;
+(SL_length_transitions == 1) && (immediate_transition_override == 0) ? (
   // loop start point may only be updated at next beat
   next_loop_trigger_beat_pos = floor(beat_position + 1);
   next_loop_start = loop_end - loop_size;
@@ -170,36 +174,50 @@ loop_size = floor(samples_per_bar /(2^(slider3/16-1)) + 0.5) - 1;
 );
 
 // check if repeat switched to ON
-slider1 > last_slider1 ? (
-  slider4 == 0 ? loop_trigger_beat_pos = beat_position 
-    : slider4 == 1 ? loop_trigger_beat_pos = floor(beat_position + 1)
+SL_repeat > last_SL_repeat ? (
+  SL_loop_start == 0 ? loop_trigger_beat_pos = beat_position 
+    : SL_loop_start == 1 ? loop_trigger_beat_pos = floor(beat_position + 1)
       : loop_trigger_beat_pos = (floor(beat_position/ts_num) + 1) * ts_num 
 ); 
 // check if repeat switched to OFF
-slider1 < last_slider1 ? (
+SL_repeat < last_SL_repeat ? (
   play_loop = 0; 
   immediate_transition_override = 0;
-  slider5 != 0 ? (
+  SL_length_transitions != 0 ? (
     // revert back to Stepped Mode and set slider 3 to closest stepped length unless transition was set to "Immediately"
-    slider3 = slider3_from_slider2(slider2);
-    last_slider2 = slider2;
-    last_slider3 = slider3;
+    SL_loop_length_CTN = SL_loop_length_CTN_from_SL_loop_length_STP(SL_loop_length_STP);
+    last_SL_loop_length_STP = SL_loop_length_STP;
+    last_SL_loop_length_CTN = SL_loop_length_CTN;
   );
-  slider6 ? ( // fade out requested?
-    loop_pos_READ <= loop_end ? (
-      remaining_loop_length = loop_end - loop_pos_READ;
+  SL_repeat_ending ? ( // fade out requested?
+    SL_direction == 0 ? (
+      loop_pos_READ <= loop_end ? (
+        remaining_loop_length = loop_end - loop_pos_READ;
+      ):(
+        remaining_loop_length = buf_size - loop_pos_READ + loop_end;
+      );
+      remaining_loop_length == 0 ? ( // no need for fade out as we are exactly at the loop end
+        fade_vol = 0;
+      ):(
+        fade_step = 1/remaining_loop_length;
+        fade_vol =1;
+      );
     ):(
-      remaining_loop_length = buf_size - loop_pos_READ + loop_end;
-    );
-    remaining_loop_length == 0 ? ( // no need for fade out as we are exactly at the loop end
-      fade_vol = 0;
-    ):(
-      fade_step = 1/remaining_loop_length;
-      fade_vol =1;
+      loop_pos_READ >= loop_start ? (
+        remaining_loop_length = loop_pos_READ - loop_start;
+      ):(
+        remaining_loop_length = loop_pos_READ + buf_size - loop_start;
+      );
+      remaining_loop_length == 0 ? ( // no need for fade out as we have fully reversed to the loop start
+        fade_vol = 0;
+      ):(
+        fade_step = 1/remaining_loop_length;
+        fade_vol =1;
+      );
     );
   );        
 ); 
-last_slider1 = slider1;
+last_SL_repeat = SL_repeat;
 
 
 @block
@@ -239,7 +257,7 @@ play_loop ? (
   );
 
   // check if there is the need to update the loop start position
-  (slider5 == 1) && (immediate_transition_override == 0) ? (
+  (SL_length_transitions == 1) && (immediate_transition_override == 0) ? (
     loop_start != next_loop_start ? (
       exact_beat_position >= next_loop_trigger_beat_pos ? (
         loop_start = next_loop_start;
@@ -254,20 +272,32 @@ play_loop ? (
   // play back the loop & mute what is coming from the input channels
   loop_spl_L = buf0[loop_copied*(loop_copy_offset) + loop_pos_READ];  loop_spl_R = buf1[loop_copied*(loop_copy_offset) + loop_pos_READ];
   infade_relative_pos < infade_size ? (
-    // gradual loop fade-in starting at interpolated slope originating from loop end
+    // gradual loop fade-in starting at extrapolated slope originating from loop end
     infade_ratio = infade_relative_pos / infade_size;
-    next_spl_intpol_L = last_spl_played_L + slope_factor * (last_spl_played_L - llast_spl_played_L);
-    next_spl_intpol_R = last_spl_played_R + slope_factor * (last_spl_played_R - llast_spl_played_R);
+    
+    last_spl_delta_L = last_spl_played_L - llast_spl_played_L;
+    last_spl_delta_R = last_spl_played_R - llast_spl_played_R;
+    abs(last_spl_delta_L) > max_slope ? last_spl_delta_L = sign(last_spl_delta_L)*max_slope;
+    abs(last_spl_delta_R) > max_slope ? last_spl_delta_R = sign(last_spl_delta_R)*max_slope;
+    
+    // target_spl_delta_L = loop_spl_L - last_spl_played_L; // maybe useful in yet another future algo optimization...
+    // target_spl_delta_R = loop_spl_R - last_spl_played_R; // maybe useful in yet another future algo optimization...
+   
+    next_spl_intpol_L = last_spl_played_L + slope_factor * last_spl_delta_L;
+    next_spl_intpol_R = last_spl_played_R + slope_factor * last_spl_delta_R;
     spl2 = loop_spl_L * infade_ratio + next_spl_intpol_L * (1 - infade_ratio);
     spl3 = loop_spl_R * infade_ratio + next_spl_intpol_R * (1 - infade_ratio);
+    
+    // spl2 = next_spl_intpol_L; // DEBUG PURPOSES ONLY - visualize sloping
     // spl3 = next_spl_intpol_R; // DEBUG PURPOSES ONLY - visualize sloping
+    
     infade_relative_pos += 1;
   ):(
     spl2 = loop_spl_L;  spl3 = loop_spl_R;
   );  
     
   // Fx channel routing
-  Slider7 ? (
+  SL_fx_routing ? (
     spl0 = 0; spl1 = 0;
   ):(
     spl0 = spl2;  spl1 = spl3;
@@ -279,7 +309,8 @@ play_loop ? (
   last_spl_played_L = spl2; last_spl_played_R = spl3;
   
   // advancing the loop READ position depending on specific settings
-  (slider5 == 2) && (immediate_transition_override == 0) ? (
+  SL_direction == 0 ? (
+    (SL_length_transitions == 2) && (immediate_transition_override == 0) ? (
       //loop must play till end before READ position may be set to current loop start position
       loop_pos_READ == loop_end ? (
         loop_pos_READ = loop_start;
@@ -287,7 +318,7 @@ play_loop ? (
       ):(
         loop_pos_READ += 1; loop_pos_READ >= buf_size ? loop_pos_READ = 0;
       );  
-  ):(
+    ):(
       // loop READ position moves to (new) start position immediately if it has reached the loop end or if loop length has been shortened while playing
       loop_pos_READ += 1; loop_pos_READ >= buf_size ? loop_pos_READ = 0;  
       loop_overflow == 0 ? (
@@ -301,14 +332,31 @@ play_loop ? (
           infade_relative_pos = 0;
         );  
       );
-  );   
+    );   
+  ):(
+    // loop READ position moves to end position immediately if it has reached the current loop start or if the loop has been shortened while playing
+    loop_pos_READ -= 1; loop_pos_READ < 0 ? loop_pos_READ = buf_size - 1;  
+    loop_overflow == 0 ? (
+      loop_pos_READ < loop_start ? (
+        loop_pos_READ = loop_end;
+        infade_relative_pos = 0;
+      ); 
+    ):(
+      (loop_pos_READ > loop_end)&&(loop_pos_READ < loop_start) ? (
+        loop_pos_READ = loop_end;
+        infade_relative_pos = 0;
+      );  
+    );
+  );
+  
+  
   
   
 //------------------------------------------------------------------------------------------------  
 ):(
   // No continuous loop playback from here
   // check if loop playback requested and we are ready to go
-  slider1 ? (
+  SL_repeat ? (
     exact_beat_position >= loop_trigger_beat_pos ? (
       // freeze the loop end point at the current position, set loop start point and flag to play the loop
       loop_end = buf_pos_WRITE;
@@ -330,7 +378,7 @@ play_loop ? (
   fade_vol > 0 ? (
     track_X_vol = sqrt(1-fade_vol); loop_X_vol = sqrt(fade_vol); // equal power cross fade
     spl2 = buf0[loop_copied*loop_copy_offset+loop_pos_READ]*loop_X_vol; spl3 = buf1[loop_copied*loop_copy_offset+loop_pos_READ]*loop_X_vol;
-    slider7 ? (
+    SL_fx_routing ? (
       spl0 = spl0*track_X_vol; spl1 = spl1*track_X_vol;
       last_spl_played_L = spl2; last_spl_played_R = spl3;
     ):(
