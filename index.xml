@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="a324aaad6a99852065089b00feaa9f61c6038037">
+<index version="1" name="ReaTeam JSFX" commit="3eb42c84497af2988e3eb4feae8e7acdb0079cdb">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1335,6 +1335,14 @@ And a bit of source code cleaning.]]></changelog>
   Improvements:
   - Loop fade in: Better slope extrapolation algorithm to reduce high frequency artefacts in spectrum]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/a324aaad6a99852065089b00feaa9f61c6038037/Misc/brumbear_LiveBeatRepeater.jsfx</source>
+      </version>
+      <version name="1.12" author="brumbear" time="2020-10-01T13:00:18Z">
+        <changelog><![CDATA[- 3 different loop fade algorithms selectable by user
+- Updated Fx routing options
+- Added loop start, loop end and playhead indicators (cannot be manipulated yet)
+- Improve memory management
+- Fixed bug during loop fade out when reversing]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/3eb42c84497af2988e3eb4feae8e7acdb0079cdb/Misc/brumbear_LiveBeatRepeater.jsfx</source>
       </version>
     </reapack>
     <reapack name="brumbear_LiveScrubberDucky.jsfx" type="effect" desc="LiveScrubberDucky">
