@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="3eb42c84497af2988e3eb4feae8e7acdb0079cdb">
+<index version="1" name="ReaTeam JSFX" commit="ffd7a9043881fe57ce5b97dcfe88ada9cbd06d9b">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1343,6 +1343,11 @@ And a bit of source code cleaning.]]></changelog>
 - Improve memory management
 - Fixed bug during loop fade out when reversing]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/3eb42c84497af2988e3eb4feae8e7acdb0079cdb/Misc/brumbear_LiveBeatRepeater.jsfx</source>
+      </version>
+      <version name="1.20" author="brumbear" time="2020-10-10T15:33:39Z">
+        <changelog><![CDATA[- Visualize sampled waveform, playhead and loop area
+- Allow manipulation of loop start and loop end position during loop repeat]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/ffd7a9043881fe57ce5b97dcfe88ada9cbd06d9b/Misc/brumbear_LiveBeatRepeater.jsfx</source>
       </version>
     </reapack>
     <reapack name="brumbear_LiveScrubberDucky.jsfx" type="effect" desc="LiveScrubberDucky">
