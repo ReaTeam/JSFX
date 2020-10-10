@@ -1,12 +1,9 @@
 desc: LiveBeatRepeater
 author: brumbear
-version: 1.12
+version: 1.20
 changelog:
-  - 3 different loop fade algorithms selectable by user
-  - Updated Fx routing options
-  - Added loop start, loop end and playhead indicators (cannot be manipulated yet)
-  - Improve memory management
-  - Fixed bug during loop fade out when reversing
+  - Visualize sampled waveform, playhead and loop area
+  - Allow manipulation of loop start and loop end position during loop repeat
 link: Forum thread https://forum.cockos.com/showthread.php?t=211834
 about:
   # LiveBeatRepeater
@@ -23,23 +20,23 @@ about:
 // License: GPLv3 - http://www.gnu.org/licenses/gpl
 // desc: LiveBeatRepeater (brumbear@pacific_peaks)
 // author: brumbear @ pacific peaks
-// 2020-09-30: Release V1.12
+// 2020-10-09: Release V1.20
 
 
 //------------------------------------------------------------------------------------------------
-slider1:SL_repeat=0<0,1,1{Off,On}>Repeat
+slider1:SL_repeat=0<0,1,1{Off,On}>Loop Repeat
 slider2:SL_direction=0<0,1,1{Forward,Reverse}>Direction
-slider3:SL_loop_length_STP=5<0,13,1{2,1,1T(=2/3),1/2,1/2T(=1/3),1/4,1/4T(=1/6),1/8,1/8T(=1/12),1/16,1/16T(=1/24),1/32, 1/64, 1/128}>Loop Length [bars] (Stepped Mode)
+slider3:SL_loop_length_STP=5<0,13,1{2,1,1T(=2/3),1/2,1/2T(=1/3),1/4,1/4T(=1/6),1/8,1/8T(=1/12),1/16,1/16T(=1/24),1/32, 1/64, 1/128}>Length f. End [bars] (STP)
 // Continuous Loop Length will be reset to closest stepped Loop Length when Repeat is switched from ON to OFF unless Transition is set to "Immediately"
-slider4:SL_loop_length_CTN=48<0,128,0.1>Loop Length (Continuous Mode)
-slider5:SL_pointer_start=0<-2,0,0.01>Loop Start Pos [bar]
-slider6:SL_pointer_read=0<-2,0,0.01>Loop Playhead
-slider7:SL_pointer_end=0<-2,0,0.01>Loop End Pos [bar]
+slider4:SL_loop_length_CTN=48<0,128,0.01>Length f. End (CTD)
+slider5:SL_pointer_start=0<-2,0,0.001>Loop Start Pos [bar]
+slider6:SL_pointer_end=0<-2,0,0.001>Loop End Pos [bar]
+slider7:SL_pointer_read=0<-2,0,0.001>-Loop Playhead
 
 slider10:SL_loop_start=1<0,3,1{Immediately,At Next Beat,At Next Bar}>Loop Start Trigger
 slider11:SL_infade_algo=2<0,2,1{Extrapolated Slope,Reverse Crossfade,Padded Reverse Crossfade}>Loop Fade-In Algorithm
 slider12:SL_infade_time=20<10,100,1>Loop Fade-In Time [ms]
-slider13:SL_length_transitions=2<0,2,1{Immediately/Continuous,At Next Beat (Stepped Mode),At Loop End (Stepped Mode)}>Length Transitions
+slider13:SL_length_transitions=2<0,2,1{Immediately/Continuous,At Next Beat (STP Mode),At Loop End (STP Mode)}>Length Transitions
 slider14:SL_repeat_ending=1<0,1,1{Immediately,Soft Fade Out}>Repeat Ending  
 
 slider20:SL_fx_routing=0<0,2,1{Main=Combined / Fx=Loop only,Main=Muted when looping / Fx=Loop only,Main=Input passthrough / Fx =Loop only}>Fx Channel Routing
@@ -51,6 +48,7 @@ out_pin:Main output right
 out_pin:Fx loop output left
 out_pin:Fx loop output right
 
+options:no_meter
 
 //===========================================================================================================
 //===========================================================================================================
@@ -79,7 +77,7 @@ function loop_length_SL_loop_length_STP(n) // returns the inverse of the fractio
 
 function SL_loop_length_CTN_from_SL_loop_length_STP(x) 
 // calculate the exact value for continuous loop length with double float precision
-// the exact value of slider 3 will later be used to calculated the loop size [samples]
+// the exact value of SL_loop_length_CTN will later be used to calculated the loop size [samples]
 (
  (log(loop_length_SL_loop_length_STP(x))/log2 + 1) * 16;
 );
@@ -131,16 +129,21 @@ function Update_Tail()
 function Update_Pointers()
 local(offset)
 (
-  // TODO: reference to loop_end_freeze and scale to 2*samples per bar
   offset = loop_end_freeze - loop_start + 1; offset < 0 ? offset += buf_size; 
   SL_pointer_start =  -offset/samples_per_bar;
+  slider_automate(slider5);
   
   offset = loop_end_freeze - loop_end; offset < 0 ? offset += buf_size;
   SL_pointer_end =  -offset/samples_per_bar;
+  slider_automate(slider6);
   
   offset = loop_end_freeze - loop_pos_READ; offset < 0 ? offset += buf_size;
   SL_pointer_read = -offset/samples_per_bar;
 );
+
+//------------------------------------------------------------------------------------------------
+gfx_ext_retina = 1;
+gfx_clear = 0x000000; // clear frame buffer every cycle as it must be redrawn/reblited anyway (-1 would not save resources)
 
 //------------------------------------------------------------------------------------------------
 // need some defaults when sliders have not been touched yet, no playback or just input monitoring
@@ -178,14 +181,15 @@ tail_pos_WRITE = 0;
 tail_pos_READ = 0;
 memset(tail0, 0, 2 * tailbuf_size);
 
-loop_size = 0; // repeat loop length. E.g. loop_size = 10, loop_start = 0 => loop_end = 9
 loop_start = 0; // start position of loop within track ring buffer
+loop_size = buf_size; // number of samples in repeat loop. E.g. loop_size = 10, loop_start = 0 => loop_end = 9
 loop_end = buf_size - 1; // end position of loop within track ring buffer. Frozen when repeat mode is switched on. loop_end contains the last sample of the loop.
 loop_end_freeze = loop_end;
 loop_overflow = 0; // flag to indicate if loop stretches beyond buffer end, i.e. loop_end < loop_start
-loop_pos_READ = 0; // position in buffer that will be played back when repeat is on
+loop_pos_READ = loop_end; // position in buffer that will be played back when repeat is on
 loop_trigger_beat_pos = 0;
 play_loop = 0;
+last_play_loop = 0;
 
 next_loop_start = 0; 
 next_loop_overflow = 0;
@@ -194,6 +198,8 @@ next_loop_trigger_beat_pos = 0;
 last_SL_repeat = 0;
 last_SL_loop_length_STP = 5;
 last_SL_loop_length_CTN = 48;
+last_SL_pointer_end = 0;
+last_SL_pointer_start = 0;
 
 immediate_transition_override = 0; // flag to indicate if we are in Continuos Mode (NOT discrete loop length)
 
@@ -201,6 +207,41 @@ immediate_transition_override = 0; // flag to indicate if we are in Continuos Mo
 //===========================================================================================================
 //===========================================================================================================
 @slider
+// update the loop fade-in time
+infade_size = floor(srate*SL_infade_time/1000 + 0.5);
+
+// loop end position change requested during loop playback?
+(last_SL_pointer_end != SL_pointer_end) && play_loop ? (
+  // boundary check
+  SL_pointer_end < (SL_pointer_start + 1/128) ? (
+    SL_pointer_end = SL_pointer_start + 1/128;
+  );
+  last_SL_pointer_end = SL_pointer_end;
+  immediate_transition_override = 1;
+  // update loop end and loop size/length
+  loop_end = loop_end_freeze + SL_pointer_end * samples_per_bar;
+  loop_end < 0 ? loop_end += buf_size;
+  loop_size = loop_end - loop_start + 1;
+  loop_size < 0 ? ( loop_size += buf_size; loop_overflow = 1; ):( loop_overflow = 0; );
+  SL_loop_length_CTN = 16 * ( log( samples_per_bar/loop_size )/log2 + 1 );
+);
+
+// loop start position change requested during loop playback?
+(last_SL_pointer_start != SL_pointer_start) && play_loop ? (
+  // boundary check
+  SL_pointer_start > (SL_pointer_end - 1/128) ? (
+    SL_pointer_start = SL_pointer_end - 1/128;
+  );
+  last_SL_pointer_start = SL_pointer_start;
+  immediate_transition_override = 1;
+  // update loop start
+  loop_start = loop_end_freeze + SL_pointer_start * samples_per_bar;
+  loop_start < 0 ? loop_start += buf_size;
+  loop_size = loop_end - loop_start + 1;
+  loop_size < 0 ? ( loop_size += buf_size; loop_overflow = 1; ):( loop_overflow = 0; );
+  SL_loop_length_CTN = 16 * ( log( samples_per_bar/loop_size )/log2 + 1 );
+);
+
 // synchronize loop length sliders
 (last_SL_loop_length_CTN != SL_loop_length_CTN) && (last_SL_loop_length_STP == SL_loop_length_STP) ? (
   SL_loop_length_STP = Nearest_Loop_Length(SL_loop_length_CTN);
@@ -216,20 +257,35 @@ immediate_transition_override = 0; // flag to indicate if we are in Continuos Mo
   );  
 );    
 
-// adjust the loop fade-in time
-infade_size = floor(srate*SL_infade_time/1000 + 0.5);
+// update the loop size
+loop_size = floor(samples_per_bar /(2^(SL_loop_length_CTN/16 - 1)) + 0.5);
 
-// adjust loop start position when loop length changes
-loop_size = floor(samples_per_bar /(2^(SL_loop_length_CTN/16-1)) + 0.5);
+// maximum loop size health check: Loop end change during playback could lead to length requests outside of buffer range
+play_loop ? (
+  loop_end <= loop_end_freeze ? (
+    loop_size_max = 2 * samples_per_bar - (loop_end_freeze - loop_end);
+  ):(
+    loop_size_max = 2 * samples_per_bar - (loop_end_freeze + (buf_size - loop_end));
+  );
+  loop_size > loop_size_max ? (
+    loop_size = loop_size_max;
+    SL_loop_length_CTN = 16 * ( log( samples_per_bar/loop_size )/log2 + 1 );
+    SL_loop_length_STP = Nearest_Loop_Length(SL_loop_length_CTN);
+  );
+);
+
+// adjust (next) start position
 (SL_length_transitions == 1) && (immediate_transition_override == 0) ? (
   // loop start point may only be updated at next beat
   next_loop_trigger_beat_pos = floor(beat_position + 1);
   next_loop_start = loop_end - (loop_size - 1);
-  next_loop_start <0 ? (next_loop_start += buf_size; next_loop_overflow = 1;) : (next_loop_overflow = 0);
+  next_loop_start <0 ? (next_loop_start += buf_size; next_loop_overflow = 1;) : (next_loop_overflow = 0; );
 ):(
   // update the loop start position
   loop_start = loop_end - (loop_size - 1);
-  loop_start <0 ? (loop_start += buf_size; loop_overflow = 1;) : (loop_overflow = 0);
+  loop_start < 0 ? ( loop_start += buf_size; loop_overflow = 1; ):( loop_overflow = 0; );
+  Update_Pointers();
+  last_SL_pointer_start = SL_pointer_start;
 );
 
 // check if repeat switched to ON
@@ -294,7 +350,7 @@ last_SL_repeat = SL_repeat;
     SL_loop_length_CTN = SL_loop_length_CTN_from_SL_loop_length_STP(SL_loop_length_STP);
     last_SL_loop_length_STP = SL_loop_length_STP;
     last_SL_loop_length_CTN = SL_loop_length_CTN;
-  );  
+  );
 );
 last_play_state = play_state;
 
@@ -313,7 +369,6 @@ tailbuf_size = 3 * infade_size;
 tail0 = buf0 + 4 * buf_size; tail1 = tail0 + tailbuf_size; 
 
 beat_offset = 0;
-
 
 //===========================================================================================================
 //===========================================================================================================
@@ -336,7 +391,7 @@ buf0[buf_pos_WRITE] = in_spl0; buf1[buf_pos_WRITE] = in_spl1;
   loop_end < 0 ? loop_end = buf_size - 1;
   loop_end_freeze = loop_end;
   loop_start = loop_end - (loop_size - 1);
-  loop_start <0 ? (loop_start += buf_size; loop_overflow = 1;) : (loop_overflow = 0);
+  loop_start <0 ? (loop_start += buf_size; loop_overflow = 1;) : (loop_overflow = 0; );
   next_loop_start = loop_start; next_loop_overflow = loop_overflow;
   loop_pos_READ = loop_start;
   infade_relative_pos = 0;
@@ -353,7 +408,7 @@ play_loop ? (
   loop_copied == 0 ? (
     buf0[loop_copy_offset + loop_pos_COPY] = buf0[loop_pos_COPY];
     buf1[loop_copy_offset + loop_pos_COPY] = buf1[loop_pos_COPY];
-    loop_pos_COPY == loop_end ? loop_copied = 1;
+    loop_pos_COPY == loop_end_freeze ? loop_copied = 1;
     loop_pos_COPY += 1; loop_pos_COPY >= buf_size ? loop_pos_COPY = 0;
   );
 
@@ -495,6 +550,10 @@ play_loop ? (
     );
     
   ):( // no loop fade out
+    loop_end != loop_end_freeze ? (
+      loop_end = loop_end_freeze;
+      
+    );
     out_spl0 = in_spl0; out_spl1 = in_spl1;
     out_spl2 = 0; out_spl3 = 0;
     last_spl_played_L = out_spl0; last_spl_played_R = out_spl1;
@@ -514,6 +573,160 @@ spl2 = out_spl2; spl3 = out_spl3;
 buf_pos_WRITE += 1; buf_pos_WRITE >= buf_size ? buf_pos_WRITE = 0;
 Update_Pointers();
 
+//===========================================================================================================
+//===========================================================================================================
+@gfx 800 400
 
+function MinPeakSearch(search_pos,steps_backw) (
+  min_spl = 0;
+  while (steps_backw > 0) (
+    buf0[search_pos] < min_spl ? min_spl = buf0[search_pos];
+    buf1[search_pos] < min_spl ? min_spl = buf1[search_pos];
+    search_pos -= 1;
+    search_pos < 0 ? search_pos += buf_size;
+    steps_backw -=1;
+  );
+  min_spl;
+);
 
+function MaxPeakSearch(search_pos,steps_backw) (
+  max_spl = 0;
+  while (steps_backw > 0) (
+    buf0[search_pos] > max_spl ? max_spl = buf0[search_pos];
+    buf1[search_pos] > max_spl ? max_spl = buf1[search_pos];
+    search_pos -= 1;
+    search_pos < 0 ? search_pos += buf_size;
+    steps_backw -=1;
+  );
+  max_spl;
+);
 
+function CopyLoopImg(from,to) (
+  to != -1 ? (
+    gfx_getimgdim(to,w,h);
+    (w != gfx_w)||(h != gfx_h) ? (
+      gfx_setimgdim(to , -1 , -1);
+      gfx_setimgdim(to , gfx_w , gfx_h);
+    );
+  );
+  gfx_dest = to;
+  gfx_blit(from,1,0,  0,0,gfx_w,draw_loop_height,  0,0,gfx_w,draw_loop_height,  0,0);
+  gfx_dest = -1;
+);
+
+function UpdateLoopImg() (
+  gfx_set(1,1,1,1);
+  x = gfx_w;
+  searchpos_current = loop_copied*(loop_copy_offset) + loop_end_freeze;
+  while (x >= 0) (
+    ymin = MinPeakSearch(searchpos_current,spls_p_pixel)*draw_loop_scale + draw_loop_offset;
+    ymax = MaxPeakSearch(searchpos_current,spls_p_pixel)*draw_loop_scale + draw_loop_offset;
+    gfx_line(x,ymin,x,ymax);
+    searchpos_current -= spls_p_pixel;
+    searchpos_current < 0 ? searchpos_current += buf_size;
+    x -= 1;
+  );
+);
+
+//------------------------------------------------------------------------------------------------
+// initialize drawing parameters depending on window size
+(gfx_w != old_w)||(gfx_h != old_h) ? (
+  old_w = gfx_w; old_h = gfx_h;
+  loop_img_upd = 1;
+
+  draw_peak_scaling = 0.9;
+  
+  draw_loop_height = floor(gfx_h * 0.8 + 0.5);
+  draw_loop_offset = floor(draw_loop_height/2 + 0.5);
+  draw_loop_scale = draw_peak_scaling * draw_loop_height / 2;
+
+  draw_input_height = floor(gfx_h * 0.2 + 0.5);
+  draw_input_offset = floor(draw_loop_height + draw_input_height/2 + 0.5);
+  draw_input_scale = draw_peak_scaling * draw_input_height / 2;
+
+  spls_p_pixel = 2 * samples_per_bar / gfx_w; // show 2 bars over the graphs width
+  
+  gfx_setimgdim(0 , -1 , -1);
+  gfx_setimgdim(0 , gfx_w , gfx_h); // always keep a fitting space in img buffer 0
+);
+
+//------------------------------------------------------------------------------------------------
+// update loop drawing area
+play_loop || fade_vol > 0 ? (
+  // create loop img if the loop just started or update img if window got resized
+  last_play_loop != play_loop ? loop_img_upd = 1;
+  loop_img_upd ? (
+    UpdateLoopImg();
+    CopyLoopImg(-1,1); // create a clean copy for later
+    loop_img_upd = 0;
+  );
+  // bring a clean copy to the screen
+  CopyLoopImg(1,-1);
+  // tint looped area
+  fade_vol > 0 ? (
+    gfx_muladdrect(gfx_w * ( 1 + SL_pointer_start / 2 ),0,gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2,draw_loop_height,
+                     1-0.9*(1-fade_vol),0.1,0.1+0.9*(1-fade_vol),
+                     0.1,0.1,0.2,0.3);
+  ):(
+    gfx_muladdrect(gfx_w * ( 1 + SL_pointer_start / 2 ),0,gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2,draw_loop_height,
+                   1,0.1,0.1,
+                   0.1,0.1,0.2,0.3);
+  );
+  // show playhead
+  x = gfx_w * ( 1 + SL_pointer_read / 2);
+  gfx_set(1,1,1,1);
+  gfx_line(x,draw_loop_height-1,x,0);
+);
+
+last_play_loop = play_loop;
+
+//------------------------------------------------------------------------------------------------
+// update input drawing area
+// use scrolling rather than recalculation (EFFICIENT, but may show graphics jitter and artefacts due to rounding)
+searchpos_current = buf_pos_WRITE; // buf_pos_WRITE may proceed in parallel audio thread while we process graphics
+spls_p_gfx_period = searchpos_current - last_searchpos;
+spls_p_gfx_period < 0 ? spls_p_gfx_period += buf_size;
+spls_p_gfx_period > 2 * samples_per_bar ? spls_p_gfx_period = 2 * samples_per_bar;
+last_searchpos = searchpos_current;
+pixels_p_gfx_period = floor(spls_p_gfx_period/spls_p_pixel + 0.5);
+
+// scrolling
+gfx_blit(0,1,0,   
+         pixels_p_gfx_period,draw_loop_height,gfx_w-pixels_p_gfx_period,gfx_h-draw_loop_height,
+         0,draw_loop_height,gfx_w - pixels_p_gfx_period,gfx_h-draw_loop_height,
+         0,0);
+// only redraw rightmost samples
+x = gfx_w;
+while (x >= (gfx_w - pixels_p_gfx_period)) (
+  ymin = MinPeakSearch(searchpos_current,spls_p_pixel)*draw_input_scale + draw_input_offset;
+  ymax = MaxPeakSearch(searchpos_current,spls_p_pixel)*draw_input_scale + draw_input_offset;
+  gfx_set(0.5,0.5,0.5,1);
+  gfx_line(x,ymin,x,ymax);
+  searchpos_current -= spls_p_pixel;
+  searchpos_current < 0 ? searchpos_current += buf_size;
+  x -= 1;
+);
+// store copy for later scrolling
+gfx_dest = 0;
+gfx_blit(-1,1,0,   
+         0,draw_loop_height,gfx_w,gfx_h-draw_loop_height,
+         0,draw_loop_height,gfx_w,gfx_h-draw_loop_height,
+         0,0);
+gfx_dest = -1;
+
+/*
+// update input drawing area - redraw everything (WASTEFUL!)
+gfx_set(0,0,0,1);
+gfx_rect(0,draw_loop_height,gfx_w,gfx_h);
+gfx_set(1,1,1,1);
+x = gfx_w;
+searchpos_current = buf_pos_WRITE;
+while (x >= 0) (
+  ymin = MinPeakSearch(searchpos_current,spls_p_pixel)*draw_input_scale + draw_input_offset;
+  ymax = MaxPeakSearch(searchpos_current,spls_p_pixel)*draw_input_scale + draw_input_offset;
+  gfx_line(x,ymin,x,ymax);
+  searchpos_current -= spls_p_pixel;
+  searchpos_current < 0 ? searchpos_current += buf_size;
+  x -= 1;
+);
+*/
