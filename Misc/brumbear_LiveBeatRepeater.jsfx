@@ -1,45 +1,75 @@
 desc: LiveBeatRepeater
 author: brumbear
-version: 1.20
+version: 1.30
 changelog:
-  - Visualize sampled waveform, playhead and loop area
-  - Allow manipulation of loop start and loop end position during loop repeat
+  - Added Slice Pattern Sequencer*
+  - Added Loop Freeze/Recall feature*
+  - Added new routing option
+  - Added vertical zoom slider for waveform
+  - Fixed wrong beat/bar length calculations for certain time signatures (Reaper's tempo is actually QPM, not BPM)
+  - Fixed slice start calculation when changing Slice Start Pos slider (was off by 1 sample)
+
+  *Note: Switching Pattern Sequencer on/off and Freeze/Recall can be automated just like other non hidden sliders
 link: Forum thread https://forum.cockos.com/showthread.php?t=211834
 about:
   # LiveBeatRepeater
 
-  JSFX for live performance stutter effects. Zero latency. Synchronized (sample accurate!) to project tempo and time signature. Works well with linear songs as well as loop based material. Mashes up nicely your rhythms on drum tracks/percussion. Great toy on voices.
+  JSFX for live performance stutter effects. Zero latency. Synchronized to project tempo and time signature - sample accurate. Built-in slicer & pattern sequencer. Works well with linear songs as well as loop based material. Mashes up nicely your rhythms on drum tracks/percussion. Great toy on voices.
 
-  What makes this fx different from the classical looper or "instant" samplers is the fact that it constantly samples the input and repeats what you just heard when you trigger the repeat mode. I.e. you do not have to trigger recording a loop blindly hoping it will be what you want, but you repeat what was just played.
+  Constantly samples the input and repeats what you just heard when you trigger the repeat mode. I.e. you do not have to trigger recording a loop blindly hoping it will be what you want, but you repeat what was just played.
 
   Most fun if controlled via a MIDI/OSC hardware device (pad controller, touch screen device). E.g. Repeat On-Off to a pad, continuous Loop Length to a rotary encoder (relative mode) and stepped Loop Length to dedicated pads (one for each loop length).
 
-  Separate loop audio routing allows to feed the repeating loop into any custom fx chain. Resonant HP/LP filters with variable cut off frequency, ping pong delays, distortion etc work particularly well with the stutter and allow spontaneous live (or automated) build ups.
+  Separate loop audio routing allows to conveniently feed the repeating loop into any custom fx chain. Phaser, resonant HP/LP filters with variable cut off frequency, ping pong delays etc work particularly well with the stutter and allow spontaneous live (or automated) build ups.
 
 // This effect Copyright (C) 2018 and later Pacific Peaks Studio
 // License: GPLv3 - http://www.gnu.org/licenses/gpl
 // desc: LiveBeatRepeater (brumbear@pacific_peaks)
 // author: brumbear @ pacific peaks
-// 2020-10-09: Release V1.20
+// 2020-10-18: Release V1.30
 
+// ***********************************************************************************************
+// SLICE PATTERN SEQUENCER - INSTRUCTIONS
+// 
+// Pattern Slice types:
+//
+//  Pink:  Play First
+//  Red:   Play
+//  Black: Skip
+//  Grey:  Replace/Mute. Input will be played during slice period and also put onto Fx output for further processing.
+//                       Fx routing "Active Slice only" will mute slice entirely.
+//  
+//
+// Left mouse click: Cycle through slice type
+// SHIFT + Left mouse click: Make current cell Play First
+// Right mouse click DRAG: Copy slice type to neighbouring pattern cells
+//
+// Usage hint: Patterns work well with start trigger set to "At Next Bar"
+//
+// ***********************************************************************************************
 
 //------------------------------------------------------------------------------------------------
-slider1:SL_repeat=0<0,1,1{Off,On}>Loop Repeat
+slider1:SL_repeat=0<0,1,1{Off,On}>Loop-Repeat
 slider2:SL_direction=0<0,1,1{Forward,Reverse}>Direction
-slider3:SL_loop_length_STP=5<0,13,1{2,1,1T(=2/3),1/2,1/2T(=1/3),1/4,1/4T(=1/6),1/8,1/8T(=1/12),1/16,1/16T(=1/24),1/32, 1/64, 1/128}>Length f. End [bars] (STP)
-// Continuous Loop Length will be reset to closest stepped Loop Length when Repeat is switched from ON to OFF unless Transition is set to "Immediately"
-slider4:SL_loop_length_CTN=48<0,128,0.01>Length f. End (CTD)
-slider5:SL_pointer_start=0<-2,0,0.001>Loop Start Pos [bar]
-slider6:SL_pointer_end=0<-2,0,0.001>Loop End Pos [bar]
-slider7:SL_pointer_read=0<-2,0,0.001>-Loop Playhead
+slider3:SL_sequencer=1<0,1,1{Off,On}>-Slice Pattern Sequenzer
+slider4:SL_clear_pattern=<0,1,1{-,Clear}>-Clear Pattern
+slider5:SL_freeze==0<0,1,1{Off,On}>-Freeze Loop
 
-slider10:SL_loop_start=1<0,3,1{Immediately,At Next Beat,At Next Bar}>Loop Start Trigger
-slider11:SL_infade_algo=2<0,2,1{Extrapolated Slope,Reverse Crossfade,Padded Reverse Crossfade}>Loop Fade-In Algorithm
-slider12:SL_infade_time=20<10,100,1>Loop Fade-In Time [ms]
-slider13:SL_length_transitions=2<0,2,1{Immediately/Continuous,At Next Beat (STP Mode),At Loop End (STP Mode)}>Length Transitions
-slider14:SL_repeat_ending=1<0,1,1{Immediately,Soft Fade Out}>Repeat Ending  
+slider10:SL_slice_length_STP=5<0,13,1{2,1,1T(=2/3),1/2,1/2T(=1/3),1/4,1/4T(=1/6),1/8,1/8T(=1/12),1/16,1/16T(=1/24),1/32, 1/64, 1/128}>Slice Length [bars] (QUANT)
+// Continuous Slice Length will be reset to closest quantized Slice Length when Repeat is switched from ON to OFF unless Transition is set to "Immediately"
+slider11:SL_slice_length_CTN=48<0,128,0.01>Slice Length (CONT)
+slider12:SL_pointer_start=0<-2,0,0.001>Slice Start Pos [bar] (CONT)
+slider13:SL_pointer_end=0<-2,0,0.001>Slice End Pos [bar] (CONT)
+slider14:SL_pointer_read=0<-2,0,0.001>-Loop Playhead
 
-slider20:SL_fx_routing=0<0,2,1{Main=Combined / Fx=Loop only,Main=Muted when looping / Fx=Loop only,Main=Input passthrough / Fx =Loop only}>Fx Channel Routing
+slider20:SL_loop_start_trigger=1<0,3,1{Immediately,At Next Beat,At Next Bar}>Start Slice/Pattern
+slider21:SL_length_transitions=2<0,2,1{Immediately/Continuous (CONT),At Next Beat (QUANT),At Slice End (QUANT)}>Slice Length Transitions (Mode)
+slider22:SL_infade_algo=2<0,2,1{Extrapolated Slope,Reverse Crossfade,Padded Reverse Crossfade}>Slice Fade-In Algorithm
+slider23:SL_infade_time=20<10,100,1>Slice Fade-In Time [ms]
+slider24:SL_repeat_ending=1<0,1,1{Immediately,Soft Fade Out}>Fade Out
+
+slider30:SL_fx_routing=0<0,3,1{Main=Combined / Fx=Loop only,Main=Muted when looping / Fx=Loop only,Main=Input passthrough / Fx=Loop only,Main=Input passthrough / Fx =Active Slices only}>Fx Channel Routing
+slider31:SL_draw_zoom=90<0,200,1>Waveform Vertical Zoom [%]
 
 in_pin:Input left
 in_pin:Input right
@@ -56,13 +86,13 @@ options:no_meter
 
 log2 = log(2);
 
-function loop_length_SL_loop_length_STP(n) // returns the inverse of the fractional loop length of a bar (e.g. 4 for 1/4bar), see values for SL_loop_length_STP
+function slice_length_SL_slice_length_STP(n) // returns the inverse of the fractional slice length of a bar (e.g. 4 for 1/4bar), see values for SL_slice_length_STP
 (
- n == 0 ? 0.5 // SL_loop_length_CTN = 0
- : n == 1 ? 1 // SL_loop_length_CTN = 16
-  : n == 2 ? 1.5 // SL_loop_length_CTN = 25.36
-   : n == 3 ? 2 // SL_loop_length_CTN = 32
-    : n == 4 ? 3 // etc... calculation as per below function SL_loop_length_CTN_from_SL_loop_length_STP
+ n == 0 ? 0.5 // SL_slice_length_CTN = 0
+ : n == 1 ? 1 // SL_slice_length_CTN = 16
+  : n == 2 ? 1.5 // SL_slice_length_CTN = 25.36
+   : n == 3 ? 2 // SL_slice_length_CTN = 32
+    : n == 4 ? 3 // etc... calculation as per below function SL_slice_length_CTN_from_SL_slice_length_STP
      : n == 5 ? 4 
       : n == 6 ? 6
        : n == 7 ? 8 
@@ -75,18 +105,18 @@ function loop_length_SL_loop_length_STP(n) // returns the inverse of the fractio
              : 0;
 );
 
-function SL_loop_length_CTN_from_SL_loop_length_STP(x) 
-// calculate the exact value for continuous loop length with double float precision
-// the exact value of SL_loop_length_CTN will later be used to calculated the loop size [samples]
+function SL_slice_length_CTN_from_SL_slice_length_STP(x) 
+// calculate the exact value for continuous slice length with double float precision
+// the exact value of SL_slice_length_CTN will later be used to calculated the slice size [samples]
 (
- (log(loop_length_SL_loop_length_STP(x))/log2 + 1) * 16;
+ (log(slice_length_SL_slice_length_STP(x))/log2 + 1) * 16;
 );
 
 
-function Nearest_Loop_Length(i) // aka "SL_loop_length_STP_from_SL_loop_length_CTN", returns SL_loop_length_STP index from SL_loop_length_CTN value
+function Nearest_slice_Length(i) // aka "SL_slice_length_STP_from_SL_slice_length_CTN", returns SL_slice_length_STP index from SL_slice_length_CTN value
 (
- i <= 8 ? 0 // midpoint between SL_loop_length_CTN = 0 and SL_loop_length_CTN = 16
- : i <= 20.68 ? 1 //  midpoint between SL_loop_length_CTN = 16 and SL_loop_length_CTN = 25.36
+ i <= 8 ? 0 // midpoint between SL_slice_length_CTN = 0 and SL_slice_length_CTN = 16
+ : i <= 20.68 ? 1 //  midpoint between SL_slice_length_CTN = 16 and SL_slice_length_CTN = 25.36
   : i <= 28.68 ? 2 // etc...
    : i <= 36.68 ? 3
     : i <= 44.68 ? 4
@@ -129,16 +159,50 @@ function Update_Tail()
 function Update_Pointers()
 local(offset)
 (
-  offset = loop_end_freeze - loop_start + 1; offset < 0 ? offset += buf_size; 
+  offset = loop_memory_end - slice_start + 1; offset < 0 ? offset += buf_size; 
   SL_pointer_start =  -offset/samples_per_bar;
   slider_automate(slider5);
   
-  offset = loop_end_freeze - loop_end; offset < 0 ? offset += buf_size;
+  offset = loop_memory_end - slice_end; offset < 0 ? offset += buf_size;
   SL_pointer_end =  -offset/samples_per_bar;
   slider_automate(slider6);
   
-  offset = loop_end_freeze - loop_pos_READ; offset < 0 ? offset += buf_size;
+  offset = loop_memory_end - loop_pos_READ; offset < 0 ? offset += buf_size;
   SL_pointer_read = -offset/samples_per_bar;
+);
+
+function Advance_Pattern_Index()
+(
+  SL_direction == 0 ? (pindex -= 1; ):( pindex += 1; );
+  pindex < 0 ? pindex = pattern_size - 1;
+  pindex >= pattern_size ? pindex = 0;
+);
+
+function Calc_Slice_StartEnd(i)
+(
+  slice_end = loop_memory_end - i * slice_size;
+  slice_end < 0 ? slice_end += buf_size;
+  slice_start = slice_end - slice_size + 1;
+  slice_start <0 ? (slice_start += buf_size; slice_overflow = 1;) : (slice_overflow = 0; );
+);
+
+function NextActiveSlice()
+(
+  (pattern_size > 1) && SL_sequencer ? (
+    Advance_Pattern_Index();
+    count = pattern_size;
+    while (pattern[pindex] == -1 &&  count >= 0) (
+      Advance_Pattern_Index(); // skip slice
+      count -= 1; // break loop if all slices are skipped
+    );
+    Calc_Slice_StartEnd(pindex);
+    next_slice_start = slice_start; next_slice_overflow = slice_overflow;
+    play_slice = pattern[pindex];
+    Update_Pointers();
+    // changes to pointers during and when ending pattern sequencing shall not trigger a manual change request by user
+    last_SL_pointer_start = SL_pointer_start;
+    last_SL_pointer_end = SL_pointer_end;
+  );
 );
 
 //------------------------------------------------------------------------------------------------
@@ -146,15 +210,17 @@ gfx_ext_retina = 1;
 gfx_clear = 0x000000; // clear frame buffer every cycle as it must be redrawn/reblited anyway (-1 would not save resources)
 
 //------------------------------------------------------------------------------------------------
-// need some defaults when sliders have not been touched yet, no playback or just input monitoring
+// need some defaults on load and samplerate changes
 // default is only used to claim & clean indexed memory for buffer area. Will be updated with actual values.
-default_srate = 96000;
+ext_noinit = 1; // do not execute on start of playback
+default_srate = srate;
 default_samples_per_bar = default_srate * 2; // assuming 120bpm, 4/4 signature
 samples_per_bar = default_samples_per_bar;
 
-// Loop fade-in algorithm variables
-default_infade_time = 0.1; // maximum fade-in time in seconds
-infade_size = floor(default_srate*default_infade_time + 0.5);
+// slice fade-in algorithm variables
+max_infade_time = 0.1; // maximum fade-in time in seconds
+max_infade_size = floor(default_srate*max_infade_time + 0.5);
+infade_size = max_infade_size;
 infade_relative_pos = 0;
 slope_factor = 0.7;
 max_slope = 0.13;
@@ -165,9 +231,22 @@ llast_spl_played_R = 0;
 next_spl_extrap_L = 0;
 next_spl_extrap_R = 0;
 
-// create a buffer hosting 2 sections: track ring buffer and loop copy buffer
+// create pattern storage. pattern[pindex] determines type of slice:
+// -1: skip slice
+//  0: mute slice and play input (Fx routing: completely mute input during looping in "Active Slice only" mode )
+//  1: play slice
+max_pattern_size = 256; // maximum number of slices in a 2 bar pattern is 2 * 128
+pattern_size = max_pattern_size;
+pattern = 0;
+memset(pattern, -1, max_pattern_size);
+pattern[0] = 1;
+pindex = 0;
+pattern_first = 0;
+play_slice = 1;
+
+// create a buffer hosting 2 sections: track ring buffer and slice copy buffer
 buf_size = 5 * samples_per_bar; //track ring buffer has to be > 2x max loop length sample
-buf0 = 0; buf1 = buf0 + buf_size; // Start address pointers
+buf0 = max_pattern_size; buf1 = buf0 + buf_size; // Start address pointers
 buf_pos_WRITE = 0; // position in track ring buffer that is being filled with current track samples
 loop_copy_offset = 2 * buf_size; // buf0[loop_copy_offset + pos] and buf1[loop_copy_offset + pos] store a copy of the max length loop portion from track ring buffer.
 loop_pos_COPY = 0; // position that gets copied from track ring buffer to loop copy buffer
@@ -181,117 +260,144 @@ tail_pos_WRITE = 0;
 tail_pos_READ = 0;
 memset(tail0, 0, 2 * tailbuf_size);
 
-loop_start = 0; // start position of loop within track ring buffer
-loop_size = buf_size; // number of samples in repeat loop. E.g. loop_size = 10, loop_start = 0 => loop_end = 9
-loop_end = buf_size - 1; // end position of loop within track ring buffer. Frozen when repeat mode is switched on. loop_end contains the last sample of the loop.
-loop_end_freeze = loop_end;
-loop_overflow = 0; // flag to indicate if loop stretches beyond buffer end, i.e. loop_end < loop_start
-loop_pos_READ = loop_end; // position in buffer that will be played back when repeat is on
+slice_size = 2*samples_per_bar; // number of samples in slice. E.g. slice_size = 10, slice_start = 0 => slice_end = 9
+slice_end = buf_size - 1; // end position of slice within track ring buffer. Frozen when repeat mode is switched on. slice_end contains the last sample of the slice.
+slice_start = slice_end - slice_size + 1; // start position of slice within track ring buffer
+slice_overflow = 0; // flag to indicate if slice stretches beyond buffer end, i.e. slice_end < slice_start
+
+loop_memory_end = slice_end;
+loop_pos_READ = slice_end; // position in buffer that will be played back when repeat is on
 loop_trigger_beat_pos = 0;
 play_loop = 0;
 last_play_loop = 0;
 
-next_loop_start = 0; 
-next_loop_overflow = 0;
-next_loop_trigger_beat_pos = 0;
+next_slice_start = 0;
+next_slice_overflow = 0;
+next_slice_trigger_beat_pos = 0;
 
 last_SL_repeat = 0;
-last_SL_loop_length_STP = 5;
-last_SL_loop_length_CTN = 48;
+last_SL_slice_length_STP = 5;
+last_SL_slice_length_CTN = 48;
 last_SL_pointer_end = 0;
 last_SL_pointer_start = 0;
+last_SL_sequencer = 1;
 
-immediate_transition_override = 0; // flag to indicate if we are in Continuos Mode (NOT discrete loop length)
+immediate_transition_override = 0; // flag to indicate if we are in Continuos Mode (NOT discrete slice length)
 
 
 //===========================================================================================================
 //===========================================================================================================
 @slider
-// update the loop fade-in time
+// update the slice fade-in time
 infade_size = floor(srate*SL_infade_time/1000 + 0.5);
 
-// loop end position change requested during loop playback?
-(last_SL_pointer_end != SL_pointer_end) && play_loop ? (
+// slice end position change requested during loop playback?
+(last_SL_pointer_end != SL_pointer_end) && play_loop && !SL_sequencer ? (
   // boundary check
   SL_pointer_end < (SL_pointer_start + 1/128) ? (
     SL_pointer_end = SL_pointer_start + 1/128;
   );
   last_SL_pointer_end = SL_pointer_end;
   immediate_transition_override = 1;
-  // update loop end and loop size/length
-  loop_end = loop_end_freeze + SL_pointer_end * samples_per_bar;
-  loop_end < 0 ? loop_end += buf_size;
-  loop_size = loop_end - loop_start + 1;
-  loop_size < 0 ? ( loop_size += buf_size; loop_overflow = 1; ):( loop_overflow = 0; );
-  SL_loop_length_CTN = 16 * ( log( samples_per_bar/loop_size )/log2 + 1 );
+  // update slice end and slice size/length
+  slice_end = loop_memory_end + SL_pointer_end * samples_per_bar;
+  slice_end < 0 ? slice_end += buf_size;
+  slice_size = slice_end - slice_start + 1;
+  slice_size < 0 ? ( slice_size += buf_size; slice_overflow = 1; ):( slice_overflow = 0; );
+  SL_slice_length_CTN = 16 * ( log( samples_per_bar/slice_size )/log2 + 1 );
 );
 
-// loop start position change requested during loop playback?
-(last_SL_pointer_start != SL_pointer_start) && play_loop ? (
+// slice start position change requested during loop playback?
+(last_SL_pointer_start != SL_pointer_start) && play_loop && !SL_sequencer ? (
   // boundary check
   SL_pointer_start > (SL_pointer_end - 1/128) ? (
     SL_pointer_start = SL_pointer_end - 1/128;
   );
   last_SL_pointer_start = SL_pointer_start;
   immediate_transition_override = 1;
-  // update loop start
-  loop_start = loop_end_freeze + SL_pointer_start * samples_per_bar;
-  loop_start < 0 ? loop_start += buf_size;
-  loop_size = loop_end - loop_start + 1;
-  loop_size < 0 ? ( loop_size += buf_size; loop_overflow = 1; ):( loop_overflow = 0; );
-  SL_loop_length_CTN = 16 * ( log( samples_per_bar/loop_size )/log2 + 1 );
+  // update slice start
+  slice_start = loop_memory_end + SL_pointer_start * samples_per_bar + 1;
+  slice_start < 0 ? slice_start += buf_size;
+  slice_size = slice_end - slice_start + 1;
+  slice_size < 0 ? ( slice_size += buf_size; slice_overflow = 1; ):( slice_overflow = 0; );
+  SL_slice_length_CTN = 16 * ( log( samples_per_bar/slice_size )/log2 + 1 );
 );
 
-// synchronize loop length sliders
-(last_SL_loop_length_CTN != SL_loop_length_CTN) && (last_SL_loop_length_STP == SL_loop_length_STP) ? (
-  SL_loop_length_STP = Nearest_Loop_Length(SL_loop_length_CTN);
-  last_SL_loop_length_STP = SL_loop_length_STP;
-  last_SL_loop_length_CTN = SL_loop_length_CTN;
+// synchronize slice length sliders
+(last_SL_slice_length_CTN != SL_slice_length_CTN) && (last_SL_slice_length_STP == SL_slice_length_STP) ? (
+  SL_slice_length_STP = Nearest_slice_Length(SL_slice_length_CTN);
+  last_SL_slice_length_STP = SL_slice_length_STP;
+  last_SL_slice_length_CTN = SL_slice_length_CTN;
   immediate_transition_override = 1;
+  SL_sequencer = 0;
+  play_slice = 1;
 ):(
-  last_SL_loop_length_STP != SL_loop_length_STP ? (
-    SL_loop_length_CTN = SL_loop_length_CTN_from_SL_loop_length_STP(SL_loop_length_STP);
-    last_SL_loop_length_STP = SL_loop_length_STP;
-    last_SL_loop_length_CTN = SL_loop_length_CTN;
-    immediate_transition_override = 0;
+  last_SL_slice_length_STP != SL_slice_length_STP ? (
+    SL_slice_length_CTN = SL_slice_length_CTN_from_SL_slice_length_STP(SL_slice_length_STP);
+    last_SL_slice_length_STP = SL_slice_length_STP;
+    last_SL_slice_length_CTN = SL_slice_length_CTN;
+    play_loop == 0 ? (
+      immediate_transition_override = 0;
+    );  
   );  
 );    
 
-// update the loop size
-loop_size = floor(samples_per_bar /(2^(SL_loop_length_CTN/16 - 1)) + 0.5);
+// update the slice size
+slice_size = floor(samples_per_bar /(2^(SL_slice_length_CTN/16 - 1)) + 0.5);
 
-// maximum loop size health check: Loop end change during playback could lead to length requests outside of buffer range
-play_loop ? (
-  loop_end <= loop_end_freeze ? (
-    loop_size_max = 2 * samples_per_bar - (loop_end_freeze - loop_end);
+// maximum slice size health check: slice end change could lead to length requests outside of buffer range
+!SL_sequencer ? (
+  slice_end <= loop_memory_end ? (
+    slice_size_max = 2 * samples_per_bar - (loop_memory_end - slice_end);
   ):(
-    loop_size_max = 2 * samples_per_bar - (loop_end_freeze + (buf_size - loop_end));
+    slice_size_max = 2 * samples_per_bar - (loop_memory_end + (buf_size - slice_end));
   );
-  loop_size > loop_size_max ? (
-    loop_size = loop_size_max;
-    SL_loop_length_CTN = 16 * ( log( samples_per_bar/loop_size )/log2 + 1 );
-    SL_loop_length_STP = Nearest_Loop_Length(SL_loop_length_CTN);
+  slice_size > slice_size_max ? (
+    slice_size = slice_size_max;
+    SL_slice_length_CTN = 16 * ( log( samples_per_bar/slice_size )/log2 + 1 );
+    SL_slice_length_STP = Nearest_slice_Length(SL_slice_length_CTN);
+  );
+);
+
+// update the pattern size
+SL_sequencer ? (
+  pattern_size = 2 * slice_length_SL_slice_length_STP(SL_slice_length_STP);
+  pattern_first >= pattern_size ? (
+    // Find leftmost slice that can be played first
+    i = pattern_size - 1;
+    while (i > 0) (
+      pattern[i] == 1 ? (
+        pattern_first = i;
+        i = -1;
+      ):(
+        i -= 1;
+      );
+    );
+    i == 0 ? (
+      pattern_first = 0;
+      pattern[0] = 1;
+    );
   );
 );
 
 // adjust (next) start position
 (SL_length_transitions == 1) && (immediate_transition_override == 0) ? (
-  // loop start point may only be updated at next beat
-  next_loop_trigger_beat_pos = floor(beat_position + 1);
-  next_loop_start = loop_end - (loop_size - 1);
-  next_loop_start <0 ? (next_loop_start += buf_size; next_loop_overflow = 1;) : (next_loop_overflow = 0; );
+  // slice start point may only be updated at next beat
+  next_slice_trigger_beat_pos = floor(beat_position + 1);
+  next_slice_start = slice_end - (slice_size - 1);
+  next_slice_start <0 ? (next_slice_start += buf_size; next_slice_overflow = 1;) : (next_slice_overflow = 0; );
 ):(
-  // update the loop start position
-  loop_start = loop_end - (loop_size - 1);
-  loop_start < 0 ? ( loop_start += buf_size; loop_overflow = 1; ):( loop_overflow = 0; );
+  // update the slice start position
+  slice_start = slice_end - (slice_size - 1);
+  slice_start < 0 ? ( slice_start += buf_size; slice_overflow = 1; ):( slice_overflow = 0; );
   Update_Pointers();
   last_SL_pointer_start = SL_pointer_start;
 );
 
 // check if repeat switched to ON
 SL_repeat > last_SL_repeat ? (
-  SL_loop_start == 0 ? loop_trigger_beat_pos = beat_position 
-    : SL_loop_start == 1 ? loop_trigger_beat_pos = floor(beat_position + 1)
+  SL_loop_start_trigger == 0 ? loop_trigger_beat_pos = beat_position 
+    : SL_loop_start_trigger == 1 ? loop_trigger_beat_pos = floor(beat_position + 1)
       : loop_trigger_beat_pos = (floor(beat_position/ts_num) + 1) * ts_num 
 ); 
 // check if repeat switched to OFF
@@ -299,34 +405,34 @@ SL_repeat < last_SL_repeat ? (
   play_loop = 0; 
   immediate_transition_override = 0;
   SL_length_transitions != 0 ? (
-    // revert back to Stepped Mode and set slider 3 to closest stepped length unless transition was set to "Immediately"
-    SL_loop_length_CTN = SL_loop_length_CTN_from_SL_loop_length_STP(SL_loop_length_STP);
-    last_SL_loop_length_STP = SL_loop_length_STP;
-    last_SL_loop_length_CTN = SL_loop_length_CTN;
+    // revert back to quantized Mode and set slider 3 to closest quantized length unless transition was set to "Immediately"
+    SL_slice_length_CTN = SL_slice_length_CTN_from_SL_slice_length_STP(SL_slice_length_STP);
+    last_SL_slice_length_STP = SL_slice_length_STP;
+    last_SL_slice_length_CTN = SL_slice_length_CTN;
   );
   SL_repeat_ending ? ( // fade out requested?
     SL_direction == 0 ? (
-      loop_pos_READ <= loop_end ? (
-        remaining_loop_length = loop_end - loop_pos_READ;
+      loop_pos_READ <= slice_end ? (
+        remaining_slice_length = slice_end - loop_pos_READ;
       ):(
-        remaining_loop_length = buf_size - loop_pos_READ + loop_end;
+        remaining_slice_length = buf_size - loop_pos_READ + slice_end;
       );
-      remaining_loop_length == 0 ? ( // no need for fade out as we are exactly at the loop end
+      remaining_slice_length == 0 ? ( // no need for fade out as we are exactly at the slice end
         fade_vol = 0;
       ):(
-        fade_step = 1/remaining_loop_length;
+        fade_step = 1/remaining_slice_length;
         fade_vol =1;
       );
     ):(
-      loop_pos_READ >= loop_start ? (
-        remaining_loop_length = loop_pos_READ - loop_start;
+      loop_pos_READ >= slice_start ? (
+        remaining_slice_length = loop_pos_READ - slice_start;
       ):(
-        remaining_loop_length = loop_pos_READ + buf_size - loop_start;
+        remaining_slice_length = loop_pos_READ + buf_size - slice_start;
       );
-      remaining_loop_length == 0 ? ( // no need for fade out as we have fully reversed to the loop start
+      remaining_slice_length == 0 ? ( // no need for fade out as we have fully reversed to the slice start
         fade_vol = 0;
       ):(
-        fade_step = 1/remaining_loop_length;
+        fade_step = 1/remaining_slice_length;
         fade_vol =1;
       );
     );
@@ -334,39 +440,58 @@ SL_repeat < last_SL_repeat ? (
 ); 
 last_SL_repeat = SL_repeat;
 
+// check if sequencer switched to ON
+SL_sequencer > last_SL_sequencer ? (
+  // sequencer may only be swithed on when not looping or if no continuous changes have been applied
+  !immediate_transition_override || !play_loop ? (
+    SL_slice_length_CTN = SL_slice_length_CTN_from_SL_slice_length_STP(SL_slice_length_STP);
+    last_SL_slice_length_STP = SL_slice_length_STP;
+    last_SL_slice_length_CTN = SL_slice_length_CTN;
+    last_SL_sequencer = 1;
+    immediate_transition_override = 0;
+  );
+);
+
+// check if sequencer switched to OFF
+SL_sequencer < last_SL_sequencer ? (
+  play_slice = 1;
+);
 
 //===========================================================================================================
 //===========================================================================================================
 @block
 // has playback just stopped?
-(play_state == 0) && (play_state != last_play_state) ? (
+(play_state == 0) && (play_state != last_play_state) && !(SL_freeze & loop_copied) ? (
   SL_repeat = 0;
-  play_loop = 0; 
+  play_loop = 0;
+  loop_copied = 0;
+  loop_spls_copied = 0;
   immediate_transition_override = 0;
   memset(buf0, 0, 4 * buf_size);
   memset(tail0, 0, 2 * tailbuf_size);
   SL_length_transitions != 0 ? (
-    // revert back to Stepped Mode and set slider 3 to closest stepped length unless transition was set to "Immediately"
-    SL_loop_length_CTN = SL_loop_length_CTN_from_SL_loop_length_STP(SL_loop_length_STP);
-    last_SL_loop_length_STP = SL_loop_length_STP;
-    last_SL_loop_length_CTN = SL_loop_length_CTN;
+    // revert back to quantized Mode and set slider 3 to closest quantized length unless transition was set to "Immediately"
+    SL_slice_length_CTN = SL_slice_length_CTN_from_SL_slice_length_STP(SL_slice_length_STP);
+    last_SL_slice_length_STP = SL_slice_length_STP;
+    last_SL_slice_length_CTN = SL_slice_length_CTN;
   );
 );
 last_play_state = play_state;
 
 // adjust buffer size and pointers to follow parameter changes
 (ts_num > 0) && (tempo > 0) ? (
-  samples_per_beat = floor((srate/tempo)*60 + 0.5);
-  samples_per_bar = ts_num * samples_per_beat; // ts_num is equal to beats per bar)
+  samples_per_quarternote = (srate/tempo)*60; // Reaper BPM is actually QPM (quarter notes per minute)!
+  samples_per_beat = floor(4/ts_denom * samples_per_quarternote +0.5);
+  samples_per_bar = ts_num * samples_per_beat;
 ):(
   samples_per_bar = default_samples_per_bar;
   samples_per_beat = floor( default_samples_per_bar/ts_num + 0.5);
 );
 buf_size = 5 * samples_per_bar; 
-buf0 = 0; buf1 = buf0 + buf_size;
+buf0 = max_pattern_size; buf1 = buf0 + buf_size;
 loop_copy_offset = 2 * buf_size; 
 tailbuf_size = 3 * infade_size; 
-tail0 = buf0 + 4 * buf_size; tail1 = tail0 + tailbuf_size; 
+tail0 = buf0 + 4 * buf_size; tail1 = tail0 + tailbuf_size;
 
 beat_offset = 0;
 
@@ -384,21 +509,44 @@ in_spl0 = spl0; in_spl1 = spl1;
 buf0[buf_pos_WRITE] = in_spl0; buf1[buf_pos_WRITE] = in_spl1;
 
 //------------------------------------------------------------------------------------------------
+// Switch the sequencer off if any continuous manipulations have been made
+immediate_transition_override ? (
+  SL_sequencer = 0;
+  last_SL_sequencer = 0;
+  play_slice = 1;
+);
+
+//------------------------------------------------------------------------------------------------
 // check if loop playback got just requested and we are ready to go
 (play_loop == 0) && (SL_repeat) && (exact_beat_position >= loop_trigger_beat_pos) ? (
-  // freeze the loop end point at the current position, set loop start point and flag to play the loop
-  loop_end = buf_pos_WRITE - 1;
-  loop_end < 0 ? loop_end = buf_size - 1;
-  loop_end_freeze = loop_end;
-  loop_start = loop_end - (loop_size - 1);
-  loop_start <0 ? (loop_start += buf_size; loop_overflow = 1;) : (loop_overflow = 0; );
-  next_loop_start = loop_start; next_loop_overflow = loop_overflow;
-  loop_pos_READ = loop_start;
+  !(SL_freeze & loop_copied) ? (
+    // freeze the loop end point at the current position, set slice start and end point and flag to play the loop
+    loop_memory_end = buf_pos_WRITE - 1;
+    loop_memory_end < 0 ? loop_memory_end = buf_size - 1;
+    loop_memory_start = loop_memory_end - (2*samples_per_bar) + 1; // start copy at max length that the looping section can have
+    loop_memory_start <0 ? (loop_memory_start += buf_size; loop_memory_overflow = 1;):(loop_memory_overflow = 0);
+    loop_pos_COPY = loop_memory_start;
+    loop_copied = 0;
+    loop_spls_copied = 0;  
+  );
+
+  SL_sequencer ? (
+    pindex = pattern_first;
+    play_slice = pattern[pindex];
+    Calc_Slice_StartEnd(pindex);
+  ):(
+    !(SL_freeze & loop_copied) ? (
+      Calc_Slice_StartEnd(0);
+    );
+  );
+  next_slice_start = slice_start; next_slice_overflow = slice_overflow;
+  SL_direction == 0 ? (
+    loop_pos_READ = slice_start;
+  ):(
+    loop_pos_READ = slice_end;
+  );
   infade_relative_pos = 0;
   Update_Tail();
-  loop_pos_COPY = loop_end - (2*samples_per_bar) + 1; // start copy at max length that the looping section can have
-  loop_pos_COPY <0 ? loop_pos_COPY += buf_size;
-  loop_copied = 0;
   play_loop = 1;
 );
 
@@ -408,17 +556,18 @@ play_loop ? (
   loop_copied == 0 ? (
     buf0[loop_copy_offset + loop_pos_COPY] = buf0[loop_pos_COPY];
     buf1[loop_copy_offset + loop_pos_COPY] = buf1[loop_pos_COPY];
-    loop_pos_COPY == loop_end_freeze ? loop_copied = 1;
+    loop_spls_copied += 1;
+    loop_pos_COPY == loop_memory_end ? loop_copied = 1;
     loop_pos_COPY += 1; loop_pos_COPY >= buf_size ? loop_pos_COPY = 0;
   );
 
-  // check if there is the need to update the loop start position
+  // check if there is the need to update the slice start position
   (SL_length_transitions == 1) && (immediate_transition_override == 0) ? (
-    loop_start != next_loop_start ? (
-      exact_beat_position >= next_loop_trigger_beat_pos ? (
-        loop_start = next_loop_start;
-        loop_overflow = next_loop_overflow;
-        loop_pos_READ = loop_start;
+    slice_start != next_slice_start ? (
+      exact_beat_position >= next_slice_trigger_beat_pos ? (
+        slice_start = next_slice_start;
+        slice_overflow = next_slice_overflow;
+        loop_pos_READ = slice_start;
         infade_relative_pos = 0;
         Update_Tail();
       );
@@ -426,10 +575,17 @@ play_loop ? (
   );      
   
    
-  // play back the loop
-  loop_spl_L = buf0[loop_copied*(loop_copy_offset) + loop_pos_READ];  loop_spl_R = buf1[loop_copied*(loop_copy_offset) + loop_pos_READ];
+  // play back the loop if not muted
+  play_slice ? (
+    loop_spl_L = buf0[loop_copied*(loop_copy_offset) + loop_pos_READ];
+    loop_spl_R = buf1[loop_copied*(loop_copy_offset) + loop_pos_READ];
+  ):(
+    loop_spl_L = in_spl0;
+    loop_spl_R = in_spl1;
+  );
+  
   infade_relative_pos < infade_size - 1 ? (
-    // gradual loop fade-in
+    // gradual slice fade-in
     infade_ratio = infade_relative_pos / infade_size;
     
     SL_infade_algo == 0 ? ( // extrapolated slope
@@ -454,12 +610,19 @@ play_loop ? (
     
   // Fx channel routing
   SL_fx_routing == 0 ? (
-    out_spl0 = out_spl2;  out_spl1 = out_spl3; // combined
+    out_spl0 = out_spl2;  out_spl1 = out_spl3; // combined main
   ):(
     SL_fx_routing == 1 ? (
-      out_spl0 = 0; out_spl1 = 0; // muted
+      out_spl0 = 0; out_spl1 = 0; // input muted on main
     ):(
-      out_spl0 = in_spl0; out_spl1 = in_spl1; // passthrough
+      SL_fx_routing == 2 ? (
+        out_spl0 = in_spl0; out_spl1 = in_spl1; // input passthrough on main
+      ):(
+        out_spl0 = in_spl0; out_spl1 = in_spl1; // input passthrough on main
+        !play_slice ? (
+          out_spl2 = 0;  out_spl3 = 0; // only active slices on FX output
+        );
+      );
     );
   );
    
@@ -469,51 +632,58 @@ play_loop ? (
   last_spl_played_L = out_spl2; last_spl_played_R = out_spl3;
   Write_Tail(out_spl2,out_spl3);
   
+ 
   // advancing the loop READ position depending on specific settings
   SL_direction == 0 ? (
     (SL_length_transitions == 2) && (immediate_transition_override == 0) ? (
-      //loop must play till end before READ position may be set to current loop start position
-      loop_pos_READ == loop_end ? (
-        loop_pos_READ = loop_start;
+      //slice must play till end before READ position may be set to current slice start position
+      loop_pos_READ == slice_end ? (
+        NextActiveSlice();
+        loop_pos_READ = slice_start;
         infade_relative_pos = 0;
         Update_Tail();
       ):(
         loop_pos_READ += 1; loop_pos_READ >= buf_size ? loop_pos_READ = 0;
       );  
     ):(
-      // loop READ position moves to (new) start position immediately if it has reached the loop end or if loop length has been shortened while playing
+      // loop READ position moves to (new) start position immediately if it has reached the slice end or if slice length has been shortened while playing
       loop_pos_READ += 1; loop_pos_READ >= buf_size ? loop_pos_READ = 0;  
-      loop_overflow == 0 ? (
-        (loop_pos_READ > loop_end)||(loop_pos_READ < loop_start) ? (
-          loop_pos_READ = loop_start;
+      slice_overflow == 0 ? (
+        (loop_pos_READ > slice_end)||(loop_pos_READ < slice_start) ? (
+          NextActiveSlice();
+          loop_pos_READ = slice_start;
           infade_relative_pos = 0;
           Update_Tail();
         ); 
       ):(
-        (loop_pos_READ > loop_end)&&(loop_pos_READ < loop_start) ? (
-          loop_pos_READ = loop_start;
+        (loop_pos_READ > slice_end)&&(loop_pos_READ < slice_start) ? (
+          NextActiveSlice();
+          loop_pos_READ = slice_start;
           infade_relative_pos = 0;
           Update_Tail();
         );  
       );
     );   
   ):(
-    // loop READ position moves to end position immediately if it has reached the current loop start or if the loop has been shortened while playing
+    // loop READ position moves to end position immediately if it has reached the current slice start or if the slice has been shortened while playing
     loop_pos_READ -= 1; loop_pos_READ < 0 ? loop_pos_READ = buf_size - 1;  
-    loop_overflow == 0 ? (
-      loop_pos_READ < loop_start ? (
-        loop_pos_READ = loop_end;
+    slice_overflow == 0 ? (
+      loop_pos_READ < slice_start ? (
+        NextActiveSlice();
+        loop_pos_READ = slice_end;
         infade_relative_pos = 0;
         Update_Tail();
       ); 
     ):(
-      (loop_pos_READ > loop_end)&&(loop_pos_READ < loop_start) ? (
-        loop_pos_READ = loop_end;
+      (loop_pos_READ > slice_end)&&(loop_pos_READ < slice_start) ? (
+        NextActiveSlice();
+        loop_pos_READ = slice_end;
         infade_relative_pos = 0;
         Update_Tail();
       );  
     );
   );
+  
   
 //------------------------------------------------------------------------------------------------  
 ):(
@@ -524,19 +694,20 @@ play_loop ? (
   // is there a loop fading out?
   fade_vol > 0 ? (
     track_X_vol = sqrt(1-fade_vol); loop_X_vol = sqrt(fade_vol); // equal power cross fade
-    out_spl2 = buf0[loop_copied*loop_copy_offset+loop_pos_READ]*loop_X_vol; out_spl3 = buf1[loop_copied*loop_copy_offset+loop_pos_READ]*loop_X_vol;
+    out_spl2 = buf0[loop_copied*loop_copy_offset+loop_pos_READ]*loop_X_vol;
+    out_spl3 = buf1[loop_copied*loop_copy_offset+loop_pos_READ]*loop_X_vol;
     // Fx channel routing
     SL_fx_routing == 0 ? (
-      out_spl0 = in_spl0*track_X_vol + out_spl2; out_spl1 = in_spl1*track_X_vol + out_spl3; // combined
+      out_spl0 = in_spl0*track_X_vol + out_spl2; out_spl1 = in_spl1*track_X_vol + out_spl3; // combined main output
       last_spl_played_L = out_spl0; last_spl_played_R = out_spl1;
       Write_Tail(out_spl0,out_spl1);
     ):(
       SL_fx_routing == 1 ? (
-        out_spl0 = in_spl0*track_X_vol; out_spl1 = in_spl1*track_X_vol; // fade muted track back in
+        out_spl0 = in_spl0*track_X_vol; out_spl1 = in_spl1*track_X_vol; // fade in previously muted input track
         last_spl_played_L = out_spl2; last_spl_played_R = out_spl3;
         Write_Tail(out_spl2,out_spl3);
       ):(
-        out_spl0 = in_spl0; out_spl1 = in_spl1; // passthrough
+        out_spl0 = in_spl0; out_spl1 = in_spl1; // passthrough input irrespective of Fx output settings
         last_spl_played_L = out_spl2; last_spl_played_R = out_spl3;
         Write_Tail(out_spl2,out_spl3);
       );
@@ -550,10 +721,6 @@ play_loop ? (
     );
     
   ):( // no loop fade out
-    loop_end != loop_end_freeze ? (
-      loop_end = loop_end_freeze;
-      
-    );
     out_spl0 = in_spl0; out_spl1 = in_spl1;
     out_spl2 = 0; out_spl3 = 0;
     last_spl_played_L = out_spl0; last_spl_played_R = out_spl1;
@@ -571,13 +738,15 @@ spl2 = out_spl2; spl3 = out_spl3;
 //------------------------------------------------------------------------------------------------
 
 buf_pos_WRITE += 1; buf_pos_WRITE >= buf_size ? buf_pos_WRITE = 0;
+
 Update_Pointers();
 
 //===========================================================================================================
 //===========================================================================================================
 @gfx 800 400
 
-function MinPeakSearch(search_pos,steps_backw) (
+function MinPeakSearch(search_pos,steps_backw)
+(
   min_spl = 0;
   while (steps_backw > 0) (
     buf0[search_pos] < min_spl ? min_spl = buf0[search_pos];
@@ -586,10 +755,11 @@ function MinPeakSearch(search_pos,steps_backw) (
     search_pos < 0 ? search_pos += buf_size;
     steps_backw -=1;
   );
-  min_spl;
+  min_spl < -clip ? -clip : min_spl;
 );
 
-function MaxPeakSearch(search_pos,steps_backw) (
+function MaxPeakSearch(search_pos,steps_backw)
+(
   max_spl = 0;
   while (steps_backw > 0) (
     buf0[search_pos] > max_spl ? max_spl = buf0[search_pos];
@@ -598,10 +768,11 @@ function MaxPeakSearch(search_pos,steps_backw) (
     search_pos < 0 ? search_pos += buf_size;
     steps_backw -=1;
   );
-  max_spl;
+  max_spl > clip ? clip : max_spl;
 );
 
-function CopyLoopImg(from,to) (
+function CopyLoopImg(from,to)
+(
   to != -1 ? (
     gfx_getimgdim(to,w,h);
     (w != gfx_w)||(h != gfx_h) ? (
@@ -610,14 +781,15 @@ function CopyLoopImg(from,to) (
     );
   );
   gfx_dest = to;
-  gfx_blit(from,1,0,  0,0,gfx_w,draw_loop_height,  0,0,gfx_w,draw_loop_height,  0,0);
+  gfx_blit(from,1,0,  0,draw_loop_pos,gfx_w,draw_loop_height,  0,draw_loop_pos,gfx_w,draw_loop_height,  0,0);
   gfx_dest = -1;
 );
 
-function UpdateLoopImg() (
+function UpdateLoopImg()
+(
   gfx_set(1,1,1,1);
   x = gfx_w;
-  searchpos_current = loop_copied*(loop_copy_offset) + loop_end_freeze;
+  searchpos_current = loop_copied*(loop_copy_offset) + loop_memory_end;
   while (x >= 0) (
     ymin = MinPeakSearch(searchpos_current,spls_p_pixel)*draw_loop_scale + draw_loop_offset;
     ymax = MaxPeakSearch(searchpos_current,spls_p_pixel)*draw_loop_scale + draw_loop_offset;
@@ -628,20 +800,113 @@ function UpdateLoopImg() (
   );
 );
 
+function DrawPatternGrid()
+(
+  pixels_p_cell = (gfx_w - 1) / pattern_size;
+  i = pattern_size - 1;
+  x = 0;
+  while (i >= 0) (
+    i == pattern_first ? (
+      gfx_set(0.8,0.2,0.6,1); // play first
+    ):(
+      pattern[i] == -1 ? (
+        gfx_set(0,0,0,1); // skip slice
+      ):(
+        pattern[i] == 0 ? (
+          gfx_set(0.6,0.6,0.8,1); // mute slice
+        ):(
+          gfx_set(1,0.2,0.3,1); // play
+        );
+      );
+    );
+    gfx_rect(x,draw_pattern_grid_pos,pixels_p_cell,draw_pattern_grid_height);
+    // grey out loop area for skipped slices
+    (play_loop || fade_vol > 0) && pattern[i] == -1 ? (
+      gfx_muladdrect(x,draw_loop_pos+1,pixels_p_cell + 1,draw_loop_height,
+                           0.3,0.3,0.3,
+                           0,0,0,0);
+    );
+    x += pixels_p_cell;
+    i -= 1;
+  );
+  gfx_set(1,1,1,1);
+  x = 0;
+  while (x <= gfx_w) (
+    gfx_line(x,draw_loop_pos-1,x,draw_pattern_grid_pos);
+    x += pixels_p_cell;
+  );
+  gfx_line(0,draw_loop_pos-1,gfx_w,draw_loop_pos-1);
+  gfx_line(0,draw_pattern_grid_pos,gfx_w,draw_pattern_grid_pos);
+);
+
+function MouseToPatternIndex()
+(
+  (mouse_y < draw_pattern_grid_pos) || (mouse_y >= draw_loop_pos) ? (
+    -1;
+  ):(
+    i = floor( (1 - mouse_x/gfx_w) * pattern_size );
+    (i < 0) || (i > pattern_size - 1) ? (
+      -1;
+    ):(
+      i;
+    );
+  );
+);
+
+function MouseToButtonID()
+(
+  (mouse_y < draw_menu_pos) || (mouse_y > draw_menu_pos + draw_menu_height) || (mouse_x < button0) ? -1
+    : mouse_x <= button1 - button0 ? 0
+      : mouse_x >= button1 && mouse_x <= button2 - button0 ? 1
+        : -1;
+);
+
+function DrawButton(x,w,name,fill,r,b,g,a)
+(
+  gfx_x = x; gfx_y = draw_menu_pos;
+  fill ? (
+    r0 = gfx_r; g0 = gfx_g; b0 = gfx_b; a0 = gfx_a;
+    gfx_set(r,b,g,a);
+    gfx_rect(x+1,draw_menu_pos+1,w-1,draw_menu_height-1);
+    gfx_set(r0,b0,g0,a0);
+  );
+  gfx_roundrect(x,draw_menu_pos,w,draw_menu_height,2);
+  gfx_drawstr(name,5,x+w,draw_menu_pos + draw_menu_height);
+);
+
 //------------------------------------------------------------------------------------------------
 // initialize drawing parameters depending on window size
-(gfx_w != old_w)||(gfx_h != old_h) ? (
+(gfx_w != old_w)||(gfx_h != old_h)||(SL_draw_zoom!=last_SL_draw_zoom) ? (
   old_w = gfx_w; old_h = gfx_h;
+  last_SL_draw_zoom = SL_draw_zoom;
   loop_img_upd = 1;
-
-  draw_peak_scaling = 0.9;
   
-  draw_loop_height = floor(gfx_h * 0.8 + 0.5);
-  draw_loop_offset = floor(draw_loop_height/2 + 0.5);
+  draw_peak_scaling = SL_draw_zoom/100;
+  clip = 1/draw_peak_scaling;
+  
+  button_width = 100;
+  button0 = 5;
+  button1 = 2*button0 + button_width;
+  button2 = button1 + button0 + 2*button_width;
+  
+  draw_spacer1 = 5;
+  
+  draw_menu_pos = draw_spacer1;
+  draw_menu_height = 20;
+  
+  draw_spacer2 = 15;
+  
+  draw_pattern_grid_pos = draw_menu_pos + draw_menu_height + draw_spacer2;
+  draw_pattern_grid_height = 20;
+  
+  draw_loop_pos = draw_pattern_grid_pos + draw_pattern_grid_height;
+  draw_loop_height = floor((gfx_h - draw_pattern_grid_pos - draw_pattern_grid_height) * 0.8 + 0.5);
+  draw_loop_offset = floor(draw_loop_height/2 + 0.5) + draw_loop_pos;
   draw_loop_scale = draw_peak_scaling * draw_loop_height / 2;
 
-  draw_input_height = floor(gfx_h * 0.2 + 0.5);
-  draw_input_offset = floor(draw_loop_height + draw_input_height/2 + 0.5);
+  draw_input_pos = draw_loop_pos + draw_loop_height;
+  draw_input_height = floor((gfx_h - draw_pattern_grid_pos - draw_pattern_grid_height) * 0.2 + 0.5);
+  draw_input_offset = floor(draw_input_height/2 + 0.5) + draw_input_pos;
   draw_input_scale = draw_peak_scaling * draw_input_height / 2;
 
   spls_p_pixel = 2 * samples_per_bar / gfx_w; // show 2 bars over the graphs width
@@ -649,6 +914,111 @@ function UpdateLoopImg() (
   gfx_setimgdim(0 , -1 , -1);
   gfx_setimgdim(0 , gfx_w , gfx_h); // always keep a fitting space in img buffer 0
 );
+
+//------------------------------------------------------------------------------------------------
+// Instant Loop Freeze Trickery
+// Since GFX is run in a separate thread from audio thread we can afford to sometimes copy large
+// amounts of loop memory rather than just sample by sample as per loop copy mechanism @sample
+play_loop && SL_freeze && !loop_copied ? (
+  memcpy(buf0+loop_copy_offset,buf0,buf_size);
+  memcpy(buf1+loop_copy_offset,buf1,buf_size);
+  loop_copied = 1;
+  loop_spls_copied = 2*samples_per_bar;
+);
+
+//------------------------------------------------------------------------------------------------
+// Input General
+mouse_cap & 3 == 0 ? (
+  input_ready = 1;
+);
+
+//------------------------------------------------------------------------------------------------
+// Input for Menu Area
+input_ready ? (
+  mouse_cap & 1 ? ( // left button clicked?
+    button_ID = MouseToButtonID();
+    button_ID == 0 ? (
+      SL_sequencer = abs(SL_sequencer - 1);
+      input_ready = 0;
+    ):(
+      button_ID == 1 ? (
+        SL_freeze = abs(SL_freeze - 1);
+        input_ready = 0;
+      );
+    );
+  );
+);
+
+//------------------------------------------------------------------------------------------------
+// Input for Pattern Sequencer Grid
+SL_sequencer ? (
+  mouse_cap & 9 == 1 ? ( // left button clicked without Shift?
+    input_ready ? (
+      click_index = MouseToPatternIndex();
+      (click_index != -1) && (click_index != pattern_first) ? (
+        input_ready = 0;
+        pattern[click_index] -= 1;
+        pattern[click_index] < -1 ? pattern[click_index] = 1;
+      );
+    );
+  ):(
+    mouse_cap & 9 == 9 ? ( // right button clicked?
+      input_ready ? (
+        click_index = MouseToPatternIndex();
+        click_index != -1 ? (
+          input_ready = 0;
+          pattern[click_index] = 1;
+          pattern_first = click_index;
+        );
+      );
+    );
+  );
+  mouse_cap & 2 == 2 ? ( // left button + SHIFT held?
+    click_index = MouseToPatternIndex();
+    (click_index != -1) && (click_index != pattern_first) ? (
+      input_ready ? (
+        input_ready = 0;
+        last_clicked_slice_type = pattern[click_index];
+      ):(
+        pattern[click_index] = last_clicked_slice_type;
+      );
+    );
+  );
+);  
+  
+//------------------------------------------------------------------------------------------------
+// update input drawing area
+// use scrolling rather than recalculation (EFFICIENT, but may show graphics jitter and artefacts due to rounding)
+searchpos_current = buf_pos_WRITE; // buf_pos_WRITE may proceed in parallel audio thread while we process graphics
+spls_p_gfx_period = searchpos_current - last_searchpos;
+spls_p_gfx_period < 0 ? spls_p_gfx_period += buf_size;
+spls_p_gfx_period > 2 * samples_per_bar ? spls_p_gfx_period = 2 * samples_per_bar;
+last_searchpos = searchpos_current;
+pixels_p_gfx_period = floor(spls_p_gfx_period/spls_p_pixel + 0.5);
+
+// scrolling
+gfx_blit(0,1,0,   
+         pixels_p_gfx_period,draw_input_pos,gfx_w-pixels_p_gfx_period,draw_input_height,
+         0,draw_input_pos,gfx_w - pixels_p_gfx_period,draw_input_height,
+         0,0);
+// only redraw rightmost samples
+x = gfx_w;
+while (x >= (gfx_w - pixels_p_gfx_period)) (
+  ymin = MinPeakSearch(searchpos_current,spls_p_pixel)*draw_input_scale + draw_input_offset;
+  ymax = MaxPeakSearch(searchpos_current,spls_p_pixel)*draw_input_scale + draw_input_offset;
+  gfx_set(0.6,0.6,0.8,1);
+  gfx_line(x,ymin,x,ymax);
+  searchpos_current -= spls_p_pixel;
+  searchpos_current < 0 ? searchpos_current += buf_size;
+  x -= 1;
+);
+// store copy for later scrolling
+gfx_dest = 0;
+gfx_blit(-1,1,0,   
+         0,draw_input_pos,gfx_w,draw_input_height,
+         0,draw_input_pos,gfx_w,draw_input_height,
+         0,0);
+gfx_dest = -1;
 
 //------------------------------------------------------------------------------------------------
 // update loop drawing area
@@ -662,71 +1032,69 @@ play_loop || fade_vol > 0 ? (
   );
   // bring a clean copy to the screen
   CopyLoopImg(1,-1);
-  // tint looped area
+  // tint slice area
   fade_vol > 0 ? (
-    gfx_muladdrect(gfx_w * ( 1 + SL_pointer_start / 2 ),0,gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2,draw_loop_height,
-                     1-0.9*(1-fade_vol),0.1,0.1+0.9*(1-fade_vol),
-                     0.1,0.1,0.2,0.3);
+    gfx_muladdrect(gfx_w * ( 1 + SL_pointer_start / 2 ),draw_loop_pos+1,gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2,draw_loop_height,
+                         1,(1-fade_vol),(1-fade_vol),
+                         0.1,0.1,0.2,0.3);
   ):(
-    gfx_muladdrect(gfx_w * ( 1 + SL_pointer_start / 2 ),0,gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2,draw_loop_height,
-                   1,0.1,0.1,
-                   0.1,0.1,0.2,0.3);
+    play_slice == 0 ? (
+      gfx_muladdrect(gfx_w * ( 1 + SL_pointer_start / 2 ),draw_loop_pos+1,gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2,draw_loop_height,
+                   0,0,0,
+                   0,0,0,0);
+      gfx_muladdrect(gfx_w * ( 1 + SL_pointer_start / 2 ),draw_input_pos,gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2,draw_input_height,
+                         1,1,1,
+                         0.1,0.1,0.2,0.3);             
+    ):(
+      gfx_muladdrect(gfx_w * ( 1 + SL_pointer_start / 2 ),draw_loop_pos+1,gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2,draw_loop_height,
+                     1,0,0,
+                     0.1,0.1,0.2,0.3);
+    );
   );
   // show playhead
-  x = gfx_w * ( 1 + SL_pointer_read / 2);
-  gfx_set(1,1,1,1);
-  gfx_line(x,draw_loop_height-1,x,0);
+  play_slice ? (
+    x = gfx_w * ( 1 + SL_pointer_read / 2);
+    gfx_set(1,1,1,1);
+    gfx_line(x,draw_input_pos-1,x,draw_loop_pos+1);
+  );
 );
-
 last_play_loop = play_loop;
 
 //------------------------------------------------------------------------------------------------
-// update input drawing area
-// use scrolling rather than recalculation (EFFICIENT, but may show graphics jitter and artefacts due to rounding)
-searchpos_current = buf_pos_WRITE; // buf_pos_WRITE may proceed in parallel audio thread while we process graphics
-spls_p_gfx_period = searchpos_current - last_searchpos;
-spls_p_gfx_period < 0 ? spls_p_gfx_period += buf_size;
-spls_p_gfx_period > 2 * samples_per_bar ? spls_p_gfx_period = 2 * samples_per_bar;
-last_searchpos = searchpos_current;
-pixels_p_gfx_period = floor(spls_p_gfx_period/spls_p_pixel + 0.5);
-
-// scrolling
-gfx_blit(0,1,0,   
-         pixels_p_gfx_period,draw_loop_height,gfx_w-pixels_p_gfx_period,gfx_h-draw_loop_height,
-         0,draw_loop_height,gfx_w - pixels_p_gfx_period,gfx_h-draw_loop_height,
-         0,0);
-// only redraw rightmost samples
-x = gfx_w;
-while (x >= (gfx_w - pixels_p_gfx_period)) (
-  ymin = MinPeakSearch(searchpos_current,spls_p_pixel)*draw_input_scale + draw_input_offset;
-  ymax = MaxPeakSearch(searchpos_current,spls_p_pixel)*draw_input_scale + draw_input_offset;
-  gfx_set(0.5,0.5,0.5,1);
-  gfx_line(x,ymin,x,ymax);
-  searchpos_current -= spls_p_pixel;
-  searchpos_current < 0 ? searchpos_current += buf_size;
-  x -= 1;
+// update pattern grid
+SL_sequencer ? (
+  DrawPatternGrid();
 );
-// store copy for later scrolling
-gfx_dest = 0;
-gfx_blit(-1,1,0,   
-         0,draw_loop_height,gfx_w,gfx_h-draw_loop_height,
-         0,draw_loop_height,gfx_w,gfx_h-draw_loop_height,
-         0,0);
-gfx_dest = -1;
 
-/*
-// update input drawing area - redraw everything (WASTEFUL!)
-gfx_set(0,0,0,1);
-gfx_rect(0,draw_loop_height,gfx_w,gfx_h);
-gfx_set(1,1,1,1);
-x = gfx_w;
-searchpos_current = buf_pos_WRITE;
-while (x >= 0) (
-  ymin = MinPeakSearch(searchpos_current,spls_p_pixel)*draw_input_scale + draw_input_offset;
-  ymax = MaxPeakSearch(searchpos_current,spls_p_pixel)*draw_input_scale + draw_input_offset;
-  gfx_line(x,ymin,x,ymax);
-  searchpos_current -= spls_p_pixel;
-  searchpos_current < 0 ? searchpos_current += buf_size;
-  x -= 1;
+//------------------------------------------------------------------------------------------------
+// Draw Menu
+gfx_set(0.15,0.15,0.1,1);
+gfx_rect(0,0,gfx_w,draw_pattern_grid_pos,1);
+
+SL_sequencer ? (
+  gfx_set(1,1,1,1);
+  DrawButton(button0,button_width,"PATTERN",1,0.8,0.2,0.6,1);
+):(
+  gfx_set(0.4,0.4,0.45,1);
+  DrawButton(button0,button_width,"PATTERN",0,0,0,0,0);
 );
-*/
+
+play_loop || loop_copied ? (
+  gfx_set(0.6,0.6,0.6,1);
+  gfx_rect(button1+1,draw_menu_pos+1,loop_spls_copied/samples_per_bar*button_width,draw_menu_height-1);
+);
+
+SL_freeze ? (
+  loop_copied ? (
+    gfx_set(1,1,1,1);
+    DrawButton(button1,button_width*2,"FREEZE / RECALL",1,0.2,0.2,1,1);
+  ):(
+    gfx_set(1,1,1,1);
+    DrawButton(button1,button_width*2,"FREEZE / RECALL",0,0,0,0,0);
+  );
+):(
+  gfx_set(0.4,0.4,0.45,1);
+  DrawButton(button1,button_width*2,"FREEZE / RECALL",0,0,0,0,0);
+);
+
+//------------------------------------------------------------------------------------------------
