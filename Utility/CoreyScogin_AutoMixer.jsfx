@@ -79,7 +79,7 @@ slider3:WindowType=0<0,1,1{Rectangular,Efficient}>RMS Window Type
   i=0;
   trkSum=0;
   loop(num_ch,              // For each channel
-        trkSum += spl(i);   // Add the sample values
+        trkSum += sqr(spl(i));   // Add the sample values
         i += 1;
        ); 
   trkAvg = trkSum / num_ch; // Calculate the average
@@ -88,10 +88,9 @@ slider3:WindowType=0<0,1,1{Rectangular,Efficient}>RMS Window Type
   // Calculate the new rms value
   WindowType == 0 ? (          // Window Type == Rectangular
                             // Less efficient true rectangular window moving average 
-    splSq = trkAvg ^ 2;     // Sample (or average of channel samples) squared for moving average sum.
     rmsSum -= buf[0];       // Subtract the oldest value square from the sum
-    rmsSum += splSq;        // add the newest value square to the sum
-    buf[0] = splSq;         // add the newest value square to the buffer
+    rmsSum += trkAvg;        // add the newest value square to the sum
+    buf[0] = trkAvg;         // add the newest value square to the buffer
   
     (buf+=1) >= window ? buf=0;   // increment buffer position
   
@@ -99,7 +98,7 @@ slider3:WindowType=0<0,1,1{Rectangular,Efficient}>RMS Window Type
     
   ):( // Window Type == efficient approximation 
     // Efficient moving average approximation
-    fout = a0 * (trkAvg ^ 2) + b1 * fout;
+    fout = a0 * trkAvg + b1 * fout;
     rms = sqrt(fout);
   );
   
