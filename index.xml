@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="ffd7a9043881fe57ce5b97dcfe88ada9cbd06d9b">
+<index version="1" name="ReaTeam JSFX" commit="c5e42e72f9d80a9f29077d1c68eb980109f282cc">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1305,10 +1305,10 @@ And a bit of source code cleaning.]]></changelog>
 \widowctrl\hyphauto
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 LiveBeatRepeater\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 JSFX for live performance stutter effects. Zero latency. Synchronized (sample accurate!) to project tempo and time signature. Works well with linear songs as well as loop based material. Mashes up nicely your rhythms on drum tracks/percussion. Great toy on voices.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 What makes this fx different from the classical looper or "instant" samplers is the fact that it constantly samples the input and repeats what you just heard when you trigger the repeat mode. I.e. you do not have to trigger recording a loop blindly hoping it will be what you want, but you repeat what was just played.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 JSFX for live performance stutter effects. Zero latency. Synchronized to project tempo and time signature - sample accurate. Built-in slicer & pattern sequencer. Works well with linear songs as well as loop based material. Mashes up nicely your rhythms on drum tracks/percussion. Great toy on voices.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Constantly samples the input and repeats what you just heard when you trigger the repeat mode. I.e. you do not have to trigger recording a loop blindly hoping it will be what you want, but you repeat what was just played.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Most fun if controlled via a MIDI/OSC hardware device (pad controller, touch screen device). E.g. Repeat On-Off to a pad, continuous Loop Length to a rotary encoder (relative mode) and stepped Loop Length to dedicated pads (one for each loop length).\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Separate loop audio routing allows to feed the repeating loop into any custom fx chain. Resonant HP/LP filters with variable cut off frequency, ping pong delays, distortion etc work particularly well with the stutter and allow spontaneous live (or automated) build ups.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Separate loop audio routing allows to conveniently feed the repeating loop into any custom fx chain. Phaser, resonant HP/LP filters with variable cut off frequency, ping pong delays etc work particularly well with the stutter and allow spontaneous live (or automated) build ups.\par}
 }
 ]]></description>
         <link rel="website" href="https://forum.cockos.com/showthread.php?t=211834">Forum thread</link>
@@ -1348,6 +1348,17 @@ And a bit of source code cleaning.]]></changelog>
         <changelog><![CDATA[- Visualize sampled waveform, playhead and loop area
 - Allow manipulation of loop start and loop end position during loop repeat]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/ffd7a9043881fe57ce5b97dcfe88ada9cbd06d9b/Misc/brumbear_LiveBeatRepeater.jsfx</source>
+      </version>
+      <version name="1.30" author="brumbear" time="2020-10-19T02:29:36Z">
+        <changelog><![CDATA[- Added Slice Pattern Sequencer*
+- Added Loop Freeze/Recall feature*
+- Added new routing option
+- Added vertical zoom slider for waveform
+- Fixed wrong beat/bar length calculations for certain time signatures (Reaper's tempo is actually QPM, not BPM)
+- Fixed slice start calculation when changing Slice Start Pos slider (was off by 1 sample)
+
+*Note: Switching Pattern Sequencer on/off and Freeze/Recall can be automated just like other non hidden sliders]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/c5e42e72f9d80a9f29077d1c68eb980109f282cc/Misc/brumbear_LiveBeatRepeater.jsfx</source>
       </version>
     </reapack>
     <reapack name="brumbear_LiveScrubberDucky.jsfx" type="effect" desc="LiveScrubberDucky">
