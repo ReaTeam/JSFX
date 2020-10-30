@@ -1,20 +1,17 @@
 desc: LiveBeatRepeater
 author: brumbear
-version: 1.30
+version: 1.50
 changelog:
-  - Added Slice Pattern Sequencer*
-  - Added Loop Freeze/Recall feature*
-  - Added new routing option
-  - Added vertical zoom slider for waveform
-  - Fixed wrong beat/bar length calculations for certain time signatures (Reaper's tempo is actually QPM, not BPM)
-  - Fixed slice start calculation when changing Slice Start Pos slider (was off by 1 sample)
-
-  *Note: Switching Pattern Sequencer on/off and Freeze/Recall can be automated just like other non hidden sliders
+  - Added multiple MIDI control options for grid based slicer
+  - Added GUI mouse controls for manipulation of Slice Start/End and Slice Move (new).
+  - Allow manipulation of Slice Start/End while pattern is playing and terminate pattern mode immediately
+  - Added GUI indicator to show if plugin is in QUANTIZE mode
+  - Improved behavior when length transitions are set to "At Next Beat"
 link: Forum thread https://forum.cockos.com/showthread.php?t=211834
 about:
   # LiveBeatRepeater
 
-  JSFX for live performance stutter effects. Zero latency. Synchronized to project tempo and time signature - sample accurate. Built-in slicer & pattern sequencer. Works well with linear songs as well as loop based material. Mashes up nicely your rhythms on drum tracks/percussion. Great toy on voices.
+  JSFX for live performance stutter effects, instant "on the go" sampling/looping and more. Zero latency. Synchronized to project tempo and time signature - sample accurate. Slicer can be controlled by built-in pattern sequencer or external MIDI. Works well with linear songs as well as loop based material. Mashes up nicely your rhythms on drum tracks/percussion (slice pattern sequencing allows to completely change the groove of drum loops). Great toy on voices.
 
   Constantly samples the input and repeats what you just heard when you trigger the repeat mode. I.e. you do not have to trigger recording a loop blindly hoping it will be what you want, but you repeat what was just played.
 
@@ -22,14 +19,15 @@ about:
 
   Separate loop audio routing allows to conveniently feed the repeating loop into any custom fx chain. Phaser, resonant HP/LP filters with variable cut off frequency, ping pong delays etc work particularly well with the stutter and allow spontaneous live (or automated) build ups.
 
+
 // This effect Copyright (C) 2018 and later Pacific Peaks Studio
 // License: GPLv3 - http://www.gnu.org/licenses/gpl
 // desc: LiveBeatRepeater (brumbear@pacific_peaks)
 // author: brumbear @ pacific peaks
-// 2020-10-18: Release V1.30
-
+// 2020-10-30: Release V1.50
+//
 // ***********************************************************************************************
-// SLICE PATTERN SEQUENCER - INSTRUCTIONS
+// GRID-SEQ: SLICE PATTERN SEQUENCER - INSTRUCTIONS
 // 
 // Pattern Slice types:
 //
@@ -44,32 +42,64 @@ about:
 // SHIFT + Left mouse click: Make current cell Play First
 // Right mouse click DRAG: Copy slice type to neighbouring pattern cells
 //
-// Usage hint: Patterns work well with start trigger set to "At Next Bar"
+// Usage hint: Patterns work well with loop start trigger set to "At Next Bar"
+//
+// ***********************************************************************************************
+// GRID-MIDI: SLICE MIDI CONTROL - INSTRUCTIONS
+// 
+// Slice types:
+//
+//  Red:   Play (triggered by MIDI note on)
+//  Grey:  Replace/Mute. Input will be played during slice period and also put onto Fx output for further processing.
+//                       Fx routing "Active Slice only" will mute slice entirely.
+//  
+// While Loop-Repeat is on MIDI note on/off events are immediately effective, i.e. it is possible
+// to trigger a slice in very short order even if slice length is long. MIDI sequencing precisely 
+// follows sequencer input with sample accurate audio-to-MIDI sync.
+//
+// MIDI Loop-Repeat:
+//  Manual:       Loop must be triggered via Loop-Repeat.
+//  Auto-On:      First valid MIDI note on event triggers loop automatically.
+//  Auto-On/Off:  Use this to play individual slices "on the go" for "stream sampling".
+//                Slice starts at chosen Loop Start setting, slice fade out according to Loop Fade Out setting.
+//                
+//
+// MIDI 1st slice Trigger: MIDI note which triggers the righmost slice;
+//                         slices to the left are triggered with decreasing notes  
+//
+// Usage hint: Slices can be played like an instrument or sequenced via MIDI. MIDI sequencing allows
+// unlimited rhythmic variations irrespective of slice length (try staccatos, breakbeats etc).
 //
 // ***********************************************************************************************
 
 //------------------------------------------------------------------------------------------------
 slider1:SL_repeat=0<0,1,1{Off,On}>Loop-Repeat
-slider2:SL_direction=0<0,1,1{Forward,Reverse}>Direction
-slider3:SL_sequencer=1<0,1,1{Off,On}>-Slice Pattern Sequenzer
-slider4:SL_clear_pattern=<0,1,1{-,Clear}>-Clear Pattern
-slider5:SL_freeze==0<0,1,1{Off,On}>-Freeze Loop
+slider2:SL_direction=0<0,1,1{Forward,Reverse}>Loop Direction
+slider3:SL_loop_start_trigger=1<0,2,1{Immediately,At Next Beat,At Next Bar}>Loop Start
+slider4:SL_repeat_fade_out=1<0,1,1{None,Last Slice Soft Fade Out}>Loop Fade Out
+slider5:SL_grid=0<0,1,1{Off,On}>-Grid
+slider6:SL_grid_trigger=1<0,1,1{External Midi (MIDI),Internal Pattern Sequencer (SEQ)}>-Grid Trigger Mode
+slider7:SL_freeze==0<0,1,1{Off,On}>-Freeze/Recall Loop
+
 
 slider10:SL_slice_length_STP=5<0,13,1{2,1,1T(=2/3),1/2,1/2T(=1/3),1/4,1/4T(=1/6),1/8,1/8T(=1/12),1/16,1/16T(=1/24),1/32, 1/64, 1/128}>Slice Length [bars] (QUANT)
 // Continuous Slice Length will be reset to closest quantized Slice Length when Repeat is switched from ON to OFF unless Transition is set to "Immediately"
 slider11:SL_slice_length_CTN=48<0,128,0.01>Slice Length (CONT)
-slider12:SL_pointer_start=0<-2,0,0.001>Slice Start Pos [bar] (CONT)
-slider13:SL_pointer_end=0<-2,0,0.001>Slice End Pos [bar] (CONT)
+slider12:SL_pointer_start=0<-2,0,0.001>-Slice Start Pos [bar]
+slider13:SL_pointer_end=0<-2,0,0.001>-Slice End Pos [bar]
 slider14:SL_pointer_read=0<-2,0,0.001>-Loop Playhead
+slider15:SL_slice_move=0<-2,0,0.001>-Slice Move [End Pos]
 
-slider20:SL_loop_start_trigger=1<0,3,1{Immediately,At Next Beat,At Next Bar}>Start Slice/Pattern
-slider21:SL_length_transitions=2<0,2,1{Immediately/Continuous (CONT),At Next Beat (QUANT),At Slice End (QUANT)}>Slice Length Transitions (Mode)
-slider22:SL_infade_algo=2<0,2,1{Extrapolated Slope,Reverse Crossfade,Padded Reverse Crossfade}>Slice Fade-In Algorithm
-slider23:SL_infade_time=20<10,100,1>Slice Fade-In Time [ms]
-slider24:SL_repeat_ending=1<0,1,1{Immediately,Soft Fade Out}>Fade Out
+slider20:SL_length_transitions=2<0,2,1{Immediately/Continuous (CONT),At Next Beat (QUANT),At Slice End (QUANT)}>Slice Length Transitions (Mode)
+slider21:SL_infade_algo=2<0,2,1{Extrapolated Slope,Reverse Crossfade,Padded Reverse Crossfade}>Slice Fade-In Algorithm
+slider22:SL_infade_time=20<10,100,1>Slice Fade-In Time [ms]
 
-slider30:SL_fx_routing=0<0,3,1{Main=Combined / Fx=Loop only,Main=Muted when looping / Fx=Loop only,Main=Input passthrough / Fx=Loop only,Main=Input passthrough / Fx =Active Slices only}>Fx Channel Routing
-slider31:SL_draw_zoom=90<0,200,1>Waveform Vertical Zoom [%]
+slider30:SL_midi_auto_mode=2<0,2,1{Manual,Auto-On,Auto-On/Off}>MIDI Loop-Repeat
+// MIDI note corresponding to the righmost cell in grid
+slider31:SL_midi_note_start=48<1,127,1>MIDI 1st Slice Trigger [note value]
+
+slider40:SL_fx_routing=0<0,3,1{Main=Combined / Fx=Loop only,Main=Muted when looping / Fx=Loop only,Main=Input passthrough / Fx=Loop only,Main=Input passthrough / Fx =Active Slices only}>Fx Channel Routing
+slider41:SL_draw_zoom=90<0,200,1>Waveform Vertical Zoom [%]
 
 in_pin:Input left
 in_pin:Input right
@@ -112,7 +142,6 @@ function SL_slice_length_CTN_from_SL_slice_length_STP(x)
  (log(slice_length_SL_slice_length_STP(x))/log2 + 1) * 16;
 );
 
-
 function Nearest_slice_Length(i) // aka "SL_slice_length_STP_from_SL_slice_length_CTN", returns SL_slice_length_STP index from SL_slice_length_CTN value
 (
  i <= 8 ? 0 // midpoint between SL_slice_length_CTN = 0 and SL_slice_length_CTN = 16
@@ -129,6 +158,25 @@ function Nearest_slice_Length(i) // aka "SL_slice_length_STP_from_SL_slice_lengt
            : i <= 104 ? 11
             : i <= 120 ? 12
            : 13;
+);
+
+function Update_Pointers()
+local(offset)
+(
+  offset = loop_memory_end - loop_pos_READ; offset < 0 ? offset += buf_size;
+  SL_pointer_read = -offset/samples_per_bar;
+  
+  offset = loop_memory_end - slice_start + 1; offset < 0 ? offset += buf_size; 
+  SL_pointer_start =  -offset/samples_per_bar;
+  
+  offset = loop_memory_end - slice_end; offset < 0 ? offset += buf_size;
+  SL_pointer_end =  -offset/samples_per_bar;
+ 
+  SL_slice_move = SL_pointer_end;
+  
+  last_SL_pointer_start = SL_pointer_start;
+  last_SL_pointer_end = SL_pointer_end;
+  last_SL_slice_move = SL_slice_move;
 );
 
 function Write_Tail(left,right)
@@ -156,21 +204,6 @@ function Update_Tail()
   tail_pos_READ = tail_pos_WRITE;
 );
 
-function Update_Pointers()
-local(offset)
-(
-  offset = loop_memory_end - slice_start + 1; offset < 0 ? offset += buf_size; 
-  SL_pointer_start =  -offset/samples_per_bar;
-  slider_automate(slider5);
-  
-  offset = loop_memory_end - slice_end; offset < 0 ? offset += buf_size;
-  SL_pointer_end =  -offset/samples_per_bar;
-  slider_automate(slider6);
-  
-  offset = loop_memory_end - loop_pos_READ; offset < 0 ? offset += buf_size;
-  SL_pointer_read = -offset/samples_per_bar;
-);
-
 function Advance_Pattern_Index()
 (
   SL_direction == 0 ? (pindex -= 1; ):( pindex += 1; );
@@ -188,7 +221,7 @@ function Calc_Slice_StartEnd(i)
 
 function NextActiveSlice()
 (
-  (pattern_size > 1) && SL_sequencer ? (
+  (pattern_size > 1) && SL_grid && SL_grid_trigger ? (
     Advance_Pattern_Index();
     count = pattern_size;
     while (pattern[pindex] == -1 &&  count >= 0) (
@@ -199,9 +232,186 @@ function NextActiveSlice()
     next_slice_start = slice_start; next_slice_overflow = slice_overflow;
     play_slice = pattern[pindex];
     Update_Pointers();
-    // changes to pointers during and when ending pattern sequencing shall not trigger a manual change request by user
-    last_SL_pointer_start = SL_pointer_start;
-    last_SL_pointer_end = SL_pointer_end;
+  );
+);
+
+function UpdatePatternSize()
+(
+  pattern_size = 2 * slice_length_SL_slice_length_STP(SL_slice_length_STP);
+  pattern_first >= pattern_size ? (
+    // Find leftmost slice that can be played first
+    i = pattern_size - 1;
+    while (i > 0) (
+      pattern[i] == 1 ? (
+        pattern_first = i;
+        i = -1;
+      ):(
+        i -= 1;
+      );
+    );
+    i == 0 ? (
+      pattern_first = 0;
+      pattern[0] = 1;
+    );
+  );
+);
+
+function SetCurrentMidiSlice()
+(
+  i = SL_midi_note_start - midi_note_current;
+  i >= 0 && i < pattern_size ? (
+    Calc_Slice_StartEnd(i);
+    i;
+  ):(
+    -1;
+  );
+);
+
+function SetSlider_SliceStartPos()
+(
+  // boundary check
+  SL_pointer_start > (SL_pointer_end - 1/128) ? (
+    SL_pointer_start = SL_pointer_end - 1/128;
+  );
+  immediate_transition_override = 1;
+  SL_grid = 0;
+  play_slice = 1;
+  // update slice start
+  slice_start = loop_memory_end + SL_pointer_start * samples_per_bar + 1;
+  slice_start < 0 ? slice_start += buf_size;
+  slice_size = slice_end - slice_start + 1;
+  slice_size < 0 ? ( slice_size += buf_size; slice_overflow = 1; ):( slice_overflow = 0; );
+  SL_slice_length_CTN = 16 * ( log( samples_per_bar/slice_size )/log2 + 1 );
+  Update_Pointers();
+);
+
+function SetSlider_SliceEndPos()
+(
+  // boundary check
+  SL_pointer_end < (SL_pointer_start + 1/128) ? (
+    SL_pointer_end = SL_pointer_start + 1/128;
+  );
+  SL_slice_move = SL_pointer_end;
+  immediate_transition_override = 1;
+  SL_grid = 0;
+  play_slice = 1;
+  // update slice end and slice size/length
+  slice_end = loop_memory_end + SL_pointer_end * samples_per_bar;
+  slice_end < 0 ? slice_end += buf_size;
+  slice_size = slice_end - slice_start + 1;
+  slice_size < 0 ? ( slice_size += buf_size; slice_overflow = 1; ):( slice_overflow = 0; );
+  SL_slice_length_CTN = 16 * ( log( samples_per_bar/slice_size )/log2 + 1 );
+  Update_Pointers();
+);
+
+function SetSlider_SliceMove()
+(
+  // boundary check
+  (SL_pointer_start - SL_pointer_end) + SL_slice_move < -2 ? (
+    SL_slice_move = -2 - (SL_pointer_start - SL_pointer_end);
+  );
+  SL_pointer_end = SL_slice_move;
+  SL_pointer_start = SL_pointer_end - slice_size/samples_per_bar;
+  immediate_transition_override = 1;
+  SL_grid = 0;
+  play_slice = 1;
+  // update slice end and slice start
+  slice_end = loop_memory_end +  SL_pointer_end * samples_per_bar;
+  slice_end < 0 ? slice_end += buf_size;
+  slice_start = slice_end - (slice_size - 1);
+  slice_start < 0 ? ( slice_start += buf_size; slice_overflow = 1; ):( slice_overflow = 0; );
+  Update_Pointers();
+);
+
+function SetSlider_SyncSliceLengthSize()
+(
+  // synchronize slice length sliders
+  (last_SL_slice_length_CTN != SL_slice_length_CTN) && (last_SL_slice_length_STP == SL_slice_length_STP) ? (
+    SL_slice_length_STP = Nearest_slice_Length(SL_slice_length_CTN);
+    last_SL_slice_length_STP = SL_slice_length_STP;
+    last_SL_slice_length_CTN = SL_slice_length_CTN;
+    immediate_transition_override = 1;
+    SL_grid = 0;
+    play_slice = 1;
+  ):(
+    last_SL_slice_length_STP != SL_slice_length_STP ? (
+      SL_slice_length_CTN = SL_slice_length_CTN_from_SL_slice_length_STP(SL_slice_length_STP);
+      last_SL_slice_length_STP = SL_slice_length_STP;
+      last_SL_slice_length_CTN = SL_slice_length_CTN;
+      play_loop == 0 ? (
+        immediate_transition_override = 0;
+      );  
+    );  
+  );
+  // update the slice size
+  slice_size = floor(samples_per_bar /(2^(SL_slice_length_CTN/16 - 1)) + 0.5);
+  SL_grid ? UpdatePatternSize();
+);
+
+function SetSlider_Repeat_On()
+(
+  SL_loop_start_trigger == 0 ? loop_trigger_beat_pos = beat_position 
+    : SL_loop_start_trigger == 1 ? loop_trigger_beat_pos = floor(beat_position + 1)
+      : loop_trigger_beat_pos = (floor(beat_position/ts_num) + 1) * ts_num 
+);
+
+function SetSlider_Repeat_Off()
+(
+  play_loop = 0; 
+  immediate_transition_override = 0;
+  last_midi_note_current = 0;
+  SL_length_transitions != 0 ? (
+    // revert back to quantized Mode and set slider 3 to closest quantized length unless transition was set to "Immediately"
+    SL_slice_length_CTN = SL_slice_length_CTN_from_SL_slice_length_STP(SL_slice_length_STP);
+    last_SL_slice_length_STP = SL_slice_length_STP;
+    last_SL_slice_length_CTN = SL_slice_length_CTN;
+    slice_size = floor(samples_per_bar /(2^(SL_slice_length_CTN/16 - 1)) + 0.5);
+    slice_start = slice_end - (slice_size - 1);
+    slice_start < 0 ? ( slice_start += buf_size; slice_overflow = 1; ):( slice_overflow = 0; );
+    next_slice_start = slice_start; next_slice_overflow = slice_overflow;
+    Update_Pointers();
+  );
+  SL_repeat_fade_out && play_slice ? ( // fade out requested?
+    SL_direction == 0 ? (
+      loop_pos_READ <= slice_end ? (
+        remaining_slice_length = slice_end - loop_pos_READ;
+      ):(
+        remaining_slice_length = buf_size - loop_pos_READ + slice_end;
+      );
+      remaining_slice_length == 0 ? ( // no need for fade out as we are exactly at the slice end
+        fade_vol = 0;
+      ):(
+        fade_step = 1/remaining_slice_length;
+        fade_vol =1;
+      );
+    ):(
+      loop_pos_READ >= slice_start ? (
+        remaining_slice_length = loop_pos_READ - slice_start;
+      ):(
+        remaining_slice_length = loop_pos_READ + buf_size - slice_start;
+      );
+      remaining_slice_length == 0 ? ( // no need for fade out as we have fully reversed to the slice start
+        fade_vol = 0;
+      ):(
+        fade_step = 1/remaining_slice_length;
+        fade_vol =1;
+      );
+    );
+  );        
+);
+
+function SetSlider_Grid_On()
+(
+  // sequencer may only be swithed on when not looping or if no continuous changes have been applied
+  !immediate_transition_override || !play_loop ? (
+    SL_slice_length_CTN = SL_slice_length_CTN_from_SL_slice_length_STP(SL_slice_length_STP);
+    last_SL_slice_length_STP = SL_slice_length_STP;
+    last_SL_slice_length_CTN = SL_slice_length_CTN;
+    // update the slice size
+    slice_size = floor(samples_per_bar /(2^(SL_slice_length_CTN/16 - 1)) + 0.5);
+    UpdatePatternSize();
+    last_SL_grid = 1;
+    immediate_transition_override = 0;
   );
 );
 
@@ -242,7 +452,7 @@ memset(pattern, -1, max_pattern_size);
 pattern[0] = 1;
 pindex = 0;
 pattern_first = 0;
-play_slice = 1;
+play_slice = 1; // determines if current slice will be muted/replaced (play_slice = 0) or not (play_slice = 1)
 
 // create a buffer hosting 2 sections: track ring buffer and slice copy buffer
 buf_size = 5 * samples_per_bar; //track ring buffer has to be > 2x max loop length sample
@@ -279,11 +489,14 @@ last_SL_repeat = 0;
 last_SL_slice_length_STP = 5;
 last_SL_slice_length_CTN = 48;
 last_SL_pointer_end = 0;
+last_SL_slice_move = 0;
 last_SL_pointer_start = 0;
-last_SL_sequencer = 1;
+last_SL_grid = 0;
 
-immediate_transition_override = 0; // flag to indicate if we are in Continuos Mode (NOT discrete slice length)
+immediate_transition_override = 0; // flag to indicate if we are temporarily in Continuos Mode (NOT quantized slice length)
 
+midi_note_current = 0; // In Grid-MIDI mode this is the current note corresponding to a grid cell. If 0 then no slice playback
+last_midi_note_current = 0;
 
 //===========================================================================================================
 //===========================================================================================================
@@ -292,61 +505,25 @@ immediate_transition_override = 0; // flag to indicate if we are in Continuos Mo
 infade_size = floor(srate*SL_infade_time/1000 + 0.5);
 
 // slice end position change requested during loop playback?
-(last_SL_pointer_end != SL_pointer_end) && play_loop && !SL_sequencer ? (
-  // boundary check
-  SL_pointer_end < (SL_pointer_start + 1/128) ? (
-    SL_pointer_end = SL_pointer_start + 1/128;
-  );
-  last_SL_pointer_end = SL_pointer_end;
-  immediate_transition_override = 1;
-  // update slice end and slice size/length
-  slice_end = loop_memory_end + SL_pointer_end * samples_per_bar;
-  slice_end < 0 ? slice_end += buf_size;
-  slice_size = slice_end - slice_start + 1;
-  slice_size < 0 ? ( slice_size += buf_size; slice_overflow = 1; ):( slice_overflow = 0; );
-  SL_slice_length_CTN = 16 * ( log( samples_per_bar/slice_size )/log2 + 1 );
+(last_SL_pointer_end != SL_pointer_end) && play_loop ? (
+  SetSlider_SliceEndPos();
 );
 
 // slice start position change requested during loop playback?
-(last_SL_pointer_start != SL_pointer_start) && play_loop && !SL_sequencer ? (
-  // boundary check
-  SL_pointer_start > (SL_pointer_end - 1/128) ? (
-    SL_pointer_start = SL_pointer_end - 1/128;
-  );
-  last_SL_pointer_start = SL_pointer_start;
-  immediate_transition_override = 1;
-  // update slice start
-  slice_start = loop_memory_end + SL_pointer_start * samples_per_bar + 1;
-  slice_start < 0 ? slice_start += buf_size;
-  slice_size = slice_end - slice_start + 1;
-  slice_size < 0 ? ( slice_size += buf_size; slice_overflow = 1; ):( slice_overflow = 0; );
-  SL_slice_length_CTN = 16 * ( log( samples_per_bar/slice_size )/log2 + 1 );
+(last_SL_pointer_start != SL_pointer_start) && play_loop ? (
+  SetSlider_SliceStartPos();
 );
 
-// synchronize slice length sliders
-(last_SL_slice_length_CTN != SL_slice_length_CTN) && (last_SL_slice_length_STP == SL_slice_length_STP) ? (
-  SL_slice_length_STP = Nearest_slice_Length(SL_slice_length_CTN);
-  last_SL_slice_length_STP = SL_slice_length_STP;
-  last_SL_slice_length_CTN = SL_slice_length_CTN;
-  immediate_transition_override = 1;
-  SL_sequencer = 0;
-  play_slice = 1;
-):(
-  last_SL_slice_length_STP != SL_slice_length_STP ? (
-    SL_slice_length_CTN = SL_slice_length_CTN_from_SL_slice_length_STP(SL_slice_length_STP);
-    last_SL_slice_length_STP = SL_slice_length_STP;
-    last_SL_slice_length_CTN = SL_slice_length_CTN;
-    play_loop == 0 ? (
-      immediate_transition_override = 0;
-    );  
-  );  
-);    
+// synchronize slice length sliders & update the slice size
+SetSlider_SyncSliceLengthSize();
 
-// update the slice size
-slice_size = floor(samples_per_bar /(2^(SL_slice_length_CTN/16 - 1)) + 0.5);
+// slice move requested during loop playback?
+(last_SL_slice_move != SL_slice_move) && play_loop ? (
+  SetSlider_SliceMove();
+);
 
 // maximum slice size health check: slice end change could lead to length requests outside of buffer range
-!SL_sequencer ? (
+!SL_grid ? (
   slice_end <= loop_memory_end ? (
     slice_size_max = 2 * samples_per_bar - (loop_memory_end - slice_end);
   ):(
@@ -360,24 +537,8 @@ slice_size = floor(samples_per_bar /(2^(SL_slice_length_CTN/16 - 1)) + 0.5);
 );
 
 // update the pattern size
-SL_sequencer ? (
-  pattern_size = 2 * slice_length_SL_slice_length_STP(SL_slice_length_STP);
-  pattern_first >= pattern_size ? (
-    // Find leftmost slice that can be played first
-    i = pattern_size - 1;
-    while (i > 0) (
-      pattern[i] == 1 ? (
-        pattern_first = i;
-        i = -1;
-      ):(
-        i -= 1;
-      );
-    );
-    i == 0 ? (
-      pattern_first = 0;
-      pattern[0] = 1;
-    );
-  );
+SL_grid ? (
+  UpdatePatternSize();
 );
 
 // adjust (next) start position
@@ -391,69 +552,25 @@ SL_sequencer ? (
   slice_start = slice_end - (slice_size - 1);
   slice_start < 0 ? ( slice_start += buf_size; slice_overflow = 1; ):( slice_overflow = 0; );
   Update_Pointers();
-  last_SL_pointer_start = SL_pointer_start;
 );
 
 // check if repeat switched to ON
 SL_repeat > last_SL_repeat ? (
-  SL_loop_start_trigger == 0 ? loop_trigger_beat_pos = beat_position 
-    : SL_loop_start_trigger == 1 ? loop_trigger_beat_pos = floor(beat_position + 1)
-      : loop_trigger_beat_pos = (floor(beat_position/ts_num) + 1) * ts_num 
+  SetSlider_Repeat_On();
 ); 
 // check if repeat switched to OFF
 SL_repeat < last_SL_repeat ? (
-  play_loop = 0; 
-  immediate_transition_override = 0;
-  SL_length_transitions != 0 ? (
-    // revert back to quantized Mode and set slider 3 to closest quantized length unless transition was set to "Immediately"
-    SL_slice_length_CTN = SL_slice_length_CTN_from_SL_slice_length_STP(SL_slice_length_STP);
-    last_SL_slice_length_STP = SL_slice_length_STP;
-    last_SL_slice_length_CTN = SL_slice_length_CTN;
-  );
-  SL_repeat_ending ? ( // fade out requested?
-    SL_direction == 0 ? (
-      loop_pos_READ <= slice_end ? (
-        remaining_slice_length = slice_end - loop_pos_READ;
-      ):(
-        remaining_slice_length = buf_size - loop_pos_READ + slice_end;
-      );
-      remaining_slice_length == 0 ? ( // no need for fade out as we are exactly at the slice end
-        fade_vol = 0;
-      ):(
-        fade_step = 1/remaining_slice_length;
-        fade_vol =1;
-      );
-    ):(
-      loop_pos_READ >= slice_start ? (
-        remaining_slice_length = loop_pos_READ - slice_start;
-      ):(
-        remaining_slice_length = loop_pos_READ + buf_size - slice_start;
-      );
-      remaining_slice_length == 0 ? ( // no need for fade out as we have fully reversed to the slice start
-        fade_vol = 0;
-      ):(
-        fade_step = 1/remaining_slice_length;
-        fade_vol =1;
-      );
-    );
-  );        
+  SetSlider_Repeat_Off();
 ); 
 last_SL_repeat = SL_repeat;
 
 // check if sequencer switched to ON
-SL_sequencer > last_SL_sequencer ? (
-  // sequencer may only be swithed on when not looping or if no continuous changes have been applied
-  !immediate_transition_override || !play_loop ? (
-    SL_slice_length_CTN = SL_slice_length_CTN_from_SL_slice_length_STP(SL_slice_length_STP);
-    last_SL_slice_length_STP = SL_slice_length_STP;
-    last_SL_slice_length_CTN = SL_slice_length_CTN;
-    last_SL_sequencer = 1;
-    immediate_transition_override = 0;
-  );
+SL_grid > last_SL_grid ? (
+  SetSlider_Grid_On();
 );
 
 // check if sequencer switched to OFF
-SL_sequencer < last_SL_sequencer ? (
+SL_grid < last_SL_grid ? (
   play_slice = 1;
 );
 
@@ -474,6 +591,10 @@ SL_sequencer < last_SL_sequencer ? (
     SL_slice_length_CTN = SL_slice_length_CTN_from_SL_slice_length_STP(SL_slice_length_STP);
     last_SL_slice_length_STP = SL_slice_length_STP;
     last_SL_slice_length_CTN = SL_slice_length_CTN;
+    slice_start = slice_end - (slice_size - 1);
+    slice_start < 0 ? ( slice_start += buf_size; slice_overflow = 1; ):( slice_overflow = 0; );
+    next_slice_start = slice_start; next_slice_overflow = slice_overflow;
+    Update_Pointers();
   );
 );
 last_play_state = play_state;
@@ -495,6 +616,44 @@ tail0 = buf0 + 4 * buf_size; tail1 = tail0 + tailbuf_size;
 
 beat_offset = 0;
 
+// get last MIDI note messages from queue
+!SL_grid_trigger ? (
+  while (midirecv(midi_offset,msg1,msg2,msg3)) (
+    midisend(midi_offset,msg1,msg2,msg3); // passthrough everything
+    midi_note_status = msg1 & 0xF0;
+    midi_channel = msg1 & 0x0F;
+    midi_note = msg2;
+    midi_velocity = msg3;
+    midi_note_status == 0x80 || (midi_note_status == 0x90 && midi_velocity == 0) ? ( // note OFF message
+      midi_note == midi_note_current ? (
+        midi_note_current = 0;
+        midi_offset_target = 0;
+      );
+    ):(
+      midi_note_status == 0x90 ? ( // note ON message
+          midi_note_current = midi_note;
+          midi_offset_target = midi_offset;
+      );
+    );
+  );
+  midi_offset_current = 0;
+  
+  // Process automatic Repeat On
+  SL_grid && SL_repeat == 0 && SL_midi_auto_mode > 0 && midi_note_current != 0 ? (
+    m = SL_midi_note_start - midi_note_current;
+    m >= 0 && m < pattern_size ? (
+      SL_repeat = 1;
+      SetSlider_Repeat_On();
+    );  
+  ):(
+    // Process automatic Repeat Off
+    SL_grid && SL_repeat == 1 && SL_midi_auto_mode == 2 && midi_note_current == 0 ? (
+      SL_repeat = 0;
+      SetSlider_Repeat_Off();
+    );
+  );
+);
+
 //===========================================================================================================
 //===========================================================================================================
 @sample
@@ -509,10 +668,10 @@ in_spl0 = spl0; in_spl1 = spl1;
 buf0[buf_pos_WRITE] = in_spl0; buf1[buf_pos_WRITE] = in_spl1;
 
 //------------------------------------------------------------------------------------------------
-// Switch the sequencer off if any continuous manipulations have been made
+// Switch the grid off if any continuous manipulations have been made
 immediate_transition_override ? (
-  SL_sequencer = 0;
-  last_SL_sequencer = 0;
+  SL_grid = 0;
+  last_SL_grid = 0;
   play_slice = 1;
 );
 
@@ -530,7 +689,7 @@ immediate_transition_override ? (
     loop_spls_copied = 0;  
   );
 
-  SL_sequencer ? (
+  SL_grid && SL_grid_trigger ? (
     pindex = pattern_first;
     play_slice = pattern[pindex];
     Calc_Slice_StartEnd(pindex);
@@ -548,6 +707,7 @@ immediate_transition_override ? (
   infade_relative_pos = 0;
   Update_Tail();
   play_loop = 1;
+  Update_Pointers();
 );
 
 //------------------------------------------------------------------------------------------------
@@ -561,12 +721,13 @@ play_loop ? (
     loop_pos_COPY += 1; loop_pos_COPY >= buf_size ? loop_pos_COPY = 0;
   );
 
-  // check if there is the need to update the slice start position
+  // check if there is the need to update the slice start position (to the next beat)
   (SL_length_transitions == 1) && (immediate_transition_override == 0) ? (
     slice_start != next_slice_start ? (
       exact_beat_position >= next_slice_trigger_beat_pos ? (
         slice_start = next_slice_start;
         slice_overflow = next_slice_overflow;
+        Update_Pointers();
         loop_pos_READ = slice_start;
         infade_relative_pos = 0;
         Update_Tail();
@@ -574,12 +735,43 @@ play_loop ? (
     );
   );      
   
+  // External Midi Trigger for slices
+  // Midi trigger shall be sample accurate
+  midi_offset_current += 1;
+  SL_grid && !SL_grid_trigger && (midi_note_current != last_midi_note_current) && (midi_offset_current >= midi_offset_target) ? (
+    last_midi_note_current = midi_note_current;
+    midi_note_current == 0 ? (
+      play_slice = 0;
+      //Calc_Slice_StartEnd(0);
+      infade_relative_pos = 0;
+      Update_Tail();
+    ):(
+      SetCurrentMidiSlice() >= 0 ? (
+        next_slice_start = slice_start; next_slice_overflow = slice_overflow;
+        SL_direction == 0 ? (
+          loop_pos_READ = slice_start;
+        ):(
+          loop_pos_READ = slice_end;
+        );
+        infade_relative_pos = 0;
+        Update_Tail();
+        play_slice = 1;
+      );
+    );
+    Update_Pointers();
+  );
    
   // play back the loop if not muted
   play_slice ? (
+    last_play_slice = 1;
     loop_spl_L = buf0[loop_copied*(loop_copy_offset) + loop_pos_READ];
     loop_spl_R = buf1[loop_copied*(loop_copy_offset) + loop_pos_READ];
   ):(
+    last_play_slice == 1 ? (
+      last_play_slice = 0;
+      infade_relative_pos = 0;
+      Update_Tail();
+    );
     loop_spl_L = in_spl0;
     loop_spl_R = in_spl1;
   );
@@ -640,8 +832,10 @@ play_loop ? (
       loop_pos_READ == slice_end ? (
         NextActiveSlice();
         loop_pos_READ = slice_start;
-        infade_relative_pos = 0;
-        Update_Tail();
+        !(!play_slice && !last_play_slice) ? (
+          infade_relative_pos = 0;
+          Update_Tail();
+        );
       ):(
         loop_pos_READ += 1; loop_pos_READ >= buf_size ? loop_pos_READ = 0;
       );  
@@ -652,15 +846,19 @@ play_loop ? (
         (loop_pos_READ > slice_end)||(loop_pos_READ < slice_start) ? (
           NextActiveSlice();
           loop_pos_READ = slice_start;
-          infade_relative_pos = 0;
-          Update_Tail();
+          !(!play_slice && !last_play_slice) ? (
+            infade_relative_pos = 0;
+            Update_Tail();
+          );
         ); 
       ):(
         (loop_pos_READ > slice_end)&&(loop_pos_READ < slice_start) ? (
           NextActiveSlice();
           loop_pos_READ = slice_start;
-          infade_relative_pos = 0;
-          Update_Tail();
+          !(!play_slice && !last_play_slice) ? (
+            infade_relative_pos = 0;
+            Update_Tail();
+          );
         );  
       );
     );   
@@ -671,15 +869,19 @@ play_loop ? (
       loop_pos_READ < slice_start ? (
         NextActiveSlice();
         loop_pos_READ = slice_end;
-        infade_relative_pos = 0;
-        Update_Tail();
+        !(!play_slice && !last_play_slice) ? (
+          infade_relative_pos = 0;
+          Update_Tail();
+        );
       ); 
     ):(
       (loop_pos_READ > slice_end)&&(loop_pos_READ < slice_start) ? (
         NextActiveSlice();
         loop_pos_READ = slice_end;
-        infade_relative_pos = 0;
-        Update_Tail();
+        !(!play_slice && !last_play_slice) ? (
+          infade_relative_pos = 0;
+          Update_Tail();
+        );
       );  
     );
   );
@@ -805,27 +1007,40 @@ function DrawPatternGrid()
   pixels_p_cell = (gfx_w - 1) / pattern_size;
   i = pattern_size - 1;
   x = 0;
+  m = SL_midi_note_start - midi_note_current;
   while (i >= 0) (
-    i == pattern_first ? (
-      gfx_set(0.8,0.2,0.6,1); // play first
-    ):(
-      pattern[i] == -1 ? (
-        gfx_set(0,0,0,1); // skip slice
+    !SL_grid_trigger ? (
+      // MIDI mode: all grid cells grey but currently pressed MIDI note
+      i == m ? (
+        gfx_set(1,0.2,0.3,1);
+        gfx_rect(x,draw_pattern_grid_pos,pixels_p_cell,draw_pattern_grid_height);
       ):(
-        pattern[i] == 0 ? (
-          gfx_set(0.6,0.6,0.8,1); // mute slice
+        gfx_set(0.6,0.6,0.8,1);
+        gfx_rect(x,draw_pattern_grid_pos,pixels_p_cell,draw_pattern_grid_height);
+      );
+    ):(
+      // Internal Pattern Sequencer has different cell types
+      i == pattern_first ? (
+        gfx_set(0.8,0.2,0.6,1); // play first
+      ):(
+        pattern[i] == -1 ? (
+          gfx_set(0,0,0,1); // skip slice
         ):(
-          gfx_set(1,0.2,0.3,1); // play
+          pattern[i] == 0 ? (
+            gfx_set(0.6,0.6,0.8,1); // mute slice
+          ):(
+            gfx_set(1,0.2,0.3,1); // play
+          );
         );
       );
-    );
-    gfx_rect(x,draw_pattern_grid_pos,pixels_p_cell,draw_pattern_grid_height);
-    // grey out loop area for skipped slices
-    (play_loop || fade_vol > 0) && pattern[i] == -1 ? (
-      gfx_muladdrect(x,draw_loop_pos+1,pixels_p_cell + 1,draw_loop_height,
-                           0.3,0.3,0.3,
-                           0,0,0,0);
-    );
+      gfx_rect(x,draw_pattern_grid_pos,pixels_p_cell,draw_pattern_grid_height);
+      // grey out loop area for skipped slices
+      (play_loop || fade_vol > 0) && pattern[i] == -1 ? (
+        gfx_muladdrect(x,draw_loop_pos+1,pixels_p_cell + 1,draw_loop_height,
+                             0.3,0.3,0.3,
+                             0,0,0,0);
+      );
+    ); 
     x += pixels_p_cell;
     i -= 1;
   );
@@ -855,22 +1070,24 @@ function MouseToPatternIndex()
 
 function MouseToButtonID()
 (
-  (mouse_y < draw_menu_pos) || (mouse_y > draw_menu_pos + draw_menu_height) || (mouse_x < button0) ? -1
-    : mouse_x <= button1 - button0 ? 0
-      : mouse_x >= button1 && mouse_x <= button2 - button0 ? 1
-        : -1;
+  (mouse_y < draw_menu_pos) || (mouse_y > draw_menu_pos + draw_menu_height) ? -1
+    : mouse_x >= button0 && mouse_x <= button0 + button0_width ? 0
+      : mouse_x >= button1 && mouse_x <= button1 + button1_width ? 1
+        : mouse_x >= button2 && mouse_x <= button2 + button2_width ? 2
+          : mouse_x >= button3 && mouse_x <= button3 + button3_width ? 3
+            : -1;
 );
 
-function DrawButton(x,w,name,fill,r,b,g,a)
+function DrawButton(x,w,radius,name,fill,r,b,g,a)
 (
   gfx_x = x; gfx_y = draw_menu_pos;
   fill ? (
     r0 = gfx_r; g0 = gfx_g; b0 = gfx_b; a0 = gfx_a;
     gfx_set(r,b,g,a);
-    gfx_rect(x+1,draw_menu_pos+1,w-1,draw_menu_height-1);
+    gfx_rect(x+radius/2-1,draw_menu_pos+1,w-radius+2,draw_menu_height-1);
     gfx_set(r0,b0,g0,a0);
   );
-  gfx_roundrect(x,draw_menu_pos,w,draw_menu_height,2);
+  gfx_roundrect(x,draw_menu_pos,w,draw_menu_height,radius);
   gfx_drawstr(name,5,x+w,draw_menu_pos + draw_menu_height);
 );
 
@@ -881,13 +1098,10 @@ function DrawButton(x,w,name,fill,r,b,g,a)
   last_SL_draw_zoom = SL_draw_zoom;
   loop_img_upd = 1;
   
+  click_handle_tolerance = 20;
+  
   draw_peak_scaling = SL_draw_zoom/100;
   clip = 1/draw_peak_scaling;
-  
-  button_width = 100;
-  button0 = 5;
-  button1 = 2*button0 + button_width;
-  button2 = button1 + button0 + 2*button_width;
   
   draw_spacer1 = 5;
   
@@ -908,7 +1122,26 @@ function DrawButton(x,w,name,fill,r,b,g,a)
   draw_input_height = floor((gfx_h - draw_pattern_grid_pos - draw_pattern_grid_height) * 0.2 + 0.5);
   draw_input_offset = floor(draw_input_height/2 + 0.5) + draw_input_pos;
   draw_input_scale = draw_peak_scaling * draw_input_height / 2;
-
+  
+  button_width = 100;
+  button_spacer = 5;
+  
+  button0 = button_spacer;
+  button0_width = button_width;
+  button01_spacer = 1;
+  
+  button1 = button0 + button0_width + button01_spacer;
+  button1_width = 0.5*button_width;
+  button12_spacer = 4*button_spacer;
+  
+  button2 = button1 + button1_width + button12_spacer;
+  button2_width = 1.5*button_width;
+  button23_spacer = 8*button_spacer;  
+  
+  button3 = button2 + button2_width + button23_spacer;
+  button3_width = 0.5*button_width;
+  button34_spacer = button_spacer;
+  
   spls_p_pixel = 2 * samples_per_bar / gfx_w; // show 2 bars over the graphs width
   
   gfx_setimgdim(0 , -1 , -1);
@@ -938,12 +1171,25 @@ input_ready ? (
   mouse_cap & 1 ? ( // left button clicked?
     button_ID = MouseToButtonID();
     button_ID == 0 ? (
-      SL_sequencer = abs(SL_sequencer - 1);
+      SL_grid = abs(SL_grid - 1);
+      // slider_automate(slider5); // ATTENTION: Reaper bug https://forum.cockos.com/showthread.php?t=239718
+      SL_grid ? (
+        SetSlider_Grid_On();
+      ):(
+        play_slice = 1;
+      );
       input_ready = 0;
     ):(
       button_ID == 1 ? (
-        SL_freeze = abs(SL_freeze - 1);
+        SL_grid_trigger = abs(SL_grid_trigger - 1);
+        // slider_automate(slider6); // ATTENTION: Reaper bug https://forum.cockos.com/showthread.php?t=239718
         input_ready = 0;
+      ):(
+        button_ID == 2 ? (
+          SL_freeze = abs(SL_freeze - 1);
+          // sliderchange(slider7); // ATTENTION: Reaper bug https://forum.cockos.com/showthread.php?t=239718
+          input_ready = 0;
+        );  
       );
     );
   );
@@ -951,7 +1197,7 @@ input_ready ? (
 
 //------------------------------------------------------------------------------------------------
 // Input for Pattern Sequencer Grid
-SL_sequencer ? (
+SL_grid && SL_grid_trigger ? (
   mouse_cap & 9 == 1 ? ( // left button clicked without Shift?
     input_ready ? (
       click_index = MouseToPatternIndex();
@@ -962,7 +1208,7 @@ SL_sequencer ? (
       );
     );
   ):(
-    mouse_cap & 9 == 9 ? ( // right button clicked?
+    mouse_cap & 9 == 9 ? ( // left button clicked + SHIFT held?
       input_ready ? (
         click_index = MouseToPatternIndex();
         click_index != -1 ? (
@@ -973,7 +1219,7 @@ SL_sequencer ? (
       );
     );
   );
-  mouse_cap & 2 == 2 ? ( // left button + SHIFT held?
+  mouse_cap & 2 == 2 ? ( // right button clicked?
     click_index = MouseToPatternIndex();
     (click_index != -1) && (click_index != pattern_first) ? (
       input_ready ? (
@@ -985,7 +1231,90 @@ SL_sequencer ? (
     );
   );
 );  
-  
+
+//------------------------------------------------------------------------------------------------
+// Input for Slice Start/End/Move Manipulation
+play_loop ? (
+  draw_slice_edge_start = gfx_w * ( 1 + SL_pointer_start / 2 );
+  draw_slice_edge_end = gfx_w * ( 1 + SL_pointer_end / 2 );
+  draw_slice_width = gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2;
+  input_ready ? (
+    highlight_start = 0; highlight_end = 0; highlight_slice = 0;
+    draw_slice_width = gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2;
+    mouse_x >= 0 && mouse_x <= gfx_w ? (
+      // need enough click detection space inside slice rather than edge
+      draw_slice_width < 2*click_handle_tolerance ? (
+        click_handle_tolerance_inside = draw_slice_width / 2;
+      ):(
+        click_handle_tolerance_inside = click_handle_tolerance;
+      );
+      // upper half
+      mouse_y > draw_loop_pos && mouse_y <= draw_loop_offset ? (
+        // edge start
+        mouse_x >= draw_slice_edge_start - click_handle_tolerance && mouse_x <= draw_slice_edge_start + click_handle_tolerance_inside  ? (
+          highlight_start = 1;
+        ):(
+          // inside slice
+          mouse_x > draw_slice_edge_start + click_handle_tolerance_inside && mouse_x < draw_slice_edge_end  ? (
+             highlight_slice = 1;
+          );
+        );  
+      ):(
+        // lower half
+        mouse_y > draw_loop_offset && mouse_y < draw_input_pos ? (
+          // edge end
+          mouse_x >= draw_slice_edge_end - click_handle_tolerance_inside && mouse_x <= draw_slice_edge_end + click_handle_tolerance  ? (
+            highlight_end = 1;
+          ):(
+            // inside slice
+            mouse_x > draw_slice_edge_start && mouse_x < draw_slice_edge_end - click_handle_tolerance_inside  ? (
+               highlight_slice = 1;
+            );
+          );
+        );
+      );
+    );
+  );
+);
+
+highlight_start && mouse_cap & 1 ? (
+  input_ready ? (
+    input_ready = 0;
+    last_mouse_x = mouse_x;
+  ):(
+    SL_pointer_start += (mouse_x - last_mouse_x) / gfx_w * 2;
+    SL_pointer_start < -2 ? SL_pointer_start = -2;
+    last_mouse_x = mouse_x;
+    SetSlider_SliceStartPos();
+    SetSlider_SyncSliceLengthSize();
+  );
+);
+
+highlight_end && mouse_cap & 1 ? (
+  input_ready ? (
+    input_ready = 0;
+    last_mouse_x = mouse_x;
+  ):(
+    SL_pointer_end += (mouse_x - last_mouse_x) / gfx_w * 2;
+    SL_pointer_end > 0 ? SL_pointer_end = 0;
+    last_mouse_x = mouse_x;
+    SetSlider_SliceEndPos();
+    SetSlider_SyncSliceLengthSize();
+  );
+);
+
+highlight_slice && mouse_cap & 1 ? (
+  input_ready ? (
+    input_ready = 0;
+    last_mouse_x = mouse_x;
+  ):(
+    SL_slice_move += (mouse_x - last_mouse_x) / gfx_w * 2;
+    SL_slice_move > 0 ? SL_slice_move = 0;
+    last_mouse_x = mouse_x;
+    SetSlider_SliceMove();
+  );
+);
+
 //------------------------------------------------------------------------------------------------
 // update input drawing area
 // use scrolling rather than recalculation (EFFICIENT, but may show graphics jitter and artefacts due to rounding)
@@ -1034,19 +1363,24 @@ play_loop || fade_vol > 0 ? (
   CopyLoopImg(1,-1);
   // tint slice area
   fade_vol > 0 ? (
-    gfx_muladdrect(gfx_w * ( 1 + SL_pointer_start / 2 ),draw_loop_pos+1,gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2,draw_loop_height,
+    gfx_muladdrect(draw_slice_edge_start-1,draw_loop_pos+1,draw_slice_width,draw_loop_height,
                          1,(1-fade_vol),(1-fade_vol),
                          0.1,0.1,0.2,0.3);
   ):(
+    // mute/replace slice
     play_slice == 0 ? (
-      gfx_muladdrect(gfx_w * ( 1 + SL_pointer_start / 2 ),draw_loop_pos+1,gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2,draw_loop_height,
-                   0,0,0,
-                   0,0,0,0);
-      gfx_muladdrect(gfx_w * ( 1 + SL_pointer_start / 2 ),draw_input_pos,gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2,draw_input_height,
-                         1,1,1,
-                         0.1,0.1,0.2,0.3);             
+      SL_grid_trigger ? (
+        // make slice invisible in sequencer mode
+        gfx_muladdrect(draw_slice_edge_start-1,draw_loop_pos+1,draw_slice_width,draw_loop_height,
+                     0,0,0,
+                     0,0,0,0);
+      );
+      // tint input area as it replaces the slice
+      gfx_muladdrect(0,draw_input_pos,gfx_w,draw_input_height,
+                         1,0,0,
+                         0.1,0.1,0.2,0.3);
     ):(
-      gfx_muladdrect(gfx_w * ( 1 + SL_pointer_start / 2 ),draw_loop_pos+1,gfx_w * ( SL_pointer_end - SL_pointer_start ) / 2,draw_loop_height,
+      gfx_muladdrect(draw_slice_edge_start-1,draw_loop_pos+1,draw_slice_width,draw_loop_height,
                      1,0,0,
                      0.1,0.1,0.2,0.3);
     );
@@ -1062,39 +1396,100 @@ last_play_loop = play_loop;
 
 //------------------------------------------------------------------------------------------------
 // update pattern grid
-SL_sequencer ? (
+SL_grid ? (
   DrawPatternGrid();
 );
+
+//------------------------------------------------------------------------------------------------
+// Highlight slice start, end, move
+play_loop ? (
+  highlight_start ? (
+    gfx_set(0.1,0.7,0.4,1);
+    gfx_line(draw_slice_edge_start,draw_input_pos-1,draw_slice_edge_start,draw_loop_pos+1);   
+    gfx_triangle(draw_slice_edge_start-8, draw_loop_pos+1,
+                 draw_slice_edge_start+8, draw_loop_pos+1,
+                 draw_slice_edge_start, draw_loop_pos+9);
+  );
+  highlight_end ? (
+    gfx_set(0.1,0.7,0.4,1);
+    gfx_line(draw_slice_edge_end-1,draw_input_pos-1,draw_slice_edge_end-1,draw_loop_pos+1);
+    gfx_triangle(draw_slice_edge_end-9, draw_input_pos-1,
+                 draw_slice_edge_end+7, draw_input_pos-1,
+                 draw_slice_edge_end, draw_input_pos-9);
+  );
+  highlight_slice ? (
+      gfx_set(0.1,0.7,0.4,1);
+      gfx_roundrect(draw_slice_edge_start,draw_loop_pos+1,draw_slice_width,draw_loop_height-2,0);
+      gfx_triangle(draw_slice_edge_start, draw_loop_pos+1,
+                   draw_slice_edge_start+10, draw_loop_pos+1,
+                   draw_slice_edge_start, draw_loop_pos+11);
+      gfx_triangle(draw_slice_edge_end-11, draw_input_pos-1,
+                   draw_slice_edge_end, draw_input_pos-1,
+                   draw_slice_edge_end, draw_input_pos-11);
+  );
+);  
 
 //------------------------------------------------------------------------------------------------
 // Draw Menu
 gfx_set(0.15,0.15,0.1,1);
 gfx_rect(0,0,gfx_w,draw_pattern_grid_pos,1);
 
-SL_sequencer ? (
+// Slicer Button and Mode
+SL_grid ? (
   gfx_set(1,1,1,1);
-  DrawButton(button0,button_width,"PATTERN",1,0.8,0.2,0.6,1);
+  DrawButton(button0,button0_width,2,"GRID",1,0.8,0.2,0.6,1);
+  SL_grid_trigger ? (
+    gfx_set(1,1,1,1);
+    DrawButton(button1,button1_width,2,"SEQ",1,0.8,0.2,0.6,1);
+  ):(
+    midi_note_current == 0 ? (
+      gfx_set(1,1,1,1);
+      DrawButton(button1,button1_width,2,"MIDI",1,0.6,0.6,0.8,1);
+    ):(
+      gfx_set(1,1,1,1);
+      DrawButton(button1,button1_width,2,"MIDI",1,0.8,0.2,0.6,1);
+    );
+  );
 ):(
   gfx_set(0.4,0.4,0.45,1);
-  DrawButton(button0,button_width,"PATTERN",0,0,0,0,0);
+  DrawButton(button0,button0_width,2,"GRID",0,0,0,0,0);
+  SL_grid_trigger ? (
+    gfx_set(0.4,0.4,0.45,1);
+    DrawButton(button1,button1_width,2,"SEQ",0,0,0,0,0);
+  ):(
+    gfx_set(0.4,0.4,0.45,1);
+    DrawButton(button1,button1_width,2,"MIDI",0,0,0,0,0);
+  );
 );
 
+
+// Freeze Button
 play_loop || loop_copied ? (
   gfx_set(0.6,0.6,0.6,1);
-  gfx_rect(button1+1,draw_menu_pos+1,loop_spls_copied/samples_per_bar*button_width,draw_menu_height-1);
+  gfx_rect(button2+1,draw_menu_pos+1,loop_spls_copied/(2*samples_per_bar)*button2_width,draw_menu_height-1);
 );
 
 SL_freeze ? (
   loop_copied ? (
     gfx_set(1,1,1,1);
-    DrawButton(button1,button_width*2,"FREEZE / RECALL",1,0.2,0.2,1,1);
+    DrawButton(button2,button2_width,2,"FREEZE/RECALL",1,0.2,0.2,1,1);
   ):(
     gfx_set(1,1,1,1);
-    DrawButton(button1,button_width*2,"FREEZE / RECALL",0,0,0,0,0);
+    DrawButton(button2,button2_width,2,"FREEZE/RECALL",0,0,0,0,0);
   );
 ):(
   gfx_set(0.4,0.4,0.45,1);
-  DrawButton(button1,button_width*2,"FREEZE / RECALL",0,0,0,0,0);
+  DrawButton(button2,button2_width,2,"FREEZE/RECALL",0,0,0,0,0);
+);
+
+// Quantize Mode Indicator
+(SL_length_transitions == 0 || immediate_transition_override) && !SL_grid ? (
+  gfx_set(0.4,0.4,0.45,1);
+  DrawButton(button3,button3_width,draw_menu_height/2,"QUANT",0,0,0,0,0);
+):(
+  gfx_set(0.1,0.7,0.4,1);
+  DrawButton(button3,button3_width,draw_menu_height/2,"QUANT",0,0,0,0,0);
 );
 
 //------------------------------------------------------------------------------------------------
+
