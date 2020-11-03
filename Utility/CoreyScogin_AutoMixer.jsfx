@@ -1,6 +1,6 @@
 desc:AutoMixer
 author: Corey Scogin
-version: 1.3
+version: 1.3.1
 tags: volume, attenuation, automation
 link: Forum Thread https://forum.cockos.com/showthread.php?t=173289
 about: 
@@ -14,7 +14,7 @@ about:
   - Inactive channels will be attenuated helping to decrease background noise.
   - Multiple active channels will be attenuated according to the sum of all channels helping to keep the overall volume under control.
   See [Wikipedia](https://en.wikipedia.org/wiki/Automixer) for a more thorough description.
-changelog: More instance count tracking improvements. Now supports jumping playback position while playing.
+changelog: Fix subtle bug in multichannel tracks: If the channels have destructive interference the Automixer no longer thinks they’re silent.
 
 // Known Bugs:
 //  - Playback must be stopped and started if an instance is bypassed, added, or removed.
