@@ -1,8 +1,8 @@
-desc: MIDI Arranged Looper
+desc: Pre-Arranged MIDI Looper
 author: JC Gurango
 version: 0.1
 about:
-  # MIDI Arranged Looper
+  # Pre-Arranged MIDI Looper
   Loops MIDI based on a pre-arranged record and loop position. For example, you can have it automatically start recording at beat 4, and finish record at beat 8, and have that automatically loop throughout beats 8 - 20.
 
   ## Options
