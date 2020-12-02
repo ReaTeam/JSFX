@@ -15,8 +15,6 @@ about:
 
   To achieve the most accurate results, set the gain to 0db and play/loop your track at its busiest/loudest point when you Gain Match. If the result isn't quite right, it may be because you matched if on significant dip/peak. You can set the Gain back to 0 and try again. Or if the result is just a little bit off, you can adjust the gain accordingly and watch the VU meter for reference to your Target level.
 
-desc: Automatic Gain Stager
-
 slider1:gain_db=0<-30,30,0.1>Gain (dB)
 slider2:-18<-36,0,0.1>Target Level (dB)
 slider3:0<0,1,1>Gain Match
