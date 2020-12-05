@@ -1,8 +1,9 @@
 desc: MIDI CC Mapper X
 author: Talagan
-version: 4.1
+version: 4.2
 changelog:
-  - Reworked Channel Pressure (breaking change) : treat Channel Pressure as Virtual CC#128 in the UI to allow painless CC<>CP conversion.
+  - Default value for KB Range transposition is now ON instead of OFF (it feels more logical in the main flow)
+  - Added pass through option per control to keep original events and allow event duplication
 screenshot:
   Dark Theme https://stash.reaper.fm/39718/MIDICCMapperX-4-1-Dark.png
   Light Theme https://stash.reaper.fm/39719/MIDICCMapperX-4-1-Light.png
@@ -177,6 +178,7 @@ function instanceGlobalVarInit()
   // Design pattern constants
   ANY                       = 0;
   AS_SRC                    = 0;
+  KEEP                      = 0;
   DROP                      = -1;
   NONE                      = -1;
   
@@ -266,13 +268,13 @@ function instanceMemoryMapInit()
   /////////////////////////////////
   // Persistent data (user conf) //
   /////////////////////////////////
-  LOADED_VERSION                  = malloc(1);
+  LOADED_VERSION                      = malloc(1);
   
-  CONTROL_ENABLED                 = malloc(CONTROL_COUNT);  // Per-control enabled flags
-  CONTROL_SRCS                    = malloc(CONTROL_COUNT);  // CC srcs
-  CONTROL_DSTS                    = malloc(CONTROL_COUNT);  // CC dsts
-  CONTROL_HIGHRES_OUTPUT_ENABLED  = malloc(CONTROL_COUNT);  // Per-control option
-  CURVES                          = malloc(CONTROL_COUNT*CURVESIZE);
+  CONTROL_ENABLED                     = malloc(CONTROL_COUNT);  // Per-control enabled flags
+  CONTROL_SRCS                        = malloc(CONTROL_COUNT);  // CC srcs
+  CONTROL_DSTS                        = malloc(CONTROL_COUNT);  // CC dsts
+  CONTROL_HIGHRES_OUTPUT_ENABLED      = malloc(CONTROL_COUNT);  // Per-control option
+  CURVES                              = malloc(CONTROL_COUNT*CURVESIZE);
   
   KEYBOARD_FILTERING_ENABLED          = malloc(1);
   _OBS_KEYBOARD_FILTERED_NOTES        = malloc(88); // Now 128 long, replaced
@@ -353,6 +355,8 @@ function instanceMemoryMapInit()
   DROP_UNROUTED_AT_POLY_MESSAGES          = malloc(1);
   _OBS_CP_ASSOCIATED_KB_RANGE             = malloc(1);
 
+  // Added 4.2
+  CONTROL_PASS_THROUGH = malloc(CONTROL_COUNT);
 );
 
 function initMidiCCNames()
@@ -1711,7 +1715,7 @@ function readLibFile(lib_name)
     
     lc+=1;
   );
-  file_Close(handle);
+  file_close(handle);
   
   (file_ok);
 );
@@ -2013,6 +2017,10 @@ function isControlVelocity(control) (
 function isControlAfterTouch(control) (
   (control >= CONTROL_AFTERTOUCH_START && control < CONTROL_AFTERTOUCH_START + KB_RANGE_COUNT);
 );
+function isControlPitchBend(control) (
+  (control == CONTROL_PITCH_BEND);
+);
+
 function isControlHighResCapable(control) (
   (isControlVelocity(control) || (isControlARealCC(control) && ccLsbCounterpart(CONTROL_DSTS[control]) != NONE));
 );
@@ -2078,6 +2086,11 @@ function controlCurrentMinBound01(control) (
 function controlCurrentMaxBound01(control) (
   controlCurrentBound01(control,0);
 );
+
+function controlShouldPassThrough(control) (
+  (CONTROL_PASS_THROUGH[control] == KEEP)
+);
+
 function controlName(cnum) (
   128+cnum;
 );
@@ -2095,6 +2108,8 @@ function controlLabelWithFallback(cnum) local(str) (
 function selectedControlCurveAddress() (
   curveAddress(g_selected_control);
 );
+
+
 
 /////////////////////
 // KEYBOARD RANGES //
@@ -2248,17 +2263,17 @@ function firstInit()
     CONTROL_CHAN_SRCS[c]                = ANY; 
     CONTROL_CHAN_DSTS[c]                = AS_SRC;
     CONTROL_HIGHRES_OUTPUT_ENABLED[c]   = 0; 
-    CONTROL_MINS_LSB[c] = 0;
-    CONTROL_MINS_MSB[c] = 0;
-    CONTROL_MAXS_LSB[c] = 127;
-    CONTROL_MAXS_MSB[c] = 127;
-        
+    CONTROL_MINS_LSB[c]                 = 0;
+    CONTROL_MINS_MSB[c]                 = 0;
+    CONTROL_MAXS_LSB[c]                 = 127;
+    CONTROL_MAXS_MSB[c]                 = 127;
+    CONTROL_PASS_THROUGH[c]             = DROP;
     c+=1 
   );
   
   // Init kb range params
   c=0; while(c<KB_RANGE_COUNT) (
-    KB_RANGE_TRANSPOSE_ENABLED[c]     = 0;
+    KB_RANGE_TRANSPOSE_ENABLED[c]     = 1; // Enable by default, we already have a global switch
     KB_RANGE_TRANSPOSE_8VA[c]         = 0;
     KB_RANGE_TRANSPOSE_SEMI_TONES[c]  = 0;  
     KB_RANGE_OUTPUT_CHANNEL[c]        = 0;
@@ -2511,6 +2526,12 @@ function memwr(is_saving, ver)
     file_mem(0,DROP_UNROUTED_AT_POLY_MESSAGES, 1);
     file_mem(0,_OBS_CP_ASSOCIATED_KB_RANGE, 1);
   );
+  
+  // Introduced in V4.2
+  avail = file_avail(0);
+  (is_saving || avail>0)?( // Avoid squashing default values if reading old format
+    file_mem(0, CONTROL_PASS_THROUGH, ccount);
+  );
 );
 
 function backupOrRestore() local(is_saving, check_ver, old_format) (
@@ -2550,7 +2571,7 @@ backupOrRestore();
 //===========================================//
 //===============     GFX     ===============//
 //===========================================//
-@gfx 970 690
+@gfx 970 700
 
 //////////////////////////
 // GENERIC UI FUNCTIONS //
@@ -2642,6 +2663,11 @@ function textForChannelIn(val)
   );
 );
 
+function textForPassThrough(val)
+(
+  (val == KEEP)?("Yes (Keep)"):("No (Drop)");
+);
+
 function textForChannelOut(val)
 (
   (val == AS_SRC)?("= In"):(
@@ -2675,6 +2701,11 @@ function isOutputChannelSpinbox(combo_id)
   );
 );
 
+function isPassThroughSpinbox(combo_id)
+(
+  combo_id == "pt_spinbox";
+);
+
 function isCCSpinbox(combo_id) (
   (combo_id == "cc_src_spinbox" || combo_id == "cc_dst_spinbox");
 );
@@ -2684,8 +2715,9 @@ function textForComboBox(combo_id, val)
   (isInputChannelSpinbox(combo_id)?(textForChannelIn(val)):(
   (isOutputChannelSpinbox(combo_id)?(textForChannelOut(val)):(
   (isCCSpinbox(combo_id)?(textForCC(val)):(
+  (isPassThroughSpinbox(combo_id)?(textForPassThrough(val)):(
     defaultTextForCombo(val);
-  ))))));
+  ))))))));
 );
 
 // Draws a enable/disable button
@@ -3443,7 +3475,7 @@ function drawCurvezone()
   local(curve, curve_panel_top, left, top, right, bottom, gridstep, gzone, bzone, i, t1,t2,t3,t4)
 (
    // Curve zone
-    curve_panel_top = GUI_CONTROL_PARAMS_TOP+70;  
+    curve_panel_top = GUI_CONTROL_PARAMS_TOP+90;  
     curve = selectedControlCurveAddress();
    
     gzone = 0;
@@ -3918,7 +3950,7 @@ function drawCCLearnButton(cnum)
    local(bl,bt,br,bb,in_rect)
 (
   bl = 253;
-  bt = GUI_CONTROL_PARAMS_TOP+30;
+  bt = GUI_CONTROL_PARAMS_TOP+24;
   br = bl + 70;
   bb = bt + 15;
    
@@ -3950,7 +3982,7 @@ function drawCopySrcButton(cnum)
    local(bl,bt,br,bb,in_rect)
 (
   bl = 253;
-  bt = GUI_CONTROL_PARAMS_TOP+50;
+  bt = GUI_CONTROL_PARAMS_TOP+44;
   br = bl + 70;
   bb = bt + 15;
    
@@ -3985,7 +4017,7 @@ function drawDescriptionInputLine()
    local(bl,bt,br,bb,str)
 (
   bl = 130;
-  bt = GUI_CONTROL_PARAMS_TOP+10;
+  bt = GUI_CONTROL_PARAMS_TOP+4;
   br = bl + 146;
   bb = bt + 15;
   str = controlDescription(g_selected_control);
@@ -3998,12 +4030,41 @@ function drawSmallLabelInputLine()
    local(bl,bt,br,bb,str)
 (
   bl = 395;
-  bt = GUI_CONTROL_PARAMS_TOP+10;
+  bt = GUI_CONTROL_PARAMS_TOP+4;
   br = bl + 40;
   bb = bt + 15;
   
   str = controlLabel(g_selected_control);
   drawInputLine("input_sl", bl, bt, br, bb, str);
+);
+
+function passThroughMayClashForControl(control)
+   local(kbr,ic,oc)
+(
+  (controlShouldPassThrough(control))?(
+    
+    (isControlVelocity(control) || isControlAfterTouch(control))?(
+      // Velo / AT
+      kbr = controlKBRange(control);
+      ic  = keyboardInputChannel();
+      oc  = kbRangeOutputChannel(kbr);
+      
+      (oc == AS_SRC || ic == oc);
+    ):(
+      ic  = controlInputChannel(control);
+      oc  = controlOutputChannel(control);
+    
+      (isControlPitchBend(control))?(
+        // PB
+        (oc == AS_SRC || ic == oc);
+      ):(
+        // CC / CP 
+        (oc == AS_SRC || ic == oc) && (CONTROL_SRCS[control] == CONTROL_DSTS[control]);
+      );
+    );
+  ):(
+    0;
+  );
 );
 
 // Control editor sub panel for midi cc assignment
@@ -4014,23 +4075,24 @@ function drawAssignZone()
 (
   gfx_rgb(TH.DEFAULT_FONT);
     
-  gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+14;
+  gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+8;
   gfx_drawStr("Description");
   
-  gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+34;
+  gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+28;
   gfx_drawStr("In  ->");
   
-  gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+54;
+  gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+48;
   gfx_drawStr("Out ->");
   
   gfx_rgb(TH.DEFAULT_FONT); 
-  gfx_x=90; gfx_y = GUI_CONTROL_PARAMS_TOP+34;  
+  gfx_x=90; gfx_y = GUI_CONTROL_PARAMS_TOP+28;  
   gfx_drawStr("Chan");  
   
   gfx_rgb(TH.DEFAULT_FONT); 
-  gfx_x=90; gfx_y = GUI_CONTROL_PARAMS_TOP+54;  
+  gfx_x=90; gfx_y = GUI_CONTROL_PARAMS_TOP+48;  
   gfx_drawStr("Chan");
   
+  // Channel In/Out
   (isControlVelocity(g_selected_control) || isControlAfterTouch(g_selected_control)) ?(
     
     kbr = controlKBRange(g_selected_control);
@@ -4038,27 +4100,27 @@ function drawAssignZone()
     str = textForChannelIn(keyboardInputChannel());
     gfx_measureStr(str, w, h);
     gfx_rgb(TH.DYN_LABEL); 
-    gfx_xy( 140 + (65-w)/2, GUI_CONTROL_PARAMS_TOP+34);  
+    gfx_xy( 140 + (65-w)/2, GUI_CONTROL_PARAMS_TOP+28);  
     gfx_drawStr(str);
     
     str = textForChannelOut(kbRangeOutputChannel(kbr));
     gfx_measureStr(str, w, h);
     gfx_rgb(TH.DYN_LABEL); 
-    gfx_xy( 140 + (65-w)/2, GUI_CONTROL_PARAMS_TOP+54); 
+    gfx_xy( 140 + (65-w)/2, GUI_CONTROL_PARAMS_TOP+48); 
     gfx_drawStr(str);
     
   ):(
-    drawAddOrSubWidget("chan_src_spinbox",CONTROL_CHAN_SRCS,g_selected_control,130,GUI_CONTROL_PARAMS_TOP+30,0,16,56,0);  
-    drawAddOrSubWidget("chan_dst_spinbox",CONTROL_CHAN_DSTS,g_selected_control,130,GUI_CONTROL_PARAMS_TOP+50,0,16,56,0);
+    drawAddOrSubWidget("chan_src_spinbox",CONTROL_CHAN_SRCS,g_selected_control,130,GUI_CONTROL_PARAMS_TOP+24,0,16,56,0);  
+    drawAddOrSubWidget("chan_dst_spinbox",CONTROL_CHAN_DSTS,g_selected_control,130,GUI_CONTROL_PARAMS_TOP+44,0,16,56,0);
   );
   
   gfx_rgb(TH.DEFAULT_FONT);
-  gfx_x=230; gfx_y = GUI_CONTROL_PARAMS_TOP+34;
+  gfx_x=230; gfx_y = GUI_CONTROL_PARAMS_TOP+28;
   gfx_drawStr("CC");
-  gfx_x=230; gfx_y = GUI_CONTROL_PARAMS_TOP+54;
+  gfx_x=230; gfx_y = GUI_CONTROL_PARAMS_TOP+48;
   gfx_drawStr("CC");
   
-  (isControlVelocity(g_selected_control) || isControlAfterTouch(g_selected_control) || g_selected_control == CONTROL_PITCH_BEND) ?(
+  (isControlVelocity(g_selected_control) || isControlAfterTouch(g_selected_control) || isControlPitchBend(g_selected_control) ) ?(
   
     // Description
     
@@ -4068,18 +4130,18 @@ function drawAssignZone()
     ):(
       gfx_rgb(TH.DYN_LABEL);
     );
-    gfx_xy(140, GUI_CONTROL_PARAMS_TOP+14);
+    gfx_xy(140, GUI_CONTROL_PARAMS_TOP+8);
     gfx_drawStr(controlName(g_selected_control));
     
-    (g_selected_control == CONTROL_PITCH_BEND)?(
+    (isControlPitchBend(g_selected_control))?(
       gfx_rgb(TH.DYN_LABEL_DISABLED);
-      gfx_xy(275, GUI_CONTROL_PARAMS_TOP+14);
+      gfx_xy(275, GUI_CONTROL_PARAMS_TOP+8);
       gfx_drawStr("(Symmetrical - only the positive half of the curve is drawn)");
     );
     
     // Src CC
     gfx_rgb(TH.DYN_LABEL_DISABLED);
-    gfx_x = 260; gfx_y = GUI_CONTROL_PARAMS_TOP+34;
+    gfx_x = 260; gfx_y = GUI_CONTROL_PARAMS_TOP+28;
     gfx_drawStr(controlName(g_selected_control));  
     (isHighResMidiInputEnabled())?(
       gfx_rgb(TH.ROUTING_INFO_OK);
@@ -4088,7 +4150,7 @@ function drawAssignZone()
     
     // Dst
     gfx_rgb(TH.DYN_LABEL_DISABLED);
-    gfx_x = 260; gfx_y = GUI_CONTROL_PARAMS_TOP+54;
+    gfx_x = 260; gfx_y = GUI_CONTROL_PARAMS_TOP+48;
     gfx_drawStr(controlName(g_selected_control));    
     (isHighResMidiOutputEnabledForControl(g_selected_control))?(
       gfx_rgb(TH.ROUTING_INFO_OK);
@@ -4099,7 +4161,8 @@ function drawAssignZone()
   
   // Standard CC Routing / Renaming
   (isControlARealCC(g_selected_control))?(
-    gfx_x = 295; gfx_y = GUI_CONTROL_PARAMS_TOP+14;
+    // CC or CP
+    gfx_x = 295; gfx_y = GUI_CONTROL_PARAMS_TOP+8;
     gfx_drawStr("Small Label");
     
     drawDescriptionInputLine();
@@ -4108,12 +4171,12 @@ function drawAssignZone()
     drawCCLearnButton(g_selected_control);
     drawCopySrcButton(g_selected_control);
    
-    drawAddOrSubWidget("cc_src_spinbox",CONTROL_SRCS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+30,0,128,42,0);
-    drawAddOrSubWidget("cc_dst_spinbox",CONTROL_DSTS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+50,0,128,42,0);
+    drawAddOrSubWidget("cc_src_spinbox",CONTROL_SRCS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+24,0,128,42,0);
+    drawAddOrSubWidget("cc_dst_spinbox",CONTROL_DSTS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+44,0,128,42,0);
   
     // Name of the src CC
     gfx_rgb(TH.ROUTING_INFO_CCNAME);
-    gfx_x = 412;  gfx_y = GUI_CONTROL_PARAMS_TOP+34;
+    gfx_x = 412;  gfx_y = GUI_CONTROL_PARAMS_TOP+28;
     src_cc     = CONTROL_SRCS[g_selected_control];
     src_name   = midiCCName(src_cc);
     
@@ -4142,7 +4205,7 @@ function drawAssignZone()
     
     // Name of the dst CC
     gfx_rgb(TH.ROUTING_INFO_CCNAME);
-    gfx_x = 412;  gfx_y = GUI_CONTROL_PARAMS_TOP+54;
+    gfx_x = 412;  gfx_y = GUI_CONTROL_PARAMS_TOP+48;
     dst_cc     = CONTROL_DSTS[g_selected_control];
     dst_name   = midiCCName(dst_cc);
     dst_is_lsb = isALsbCC(dst_cc);
@@ -4168,10 +4231,23 @@ function drawAssignZone()
   (isControlVelocity(g_selected_control) || ccLsbCounterpart(CONTROL_DSTS[g_selected_control]) != NONE)?(
     
     gfx_rgb(TH.DEFAULT_FONT);
-    gfx_x = (isControlVelocity(g_selected_control))?(365):(455); gfx_y = GUI_CONTROL_PARAMS_TOP+14;
+    gfx_x = (isControlVelocity(g_selected_control))?(365):(455); gfx_y = GUI_CONTROL_PARAMS_TOP+8;
     gfx_drawStr("High res output");  
-    drawYesNobutton(CONTROL_HIGHRES_OUTPUT_ENABLED,g_selected_control,GUI_CONTROL_PARAMS_TOP+11,(isControlVelocity(g_selected_control))?(500):(590));
+    drawYesNobutton(CONTROL_HIGHRES_OUTPUT_ENABLED,g_selected_control,GUI_CONTROL_PARAMS_TOP+5,(isControlVelocity(g_selected_control))?(500):(590));
   );
+  
+  // In all cases, draw the pass through
+  gfx_xy(30,GUI_CONTROL_PARAMS_TOP+68);
+  gfx_rgb(TH.DEFAULT_FONT);
+  gfx_drawStr("Pass through original event");
+  drawAddOrSubWidget("pt_spinbox",CONTROL_PASS_THROUGH,g_selected_control,262,GUI_CONTROL_PARAMS_TOP+64,-1,0,102,1);
+  
+  (passThroughMayClashForControl(g_selected_control))?(
+    gfx_xy(410,GUI_CONTROL_PARAMS_TOP+68);
+    gfx_rgb(TH.ROUTING_INFO_NOT_OK);
+    gfx_drawStr("Warning! New and original events are likely to interfere.");
+  );
+  
 );
 
 function drawControlPanel() 
@@ -4239,7 +4315,7 @@ function drawControlPanel()
       drawAssignZone();
       drawCurveZone();
     ):(
-      gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+14 ; gfx_rgb(TH.DEFAULT_FONT);
+      gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+8 ; gfx_rgb(TH.DEFAULT_FONT);
       gfx_drawstr("To edit the parameters for this control, enable it first.");
     );
   );
@@ -4597,7 +4673,7 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("Midi CC Mapper X (4.1) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai"); 
+  gfx_drawstr("Midi CC Mapper X (4.2) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai"); 
 
   drawSwitchButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin");
 );
@@ -4856,15 +4932,12 @@ aaa_vtest_fconv_l   = g_hres_l;
 // For a given CONTROL on the UI, try to process the CC message
 // The value is not passed. It's already been stored in CC_RECEIVED_VALUES.
 function tryProcessCCWithControl(evt, blk_control) 
-  local (was_processed, 
-         in_val_01, out_val_01, 
+  local (in_val_01, out_val_01, 
          src_chan, dst_chan,
          out_cc_num, out_status,
          in_lsb_counterpart,
          ctrl_is_enabled, src_cc_matches, src_chan_matches, control_is_a_real_cc, src_is_ok ) 
 (
-  was_processed = 0;
-  
   src_chan                    = controlInputChannel(blk_control);
   src_chan_matches            = (src_chan == ANY || src_chan == evt.chan );
   src_cc_matches              = (CONTROL_SRCS[blk_control] == evt.cc_num);
@@ -4920,10 +4993,14 @@ function tryProcessCCWithControl(evt, blk_control)
       );
     );
     
-    was_processed = 1;
+    // Set the pass through flag.
+    controlShouldPassThrough(blk_control)?(
+      evt.should_pass_through = 1;
+    );
+    
+    evt.was_processed = 1;
   );
-
-  was_processed;
+  evt;
 );
 
 function processCCMessage(evt) 
@@ -4932,36 +5009,38 @@ function processCCMessage(evt)
   // Memorize, may be useful
   CC_RECEIVED_VALUES[evt.cc_num] = evt.cc_val;
 
-  process_counter = 0;
   (isHighResMidiInputEnabled() && isALsbCC(evt.cc_num))?(
   
     // In high res midi, drop all messages coming from lsb channels
     // They've been just stored for aggregation.
-    process_counter = 1;
+    // And that's all.
+    
+    // TODO : maybe rewrite this case?
+    // What if someone still builds a control in that conf?
+    
+    evt.was_processed = 1;
   ):(
   
     // Loop on all controls and see if we could find
     // Some of them linked to that cc.
     blk_control = 0; while(blk_control < CONTROL_COUNT)
     (              
-      process_counter += tryProcessCCWithControl(evt, blk_control);
-      blk_control     += 1;
+      tryProcessCCWithControl(evt, blk_control);
+      blk_control       += 1;
     );
   );
   
-  process_counter;
+  evt;
 );
 
 function processNoteMessage(evt) 
   local(new_key, key_range_resolved, 
-    src_chan, dst_chan, src_chan_matches, dst_status,
-    was_processed, should_keep_note, 
+    src_chan, dst_chan, src_chan_matches, dst_status, 
+    should_keep_note, 
     velocity_control_num,
     has_velocity, velocity_01, out_velocity_01, 
     velocity_tgt, lsb_cc_msg)
 (
-  was_processed = 0;
-  
   // For safety. I don't know if it's useful.
   (evt.type == MSG_NOTE_OFF)?(evt.velocity=0);  
   
@@ -5059,24 +5138,27 @@ function processNoteMessage(evt)
       
     ); // <- dst chan is not drop
   
+    // If pass through is set explicitely, duplicate
+    controlShouldPassThrough(velocity_control_num)?(
+      evt.should_pass_through = 1;
+    );
+  
     // As long as the input channel is concerned
     // Consider the event as treated (it's either DROPPED explicitly or handled).
-    was_processed = 1;
+    evt.was_processed = 1;
     
   ); // <- src chan matches  
 
-  was_processed;
+  evt;
 );
 
 function processPolyphonicAfterTouchMessage(evt) 
-  local(was_processed, blk_control, 
+  local(blk_control, 
         src_chan, src_chan_matches,
         dst_chan, dst_status,
         new_key, key_range_resolved,
         val_01, out_val_01)
 (
-  was_processed = 0;
-  
   key_range_resolved      = keyKBRangeResolved(evt.key);
   blk_control             = afterTouchControlForKBRange(key_range_resolved);
   src_chan                = keyboardInputChannel();
@@ -5127,23 +5209,26 @@ function processPolyphonicAfterTouchMessage(evt)
       
     ); // <- dst chan is not drop
     
+    controlShouldPassThrough(blk_control)?(
+      evt.should_pass_through = 1;
+    );
+    
     // As long as the input channel is concerned
     // Consider the event as treated (it's either DROPPED explicitly or handled).
-    was_processed = 1;
+    evt.was_processed = 1;
     
   ); // <- src chan matches  
 
-  was_processed;
+  evt;
 );
 
 function processPitchBendMessage(evt) 
-  local(blk_control, was_processed,
+  local(blk_control,
   src_chan, dst_chan,
   src_chan_matches, ctrl_is_enabled, 
   in_val, in_val_01, sigmul,
   out_status, out_val, out_val_01)
 (
-  was_processed               = 0;
   blk_control                 = CONTROL_PITCH_BEND;
   src_chan                    = controlInputChannel(blk_control);
    
@@ -5180,21 +5265,23 @@ function processPitchBendMessage(evt)
     // Output low res, normalize by 127 (max is 127).
     midiSend(evt.mpos, out_status, out_val & 0x7F , (out_val >> 7) & 0x7F  );
     
+    controlShouldPassThrough(blk_control)?(
+      evt.should_pass_through = 1;
+    );
+    
     // Consider the event as treated.
-    was_processed = 1;
+    evt.was_processed = 1;
   ); // <- src chan matches and ctrl is enabled
   
-  was_processed;
+  evt;
 );
 
-
 function mainLoop() 
-  local(mpos,msg1,msg2,msg3,was_routed,bus_matches)
+  local(mpos,msg1,msg2,msg3,bus_matches)
 (
 
   while(midirecv(mpos, msg1, msg2, msg3))
   (
-  
     evt = 0;
     evt.bus    = midi_bus + 1; // 1-16, not 0-15
     evt.mpos   = mpos;
@@ -5206,6 +5293,8 @@ function mainLoop()
     evt.chan   = (msg1 & 0x0F)+1; // 1-16, not 0-15
     evt.cc_num = 0;
     evt.cc_val = 0;
+    evt.should_pass_through = 0;
+    evt.was_processed = 0;
      
     bus_matches = (midiBusInput() == ANY || midiBusInput() == evt.bus);
     
@@ -5224,11 +5313,17 @@ function mainLoop()
           disableCCLearn();
         );
       
-        was_routed = processCCMessage(evt);   
-        !was_routed && !shouldDropUnroutedCCMessages()?(
+        processCCMessage(evt);   
+        (!evt.was_processed && !shouldDropUnroutedCCMessages())?(
           // Re-send message
           midisend(mpos, msg1, msg2, msg3);
         ); 
+        
+        // Explicit user pass through
+        (evt.was_processed && evt.should_pass_through)?(
+          midisend(mpos, msg1, msg2, msg3);
+        );
+        
       ):(
       (evt.type == MSG_NOTE_ON || evt.type == MSG_NOTE_OFF)?(
         
@@ -5237,12 +5332,16 @@ function mainLoop()
         evt.key       = midiNoteToKey(evt.note);
         evt.velocity  = msg3;
           
-        was_routed    = processNoteMessage(evt);
-         !was_routed && !shouldDropUnroutedNoteMessages()?(
+        processNoteMessage(evt);
+        (!evt.was_processed && !shouldDropUnroutedNoteMessages())?(
            // Re-send message
            midisend(mpos, msg1, msg2, msg3);
         );
         
+        // Explicit user pass through
+        (evt.was_processed && evt.should_pass_through)?(
+          midisend(mpos, msg1, msg2, msg3);
+        );
       ):(
       (evt.type == MSG_AT_POLY)?(
         
@@ -5251,9 +5350,14 @@ function mainLoop()
         evt.key         = midiNoteToKey(evt.note);
         evt.after_touch = msg3;
          
-        was_routed      = processPolyphonicAfterTouchMessage(evt);
-        !was_routed && !shouldDropUnroutedPolyphonicAfterTouchMessages()?(
+        processPolyphonicAfterTouchMessage(evt);
+        (!evt.was_processed && !shouldDropUnroutedPolyphonicAfterTouchMessages())?(
           // Re-send message
+          midisend(mpos, msg1, msg2, msg3);
+        );
+        
+        // Explicit user pass through
+        (evt.was_processed && evt.should_pass_through)?(
           midisend(mpos, msg1, msg2, msg3);
         );
       ):(
@@ -5269,9 +5373,14 @@ function mainLoop()
           disableCCLearn();
         );
       
-        was_routed      = processCCMessage(evt);
-        !was_routed && !shouldDropUnroutedCCMessages()?(
+        processCCMessage(evt);
+        (!evt.was_processed && !shouldDropUnroutedCCMessages())?(
           // Re-send message
+          midisend(mpos, msg1, msg2, msg3);
+        );
+        
+        // Explicit user pass through
+        (evt.was_processed && evt.should_pass_through)?(
           midisend(mpos, msg1, msg2, msg3);
         );
       ):(
@@ -5280,11 +5389,17 @@ function mainLoop()
         // PITCH BEND
         evt.pitch_bend = ((msg3 & 0x7F) << 7) | (msg2 & 0x7F);
         
-        was_routed      = processPitchBendMessage(evt);
-        !was_routed && !shouldDropUnroutedPitchBendMessages()?(
+        processPitchBendMessage(evt);
+        (!evt.was_processed && !shouldDropUnroutedPitchBendMessages())?(
           // Re-send message
           midisend(mpos, msg1, msg2, msg3);
         );
+        
+        // Explicit user pass through
+        (evt.was_processed && evt.should_pass_through)?(
+          midisend(mpos, msg1, msg2, msg3);
+        );
+        
       ):(
         // Unhandled type of message, pass through
         midisend(mpos, msg1, msg2, msg3);
