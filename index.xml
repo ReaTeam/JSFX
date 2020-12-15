@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="4764b93632985cf923ecf1fdcc8ecf404c037087">
+<index version="1" name="ReaTeam JSFX" commit="ba80e945ecd5f56437d19092e2dd7b743234a305">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -548,6 +548,23 @@ Moreover DAW-Parameters (hidden sliders) "x" and "Y" are provided for being dire
       <version name="1.1" author="polgo" time="2020-02-29T01:53:39Z">
         <changelog><![CDATA[Fixed note off problem]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/9df9682cee8e1bcceac9b3d3f273c3641fee9065/MIDI/polgo_MIDI%20Varocity.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="rekseffeks_MIDI CC to pitchbend.jsfx" type="effect" desc="MIDI CC to pitchbend">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MIDI CC to pitchbend\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This was designed to allow me to pitch bend my MIDI when the only useful pitch bend input was a CC converted from a gamepad joystick. The software I used to generate the CC was Fergo JoystickMIDI, with LoopBe1 to route it into Reaper.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Known bugs:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Bending all the way down to zero might accidentally reset the bend to 50% (no bend). This is because zero is also the value generated when the CC receives no input.\sa180\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="reks effeks" time="2020-12-15T16:46:37Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/ba80e945ecd5f56437d19092e2dd7b743234a305/MIDI/rekseffeks_MIDI%20CC%20to%20pitchbend.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI CC Bistate Button.jsfx" type="effect" desc="MIDI CC Bistate Button">
