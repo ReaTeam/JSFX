@@ -1,6 +1,6 @@
 # ReaTeam JSFX Repository
 
-[![Build status](https://travis-ci.org/ReaTeam/JSFX.svg?branch=master)](https://travis-ci.org/ReaTeam/JSFX)
+![check](https://github.com/ReaTeam/JSFX/workflows/check/badge.svg)
 
 Community-maintained collection of JS effects for REAPER.
 
