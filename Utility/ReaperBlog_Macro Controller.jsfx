@@ -1,12 +1,8 @@
-/**
- * JSFX Name: Macro controller
- * About:
- *  Dummy controls to use with Parameter link/modulation
- * Author: The REAPER Blog
- * Licence: GPL v3
- * REAPER: 5.0
- * Version: 1.0
- */
+desc: Macro controller
+author: The REAPER Blog
+version: 1.0
+provides: ReaperBlog_Macro Controller/New file 1.jsfx
+about: Dummy controls to use with Parameter link/modulation
 
 /**
  * Changelog:
