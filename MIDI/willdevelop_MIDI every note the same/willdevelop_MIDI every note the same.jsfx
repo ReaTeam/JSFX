@@ -1,11 +1,4 @@
-desc: MIDI every note the same
-author: Will Develop
-version: 1.0
-metapackage: true
-provides: willdevelop_MIDI every note the same/willdevelop_MIDI every note the same.jsfx
-link:
-  Forum Thread https://forum.cockos.com/showthread.php?p=2297569#post2297569
-  My Website https://willrecords.tk/home.php
+noindex: true
 
 desc:MIDI every note the same by Will Develop
 //tags: MIDI processing
