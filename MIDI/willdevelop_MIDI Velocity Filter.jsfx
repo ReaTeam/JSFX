@@ -1,9 +1,11 @@
 desc: MIDI Velocity Filter
 author: Will-Develop
 version: 1.0
+metapackage: true
+provides: willdevelop_MIDI Velocity Filter/willdevelop_MIDI Velocity Filter.jsfx
 link:
-  My Website http://will-records.tk/
   Forum Thread https://forum.cockos.com/showthread.php?p=2297585#post2297585
+  My Website https://willrecords.tk
 
 //tags: MIDI processing
 //author: Will Records

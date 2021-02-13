@@ -1,0 +1,36 @@
+noindex: true
+
+desc:MIDI Velocity Filter by Will Develop
+//tags: MIDI processing
+//author: Will Deveolp
+
+slider1:min_vel=0<-0,127,1>Min Velocity
+slider2:max_vel=127<-0,127,1>Max Velocity
+
+in_pin:none
+out_pin:none
+
+@init
+
+NOTE_OFF = 8;
+NOTE_ON = 9;
+
+was_filtered = 1024;  // array for storing which notes are filtered
+
+@block
+
+  while (
+    input = midirecv(mpos, msg1, msg23);
+    input? (
+
+      vel=(msg23/256)|0;
+      
+      vel >= min_vel && vel <= max_vel?(
+        midisend(mpos, msg1, msg23);
+      ):
+      (
+        midisend(mpos, $x80, msg23);
+      );
+  
+    )
+  );
