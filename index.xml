@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="ba80e945ecd5f56437d19092e2dd7b743234a305">
+<index version="1" name="ReaTeam JSFX" commit="da21627cf6f3bb421417fbb68bfd7f8c23489340">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -126,6 +126,33 @@ Improve behavior when the minimum beats slider > maximum beats and vice versa]]>
         <changelog><![CDATA[Fix handling of MIDI note #128
 Fix note off events always being sent to channel 1]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/ca7c02c4a274b0b15d2aa972c8e747bad69cfbe1/MIDI/cfillion_Sustain%20pedal%20to%20note%20length.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="erantalmor_MIDI Rhythm Trainer.jsfx" type="effect" desc="MIDI Rhythm Trainer">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MIDI Rhythm Trainer\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 A tool for improving your sense of rhythm.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Key features:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Define a rhythmic pattern, and play along to hit the pattern. Only accurate notes will be heard!\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Get visual and audio feedback on your performance.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Error bound: control the level of accuracy you wish to achieve.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Auto error bound shrink: let the tool challenge you as you improve.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Support complex polyrhythms, e.g: 4 beat pattern, divided to 5 in the right hand, 7 in the left hand.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Set up complex splits - up to 4 "lanes", receiving separate key ranges and input channels.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Set "click' sounds for each lane (like a metronome).\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "Swing" and "Phase" parameters.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab See you progress on a "10 minute training graph"\sa180\par}
+}
+]]></description>
+        <link rel="website" href="https://youtu.be/cifj6eh_LF0">Youtube tutorial</link>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?t=250891">Forum Thread</link>
+      </metadata>
+      <version name="1.01" author="Eran Talmor" time="2021-03-16T14:08:03Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/da21627cf6f3bb421417fbb68bfd7f8c23489340/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
       </version>
     </reapack>
     <reapack name="mathphreak_Learningbaby.jsfx" type="effect" desc="Learningbaby">
