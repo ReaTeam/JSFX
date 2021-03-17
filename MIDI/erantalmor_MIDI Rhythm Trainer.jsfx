@@ -1,6 +1,16 @@
 desc: MIDI Rhythm Trainer
 author: Eran Talmor
-version: 1.01
+version: 1.02
+changelog:
+  >> Improved Swing and Phase handling:
+  * Double click to reset
+  * Added "angle" value alongside decimal fraction
+  * Control-drag in jumps of 30 degrees (==1/12 == 0.08333)
+  * Swing range expanded to -0.92 => +0.92 (-330 => 330 degress)
+
+  >> Fixed a glitch playing double clicks when enabling the click.
+
+  >> Mouse wheel also control click on/off.
 link:
   Youtube tutorial https://youtu.be/cifj6eh_LF0
   Forum Thread https://forum.cockos.com/showthread.php?t=250891
@@ -41,7 +51,7 @@ slider4:0<0,1,1{Off,On}>Auto Shrink Error Bound
 
 // Hidden sliders per lane
 slider13:8<1,32,1>-Divisions1
-slider14:0<-0.5,0.5,0.01>-Swing1
+slider14:0<-0.91666, 0.91666,0.01>-Swing1
 slider15:0<0,1,0.01>-Phase1
 slider16:0<0,1,1>-Click1
 slider17:60<0,127,1>-ClickNote1
@@ -53,7 +63,7 @@ slider22:0<0,127,1>-InputMinNote1
 slider23:127<0,127,1>-InputMaxNote1
 
 slider26:8<1,32,1>-Divisions2
-slider27:0<-0.5,0.5,0.01>-Swing2
+slider27:0<-0.91666, 0.91666,0.01>-Swing2
 slider28:0<0,1,0.01>-Phase2
 slider29:0<0,1,1>-Click2
 slider30:62<0,127,1>-ClickNote2
@@ -65,7 +75,7 @@ slider35:0<0,127,1>-InputMinNote2
 slider36:127<0,127,1>-InputMaxNote2
 
 slider39:8<1,32,1>-Divisions3
-slider40:0<-0.5,0.5,0.01>-Swing3
+slider40:0<-0.91666, 0.91666,0.01>-Swing3
 slider41:0<0,1,0.01>-Phase3
 slider42:0<0,1,1>-Click3
 slider43:64<0,127,1>-ClickNote3
@@ -77,7 +87,7 @@ slider48:0<0,127,1>-InputMinNote3
 slider49:127<0,127,1>-InputMaxNote3
 
 slider52:8<1,32,1>-Divisions4
-slider53:0<-0.5,0.5,0.01>-Swing4
+slider53:0<-0.91666, 0.91666,0.01>-Swing4
 slider54:0<0,1,0.01>-Phase4
 slider55:0<0,1,1>-Click4
 slider56:65<0,127,1>-ClickNote4
@@ -147,7 +157,7 @@ function resetPlay() local(i)
 (
   i=0;
   while (i<4) (
-    (v_play_timers[i] > 0 ? v_play_timers[i] = -1;);
+    v_play_timers[i] = -1;
     v_play_indices[i] = 0; 
     i += 1;
   )
@@ -211,7 +221,7 @@ function getSwing(lane)
 
 function setSwing(lane, value) local(idx)
 (
-  setSlider(lane, slider_offset_swing, value, -0.5, 0.5, 1);
+  setSlider(lane, slider_offset_swing, value, -0.91666, 0.91666, 1);
 );
 
 function getPhase(lane)
@@ -392,7 +402,7 @@ function playGrid(lane) local(sp_per_beat, sp_now, divs, sp_grid, channel)
   (v_play_off_timers[lane] < samplesblock) ? (
     midisend(max(0, v_play_off_timers[lane]), $x90 + channel, getClickNote(lane), 0);
     v_play_off_timers[lane] = 1000000;
-  );
+  );   
   
   // find next "grid line" such that timer will be >= sampleblock
   (v_play_timers[lane] < samplesblock) ? (
@@ -498,6 +508,7 @@ while (midirecv(offset,msg1,msg2,msg3)) ( // REAPER 4.59+ syntax w while()
        midisend(offset, msg1, msg2, msg3)
      : (
        reltime = getRelTime(offset);
+       
        hit = isHit(reltime, lane);
        hit == 0 ? midisend(offset,msg1,note,msg3);
        recordHistory(reltime, hit, lane, note)
@@ -521,6 +532,11 @@ function isLButtonRelease()
 function isRButtonRelease()
 (
   (2 ~ mouse_cap) & prev_mouse_cap & 2;
+);
+
+function isLButtonDoubleClick()
+(
+  isLButtonRelease() && (time_precise() - prev_mouse_l_button_release_time < 0.4); 
 );
 
 function rgb(r,g,b) 
@@ -622,15 +638,15 @@ function isMouseInRect(l,t,w,h)
   mouse_x >= l && mouse_x <= l+w && mouse_y >= t && mouse_y <= t+h;
 );
 
-function dragPhase(lane,focus_control,divs, l,t,w,h) local(dx, orig_value, orig_x, resolution, ctrl_id)
+function dragPhase(lane,focus_control,divs, l,t,w,h) local(dx, ph, orig_value, orig_x, prev_x, resolution, ctrl_id)
 (
   ctrl_id = controlId(lane, control_phase);
   
-  active_control == ctrl_id ? (
+  (mouse_x != prev_x) && (active_control == ctrl_id) ? (
       dx = orig_value + (mouse_x - orig_x)*divs/w/2;
       resolution = mouse_cap & 4 ? 12 : 360;  
       dx = floor(dx*resolution + 0.5) / resolution;
-      setPhase(lane, max(0, min(1, dx)));
+      setPhase(lane, dx);
     ) 
   : active_control == 0 && focus_control == ctrl_id && (mouse_cap & 1) ? (
       active_control = focus_control;
@@ -638,20 +654,25 @@ function dragPhase(lane,focus_control,divs, l,t,w,h) local(dx, orig_value, orig_
       orig_x = mouse_x;
   );
   
+  focus_control == ctrl_id && isLButtonDoubleClick() ? setPhase(lane, 0);
+  
   (active_control == ctrl_id || focus_control == ctrl_id) ? (
-    sprintf(#value_edit, "Phase: %0.2f", getPhase(lane));
+    ph = getPhase(lane);
+    sprintf(#value_edit, "Phase: %0.2f (%0.0f°)", ph, ph*360);
   );
+  
+  prev_x = mouse_x;
 );
 
-function dragSwing(lane,focus_control,divs, l,t,w,h) local(dx, orig_value, orig_x, resolution, ctrl_id)
+function dragSwing(lane,focus_control,divs, l,t,w,h) local(dx, sw, orig_value, orig_x, prev_x, resolution, ctrl_id)
 (
   ctrl_id = controlId(lane, control_swing);
   
-  active_control == ctrl_id ? (
+  (mouse_x != prev_x) && (active_control == ctrl_id) ? (
       dx = orig_value + (mouse_x - orig_x)*divs/w/2;
       resolution = mouse_cap & 4 ? 12 : 360;  
       dx = floor(dx*resolution + 0.5) / resolution;
-      setSwing(lane, max(-0.5, min(0.5, dx)));
+      setSwing(lane, dx);
     ) 
   : active_control == 0 && focus_control == ctrl_id && (mouse_cap & 1) ? (
       active_control = focus_control;
@@ -659,9 +680,13 @@ function dragSwing(lane,focus_control,divs, l,t,w,h) local(dx, orig_value, orig_
       orig_x = mouse_x;
   );
   
+  focus_control == ctrl_id && isLButtonDoubleClick() ? setSwing(lane, 0);
+
   (active_control == ctrl_id || focus_control == ctrl_id) ? (
-    sprintf(#value_edit, "Swing: %0.2f", getSwing(lane));
-  );
+    sw = getSwing(lane);
+    sprintf(#value_edit, "Swing: %0.2f (%0.0f°)", sw, sw*360);  );
+  
+  prev_x = mouse_x;
 );
 
 function emptyRect(l,t,w,h)
@@ -715,7 +740,7 @@ function toggleListen(control)
   listen_note_control = listen_note_control == control ? 0 : control;
 );
 
-function drawToolBar(lane, l, t, w, h) local(release, f1, f2, f3, f4, f5, f6, f7, f8, button_left, button_top, click_note)
+function drawToolBar(lane, l, t, w, h) local(release, f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, button_width, button_left, button_top, click_note)
 (
   gfx_setfont(1, "Arial", 14);
   release = isLButtonRelease();
@@ -793,7 +818,8 @@ function drawToolBar(lane, l, t, w, h) local(release, f1, f2, f3, f4, f5, f6, f7
     (listen_note_control == control_button_in_min_note_id) ? sprintf(#value_edit, "Input Min Note: LISTENING") 
     : f10 ? sprintf(#value_edit, "Input Min Note: %s (%d)", noteName(min_note), min_note); 
     mouse_wheel_dir ? (
-      (f1 || f2) ? setDivs(lane, getDivs(lane)+mouse_wheel_dir)
+      f5 ? setClick(lane, mouse_wheel_dir)
+      : (f1 || f2) ? setDivs(lane, getDivs(lane)+mouse_wheel_dir)
       : (f3 || f4) ? setClickVel(lane, getClickVel(lane)+mouse_wheel_dir)
       : f6 && (listen_note_control != control_button_click_note_id) ? setClickNote(lane, click_note+mouse_wheel_dir)
       : (f7 || f8) ? setInputChannel(lane, getInputChannel(lane)+mouse_wheel_dir)
@@ -814,7 +840,7 @@ function drawMidiMonitor(lane, l,t,w,h) local(age)
   emptyRect(l,t,w-1,h-1);
 );
 
-function DrawGrid(lane, l,t,w,h) local(i, x,y, hit,now,low,grid,high,i,divs, toolbar_height, focus_control)
+function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high,i,divs, toolbar_height, focus_control)
 (  
   focus_control = 0;
   toolbar_height = 20;
@@ -1026,6 +1052,7 @@ drawTrainingGraphTitle(xmargin, y);
 y+=20;
 drawTrainingGraph(xmargin, y, width, max(80, gfx_h - footer_margin - y));
 
+isLButtonRelease() ? prev_mouse_l_button_release_time = time_precise();
 prev_mouse_cap = mouse_cap;
 mouse_wheel = 0;
 mouse_cap & 1 == 0 ? active_control = 0;
