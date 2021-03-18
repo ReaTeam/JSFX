@@ -2,15 +2,8 @@ desc: MIDI Rhythm Trainer
 author: Eran Talmor
 version: 1.02
 changelog:
-  >> Improved Swing and Phase handling:
-  * Double click to reset
-  * Added "angle" value alongside decimal fraction
-  * Control-drag in jumps of 30 degrees (==1/12 == 0.08333)
-  * Swing range expanded to -0.92 => +0.92 (-330 => 330 degress)
-
-  >> Fixed a glitch playing double clicks when enabling the click.
-
-  >> Mouse wheel also control click on/off.
+  * Fixed a critical bug preventing changing swing/phase on lanes 2,3,4
+  * Renamed slide2 from "Number of Lanes" to "Lanes"
 link:
   Youtube tutorial https://youtu.be/cifj6eh_LF0
   Forum Thread https://forum.cockos.com/showthread.php?t=250891
@@ -45,7 +38,7 @@ about:
 *******************************************************************************/
 
 slider1:4<1,32,1>Beats
-slider2:0<0,3,1{1,2,3,4}>Number of Lanes
+slider2:0<0,3,1{1,2,3,4}>Lanes
 slider3:50<1,100,0.1>Error Bound (%)
 slider4:0<0,1,1{Off,On}>Auto Shrink Error Bound
 
@@ -647,6 +640,7 @@ function dragPhase(lane,focus_control,divs, l,t,w,h) local(dx, ph, orig_value, o
       resolution = mouse_cap & 4 ? 12 : 360;  
       dx = floor(dx*resolution + 0.5) / resolution;
       setPhase(lane, dx);
+      prev_x = mouse_x;
     ) 
   : active_control == 0 && focus_control == ctrl_id && (mouse_cap & 1) ? (
       active_control = focus_control;
@@ -659,9 +653,7 @@ function dragPhase(lane,focus_control,divs, l,t,w,h) local(dx, ph, orig_value, o
   (active_control == ctrl_id || focus_control == ctrl_id) ? (
     ph = getPhase(lane);
     sprintf(#value_edit, "Phase: %0.2f (%0.0f°)", ph, ph*360);
-  );
-  
-  prev_x = mouse_x;
+  );  
 );
 
 function dragSwing(lane,focus_control,divs, l,t,w,h) local(dx, sw, orig_value, orig_x, prev_x, resolution, ctrl_id)
@@ -673,6 +665,7 @@ function dragSwing(lane,focus_control,divs, l,t,w,h) local(dx, sw, orig_value, o
       resolution = mouse_cap & 4 ? 12 : 360;  
       dx = floor(dx*resolution + 0.5) / resolution;
       setSwing(lane, dx);
+      prev_x = mouse_x;
     ) 
   : active_control == 0 && focus_control == ctrl_id && (mouse_cap & 1) ? (
       active_control = focus_control;
@@ -685,8 +678,6 @@ function dragSwing(lane,focus_control,divs, l,t,w,h) local(dx, sw, orig_value, o
   (active_control == ctrl_id || focus_control == ctrl_id) ? (
     sw = getSwing(lane);
     sprintf(#value_edit, "Swing: %0.2f (%0.0f°)", sw, sw*360);  );
-  
-  prev_x = mouse_x;
 );
 
 function emptyRect(l,t,w,h)
