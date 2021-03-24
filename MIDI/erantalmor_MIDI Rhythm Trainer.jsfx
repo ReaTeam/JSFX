@@ -1,9 +1,13 @@
 desc: MIDI Rhythm Trainer
 author: Eran Talmor
-version: 1.03
+version: 1.10
 changelog:
-  * Fixed an critical bug preventing changing swing/phase on Lanes 2/3/4
-  * Renamed slider "Number of Lanes" to "Lanes"
+  Added per-lane "probability density" curves!
+  These show you where you have been hitting the pattern, and gives a picture of how accurate you are on specific locations (early, late, variance,...).
+
+  Fixes:
+  Issues with click and looping.
+  Fixed some minor graphical issues.
 link:
   Youtube tutorial https://youtu.be/cifj6eh_LF0
   Forum Thread https://forum.cockos.com/showthread.php?t=250891
@@ -15,7 +19,11 @@ about:
   Key features:
 
   * Define a rhythmic pattern, and play along to hit the pattern. Only accurate notes will be heard!
-  * Get visual and audio feedback on your performance. 
+  * Get visual and audio feedback on your performance:
+      * Controllable target accuracy ("error bound")
+      * Only accurate notes are  heard
+      * Colors for early/late notes
+      * "Probability Density" curves shows where you are usually hitting over time. 
   * Error bound: control the level of accuracy you wish to achieve.
   * Auto error bound shrink: let the tool challenge you as you improve.
   * Support complex polyrhythms, e.g: 4 beat pattern, divided to 5 in the right hand, 7 in the left hand.
@@ -133,18 +141,96 @@ graph_start = 0;
 graph_idx = 0;
 hit_memory = 0.85;
 prev_select = -1;
+histogram_buckets = 1024;
+histogram_size = histogram_buckets*2;
 
-v_history_time = 4; 
-v_history_rel_time = v_history_time + max_hist;
-v_history_hits = v_history_rel_time + max_hist;
-v_history_lane = v_history_hits + max_hist;
-v_history_notes = v_history_lane + max_hist;
-v_midi_monitor_last_hit = v_history_notes + max_hist;
-v_play_indices = v_midi_monitor_last_hit + 4;
-v_play_timers = v_play_indices + 4;
-v_play_off_timers = v_play_timers + 4;
-v_graph_hit_rate = v_play_off_timers + 4*max_hist;
-v_graph_error_bound = v_graph_hit_rate + max_graph;
+heap_top = 0;
+
+function malloc(size) local(p) (
+  p = heap_top;
+  heap_top += size;
+  p;
+);
+
+v_history_time = malloc(max_hist); 
+v_history_rel_time = malloc(max_hist);
+v_history_hits = malloc(max_hist);
+v_history_lane = malloc(max_hist);
+v_history_notes = malloc(max_hist);
+v_midi_monitor_last_hit = malloc(4);
+v_play_indices = malloc(4);
+v_play_timers = malloc(4);
+v_play_off_timers = malloc(4);
+v_graph_hit_rate = malloc(max_graph);
+v_graph_error_bound = malloc(max_graph);
+v_histogram = malloc(4*histogram_size);
+v_histogram_tmp = malloc(histogram_size);
+v_histogram_max_value = malloc(4);
+memset(v_histogram_max_value, 1, 4);
+v_rounds = malloc(4);
+v_beat_pos = malloc(4);
+
+v_normal_dist = malloc(31);
+v_normal_dist[0] = 0;
+v_normal_dist[1] = 0.0398;
+v_normal_dist[2] = 0.0793;
+v_normal_dist[3] = 0.1179;
+v_normal_dist[4] = 0.1554;
+v_normal_dist[5] = 0.1915;
+v_normal_dist[6] = 0.2257;
+v_normal_dist[7] = 0.258;
+v_normal_dist[8] = 0.2881;
+v_normal_dist[9] = 0.3159;
+v_normal_dist[10] = 0.3413;
+v_normal_dist[11] = 0.3643;
+v_normal_dist[12] = 0.3849;
+v_normal_dist[13] = 0.4032;
+v_normal_dist[14] = 0.4192;
+v_normal_dist[15] = 0.4332;
+v_normal_dist[16] = 0.4452;
+v_normal_dist[17] = 0.4554;
+v_normal_dist[18] = 0.4641;
+v_normal_dist[19] = 0.4713;
+v_normal_dist[20] = 0.4772;
+v_normal_dist[21] = 0.4821;
+v_normal_dist[22] = 0.4861;
+v_normal_dist[23] = 0.4893;
+v_normal_dist[24] = 0.4918;
+v_normal_dist[25] = 0.4938;
+v_normal_dist[26] = 0.4953;
+v_normal_dist[27] = 0.4965;
+v_normal_dist[28] = 0.4974;
+v_normal_dist[29] = 0.4981;
+v_normal_dist[30] = 0.4987;
+
+v_normal_mask = malloc(histogram_size);
+
+function normal_dist(x)
+(
+  abs_idx = min(30, floor(abs(x)*10));
+  next_idx = min(30, abs_idx+1);
+  dx = abs(x)*10 - abs_idx;
+  p1 = (x >= 0 ? v_normal_dist[abs_idx] : -v_normal_dist[abs_idx]);
+  p2 = (x >- 0 ? v_normal_dist[next_idx] : -v_normal_dist[next_idx]);
+  p1*(1-dx) + p2*dx;
+);
+
+function normal_slice(x, w)
+(
+  normal_dist(x+w/2) - normal_dist(x-w/2);
+);
+
+function setNormalMask(h)
+(
+  memset(v_normal_mask, 0, histogram_size);
+  i = 0;
+  while (i<=histogram_buckets/2) (
+    v_normal_mask[i*2] = normal_slice(h*(i/histogram_buckets),0.1)/5;
+    v_normal_mask[histogram_size-i*2] = v_normal_mask[i*2];
+    i += 1;
+  );
+  fft(v_normal_mask, histogram_buckets);
+);
 
 function resetPlay() local(i)
 (
@@ -157,6 +243,12 @@ function resetPlay() local(i)
 );
 
 resetPlay();
+
+function isPlaying()
+(
+  // playing or recording
+  play_state == 1 || play_state == 5;
+);
 
 // Relative time to the beats
 function getRelTime(offset) local(p)
@@ -198,6 +290,7 @@ function updateMaxDivs() local(i)
     max_divs = max(max_divs, getDivs(i));
     i += 1;
   );
+  setNormalMask(max_divs*20);
 );
 
 function setDivs(lane, value)
@@ -389,8 +482,17 @@ resetPlay();
 
 @block
 
-function playGrid(lane) local(sp_per_beat, sp_now, divs, sp_grid, channel)
+function playGrid(lane) local(sp_per_beat, sp_now, divs, sp_grid, channel, i, prev_beat_position)
 (
+  beat_position < prev_beat_position ? (
+    i=0;
+    while(i<4) (
+      v_play_indices[i] = 0;
+      v_play_timers[i] = -1;
+      i+=1;
+    );
+  );
+
   channel = getClickChannel(lane)-1;
   (v_play_off_timers[lane] < samplesblock) ? (
     midisend(max(0, v_play_off_timers[lane]), $x90 + channel, getClickNote(lane), 0);
@@ -399,21 +501,48 @@ function playGrid(lane) local(sp_per_beat, sp_now, divs, sp_grid, channel)
   
   // find next "grid line" such that timer will be >= sampleblock
   (v_play_timers[lane] < samplesblock) ? (
-    isGridEnabled(lane, v_play_indices[lane]) && v_play_timers[lane] >= 0 ? 
+    isGridEnabled(lane, v_play_indices[lane]) && v_play_timers[lane] >= 0 ? (
       midisend(max(0, v_play_timers[lane]), $x90 + channel, getClickNote(lane), getClickVel(lane));
+      v_play_off_timers[lane] = v_play_timers[lane] + 1;
+    );
     sp_per_beat = srate * 60 / tempo;
     sp_now = floor(0.001 + beat_position * sp_per_beat);
     divs = getDivs(lane);
+    
     while (v_play_timers[lane] < samplesblock) (
       v_play_indices[lane] += 1;
       sp_grid = floor(0.001 + 1 * getGrid(lane, divs, v_play_indices[lane]) * sp_per_beat * beats);
       v_play_timers[lane] = sp_grid - sp_now;
     );
-    v_play_off_timers[lane] = timer0 * 0.1;
   );
   
   v_play_timers[lane] -= samplesblock;
   v_play_off_timers[lane] -= samplesblock;
+  prev_beat_position = beat_position;
+);
+
+function decayHistogram(lane) local(i, decay_rate, round, prev_round, prev_pos)
+(
+  decay_rate = 0.95;
+  
+  round = floor(beat_position / beats);
+  (v_rounds[lane] != round) || (beat_position < v_beat_pos[lane]) ? (
+    i = 0;
+    while (i<histogram_buckets) (
+      v_histogram[histogram_size*lane + 2*i] *= decay_rate;
+      i+=1;
+    );
+    v_histogram_max_value[lane] *= decay_rate;
+    v_rounds[lane] = round;
+    v_beat_pos[lane] = beat_position;
+  );
+);
+
+function recordHistogram(reltime, lane)
+(
+  bucket = floor(reltime * histogram_buckets);
+  // record as complex number x + 0i, i.e. x goes to event element
+  v_histogram[histogram_size*lane + 2*bucket] += 1;
 );
 
 function recordHistory(reltime, hit, lane, note)
@@ -474,7 +603,7 @@ function getLaneOfNote(note, channel) local(i, result)
   result; 
 );
 
-(play_state == 1) ? (
+isPlaying() ? (
   getClick(0) ? playGrid(0);
   getClick(1) && (num_lanes>1) ? playGrid(1);
   getClick(2) && (num_lanes>2) ? playGrid(2);
@@ -491,8 +620,7 @@ while (midirecv(offset,msg1,msg2,msg3)) ( // REAPER 4.59+ syntax w while()
      lane = getLaneOfNote(note, channel);
      lane >= 0 ? recordMidiMonitor(lane);
    );
-   
-   (play_state == 1) && is_note_on ? (
+   isPlaying() && is_note_on ? (
      listen_note_control ? (
        learnNote(note);
        midisend(offset, msg1, msg2, msg3)
@@ -504,7 +632,9 @@ while (midirecv(offset,msg1,msg2,msg3)) ( // REAPER 4.59+ syntax w while()
        
        hit = isHit(reltime, lane);
        hit == 0 ? midisend(offset,msg1,note,msg3);
-       recordHistory(reltime, hit, lane, note)
+       decayHistogram(lane);
+       recordHistory(reltime, hit, lane, note);
+       recordHistogram(reltime, lane);
      )
    ) : (
      is_note_on && listen_note_control ? learnNote(note);
@@ -512,7 +642,7 @@ while (midirecv(offset,msg1,msg2,msg3)) ( // REAPER 4.59+ syntax w while()
    );
 );
 
-(play_state == 1) ? recordTraining();
+isPlaying() ? recordTraining();
 
 @gfx
 #value_edit = "";
@@ -552,6 +682,7 @@ function drawFrame(x,y,w,h)
 (
   gfx_x = x;
   gfx_y = y;
+  gfx_a = 1;
   rgb(0.5,0.5,0.5);
   gfx_lineto(x+w,y);
   rgb(1,1,1);
@@ -652,7 +783,7 @@ function dragPhase(lane,focus_control,divs, l,t,w,h) local(dx, ph, orig_value, o
   
   (active_control == ctrl_id || focus_control == ctrl_id) ? (
     ph = getPhase(lane);
-    sprintf(#value_edit, "Phase: %0.2f (%0.0f°)", ph, ph*360);
+    sprintf(#value_edit, "Phase: %0.2f (%0.0fÂ°)", ph, ph*360);
   );  
 );
 
@@ -677,7 +808,7 @@ function dragSwing(lane,focus_control,divs, l,t,w,h) local(dx, sw, orig_value, o
 
   (active_control == ctrl_id || focus_control == ctrl_id) ? (
     sw = getSwing(lane);
-    sprintf(#value_edit, "Swing: %0.2f (%0.0f°)", sw, sw*360);  );
+    sprintf(#value_edit, "Swing: %0.2f (%0.0fÂ°)", sw, sw*360);  );
 );
 
 function emptyRect(l,t,w,h)
@@ -831,6 +962,35 @@ function drawMidiMonitor(lane, l,t,w,h) local(age)
   emptyRect(l,t,w-1,h-1);
 );
 
+function drawHistogram(lane, l, t, w, h) local (value, x, y, normalized)
+(
+  rgb(0.5, 0.5, 0.5);
+  gfx_a = 0.6;
+  memcpy(v_histogram_tmp, v_histogram + lane*histogram_size, histogram_size);
+  i = 0;
+  while(i < histogram_buckets) (
+    v_histogram_tmp[i*2] /= histogram_buckets;
+    i+=1;
+  );
+  fft(v_histogram_tmp, histogram_buckets);
+  convolve_c(v_histogram_tmp, v_normal_mask, histogram_buckets);
+  ifft(v_histogram_tmp, histogram_buckets);
+  i = 0;
+  max_value = 0;
+  prev_max_value = v_histogram_max_value[lane];
+  while(i < w) (
+    x = l+i;
+    value = v_histogram_tmp[2*floor(i/w*histogram_buckets)];
+    max_value = max(value, max_value);
+    normalized = value / (prev_max_value ? prev_max_value : 1); 
+    y = max(t, t+h*(1-normalized/2));
+    gfx_line(x,y,x,t+h);
+    i+=1;
+  );
+  fit_speed = 0.05;
+  v_histogram_max_value[lane] = (1-fit_speed)*prev_max_value + fit_speed*max_value;
+);
+
 function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high,i,divs, toolbar_height, focus_control)
 (  
   focus_control = 0;
@@ -854,6 +1014,7 @@ function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high
     );
     i+=1;
   );
+  drawHistogram(lane, l, t, w, h);
   
   // Draw dashed rhythm lines
   i=0;
@@ -900,9 +1061,10 @@ function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high
   );
   gfx_setfont(1, "Arial", 14);
   
-  play_state ? (
+  isPlaying() ? (
     i=0;
     now = time_precise();
+    // Draw history (events)
     loop(max_hist,
       birth = v_history_time[i];
       (birth != 0) && (v_history_lane[i] == lane) ? (
