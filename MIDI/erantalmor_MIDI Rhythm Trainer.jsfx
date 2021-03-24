@@ -1,13 +1,14 @@
 desc: MIDI Rhythm Trainer
 author: Eran Talmor
-version: 1.10
+version: 1.11
 changelog:
-  Added per-lane "probability density" curves!
+  Added per-lane "probability density" curves (1.10)!
   These show you where you have been hitting the pattern, and gives a picture of how accurate you are on specific locations (early, late, variance,...).
 
   Fixes:
   Issues with click and looping.
   Fixed some minor graphical issues.
+  Junk character when  printing phase/swing angle (fix of 1.11)
 link:
   Youtube tutorial https://youtu.be/cifj6eh_LF0
   Forum Thread https://forum.cockos.com/showthread.php?t=250891
@@ -783,7 +784,7 @@ function dragPhase(lane,focus_control,divs, l,t,w,h) local(dx, ph, orig_value, o
   
   (active_control == ctrl_id || focus_control == ctrl_id) ? (
     ph = getPhase(lane);
-    sprintf(#value_edit, "Phase: %0.2f (%0.0fÂ°)", ph, ph*360);
+    sprintf(#value_edit, "Phase: %0.2f (%0.0f°)", ph, ph*360);
   );  
 );
 
@@ -808,7 +809,7 @@ function dragSwing(lane,focus_control,divs, l,t,w,h) local(dx, sw, orig_value, o
 
   (active_control == ctrl_id || focus_control == ctrl_id) ? (
     sw = getSwing(lane);
-    sprintf(#value_edit, "Swing: %0.2f (%0.0fÂ°)", sw, sw*360);  );
+    sprintf(#value_edit, "Swing: %0.2f (%0.0f°)", sw, sw*360);  );
 );
 
 function emptyRect(l,t,w,h)
