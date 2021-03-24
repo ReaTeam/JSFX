@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="d0d6ec41195b63314fb26bed1573d73f8b37c30c">
+<index version="1" name="ReaTeam JSFX" commit="e28c6baba14c800363b7fddb0ddb6b5610734269">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -138,7 +138,11 @@ Fix note off events always being sent to channel 1]]></changelog>
 {\pard \ql \f0 \sa180 \li0 \fi0 A tool for improving your sense of rhythm.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Key features:\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Define a rhythmic pattern, and play along to hit the pattern. Only accurate notes will be heard!\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Get visual and audio feedback on your performance.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Get visual and audio feedback on your performance:\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Controllable target accuracy ("error bound")\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Only accurate notes are heard\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab Colors for early/late notes\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab "Probability Density" curves shows where you are usually hitting over time.\sa180\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Error bound: control the level of accuracy you wish to achieve.\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Auto error bound shrink: let the tool challenge you as you improve.\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Support complex polyrhythms, e.g: 4 beat pattern, divided to 5 in the right hand, 7 in the left hand.\par}
@@ -170,6 +174,15 @@ Fix note off events always being sent to channel 1]]></changelog>
         <changelog><![CDATA[* Fixed an critical bug preventing changing swing/phase on Lanes 2/3/4
 * Renamed slider "Number of Lanes" to "Lanes"]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/d0d6ec41195b63314fb26bed1573d73f8b37c30c/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
+      </version>
+      <version name="1.10" author="Eran Talmor" time="2021-03-24T20:26:22Z">
+        <changelog><![CDATA[Added per-lane "probability density" curves!
+These show you where you have been hitting the pattern, and gives a picture of how accurate you are on specific locations (early, late, variance,...).
+
+Fixes:
+Issues with click and looping.
+Fixed some minor graphical issues.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/e28c6baba14c800363b7fddb0ddb6b5610734269/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
       </version>
     </reapack>
     <reapack name="mathphreak_Learningbaby.jsfx" type="effect" desc="Learningbaby">
