@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="3e5cebc9a78da79ca5b4464aa068f169e24ceaf6">
+<index version="1" name="ReaTeam JSFX" commit="bba375a85255cb07891bd82d556456a58987fabb">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -193,6 +193,10 @@ Issues with click and looping.
 Fixed some minor graphical issues.
 Junk character when  printing phase/swing angle (fix of 1.11)]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/3e5cebc9a78da79ca5b4464aa068f169e24ceaf6/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
+      </version>
+      <version name="1.12" author="Eran Talmor" time="2021-03-26T15:24:35Z">
+        <changelog><![CDATA[Fixed no sound on first click after pressing play]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/bba375a85255cb07891bd82d556456a58987fabb/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
       </version>
     </reapack>
     <reapack name="mathphreak_Learningbaby.jsfx" type="effect" desc="Learningbaby">
