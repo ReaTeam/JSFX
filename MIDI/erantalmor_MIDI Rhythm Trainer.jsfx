@@ -1,14 +1,7 @@
 desc: MIDI Rhythm Trainer
 author: Eran Talmor
-version: 1.11
-changelog:
-  Added per-lane "probability density" curves (1.10)!
-  These show you where you have been hitting the pattern, and gives a picture of how accurate you are on specific locations (early, late, variance,...).
-
-  Fixes:
-  Issues with click and looping.
-  Fixed some minor graphical issues.
-  Junk character when  printing phase/swing angle (fix of 1.11)
+version: 1.12
+changelog: Fixed no sound on first click after pressing play
 link:
   Youtube tutorial https://youtu.be/cifj6eh_LF0
   Forum Thread https://forum.cockos.com/showthread.php?t=250891
@@ -235,12 +228,8 @@ function setNormalMask(h)
 
 function resetPlay() local(i)
 (
-  i=0;
-  while (i<4) (
-    v_play_timers[i] = -1;
-    v_play_indices[i] = 0; 
-    i += 1;
-  )
+  memset(v_play_timers, -1, 4);
+  memset(v_play_indices, -1, 4);
 );
 
 resetPlay();
@@ -485,35 +474,29 @@ resetPlay();
 
 function playGrid(lane) local(sp_per_beat, sp_now, divs, sp_grid, channel, i, prev_beat_position)
 (
-  beat_position < prev_beat_position ? (
-    i=0;
-    while(i<4) (
-      v_play_indices[i] = 0;
-      v_play_timers[i] = -1;
-      i+=1;
-    );
-  );
+  beat_position < prev_beat_position ? resetPlay();
 
   channel = getClickChannel(lane)-1;
   (v_play_off_timers[lane] < samplesblock) ? (
     midisend(max(0, v_play_off_timers[lane]), $x90 + channel, getClickNote(lane), 0);
     v_play_off_timers[lane] = 1000000;
   );   
-  
+
+  sp_per_beat = srate * 60 / tempo;
+  sp_now = floor(0.001 + beat_position * sp_per_beat);
+  divs = getDivs(lane);  
+
+  while (v_play_timers[lane] < 0) (
+    v_play_indices[lane] += 1;
+    sp_grid = floor(0.001 + 1 * getGrid(lane, divs, v_play_indices[lane]) * sp_per_beat * beats);
+    v_play_timers[lane] = sp_grid - sp_now;
+  );
+
   // find next "grid line" such that timer will be >= sampleblock
   (v_play_timers[lane] < samplesblock) ? (
     isGridEnabled(lane, v_play_indices[lane]) && v_play_timers[lane] >= 0 ? (
       midisend(max(0, v_play_timers[lane]), $x90 + channel, getClickNote(lane), getClickVel(lane));
       v_play_off_timers[lane] = v_play_timers[lane] + 1;
-    );
-    sp_per_beat = srate * 60 / tempo;
-    sp_now = floor(0.001 + beat_position * sp_per_beat);
-    divs = getDivs(lane);
-    
-    while (v_play_timers[lane] < samplesblock) (
-      v_play_indices[lane] += 1;
-      sp_grid = floor(0.001 + 1 * getGrid(lane, divs, v_play_indices[lane]) * sp_per_beat * beats);
-      v_play_timers[lane] = sp_grid - sp_now;
     );
   );
   
@@ -784,7 +767,7 @@ function dragPhase(lane,focus_control,divs, l,t,w,h) local(dx, ph, orig_value, o
   
   (active_control == ctrl_id || focus_control == ctrl_id) ? (
     ph = getPhase(lane);
-    sprintf(#value_edit, "Phase: %0.2f (%0.0f°)", ph, ph*360);
+    sprintf(#value_edit, "Phase: %0.2f (%0.0f\xB0)", ph, ph*360);
   );  
 );
 
@@ -809,7 +792,7 @@ function dragSwing(lane,focus_control,divs, l,t,w,h) local(dx, sw, orig_value, o
 
   (active_control == ctrl_id || focus_control == ctrl_id) ? (
     sw = getSwing(lane);
-    sprintf(#value_edit, "Swing: %0.2f (%0.0f°)", sw, sw*360);  );
+    sprintf(#value_edit, "Swing: %0.2f (%0.0f\xB0)", sw, sw*360);  );
 );
 
 function emptyRect(l,t,w,h)
