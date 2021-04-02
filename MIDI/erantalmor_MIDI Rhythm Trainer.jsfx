@@ -1,7 +1,9 @@
 desc: MIDI Rhythm Trainer
 author: Eran Talmor
-version: 1.12
-changelog: Fixed no sound on first click after pressing play
+version: 1.13
+changelog:
+  Save state of training graph  and probability curves between "play"s.
+  Easier setting of mask by right mouse button drag over grid lines.
 link:
   Youtube tutorial https://youtu.be/cifj6eh_LF0
   Forum Thread https://forum.cockos.com/showthread.php?t=250891
