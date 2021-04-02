@@ -1,7 +1,9 @@
 desc: MIDI Rhythm Trainer
 author: Eran Talmor
-version: 1.12
-changelog: Fixed no sound on first click after pressing play
+version: 1.13
+changelog:
+  Save state of training graph and probability curves between "Play"s.
+  Easier setting of mask by right mouse button drag over grid lines.
 link:
   Youtube tutorial https://youtu.be/cifj6eh_LF0
   Forum Thread https://forum.cockos.com/showthread.php?t=250891
@@ -131,12 +133,11 @@ hist_idx = 0;
 max_hist = 200;
 max_age = 60;
 max_graph = 10*60;
-graph_start = 0;
-graph_idx = 0;
 hit_memory = 0.85;
 prev_select = -1;
 histogram_buckets = 1024;
 histogram_size = histogram_buckets*2;
+hist_idx = 0;
 
 heap_top = 0;
 
@@ -151,6 +152,11 @@ v_history_rel_time = malloc(max_hist);
 v_history_hits = malloc(max_hist);
 v_history_lane = malloc(max_hist);
 v_history_notes = malloc(max_hist);
+memset(v_history_time, 0, max_hist);
+memset(v_history_rel_time, 0, max_hist);
+memset(v_history_hits, 0, max_hist);
+memset(v_history_lane, 0, max_hist);
+memset(v_history_notes, 0, max_hist);
 v_midi_monitor_last_hit = malloc(4);
 v_play_indices = malloc(4);
 v_play_timers = malloc(4);
@@ -160,7 +166,6 @@ v_graph_error_bound = malloc(max_graph);
 v_histogram = malloc(4*histogram_size);
 v_histogram_tmp = malloc(histogram_size);
 v_histogram_max_value = malloc(4);
-memset(v_histogram_max_value, 1, 4);
 v_rounds = malloc(4);
 v_beat_pos = malloc(4);
 
@@ -358,11 +363,20 @@ function isGridEnabled(lane, idx) local(d,idx,mask)
   mask & (1<<idx);
 );
 
-function toggleGrid(lane, idx) local(d,idx)
+function getGridMask(lane, idx)
 (
   d = getDivs(lane);
   idx = (idx + d) % d;
-  setSlider(lane, slider_offset_mask, getSlider(lane, slider_offset_mask) ~ (1<<idx), -2147483648, 2147483647, 0);
+  getSlider(lane, slider_offset_mask) & (1<<idx);
+);
+
+function setGridMask(lane, idx, value)
+(
+  d = getDivs(lane);
+  idx = (idx + d) % d;
+  value ?
+    setSlider(lane, slider_offset_mask, getSlider(lane, slider_offset_mask) | (1<<idx), -2147483648, 2147483647, 0)
+  : setSlider(lane, slider_offset_mask, getSlider(lane, slider_offset_mask) & (-1 ~ 1<<idx), -2147483648, 2147483647, 0);
 );
 
 function getInputChannel(lane)
@@ -543,13 +557,15 @@ function recordHistory(reltime, hit, lane, note)
   hist_idx = (hist_idx + 1) % max_hist;
 );
 
-function recordTraining() local(t)
+function recordTraining() local(t, prev_time)
 (
   t = time();
-  (t - graph_start > max_graph) ? graph_start = t;
-  graph_idx = t - graph_start;
-  v_graph_hit_rate[graph_idx] = hit_rate;
-  v_graph_error_bound[graph_idx] = error_bound;
+  t != prev_time ? (
+    graph_idx = (graph_idx+1) % max_graph;
+    v_graph_hit_rate[graph_idx] = hit_rate;
+    v_graph_error_bound[graph_idx] = error_bound;
+    prev_time = t
+  )
 );
 
 function recordMidiMonitor(lane)
@@ -633,12 +649,19 @@ isPlaying() ? recordTraining();
 
 function isLButtonRelease()
 (
-  (1 ~ mouse_cap) & prev_mouse_cap & 1;
+  (1 ~ mouse_cap) & (1 & prev_mouse_cap);
+);
+
+function isRButtonPress()
+(
+  rr +=
+  (2 & mouse_cap) & (2 ~ prev_mouse_cap);
+  (2 & mouse_cap) & (2 ~ prev_mouse_cap);
 );
 
 function isRButtonRelease()
 (
-  (2 ~ mouse_cap) & prev_mouse_cap & 2;
+  (2 ~ mouse_cap) & (2 & prev_mouse_cap);
 );
 
 function isLButtonDoubleClick()
@@ -1006,16 +1029,23 @@ function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high
   ctrl_swing_id = controlId(lane, control_swing);
   loop(divs, 
     grid = l+getGrid(lane, divs, i)*w;
-    mouse_focus = isMouseInRect(grid-8, t, 16, h - toolbar_height);
-    ((i+1)%2) && ((!active_control && mouse_focus) || (active_control == ctrl_phase_id)) ? (
-      focus_control = ctrl_phase_id;
-      rgb(0,0.5,0.5);
-      gfx_rect(grid-6, t, 12, h);
-    );
-    (i%2) && ((!active_control && mouse_focus) || (active_control == ctrl_swing_id)) ? (
-      focus_control = ctrl_swing_id;
-      rgb(0.5,0,1);
-      gfx_rect(grid-6, t, 12, h);
+    grid_mask_mode ? (
+      mouse_focus = isMouseInRect(grid - w/divs/2, t, w/divs, h - toolbar_height);
+      mouse_focus && (mouse_cap & 2) ? setGridMask(lane, i, 2-grid_mask_mode);
+    )
+    : (
+      mouse_focus = isMouseInRect(grid-8, t, 16, h - toolbar_height);
+      mouse_focus && isRButtonPress() ? grid_mask_mode = 1 + (getGridMask(lane, i) > 0);
+      ((i+1)%2) && ((!active_control && mouse_focus) || (active_control == ctrl_phase_id)) ? (
+        focus_control = ctrl_phase_id;
+        rgb(0,0.5,0.5);
+        gfx_rect(grid-6, t, 12, h);
+      );
+      (i%2) && ((!active_control && mouse_focus) || (active_control == ctrl_swing_id)) ? (
+        focus_control = ctrl_swing_id;
+        rgb(0.5,0,1);
+        gfx_rect(grid-6, t, 12, h);
+      );
     );
     rgb(0.67, 0.67, 0.67);
     verticalDashedLine(grid, t, t+h, 1, 5);
@@ -1024,9 +1054,10 @@ function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high
     : (sprintf(str, "(%d)", i+1); rgb(0.5, 0.5, 0.5));
     gfx_setfont(1, "Arial", 16);
     printCenter(grid,t+h/2,str);
-    mouse_focus && isRButtonRelease() ? toggleGrid(lane, i);
     i+=1;
   );
+  
+  isRButtonRelease() ? grid_mask_mode = 0;
     
   // Draw beat marks
   rgb(0.8, 0.8, 0.8);
@@ -1085,14 +1116,12 @@ function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high
 
 function clearTrainingGraph()
 (
-  graph_start=0;
-  graph_idx=0;
-  i=0;
-  while (i<max_graph) (
-    v_graph_error_bound[i] = 0;
-    v_graph_hit_rate[i] = 0;
-    i+=1;
-  );
+  memset(v_graph_error_bound, 0, max_graph);
+  memset(v_graph_hit_rate, 0, max_graph);
+  memset(v_histogram, 0, 4*histogram_size);
+  memset(v_histogram_max_value, 1, 4);
+  graph_idx = 0;
+  hit_rate = 0;
 );
 
 function drawTrainingGraphTitle(left, top)
@@ -1193,3 +1222,7 @@ isLButtonRelease() ? prev_mouse_l_button_release_time = time_precise();
 prev_mouse_cap = mouse_cap;
 mouse_wheel = 0;
 mouse_cap & 1 == 0 ? active_control = 0;
+
+@serialize
+// This causes the general state to be kept between DAW "play"s
+file_var(0, dummy);
