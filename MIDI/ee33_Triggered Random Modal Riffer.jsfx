@@ -1,0 +1,260 @@
+desc: Triggered Random Modal Riffer
+author: ee33
+version: 1
+about: JS plugin that populates and repeats riffs from modal scales when triggered by a MIDI message.
+
+//Reset riff of selected random notes with MIDI note 5
+// tick through riff with MIDI note 4
+// tick through root note w / MIDI note 7
+// tick through modes w / MIDI note 6
+
+
+
+slider1:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Root Note (A -2 Cycles)
+slider2:0<0,6,1{ Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian}>Mode (G# -2 Cycles)
+slider3:0<0,4,1>Octaves (G -2 Cycles)
+slider4: 1<0,7,1{0,4,8,12,16,20,24,28,32}>Loop Length (F# -2 Cycles)
+slider5: 7<0,7,1>Empty Space Likelihood
+
+in_pin:none
+out_pin:none
+
+@init
+
+octave = 1000;
+
+octave[0] = 0;
+octave[1] = 12;
+octave[2] = 24;
+octave[3] = 36;
+octave[4] = 48;
+
+ionian = 3000;
+dorian = 4000;
+phrygian = 5000;
+lydian = 6000;
+mixolydian = 7000;
+aeolian = 8000;
+locrian = 9000;
+notestoPlay = 10000;
+velocities = 11000;
+velForNote = 12000;
+
+modesList = 2000;
+modesList[0] = ionian;
+modesList[1] = dorian;
+modesList[2] = phrygian;
+modesList[3] = lydian;
+modesList[4] = mixolydian;
+modesList[5] = aeolian;
+modesList[6] = locrian;
+
+ionian[0] = 0;
+ionian[1] = 2;
+ionian[2] = 4;
+ionian[3] = 5;
+ionian[4] = 7;
+ionian[5] = 9;
+ionian[6] = 11;
+ionian[7] = 12;
+
+dorian[0] = 0;
+dorian[1] = 2;
+dorian[2] = 3;
+dorian[3] = 5;
+dorian[4] = 7;
+dorian[5] = 9;
+dorian[6] = 10;
+dorian[7] = 12;
+
+phrygian[0] = 0;
+phrygian[1] = 1;
+phrygian[2] = 3;
+phrygian[3] = 5;
+phrygian[4] = 7;
+phrygian[5] = 8;
+phrygian[6] = 10;
+phrygian[7] = 12;
+
+lydian[0] = 0;
+lydian[1] = 2;
+lydian[2] = 4;
+lydian[3] = 6;
+lydian[4] = 7;
+lydian[5] = 9;
+lydian[6] = 11;
+lydian[7] = 12;
+
+mixolydian[0] = 0;
+mixolydian[1] = 2;
+mixolydian[2] = 4;
+mixolydian[3] = 5;
+mixolydian[4] = 7;
+mixolydian[5] = 9;
+mixolydian[6] = 10;
+mixolydian[7] = 12;
+
+aeolian[0] = 0;
+aeolian[1] = 2;
+aeolian[2] = 3;
+aeolian[3] = 5;
+aeolian[4] = 7;
+aeolian[5] = 8;
+aeolian[6] = 10;
+aeolian[7] = 12;
+
+locrian[0] = 0;
+locrian[1] = 1;
+locrian[2] = 3;
+locrian[3] = 5;
+locrian[4] = 6;
+locrian[5] = 8;
+locrian[6] = 10;
+locrian[7] = 12;
+
+velocities[0] = 0.5;
+velocities[1] = 0.75;
+velocities[2] = 1;
+velocities[3] = 0;
+velocities[4] = 0;
+velocities[5] = 0;
+velocities[6] = 0;
+velocities[7] = 0;
+velocities[8] = 0;
+velocities[9] = 0.25;
+
+playThisNote = 0;
+thisVelocity = 0;
+
+@block
+
+rootNote = slider1+48;
+modeCurrent = modesList[slider2];
+octavesMax = slider3;
+loopLength = slider4*4;
+spaceLike = slider5+3;
+
+//populate new array
+while (midirecv(offset,msg1,msg2,msg3)) (
+
+  currentNote = msg2;
+
+  currentNote == 9 && msg1==$x90 ? (
+  slider1 += 1;
+  slider1 == 12 ? (
+  slider1 = 0);
+  );
+
+  currentNote == 8 && msg1==$x90 ? (
+  slider2 += 1;
+  slider2 == 7 ? (
+  slider2 = 0);
+  );
+
+  currentNote == 7 && msg1==$x90 ? (
+  slider3 += 1;
+  slider3 == 5 ? (
+  slider3 = 0);
+  );
+
+  currentNote == 6 && msg1==$x90 ? (
+  slider4 += 1;
+  slider4 == 5 ? (
+  slider4 = 1);
+  );
+
+  currentNote == 5 && msg1==$x90 ? (
+    note1  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note2  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note3  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note4  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note5  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note6  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note7  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note8  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note9  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note10  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note11  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note12  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note13  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note14  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note15  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note16  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note17  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note18  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note19  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note20  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note21  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note22  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note23  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note24  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note25  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note26  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note27  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note28  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note29  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note30  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note31  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    note32  =rootNote + modeCurrent[rand(8)] + octave[rand(octavesMax)];
+    mem_set_values(notestoPlay,note1,note2,note3,note4,note5,note6,note7,note8,note9,note10,note11,note12,note13,note14,note15,note16,note17,note18,note19,note20,note21,note22,note23,note24,note25,note26,note27,note28,note29,note30,note31,note32);
+
+vel1  = velocities[rand(spaceLike)];
+vel2  = velocities[rand(spaceLike)];
+vel3  = velocities[rand(spaceLike)];
+vel4  = velocities[rand(spaceLike)];
+vel5  = velocities[rand(spaceLike)];
+vel6  = velocities[rand(spaceLike)];
+vel7  = velocities[rand(spaceLike)];
+vel8  = velocities[rand(spaceLike)];
+vel9  = velocities[rand(spaceLike)];
+vel10  = velocities[rand(spaceLike)];
+vel11  = velocities[rand(spaceLike)];
+vel12  = velocities[rand(spaceLike)];
+vel13  = velocities[rand(spaceLike)];
+vel14  = velocities[rand(spaceLike)];
+vel15  = velocities[rand(spaceLike)];
+vel16  = velocities[rand(spaceLike)];
+vel17  = velocities[rand(spaceLike)];
+vel18  = velocities[rand(spaceLike)];
+vel19  = velocities[rand(spaceLike)];
+vel20  = velocities[rand(spaceLike)];
+vel21  = velocities[rand(spaceLike)];
+vel22  = velocities[rand(spaceLike)];
+vel23  = velocities[rand(spaceLike)];
+vel24  = velocities[rand(spaceLike)];
+vel25  = velocities[rand(spaceLike)];
+vel26  = velocities[rand(spaceLike)];
+vel27  = velocities[rand(spaceLike)];
+vel28  = velocities[rand(spaceLike)];
+vel29  = velocities[rand(spaceLike)];
+vel30  = velocities[rand(spaceLike)];
+vel31  = velocities[rand(spaceLike)];
+vel32  = velocities[rand(spaceLike)];
+    mem_set_values(velForNote,vel1,vel2,vel3,vel4,vel5,vel6,vel7,vel8,vel9,vel10,vel11,vel12,vel13,vel14,vel15,vel16,vel17,vel18,vel19,vel20,vel21,vel22,vel23,vel24,vel25,vel26,vel27,vel28,vel29,vel30,vel31,vel32);
+    );
+
+  //on midi trigger
+
+  currentNote == 4 ? (
+    playThisNote < loopLength ? (
+
+      msg1==$x90 ? (
+      noteMsg = notestoplay[playThisNote];
+      velMsg = velForNote[thisVelocity];
+      midisend(offset,msg1,noteMsg,msg3*velMsg);
+      );
+
+      msg1==$x80 ? (
+      midisend(offset,msg1,noteMsg,msg3);
+      playThisNote += 1;
+      thisVelocity += 1;
+      );
+    );
+    playThisNote >= loopLength ? (
+    midisend(offset,msg1,noteMsg,msg3);
+    playThisNote = 0;
+    thisVelocity = 0;
+    );
+  );
+
+);
