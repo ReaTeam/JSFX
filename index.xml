@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="3316c62fb0f590a9848ba94dd04d3b7d45111c44">
+<index version="1" name="ReaTeam JSFX" commit="5cdadb30d3dc33d8401313a217ec3c0c4dd8ac19">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -126,6 +126,20 @@ Improve behavior when the minimum beats slider > maximum beats and vice versa]]>
         <changelog><![CDATA[Fix handling of MIDI note #128
 Fix note off events always being sent to channel 1]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/ca7c02c4a274b0b15d2aa972c8e747bad69cfbe1/MIDI/cfillion_Sustain%20pedal%20to%20note%20length.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="ee33_Triggered Random Modal Riffer.jsfx" type="effect" desc="Triggered Random Modal Riffer">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 JS plugin that populates and repeats riffs from modal scales when triggered by a MIDI message.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1" author="ee33" time="2021-04-18T16:54:58Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/5cdadb30d3dc33d8401313a217ec3c0c4dd8ac19/MIDI/ee33_Triggered%20Random%20Modal%20Riffer.jsfx</source>
       </version>
     </reapack>
     <reapack name="erantalmor_MIDI Rhythm Trainer.jsfx" type="effect" desc="MIDI Rhythm Trainer">
