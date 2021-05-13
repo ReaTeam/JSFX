@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="5cdadb30d3dc33d8401313a217ec3c0c4dd8ac19">
+<index version="1" name="ReaTeam JSFX" commit="7f0aa65f665d0a5a1d124366df622dd1ebb571b9">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1274,10 +1274,13 @@ And a bit of source code cleaning.]]></changelog>
     <reapack name="willdevelop_MIDI every note the same.jsfx" type="effect" desc="MIDI every note the same">
       <metadata>
         <link rel="website" href="https://forum.cockos.com/showthread.php?p=2297569#post2297569">Forum Thread</link>
-        <link rel="website" href="http://will-records.tk/">My Website</link>
+        <link rel="website" href="https://willrecords.tk/">My Website</link>
       </metadata>
       <version name="1.0" author="Will Develop" time="2020-06-06T02:39:23Z">
         <source>https://github.com/ReaTeam/JSFX/raw/900b9f750753d98decc94d4ecf2f13eed2763065/MIDI/willdevelop_MIDI%20every%20note%20the%20same.jsfx</source>
+      </version>
+      <version name="2.0" author="Will Develop" time="2021-05-13T09:47:55Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/7f0aa65f665d0a5a1d124366df622dd1ebb571b9/MIDI/willdevelop_MIDI%20every%20note%20the%20same.jsfx</source>
       </version>
     </reapack>
     <reapack name="willdevelop_MIDI Note Repeater [Default Key Map B1 - A4].jsfx" type="effect" desc="MIDI Note Repeater [Default Key Map B1 - A4]">
