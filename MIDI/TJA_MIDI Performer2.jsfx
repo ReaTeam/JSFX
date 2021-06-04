@@ -1,6 +1,6 @@
 desc: MIDI Performer2
 author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.6
+version: 0.6.01
 changelog:
   - More detailed input monitor
    - Aftertouch and Channel Pressure support - filtered with CC's
@@ -9,6 +9,8 @@ changelog:
   - # Presets
   - Global transpose
   - Default deviation notification
+  0.6.01
+  -fix global transpose preset bug
 link: Forum thread https://forum.cockos.com/showthread.php?t=216034
 screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
@@ -24,7 +26,7 @@ slider2: globBusIn=0<0, 128, 1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,
 slider3:globChanIn=0<0, 128, 1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -Global Channel In
 slider4:  rowRoute=1<0, 128, 1{None,All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}>-Row#
 slider5:      thru=0<0,  1,  1{OFF,ON>-Thru
-slider6: globTrans=48<   0, 128, 1{-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -Global Transpose
+slider6: globTrans=48<   0, 128, 1{-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}>- Global Transpose
 slider7:  PCresend=0<0,  1,  1>-PCresend
 
 slider8:   0<   0, 128, 1{^,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -1-In Bus
@@ -263,6 +265,7 @@ memset(_CC6, 64, noOfOuts);
 dispOuts   = min(dispOuts,  32);
 globBusIn  = min(globBusIn, 16);
 globChanIn = min(globChanIn,16);
+globTrans  = min(max(globTrans ,0),96);
 
 rowRoute=min(rowRoute,findLargest(row, dispOuts)+1);
 
@@ -311,7 +314,7 @@ file_mem(0,    prog, DispOuts);
 file_mem(0,  outBus, DispOuts);
 file_mem(0, outChan, DispOuts);
 file_mem(0, RowOnPC, DispOuts);
-
+!globTrans ? globTrans = 48;
 @block
 while (midirecv(offset,msg1,msg2,msg3)) (
 
@@ -732,7 +735,7 @@ rowRoute   = numSlide("☰#", "None",  "All", rowRoute, x, y, w, h, 1, 0, findLa
       xgap = gfx_texth*4  ;
 
 thru       = button(  " THRU"   , x ,y, w, h, thru     ); x+=xgap;
-globTrans  = numSlide("Trans", "-48", "-47", globTrans, x, y, w, h, 48, 0,  96,-48, "num"); x+=xgap*1.5;
+globTrans  = numSlide("Trans", "-48", "-47", globTrans, x, y, w, h, 48, 24,  72,-48, "num"); x+=xgap*1.5;
 PCenable   = button("   PC"     , x ,y, w, h, PCenable ); x+=xgap;
 PCresend   = button(   "PCΔresend", x ,y, w, h, PCresend ); x+=xgap*1.5;
 enableCCs  = button(  " ⦿⦿⦿"   , x ,y, w, h, enableCCs); x+=xgap;
@@ -783,7 +786,7 @@ g=0; e=0; loop(dispOuts,
     w = gfx_texth*2.4; xgap = gfx_texth*2.8;
     minNote[g] = numSlide(  "Min",   "0",  "1", minNote[g], x, y, w, h,   0, 0, 127,  0,"note"); x+= xgap;
     maxNote[g] = numSlide(  "Max",   "0",  "1", maxNote[g], x, y, w, h, 127, 0, 127,  0,"note"); x+= xgap;
-      trans[g] = numSlide("Trans", "-48","-47",   trans[g], x, y, w, h,  48, 0,  96,-48, "num"); x+= xgap + xgaplus;
+      trans[g] = numSlide("Trans", "-48","-48",   trans[g], x, y, w, h,  48, 0,  96,-48, "num"); x+= xgap + xgaplus;
 
      w=gfx_texth*1.4; xgap = gfx_texth*1.8;
      rowOnPC[g] = button("", x,y, w, h, rowOnPC[g] ); x+= xgap;
