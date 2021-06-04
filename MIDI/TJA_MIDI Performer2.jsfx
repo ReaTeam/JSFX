@@ -1,16 +1,7 @@
 desc: MIDI Performer2
 author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.6.01
-changelog:
-  - More detailed input monitor
-   - Aftertouch and Channel Pressure support - filtered with CC's
-  - Slider compatibility: Host parameter ranges play nicer with scrollwheel, Automap, MIDI learn, ReaLearn, OSC, CSurf, etc..
-  - GUI compatibility: defaults to fixed size + settings for size control. More Linux friendly?
-  - # Presets
-  - Global transpose
-  - Default deviation notification
-  0.6.01
-  -fix global transpose preset bug
+version: 0.6.1
+changelog: - fix global transpose preset bug
 link: Forum thread https://forum.cockos.com/showthread.php?t=216034
 screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
