@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="7f0aa65f665d0a5a1d124366df622dd1ebb571b9">
+<index version="1" name="ReaTeam JSFX" commit="1a35be55ba9d48c3852224c5ab0b29fb3b6c1ab2">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1188,8 +1188,8 @@ And a bit of source code cleaning.]]></changelog>
 \widowctrl\hyphauto
 
 {\pard \ql \f0 \sa180 \li0 \fi0 MIDI Router / Filter / Transposer / CC generator / Bank+Program\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 MIDI multi-tool a bit like ReaControlMIDI. Features hanging note prevention so holding a note or sustain pedal while changing output routing, note filter or transpose is unlikely to leave notes hanging when they are released.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Hold CTRL/Command to mousewheel shift by 12 (only if the fx window is focused).\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 MIDI multi-tool with hanging note prevention: out routing/filter/transpose don't cause hanging notes.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 [CTRL]/Command : mousewheel shift by 12 (only if the fx window is focused). [Right click]: Return values to default\par}
 }
 ]]></description>
         <link rel="website" href="https://forum.cockos.com/showthread.php?t=216034">Forum thread</link>
@@ -1254,6 +1254,16 @@ And a bit of source code cleaning.]]></changelog>
       <version name="0.5.9.1" author="Kevin Morrison (ThrashJazzAssassin)" time="2020-03-06T01:32:45Z">
         <changelog><![CDATA[- Fix colour logic]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/efbc83b564e9674547ac472c6b88f32930796f89/MIDI/TJA_MIDI%20Performer2.jsfx</source>
+      </version>
+      <version name="0.6" author="Kevin Morrison (ThrashJazzAssassin)" time="2021-06-04T20:06:34Z">
+        <changelog><![CDATA[- More detailed input monitor
+ - Aftertouch and Channel Pressure support - filtered with CC's
+- Slider compatibility: Host parameter ranges play nicer with scrollwheel, Automap, MIDI learn, ReaLearn, OSC, CSurf, etc..
+- GUI compatibility: defaults to fixed size + settings for size control. More Linux friendly?
+- # Presets
+- Global transpose
+- Default deviation notification]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/1a35be55ba9d48c3852224c5ab0b29fb3b6c1ab2/MIDI/TJA_MIDI%20Performer2.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
