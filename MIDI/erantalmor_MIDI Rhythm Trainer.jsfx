@@ -1,9 +1,7 @@
 desc: MIDI Rhythm Trainer
 author: Eran Talmor
-version: 1.13
-changelog:
-  Save state of training graph and probability curves between "Play"s.
-  Easier setting of mask by right mouse button drag over grid lines.
+version: 1.14
+changelog: Added error bound display in milliseconds.
 link:
   Youtube tutorial https://youtu.be/cifj6eh_LF0
   Forum Thread https://forum.cockos.com/showthread.php?t=250891
@@ -1124,7 +1122,7 @@ function clearTrainingGraph()
   hit_rate = 0;
 );
 
-function drawTrainingGraphTitle(left, top)
+function drawTrainingGraphTitle(left, top) local(errorMs)
 (
   gfx_a = 1;
   gfx_x = left;
@@ -1137,7 +1135,8 @@ function drawTrainingGraphTitle(left, top)
   rgb(1,1,1);
   gfx_printf(", ");
   rgb(0,1,1);
-  gfx_printf("Error Bound: %0.0f%%", error_bound*100);
+  errorMs = floor(0.5 + error_bound * beats * 30000 / tempo / max_divs);
+  gfx_printf("Error Bound: %0.0f%% = \xB1%dms", error_bound*100, errorMs);
   rgb(1,1,1);
   gfx_printf(")");
   
