@@ -1,7 +1,7 @@
 desc: MIDI Performer2
 author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.6.2
-changelog: - fix slider automation, typos and syntax
+version: 0.6.3
+changelog: - fix global transpose sometimes defaulting to -24
 link: Forum thread https://forum.cockos.com/showthread.php?t=216034
 screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
@@ -256,7 +256,7 @@ memset(_CC6, 64, noOfOuts);
 dispOuts   = min(dispOuts,  32);
 globBusIn  = min(globBusIn, 16);
 globChanIn = min(globChanIn,16);
-globTrans  = min(max(globTrans ,24),72);
+!globTrans ? globTrans = 48 : globTrans  = min(max(globTrans ,24),72);
 
 rowRoute=min(rowRoute,findLargest(row, dispOuts)+1);
 
@@ -305,7 +305,6 @@ file_mem(0,    prog, DispOuts);
 file_mem(0,  outBus, DispOuts);
 file_mem(0, outChan, DispOuts);
 file_mem(0, RowOnPC, DispOuts);
-!globTrans ? globTrans = 48;
 
 @block
 while (midirecv(offset,msg1,msg2,msg3)) (
