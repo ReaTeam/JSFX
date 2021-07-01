@@ -1,15 +1,13 @@
 desc: Midi Volume Control
 author: Michael Schnell (mschnell@bschnell.de)
-version: 3.0
-changelog:
-  allow "High Resolution CC Midi" input
-  add "Time Asymmetry" slider, bugfixes.
+version: 3.1
+changelog: fix description error
 donation: United Nations Foundation http://www.unfoundation.org/
 about:
   ## Use cases:
-  
+
     - Preventing po0ps and zipper noise when controlling Volume via Midi.
-  
+
     - Fade-In / Fade-Out and crossfade automation (when switiching between sound sources.
 
     ## Description
@@ -24,12 +22,12 @@ about:
 
     Below the breakpoint, a linear curve is used so that with CC = 0 the amplification is Zero (-infinity dB).
 
-    Another slider defines the maximum speed the amplification is modulated. This is set in dB per modulation step. A step is done with any sample block.
+    Another slider defines the maximum speed the amplification is modulated. This is set in dB per modulation step. A step is done with any sample.
 
     Moreover, the maximum speed used for reaching a new defined level is as many steps as samples in a block.
-  
+
     The "Default Value" is used as a (low res) CC input when the plugin is loaded, when playback is started and when this slider is modified either by hand or by automation.
-  
+
     The "Time Asymmetry" slider allows for reducing the maximum step size (and hence increasing the time to reach a new level) for either the upwards or the downwards direction. 
     with that Fade-in Fade-out variants can be designed.
 
