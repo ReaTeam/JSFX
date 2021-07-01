@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="753c42912e2977e4a2136f2aca6e9589a540f150">
+<index version="1" name="ReaTeam JSFX" commit="49a8c813e4b07aae28d6a387d975f9905582a12a">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -2875,14 +2875,18 @@ Bug fixes]]></changelog>
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Use cases:\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Preventing po0ps and zipper noise when controlling Volume via Midi.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Fade-In / Fade-Out and crossfade automation (when switiching between sound sources.\sa180\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 The midi CC values 0 ... 127 are mapped to an "amplifier" curve that consists of a linear and an exponential part in a way, that with CC = 0 the amplification is 0 (-inf dB) and with CC = 127 the amplification is 1 (0db).\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 A slider defines the amount (in dB), the amplification is reduced with each CC step.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The midi CC values 0..127 or 0..16383, are mapped to an "amplifier" curve that consists of a linear and an exponential part in a way, that with CC = 0 the amplification is 0 (-inf dB) and with CC = 127 (or 16383), the amplification is 1 (0 db).\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 A slider defines the amount (in dB), the amplification is reduced with each (low res) CC step (or equvalently 128 steps with high res CC) .\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 According to that, the breakpoint between the exponential and the linear part is set so that at this point the value and the slope of the curves match.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Below the breakpoint, a linear curve is used so that with CC = 0 the amplification is Zero (-infinity dB).\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Another slider defines the maximum speed the amplification is modulated. This is set in dB per modulation step.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Moreover the maximum speed used is reaching a new defined level in as many steps a samples in a block.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 The "Default Value" is used as a CC input when the plugin is loaded, when playback is started and when this slider is modified either by hand or by automation.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Another slider defines the maximum speed the amplification is modulated. This is set in dB per modulation step. A step is done with any sample block.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Moreover, the maximum speed used for reaching a new defined level is as many steps as samples in a block.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The "Default Value" is used as a (low res) CC input when the plugin is loaded, when playback is started and when this slider is modified either by hand or by automation.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The "Time Asymmetry" slider allows for reducing the maximum step size (and hence increasing the time to reach a new level) for either the upwards or the downwards direction. with that Fade-in Fade-out variants can be designed.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 A graph shows as well the curve (Amplification vs CC steps), as the dynamic movement of the amplification level.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Limitations\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 As due the the description above, the modulation speed is limited to reaching the target level in a timespan at least as the duration of a sample block, the current version of this plugin is not suitable for synth-like application that intend to implement a VCA.\par}
@@ -2897,6 +2901,11 @@ Bug fixes]]></changelog>
       <version name="2.0" author="Michael Schnell (mschnell@bschnell.de)" time="2018-12-09T15:41:55Z">
         <changelog><![CDATA[add "Default CC Value" slider]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/34bd46882c95dda1ac35e39b4885d585689e5711/Utility/mschnell_MIDI%20Volume%20Control.jsfx</source>
+      </version>
+      <version name="3.0" author="Michael Schnell (mschnell@bschnell.de)" time="2021-07-01T09:02:22Z">
+        <changelog><![CDATA[allow "High Resolution CC Midi" input
+add "Time Asymmetry" slider, bugfixes.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/49a8c813e4b07aae28d6a387d975f9905582a12a/Utility/mschnell_MIDI%20Volume%20Control.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Multi_Sin_Generator.jsfx" type="effect" desc="Multi Sine Generator">
