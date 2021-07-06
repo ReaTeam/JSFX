@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="1a78f2ada3038f1ef21c6b959ae95c10ddcee196">
+<index version="1" name="ReaTeam JSFX" commit="7e4703d941aac30c3c8c30e6d7da063ac8fd1148">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -1800,6 +1800,24 @@ E.g. at 44.1/48kHz audio interface sample rate the recommended buffer size is <=
       <version name="1.0" author="Michael Fewkes" time="2017-10-25T09:40:53Z">
         <changelog><![CDATA[Initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/f68071f3067f41a55c6400965b171e64a5d1f7d2/Routing/MDF_Quad%20to%20DMS.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_Midi_Route_Note_On.jsfx" type="effect" desc="Route Note On">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The plugin works with four Midi Buses:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Command" accepts a definable Midi CC message to switch the routing to "low", "high" or "both", depending on the "Max Low" and "Min High" settings.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The Midi message in the "In" Bus are routed to the "Low" and "High" out Buses appropriately.\line All messages other than "Note On" and "Hold Pedal=press" are sent to both out buses. "Note On" and "Hold Pedal=press" are sent according to the current routing definition state.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2021-07-06T21:00:38Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/7e4703d941aac30c3c8c30e6d7da063ac8fd1148/Routing/mschnell_Midi_Route_Note_On.jsfx</source>
       </version>
     </reapack>
   </category>
