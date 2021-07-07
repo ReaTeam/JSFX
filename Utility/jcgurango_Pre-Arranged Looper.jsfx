@@ -1,0 +1,124 @@
+desc: Pre-Arranged Looper
+author: JC Gurango
+version: 0.1
+about:
+  # Pre-Arranged Looper
+    Loops audio based on a pre-arranged record and loop position. For example, you can have it automatically start recording at beat 4, and finish record at beat 8, and have that automatically loop throughout beats 8 - 20. To get multiple loop regions on one record region, just add multiple instances of the plugin on the same record region.
+
+  ## Options
+  - Record Start (Beats) - The position at which you'd like to start recording.
+  - Record End (Beats) -The position at which you'd like to end recording.
+  - Recording - Indicator slider for when the plugin is recording. 0 = not recording, 1 = recording.
+  - Playing - Indicator slider for when the plugin is looping. 0 = not looping, 1 = looping.
+  - Playback Start - The position (in beats) at which you'd like to begin loop playback.
+  - Playback End - The position (in beats) at which you'd like to end loop playback.
+  - Has Audio - Indicator for whether or not the plugin has audio data saved. 1 = has audio data.
+
+desc:Pre-Arranged Looper
+
+in_pin:Input
+out_pin:Output
+slider1:4<0, 65535, 0.125>Record Start (Beats)
+slider2:8<0, 65535, 0.125>Record End (Beats)
+slider3:0<0, 1, 1>Recording
+slider4:0<0, 1, 1>Playing
+slider5:8<0, 65535, 0.125>Playback Start
+slider6:20<0, 65535, 0.125>Playback End
+slider7:0<0, 1, 1>Has Audio
+
+@init
+// Tracks the current sample playing position.
+play_sample_pos=0;
+
+// Tracks the value of is_rec_sample during the last @sample block.
+last_is_rec_sample=0;
+
+// Tracks the value of is_playing in the last @sample block.
+last_is_playing=0;
+
+@serialize
+// rec_sample_pos contains the length of our sample.
+file_var(0, rec_sample_pos);
+
+// rec_sample_buffer contains the buffer.
+file_mem(0, 0, rec_sample_buffer);
+
+@block
+// Check if we're either playing or recording.
+is_recording=(play_state==5);
+is_playing=(play_state==1 || is_recording);
+
+// Work out how many samples per beat.
+// srate = sample rate (i.e. how many samples/second)
+// tempo = beats per minute
+samples_per_beat=(1 / (tempo / 60)) * srate;
+
+slider7!=last_slider7 ? (
+  slider7==0 ? (
+    rec_sample_pos=0;
+  );
+);
+
+slider7=rec_sample_pos>0;
+last_slider7=slider7;
+
+@sample
+// Check if we're within the boundaries set for "record".
+is_rec_sample=(beat_position > slider1 && beat_position < slider2);
+
+// Check if we're within the boundaries set for "playback".
+is_play_sample=(is_playing && beat_position > slider5 && beat_position < slider6 && rec_sample_pos > 0);
+
+// Write back to slider 3 and 4 for record/play user feedback.
+slider3=is_rec_sample && is_recording;
+slider4=is_play_sample;
+
+// Get the current sample value.
+current_sample=spl0;
+
+// Mute the sample during playback.
+is_playing ? (
+  spl0=0;
+);
+
+// If it's record time and we weren't in record time in the last sample, move the record head to 0.
+((is_rec_sample && is_recording) && (is_rec_sample && is_recording) != last_is_rec_sample) ? (
+  rec_sample_pos=0;
+);
+
+// If we're recording, add the current sample to the buffer, then move the position forward.
+is_rec_sample && is_recording ? (
+  rec_sample_buffer[rec_sample_pos] = current_sample;
+  spl0 = current_sample;
+  rec_sample_pos = rec_sample_pos + 1;
+);
+
+// If we've changed from not playing to playing, figure out the current position in samples.
+is_playing != last_is_playing ? (
+  play_sample_pos=beat_position*samples_per_beat;
+);
+
+// If we're loop playing...
+((is_play_sample || (is_playing && !is_recording && is_rec_sample)) && rec_sample_pos > 100) ? (
+  // Transform the play position into loop space.
+  playback_length=(slider6 - slider5)*samples_per_beat;
+  playback_position=play_sample_pos-(slider5 * samples_per_beat);
+  
+  while (playback_position < 0) (
+    playback_position = playback_position + playback_length;
+  );
+
+  // Use the modulus operator to loop back depnding on the size of the record buffer.
+  playback_position=playback_position % rec_sample_pos;
+
+  // Write the recorded sample to the output.
+  spl0=rec_sample_buffer[playback_position];
+);
+
+// Increment the sample position.
+is_playing ? (
+  play_sample_pos=play_sample_pos+1;
+);
+
+last_is_rec_sample=is_rec_sample && is_recording;
+last_is_playing=is_playing;
