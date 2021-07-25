@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="7e4703d941aac30c3c8c30e6d7da063ac8fd1148">
+<index version="1" name="ReaTeam JSFX" commit="b58605d9295dccc5269b41e8c34603f1b6a62cbd">
   <category name="Distortion">
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
@@ -220,6 +220,10 @@ Easier setting of mask by right mouse button drag over grid lines.]]></changelog
       <version name="1.14" author="Eran Talmor" time="2021-06-05T12:12:06Z">
         <changelog><![CDATA[Added error bound display in milliseconds.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/3d899ba844cb040cd144858f7d22060a96914756/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
+      </version>
+      <version name="1.15" author="Eran Talmor" time="2021-07-25T23:24:52Z">
+        <changelog><![CDATA[Fixed bug masking / unmasking the 32nd division]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/b58605d9295dccc5269b41e8c34603f1b6a62cbd/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
       </version>
     </reapack>
     <reapack name="mathphreak_Learningbaby.jsfx" type="effect" desc="Learningbaby">
