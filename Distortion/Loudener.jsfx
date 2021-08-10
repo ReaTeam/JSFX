@@ -2,10 +2,10 @@ desc: Loudener
 author: Samuele Pizzi
 version: 1.0
 provides:
-  loudener_gfx/bg.png https://raw.githubusercontent.com/samu4199/Loudener/main/loudener_gfx/bg.png
-  loudener_gfx/handle.png https://raw.githubusercontent.com/samu4199/Loudener/main/loudener_gfx/handle.png
-  loudener_gfx/button_off.png https://raw.githubusercontent.com/samu4199/Loudener/main/loudener_gfx/button_off.png
-  loudener_gfx/button_on.png https://raw.githubusercontent.com/samu4199/Loudener/main/loudener_gfx/button_on.png
+  loudener_gfx/bg.png
+  loudener_gfx/handle.png
+  loudener_gfx/button_off.png
+  loudener_gfx/button_on.png
 screenshot: GUI Example https://imgur.com/a/hM4leza
 donation: Donate via PayPal https://www.paypal.com/paypalme/samuelepizzi
 about:
