@@ -1,6 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="b58605d9295dccc5269b41e8c34603f1b6a62cbd">
+<index version="1" name="ReaTeam JSFX" commit="c3f3b2f63228c427948278da6fb4bad25a9e509f">
   <category name="Distortion">
+    <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Loudener\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 A Sonnox Oxford Inflator-inspired distortion plugin that increases loudness without sacrificing dynamic range\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Author: Samuele Pizzi\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Many thanks to:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "tviler" from GearSpace\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Edoardo "TheEdoRan" Ranghieri\sa180\par}
+}
+]]></description>
+        <link rel="screenshot" href="https://imgur.com/a/hM4leza">GUI Example</link>
+        <link rel="donation" href="https://www.paypal.com/paypalme/samuelepizzi">Donate via PayPal</link>
+      </metadata>
+      <version name="1.0" author="Samuele Pizzi" time="2021-08-11T03:11:36Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/c3f3b2f63228c427948278da6fb4bad25a9e509f/Distortion/Loudener.jsfx</source>
+        <source file="loudener_gfx/bg.png">https://github.com/ReaTeam/JSFX/raw/c3f3b2f63228c427948278da6fb4bad25a9e509f/Distortion/loudener_gfx/bg.png</source>
+        <source file="loudener_gfx/handle.png">https://github.com/ReaTeam/JSFX/raw/c3f3b2f63228c427948278da6fb4bad25a9e509f/Distortion/loudener_gfx/handle.png</source>
+        <source file="loudener_gfx/button_off.png">https://github.com/ReaTeam/JSFX/raw/c3f3b2f63228c427948278da6fb4bad25a9e509f/Distortion/loudener_gfx/button_off.png</source>
+        <source file="loudener_gfx/button_on.png">https://github.com/ReaTeam/JSFX/raw/c3f3b2f63228c427948278da6fb4bad25a9e509f/Distortion/loudener_gfx/button_on.png</source>
+      </version>
+    </reapack>
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
