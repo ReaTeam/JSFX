@@ -8,6 +8,11 @@ provides:
   Loudener_gfx/button_on.png
 screenshot: GUI Example https://imgur.com/a/hM4leza
 donation: Donate via PayPal https://www.paypal.com/paypalme/samuelepizzi
+changelog:
+  Fixed issue by which Clip 0 dB would reset on transport start or on window minimize
+  Clip 0 dB is now ON by default
+  Re-added meters on the side
+  Minor code cleanup
 about:
   # Loudener
   ### A Sonnox Oxford Inflator-inspired distortion plugin that increases loudness without sacrificing dynamic range
