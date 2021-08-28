@@ -1,13 +1,18 @@
 desc: Loudener
 author: Samuele Pizzi
-version: 1.0
+version: 1.1
 provides:
-  loudener_gfx/bg.png
-  loudener_gfx/handle.png
-  loudener_gfx/button_off.png
-  loudener_gfx/button_on.png
+  Loudener_gfx/bg.png
+  Loudener_gfx/handle.png
+  Loudener_gfx/button_off.png
+  Loudener_gfx/button_on.png
 screenshot: GUI Example https://imgur.com/a/hM4leza
 donation: Donate via PayPal https://www.paypal.com/paypalme/samuelepizzi
+changelog:
+  Fixed issue by which Clip 0 dB would reset on transport start or on window minimize
+  Clip 0 dB is now ON by default
+  Re-added meters on the side
+  Minor code cleanup
 about:
   # Loudener
   ### A Sonnox Oxford Inflator-inspired distortion plugin that increases loudness without sacrificing dynamic range
@@ -35,8 +40,6 @@ in_pin:Left Input
 in_pin:Right Input
 out_pin:Left Output
 out_pin:Right Output
-
-options:no_meter
 
 filename:0,loudener_gfx/bg.png
 filename:1,loudener_gfx/handle.png
@@ -81,6 +84,7 @@ slider5 = min(max(slider5, -12),0);
 //assigning values to gui sliders
 s1.value = slider1;
 s2.value = slider2;
+s3.checked = slider3;
 s4.value = slider4;
 s5.value = slider5;
 //process slider values in plugin parameters
@@ -120,7 +124,7 @@ last_gain += d_gain;
 olast_gain += od_gain;
 
 @gfx 640 420
-gfx_x = gfx_Y = 0;
+gfx_x = gfx_y = 0;
 gfx_blit(0,1,0);
 
 function draw_slider(x,y,w,h,f,t,s,d,unit,title) (
@@ -205,12 +209,6 @@ function draw_checkbox(x,y,w,h) (
     this.checked = 1-this.checked;
     this.hasEntered = this.hasClicked = this.canChange = 0;
   );
-
-  //frame
-  //gfx_r = gfx_g = gfx_b = 0.35;
-  //gfx_rect(x,y,w,h);
-  //gfx_r = gfx_g = gfx_b = 0.07;
-  //gfx_rect(x+1,y+1,w-2,h-2);
 
   //checked
   this.checked ? (
