@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="bd44f8ce1b04d0141f2fdd078e5cf1ccff6e0866">
+<index version="1" name="ReaTeam JSFX" commit="8d8f6e2023f4efde85b745015d2e7c1e52a50bbd">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -1395,16 +1395,23 @@ And a bit of source code cleaning.]]></changelog>
         <link rel="screenshot" href="https://will-records.tk/site/img/site_projekte_will_develop/MIDI_Note_Repeater_interface.png">MIDI_Note_Repeater_interface.png</link>
       </metadata>
       <version name="2.0" author="Will Develop" time="2020-02-18T16:53:48Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/3c503994c16154d73e26db2677886e50d73d2d52/MIDI/willdevelop_MIDI%20Note%20Repeater%20%5BDefault%20Key%20Map%20B1%20-%20A4%5D.jsfx</source>
+        <source>https://github.com/ReaTeam/JSFX/raw/8d8f6e2023f4efde85b745015d2e7c1e52a50bbd/MIDI/willdevelop_MIDI%20Note%20Repeater%20%5BDefault%20Key%20Map%20B1%20-%20A4%5D.jsfx</source>
       </version>
     </reapack>
     <reapack name="willdevelop_MIDI Velocity Filter.jsfx" type="effect" desc="MIDI Velocity Filter">
       <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 This script only passes through notes that are in the set velocity range.\par}
+}
+]]></description>
         <link rel="website" href="http://will-records.tk/">My Website</link>
-        <link rel="website" href="https://forum.cockos.com/showthread.php?p=2297585#post2297585">Forum Thread</link>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?p=2297585#post2297585">Forum</link>
       </metadata>
       <version name="1.0" author="Will-Develop" time="2020-06-06T02:39:33Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/0902d3658b9d2fe5b9ce6b488927dee45444f6c5/MIDI/willdevelop_MIDI%20Velocity%20Filter.jsfx</source>
+        <source>https://github.com/ReaTeam/JSFX/raw/92ca2e5987db31f53f951fc625b3642f9f28d1fb/MIDI/willdevelop_MIDI%20Velocity%20Filter.jsfx</source>
       </version>
     </reapack>
     <reapack name="XQ_Drum Converter.jsfx" type="effect" desc="Drum Converter">
