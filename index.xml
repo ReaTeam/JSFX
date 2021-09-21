@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="8d8f6e2023f4efde85b745015d2e7c1e52a50bbd">
+<index version="1" name="ReaTeam JSFX" commit="fdd1003e70d859021a7a5c7e28186c7afb546be0">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -35,6 +35,20 @@ Minor code cleanup]]></changelog>
         <source file="Loudener_gfx/handle.png">https://github.com/ReaTeam/JSFX/raw/bd44f8ce1b04d0141f2fdd078e5cf1ccff6e0866/Distortion/Loudener_gfx/handle.png</source>
         <source file="Loudener_gfx/button_off.png">https://github.com/ReaTeam/JSFX/raw/bd44f8ce1b04d0141f2fdd078e5cf1ccff6e0866/Distortion/Loudener_gfx/button_off.png</source>
         <source file="Loudener_gfx/button_on.png">https://github.com/ReaTeam/JSFX/raw/bd44f8ce1b04d0141f2fdd078e5cf1ccff6e0866/Distortion/Loudener_gfx/button_on.png</source>
+      </version>
+    </reapack>
+    <reapack name="rcjach_RCInflator.jsfx" type="effect" desc="RCInflator">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Additions by users sai'ke and BethHarmon\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="RCJacH" time="2021-09-21T19:54:58Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/fdd1003e70d859021a7a5c7e28186c7afb546be0/Distortion/rcjach_RCInflator.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
