@@ -2,10 +2,10 @@ desc: RCInflator (Oxford Edition)
 author: RCJacH
 version: 1.0
 about: 
-With additions by users sai'ke and BethHarmon.
+  With additions by users sai'ke and BethHarmon.
 
-This edition clones the behavior of the Sonnox Oxford Inflator in every aspect except "bandsplit" mode.
-For discussion see https://forum.cockos.com/showthread.php?t=256286.
+  This edition clones the behavior of the Sonnox Oxford Inflator in every aspect except "bandsplit" mode.
+  For discussion see https://forum.cockos.com/showthread.php?t=256286.
 
 slider1:0<-6, 12, 0.01>Input (dB)
 slider2:0<0, 100, 0.1>Effect (%)
