@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="d0300050c7d28ba70e4ab58ed148e032c8869bae">
+<index version="1" name="ReaTeam JSFX" commit="81cbcdb02b1732c5756ffa196a3207fd90dec026">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -43,12 +43,13 @@ Minor code cleanup]]></changelog>
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 With additions by users sai'ke and BethHarmon\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 With additions by users sai'ke and BethHarmon.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This edition clones the behavior of the Sonnox Oxford Inflator in every aspect except "bandsplit" mode. For discussion see https://forum.cockos.com/showthread.php?t=256286.\par}
 }
 ]]></description>
       </metadata>
       <version name="1.0" author="RCJacH" time="2021-09-21T19:54:58Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/d0300050c7d28ba70e4ab58ed148e032c8869bae/Distortion/rcjach_RCInflator.jsfx</source>
+        <source>https://github.com/ReaTeam/JSFX/raw/81cbcdb02b1732c5756ffa196a3207fd90dec026/Distortion/rcjach_RCInflator.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
