@@ -3,21 +3,10 @@ author: Will-Develop
 version: 1.0
 link:
   My Website http://will-records.tk/
-  Forum Thread https://forum.cockos.com/showthread.php?p=2297585#post2297585
+  Forum https://forum.cockos.com/showthread.php?p=2297585#post2297585
+about: This script only passes through notes that are in the set velocity range.
 
-//tags: MIDI processing
-//author: Will Records
-//github: https://github.com/Will-Develop/velocity_filter
-//REAPER Forum Post: https://forum.cockos.com/showthread.php?p=2297585#post2297585
-//v.1.0
 
-/*
-  This script only passes through notes that are in the set velocity range.
-  
-  Parameters:
-  -Min Velocity: The smallest possible velocity level.
-  -Max Velocity: The highest possible velocity level.
-*/
 
 slider1:min_vel=0<-0,127,1>Min Velocity
 slider2:max_vel=127<-0,127,1>Max Velocity

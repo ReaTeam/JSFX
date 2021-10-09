@@ -1,0 +1,62 @@
+desc: RCInflator (Oxford Edition)
+author: RCJacH
+version: 1.0
+about: 
+  With additions by users sai'ke and BethHarmon.
+
+  This edition clones the behavior of the Sonnox Oxford Inflator in every aspect except "bandsplit" mode.
+  For discussion see https://forum.cockos.com/showthread.php?t=256286.
+
+slider1:0<-6, 12, 0.01>Input (dB)
+slider2:0<0, 100, 0.1>Effect (%)
+slider3:curve=0<-50, 50, 0.1>Curve
+slider4:clip=1<0,1,1{Off,On}>Clip
+slider5:0<-12, 0, 0.01>Output (dB)
+
+@init
+
+@slider
+in_db = exp(0.11512925464970229 * slider1);
+wet = slider2 * 0.01;
+dry = 1.0 - wet;
+out_db = exp(0.11512925464970229 * slider5);
+
+curvepct = 0.01 * curve;
+// 1 + (curve + 50) / 100
+curveA = 1.5 + curvepct;
+// - curve / 50
+curveB = -(curvepct + curvepct);
+// (curve - 50) / 100
+curveC = curvepct - 0.5;
+// 1 / 16 - curve / 400 + curve ^ 2 / (4 * 10 ^ 4)
+curveD = 0.0625 - curve * 0.0025 + (curve * curve) * 0.000025;
+
+
+@sample
+function apply_waveshaper(in)
+local(s0, s0_2, s0_3, out)
+global(curveA, curveB, curveC, curveD,
+       clip, dry, in_db, out_db, wet)
+(
+  in *= in_db;
+  s0 = abs(in);
+  clip ? (
+    s0 = s0 > 1.0 ? 1.0 : s0;
+  );
+  s0_2 = s0 * s0;
+  s0_3 = s0_2 * s0;
+  s0 = (s0 >= 2.0) ? (
+    0.0
+  ) : (s0 > 1.0) ? (
+    2.0 * s0 - s0_2
+  ) : (
+    curveA * s0 + curveB * s0_2 + curveC * s0_3 - curveD * (s0_2 - 2.0 * s0_3 + s0_2 * s0_2)
+  );
+  
+  out = sign(in) * s0 * wet + min(max(in * dry, -2 * dry), 2 * dry);
+  out = clip ? max(-1, min(out, 1)) : out;
+  out * out_db
+);
+
+spl0 = apply_waveshaper(spl0);
+spl1 = apply_waveshaper(spl1);

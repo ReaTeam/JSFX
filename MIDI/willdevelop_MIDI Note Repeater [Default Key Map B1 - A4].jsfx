@@ -10,7 +10,7 @@ about:
 
   This is a Modification from the MIDI Note Repeater. Used scripts MIDI Arpeggiator, rye_MIDI_FilterNotesIndividually.
   The Script is for making snare and hi-hats rolls.
-  
+
 
   # Parameters:
   - Root Note: This MIDI note will be sent to the instrument at the end.
@@ -20,12 +20,12 @@ about:
   - Oneshot-Rate: Controls the repeat time for the One-Shot-Key
   - Oneshot-Rate Sync to Beat: Controls the repeat time for the One-Shot-Key in Beats (useful for MIDI-learn and Automation)
   - Start Trigger Zone: At this note, the trigger notes begin
-  
+
 
   # Default Key Map:
-  
+
   B1 -> Oneshot
-  
+
   **straight:**
   - C2->1/4    
   - D2->1/8
@@ -33,7 +33,7 @@ about:
   - F2->1/32
   - G2->1/64
   - A2->1/128
-  
+
   **triplet:**
   - C3->1/4
   - D3->1/8
@@ -49,55 +49,6 @@ about:
   - F4->1/32
   - G4->1/64
   - A4->1/128
-
-desc:MIDI Note Repeater [Default Key Map: B1 - A4]
-//tags: MIDI processing
-//author: Will Records
-//github: https://github.com/Will-Develop/MIDI_Note_Repeater-Default_Key_Map_B1-A4.git
-//v.2.0
-
-/*
-  This is a Modification from the MIDI Note Repeater. Used scripts MIDI Arpeggiator, rye_MIDI_FilterNotesIndividually
-  The Script is for making snare and hi-hats rolls.
-  
-  Parameters:
-  -Root Note: This MIDI note will be sent to the instrument at the end.
-  -Root MIDI Channel: The MIDI note is sent on this channel. All = the same as the input channel
-  -Root MIDI Length: This parameter controls the length of the MIDI note sent to the instrument
-  -Root MIDI Length Sync to Beat: This parameter does the same as the Root MIDI Length, only the rate is rasterized to the beat
-  -Oneshot-Rate: Controls the repeat time for the One-Shot-Key
-  -Oneshot-Rate Sync to Beat: Controls the repeat time for the One-Shot-Key in Beats (useful for MIDI-learn and Automation)
-  -Start Trigger Zone: At this note, the trigger notes begin
-  
-  
-  Default Key Map:
-  
-  B1 -> Oneshot
-  
-  straight:
-  C2->1/4    
-  D2->1/8
-  E2->1/16
-  F2->1/32
-  G2->1/64
-  A2->1/128
-  
-  triplet:
-  C3->1/4
-  D3->1/8
-  E3->1/16
-  F3->1/32
-  G3->1/64
-  A3->1/128
-  
-  dotted:
-  C4->1/4
-  D4->1/8
-  E4->1/16
-  F4->1/32
-  G4->1/64
-  A4->1/128
-*/
 
 slider1:48<-0,127,1{0: C-1,1: C#-1,2: D-1,3: D#-1,4: E-1,5: F-1,6: F#-1,7: G-1,8: G#-1,9: A-1,10: Bb-1,11: B-1,12: C0,13: C#0,14: D0,15: D#0-1,16: E0,17: F0,18: F#0,19: G0,20: G#0,21: A0,22: Bb0,23: B0,24: C1,25: C#1,26: D1,27: D#1,28: E1,29: F1,30: F#1,31: G1,32: G#1,33: A1,34: Bb1,35: B1,36: C2,37: C#2,38: D2,39: D#2,40: E2,41: F2,42: F#2,43: G2,44: G#2,45: A2,46: Bb2,47: B2,48: C3,49: C#3,50: D3,51: D#3,52: E3,53: F3,54: F#3,55: G3,56: G#3,57: A3,58: Bb3,59: B3,60: C4,61: C#4,62: D4,63: D#4,64: E4,65: F4,66: F#4,67: G4,68: G#4,69: A4,70: Bb4,71: B4,72: C5,73: C#5,74: D5,75: D#5,76: E5,77: F5,78: F#5,79: G5,80: G#5,81: A5,82: Bb5,83: B5,84: C6,85: C#6,86: D6,87: D#6,88: E6,89: F6,90: F#6,91: G6,92: G#6,93: A6,94: Bb6,95: B6,96: C7,97: C#7,98: D7,99: D#7,100: E7,101: F7,102: F#7,103: G7,104: G#7,105: A7,106: Bb7,107: B7,108: C8,109: C#8,110: D8,111: D#8,112: E8,113: F8,114: F#8,115: G8,116: G#8,117: A8,118: Bb8,119: B8,120: C9,121: C#9,122: D9,123: D#9,124: E9,125: F9,126: F#9,127: G9}>Root Note
 slider2:0<-1,15,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Root MIDI Channel
@@ -793,3 +744,9 @@ notecnt > 0 &&   pbincpos >= 1.0 ?
 );
 
 //spos+=1;
+
+  );
+);
+
+//spos+=1;
+
