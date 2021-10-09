@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="81cbcdb02b1732c5756ffa196a3207fd90dec026">
+<index version="1" name="ReaTeam JSFX" commit="de0218438b74e8bef52384b0fa2a363ec02f622b">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -11,8 +11,12 @@
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 A Sonnox Oxford Inflator-inspired distortion plugin that increases loudness without sacrificing dynamic range\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Author: Samuele Pizzi\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Many thanks to:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Edoardo "TheEdoRan" Ranghieri\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "tviler" from GearSpace\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Edoardo "TheEdoRan" Ranghieri\sa180\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "BethHarmon" from Cockos Forums\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "RCJacH" from Cockos Forums\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "sai'ke" from Cockos Forums\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "Zeno" from Cockos Forums\sa180\par}
 }
 ]]></description>
         <link rel="screenshot" href="https://imgur.com/a/hM4leza">GUI Example</link>
@@ -35,6 +39,15 @@ Minor code cleanup]]></changelog>
         <source file="Loudener_gfx/handle.png">https://github.com/ReaTeam/JSFX/raw/bd44f8ce1b04d0141f2fdd078e5cf1ccff6e0866/Distortion/Loudener_gfx/handle.png</source>
         <source file="Loudener_gfx/button_off.png">https://github.com/ReaTeam/JSFX/raw/bd44f8ce1b04d0141f2fdd078e5cf1ccff6e0866/Distortion/Loudener_gfx/button_off.png</source>
         <source file="Loudener_gfx/button_on.png">https://github.com/ReaTeam/JSFX/raw/bd44f8ce1b04d0141f2fdd078e5cf1ccff6e0866/Distortion/Loudener_gfx/button_on.png</source>
+      </version>
+      <version name="1.2" author="Samuele Pizzi" time="2021-10-09T00:13:19Z">
+        <changelog><![CDATA[Changed waveshaping function with the updated version from the folks at Cockos Forums, super accurate
+Minor optimizations]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/de0218438b74e8bef52384b0fa2a363ec02f622b/Distortion/Loudener.jsfx</source>
+        <source file="Loudener_gfx/bg.png">https://github.com/ReaTeam/JSFX/raw/de0218438b74e8bef52384b0fa2a363ec02f622b/Distortion/Loudener_gfx/bg.png</source>
+        <source file="Loudener_gfx/handle.png">https://github.com/ReaTeam/JSFX/raw/de0218438b74e8bef52384b0fa2a363ec02f622b/Distortion/Loudener_gfx/handle.png</source>
+        <source file="Loudener_gfx/button_off.png">https://github.com/ReaTeam/JSFX/raw/de0218438b74e8bef52384b0fa2a363ec02f622b/Distortion/Loudener_gfx/button_off.png</source>
+        <source file="Loudener_gfx/button_on.png">https://github.com/ReaTeam/JSFX/raw/de0218438b74e8bef52384b0fa2a363ec02f622b/Distortion/Loudener_gfx/button_on.png</source>
       </version>
     </reapack>
     <reapack name="rcjach_RCInflator.jsfx" type="effect" desc="RCInflator (Oxford Edition)">
