@@ -1,6 +1,6 @@
 desc: Loudener
 author: Samuele Pizzi
-version: 1.1
+version: 1.2
 provides:
   Loudener_gfx/bg.png
   Loudener_gfx/handle.png
@@ -9,10 +9,8 @@ provides:
 screenshot: GUI Example https://imgur.com/a/hM4leza
 donation: Donate via PayPal https://www.paypal.com/paypalme/samuelepizzi
 changelog:
-  Fixed issue by which Clip 0 dB would reset on transport start or on window minimize
-  Clip 0 dB is now ON by default
-  Re-added meters on the side
-  Minor code cleanup
+  Changed waveshaping function with the updated version from the folks at Cockos Forums, super accurate
+  Minor optimizations
 about:
   # Loudener
   ### A Sonnox Oxford Inflator-inspired distortion plugin that increases loudness without sacrificing dynamic range
@@ -20,8 +18,12 @@ about:
   Author: Samuele Pizzi
   ---
   Many thanks to:
-  - "tviler" from GearSpace
-  - Edoardo "TheEdoRan" Ranghieri
+   - Edoardo "TheEdoRan" Ranghieri
+   - "tviler" from GearSpace
+   - "BethHarmon" from Cockos Forums
+   - "RCJacH" from Cockos Forums
+   - "sai'ke" from Cockos Forums
+   - "Zeno" from Cockos Forums
 
 //input_db
 slider1:0<-6,12,0.1>-Input (dB)
@@ -48,32 +50,43 @@ filename:3,loudener_gfx/button_on.png
 
 @init
 //db to gain conversion
-last_gain = 10^(slider1 / 20);
-olast_gain = 10^(slider5 / 20);
+last_gain = exp(0.11512925464970229 * slider1);
+olast_gain = exp(0.11512925464970229 * slider5);
 
-//waveshaping function, 0 dB clip
-function waveShape(input) (
-  a*abs(input)+b*(input^2)+c*abs(input^3)-d*(input^2-2*abs(input^3)+input^4);
-);
-
-//waveshaping function, +6 dB clip
-function waveShapeOvershoot(input) (
-  input = min(max(input, -2),2);
-  2*abs(input) - input^2;
+//waveshaping function
+function waveShape(spln) (
+  in = abs(spln * last_gain);
+  clip ? (
+    //clip is on, limit input to 1.0
+    in = in > 1.0 ? 1.0 : in;
+  );
+  in_2 = in * in;
+  in_3 = in_2 * in;
+  out = (in >= 2.0) ? (
+    0.0
+  ) : (in > 1.0) ? (
+    2.0 * in - in_2
+  ) : (
+    a * in + b * in_2 + c * in_3 - d * (in_2 - 2.0 * in_3 + in_2 * in_2)
+  );
+  out = sign(spln) * out * wet_gain + min(max(spln * dry_gain, -2 * dry_gain), 2 * dry_gain);
+  out = clip ? max(-1, min(out, 1)) : out;
+  out * olast_gain
 );
 
 function process_sliders() (
   clip = slider3;
   //slider db to gain conversion on slider change
-  next_gain = 10^(slider1 / 20);
-  onext_gain = 10^(slider5 / 20);
-  //waveshape coefficient computation on slider change
-  a = 1 + (slider4 + 50)/100;
-  b = -slider4/50;
-  c = (slider4-50)/100;
-  d = 1/16 - slider4/400 + (slider4^2)/(4*10^4);
+  next_gain = exp(0.11512925464970229 * slider1);
+  onext_gain = exp(0.11512925464970229 * slider5);
+  //evaluate waveshape coefficient on slider change
+  curvepct = slider4 * 0.01;
+  a = 1.5 + curvepct;
+  b = -(curvepct + curvepct);
+  c = curvepct - 0.5;
+  d = 0.0625 - curve * 0.0025 + (curve * curve) * 0.000025;
   //wet-dry gain on effect slider change
-  wet_gain = slider2/100;
+  wet_gain = slider2 * 0.01;
   dry_gain = 1 - wet_gain;
 );
 
@@ -96,29 +109,8 @@ d_gain = (next_gain - last_gain)/samplesblock;
 od_gain = (onext_gain - olast_gain)/samplesblock;
 
 @sample
-//input gain
-i_l = spl0 * last_gain;
-i_r = spl1 * last_gain;
-clip == 0 ? (
-  //clip is off, apply waveShapeOvershoot to overshoots
-  i_l > 1 || i_l < -1 ? (
-    output_left = waveShapeOvershoot(i_l);
-  ) : (
-    output_left = waveShape(i_l);
-  );
-  i_r > 1 || i_r < -1 ? (
-    output_right = waveShapeOvershoot(i_r);
-  ) : (
-    output_right = waveShape(i_r);
-  );
-) : (
-  //clip is on, limit input to -1,1 then apply waveshaping function
-  output_left = waveShape(min(max(i_l, -1),1));
-  output_right = waveShape(min(max(i_r, -1),1));
-);
-//sample polarity + wet-dry gain + output gain
-spl0 = (output_left * sign(spl0) * wet_gain + i_l * dry_gain) * olast_gain;
-spl1 = (output_right * sign(spl1) * wet_gain + i_r * dry_gain) * olast_gain;
+spl0 = waveShape(spl0);
+spl1 = waveShape(spl1);
 //gain difference
 last_gain += d_gain;
 olast_gain += od_gain;
@@ -133,12 +125,12 @@ function draw_slider(x,y,w,h,f,t,s,d,unit,title) (
     _sliderDirty = 1;
     this.value.temp = this.value;
   );
-
+  
   //knob parameters
   this.knob.h = 44; //the actual handle height
   this.knob.hh = this.knob.h * 0.5;
   this.range = abs(f - t);
-
+  
   //mouse logic
   mouse_x >= x && mouse_x <= x+w && mouse_y >= y && mouse_y <= y+h && !this.disabled ? (
     !mouse_cap ? this.hasEntered = 1;
@@ -148,7 +140,7 @@ function draw_slider(x,y,w,h,f,t,s,d,unit,title) (
     this.hasEntered = this.hasClicked = 0;
   );
   !mouse_cap ? (this.canChange = 0; this.init_x = 0;);
-
+  
   //process
   this.canChange ? (
     this.knob.input = -(mouse_y - y - h + this.knob.hh);
@@ -158,24 +150,24 @@ function draw_slider(x,y,w,h,f,t,s,d,unit,title) (
     this.step = 1/s;
     this.value.rect = ceil(this.value.rect * this.step) / this.step;
     this.value = this.value.rect + f;
-
+    
     mouse_cap & 4 ? this.value = d;
   );
-
+  
   this.value = max(min(this.value,t),f);
   this.knob.pos = (this.range - this.value + f ) / (this.range) * (h-this.knob.h);
-
-  //knob
+  
+  //knob  
   gfx_y = y+this.knob.pos-8; gfx_x = x;
   gfx_blit(1,1,0);
-
+  
   //title
   gfx_r = gfx_g = gfx_b = 1;
   this.str1 = title;
   gfx_measurestr(this.str1,this.str1.w,this.str1.h);
   gfx_y = y - this.str1.h - 5; gfx_x = x + (w * 0.5) - (this.str1.w * 0.5);
   gfx_drawstr(this.str1);
-
+  
   //readout
   !this.hidereadout ? (
     gfx_r = gfx_g = gfx_b = 1;
@@ -184,7 +176,7 @@ function draw_slider(x,y,w,h,f,t,s,d,unit,title) (
     gfx_y = y + h - 7; gfx_x = x + (w * 0.5) - (this.str2.w * 0.5);
     gfx_drawstr(this.str2);
   );
-
+  
   this.value;
 );
 
@@ -209,17 +201,17 @@ function draw_checkbox(x,y,w,h) (
     this.checked = 1-this.checked;
     this.hasEntered = this.hasClicked = this.canChange = 0;
   );
-
+  
   //checked
   this.checked ? (
     gfx_x = x; gfx_y = y;
-    gfx_blit(3,1,0);
-  ) : (
+    gfx_blit(3,1,0);  
+  ) : ( 
     gfx_x = x; gfx_y = y;
-    gfx_blit(2,1,0);
+    gfx_blit(2,1,0);    
   );
-
-  this.checked;
+    
+  this.checked; 
 );
 
 gfx_setfont(1,"Calibri",22);
@@ -231,6 +223,6 @@ slider4 = s4.draw_slider(402,sld_y,45,290,-50,50,0.1,0,"","");
 slider5 = s5.draw_slider(506,sld_y,45,290,-12,0,0.1,0," dB","");
 
 _sliderDirty ? (
-  process_sliders();
+  process_sliders();  
   _sliderDirty = 0;
 );
