@@ -1,7 +1,7 @@
 desc: ReaRack Modular Synth
 author: Malcolm Smith
-version: 2.3.6
-changelog: Bug Fix in Amplifier module.
+version: 2.3.7
+changelog: Updated the LFO and the Additive Oscillator
 about:
   # ReaRack Modular Synth
   ReaRack is a modular MIDI controlled digital synth system. There are currently 20 modules-
