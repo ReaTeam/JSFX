@@ -1,0 +1,6 @@
+desc: gioGramegna JSFX
+author: Giovanni Gramegna
+version: 1.0
+provides: giovannigramegna_gioGramegna JSFX/trim_gain > giovannigramegna_gioGramegna JSFX/Trim Gain
+
+
