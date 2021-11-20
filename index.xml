@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="e756fa6451dce831cf544d13bd1bb2f393d2b9ac">
+<index version="1" name="ReaTeam JSFX" commit="4c623ee381675c5d754d54264d35644bc2a02e33">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -80,6 +80,29 @@ Minor optimizations]]></changelog>
         <changelog><![CDATA[Initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/4a33bbe6110bf1c5f37430bf245bbd058512148e/Distortion/TiaR_Ze%20Morpho%20Dist.jsfx</source>
         <source file="TiaR_Ze Morpho Dist/ZeMorphoDistIII.RPL">https://github.com/ReaTeam/JSFX/raw/4a33bbe6110bf1c5f37430bf245bbd058512148e/Distortion/TiaR_Ze%20Morpho%20Dist/ZeMorphoDistIII.RPL</source>
+      </version>
+    </reapack>
+  </category>
+  <category name="Dynamic">
+    <reapack name="ersh_Transient Controller 2.jsfx" type="effect" desc="Transient Controller 2">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Transient Controller 2\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 A basic improvement of the standard TransientController supplied with Reaper64.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Unhides internal parameters for finer adjustment.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Adds graphical visualisation: {\field{\*\fldinst{HYPERLINK "https://i.imgur.com/UMMDxQI.png"}}{\fldrslt{\ul
+screenshot
+}}}
+.\sa180\par}
+}
+]]></description>
+        <link rel="screenshot" href="https://i.imgur.com/UMMDxQI.png">Screenshot</link>
+      </metadata>
+      <version name="2.0" author="Ersh" time="2021-11-20T23:21:59Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/4c623ee381675c5d754d54264d35644bc2a02e33/Dynamic/ersh_Transient%20Controller%202.jsfx</source>
       </version>
     </reapack>
   </category>
