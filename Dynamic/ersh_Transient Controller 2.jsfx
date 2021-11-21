@@ -1,14 +1,24 @@
-desc: Transient Controller 2
-author: Ersh
-version: 2.0
-screenshot: Screenshot https://i.imgur.com/UMMDxQI.png
-about:
-  # Transient Controller 2
-
-  A basic improvement of the standard TransientController supplied with Reaper64.
-
-  - Unhides internal parameters for finer adjustment.
-  - Adds graphical visualisation: [screenshot](https://i.imgur.com/UMMDxQI.png).
+/**
+  JSFX Name: Transient Controller 2 by ERSH
+  Author: ersh
+  Licence: Apache 2.0
+  REAPER: 6.0
+  Version: 2.1.1
+  About:
+    Extended version of standard TransientController.
+    Screenshot https://i.imgur.com/UMMDxQI.png
+    Video https://i.imgur.com/UMMDxQI.png
+  Screenshot: https://i.imgur.com/UMMDxQI.png
+  Link: https://i.imgur.com/UMMDxQI.png
+  Link: https://youtu.be/twKTY5g27fE
+  Changelog:
+    v2.0:
+    * Initial release
+    v2.1.1:
+    * Add gain smoothness parameter.
+    * Increased internal frame rate to 1500 for finer peak resolution.
+    * Performance optimization.
+*/
 
 // (C) 2007, Michael Gruhn.
 // (C) 2021, Yury Ershov.
@@ -38,6 +48,8 @@ slider3:0<-12,6,.1>Output (dB)
 slider4:-30<-1000,-.1,.1>Transient Detector decay
 slider5:-1250<-10000,-.1,.1>Attack Detector decay
 slider6:-3<-100,-.1,.1>Sustain Detector decay
+slider7:0<0,1,1{No,Yes}>Use slow gain release
+slider8:25<1,1000,.1>Gain Release Rate dB/sec
 
 in_pin:left input
 in_pin:right input
@@ -51,10 +63,11 @@ b1Env2 = -exp(slider5 / srate );
 a0Env2 = 1.0 + b1Env2;
 b1Env3 = -exp(slider6 / srate );
 a0Env3 = 1.0 + b1Env3;
+gain = 0;
 
-g_maxx = 600;         // number of points on axis X
-g_framerate = 120;    // graph frame rate
-g_n = 4;              // number of graphs
+g_maxx = 2000;         // number of points on axis X
+g_framerate = 1500;    // graph frame rate
+g_n = 4;               // number of graphs
 freembuf(g_maxx*g_n + 1);
 memset(0, 0, g_maxx*g_n);
 g_idx = 0;
@@ -74,6 +87,8 @@ a0Env2 = 1.0 + b1Env2;
 b1Env3 = -exp(slider6 / srate );
 a0Env3 = 1.0 + b1Env3;
 
+gain_decay = slider8 / srate;
+
 @sample
 maxSpls = max(abs(spl0),abs(spl1));
 env1 = sqrt(tmpEnv1 = a0Env1*maxSpls - b1Env1*tmpEnv1);
@@ -82,22 +97,27 @@ env3 = sqrt(tmpEnv3 = a0Env3*maxSpls - b1Env3*tmpEnv3);
 
 gainAttack = log(max(env2/env1,1))*attack;
 gainSustain = log(max(env3/env1,1))*sustain;
-gain = exp(gainAttack) * exp(gainSustain);
 
-spl0 *= (gain *= vol);
-spl1 *= gain;
+gainLast = gain;
+gain = gainAttack + gainSustain;
+slider7 ? gain = gain >= 0 ?
+  max(gain, gainLast - gain_decay) :
+  min(gain, gainLast + gain_decay);
 
-(g_sample = (g_sample + 1) % g_spf) == 0 ? (
+gainV = exp(gain) * vol;
+
+spl0 *= gainV;
+spl1 *= gainV;
+
+play_state == 1 || play_state == 5 ? (g_sample = (g_sample + 1) % g_spf) == 0 ? (
   0[g_idx] = env1;
   1[g_idx] = env2;
   2[g_idx] = env3;
-  3[g_idx] = (gainAttack+gainSustain)/5 + 0.5;
+  3[g_idx] = gain/5 + 0.5;
   g_idx = (g_idx + g_n) % (g_maxx*g_n);
 );
 
 @gfx 600 300
-
-gfx_clear = 0;
 
 function g_y(y) (
   gfx_h - gfx_h * y;
@@ -126,9 +146,19 @@ function graph(idx, r, g, b, legend) (
   );
 );
 
+gfx_clear = 0;
+graph(2, 0, 0, 1, "Sustain (when exceeds Transient)");
 graph(1, 1, 0, 0, "Attack (when exceeds Transient)");
-graph(2, 0, 0, 1, "Release (when exceeds Transient)");
 graph(0, 1, 1, 1, "Transient");
 graph(3, 0, 1, 0, "Gain");
 
+mouse_x >= 0 && mouse_x < gfx_w && mouse_y >= 0 && mouse_y < gfx_h ? (
+  val = 3[(floor(mouse_x*g_maxx/gfx_w)*g_n + g_idx) % (g_maxx*g_n)];
+  gfx_circle(mouse_x, g_y(val), 2, 1, 1);
+
+  val = (val-0.5)*5;
+  gfx_y = 4; gfx_x = gfx_w*3/4;
+  val >= 0 ? gfx_drawstr("+");
+  gfx_drawnumber(val, 2); gfx_drawstr("dB");
+);
 
