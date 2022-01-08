@@ -1,0 +1,474 @@
+desc: MB ReautoMate
+author: mabian
+version: 1.0
+changelog: First official ReaPack release
+link: Forum thread https://forum.cockos.com/showthread.php?t=251684
+about:
+  # MB Reautomate
+
+  ### The idea
+  This plugin was made to rescale full automation envelopes to a restricted interval for the target output MIDI parameter, allowing to achieve finer precision over settings like filter cutoff, resonance, and wherever narrow sweet spots or limited ranges are relevant or useful.
+
+  ### How it works 
+  The full 0-1 automation envelope input range is remapped to a user-defined output range.
+  Additional options are available to alter the transformation shape (exponential, logarithmic, quadratic bezier types are selectable) and to perform X/Y grid value quantizing (example: quantize pitch-bend envelopes to semitones or whole tones).
+  The output result can be sent to various MIDI message types (7 bit CC, 14 bit CC, pitch bend, channel aftertouch).
+
+  ### Usage
+  1) Add the FX to a track
+  2) Set an automation envelope for the "input value" parameter
+  3) set "min" and "max" output parameters to the actual minimum and maximum values desired in output.
+  4) Set quantization and curve options as desired.
+  5) Set parameter linking from "output value" to the desired plugin parameter\
+     OR\
+     Set MIDI output as wanted and have the desired plugin parameter respond to the matching MIDI message type
+
+  For additional information refer here: https://forum.cockos.com/showthread.php?t=251684
+
+slider1:p_inputval=0.5<0,1,0.001>Input Value
+slider3:p_minval=0<0,1,0.01>Output min
+slider4:p_maxval=1<0,1,0.01>Output max
+slider5:p_outputval=0.5<0,1,0.001>Output Value
+
+slider7:p_shapetype=0<0,2,1{Exponential,Logarithmic,Quadratic Bezier}>Shape type
+slider8:p_shapebend=0.5<0,1,0.001>Curve (Fast < Linear < Slow)
+
+slider10:p_stepnum_x=0<0,100,1>X steps (0 = Off)
+slider11:p_steplimit_x=0<0,1,1{Upper,Center}>X steps boundary
+slider12:p_stepnum_y=0<0,100,1>Y steps (0 = Off)
+slider13:p_steplimit_y=0<0,1,1{Upper,Center}>Y steps boundary
+
+slider15:p_midimode=0<0,1,1{None,Midi 7bit CC,Midi 14bit CC,Pitch Bend,Ch Aftertouch>MIDI Output Type
+slider16:p_midichannel=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Channel
+slider17:p_midiccnum=0<0,30,1{1,2,3,4,5,6,7,8,9,0,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31}>MIDI CC #
+
+in_pin:none
+out_pin:none
+
+//options:no_meter
+
+//-----------------------------------------------------
+@init
+ext_noinit = 1.0;
+ext_nodenorm = 1.0;
+
+old_mididata = -1;
+
+// cache values to detect changes
+cache_inputval = -10;
+cache_minval = -10;
+cache_maxval = -10;
+
+cache_shapetype = -10;
+cache_shapebend = -10;
+
+cache_stepnum_x = -10;
+cache_steplimit_x = -10;
+cache_stepnum_y = -10;
+cache_steplimit_y = -10;
+
+cache_outval = -10;
+
+refreshreq = 0;
+
+old_gfx_w = -1;
+old_gfx_h = -1;
+
+function RestrictValue(val, vmin, vmax)
+(
+  val = min(val, vmax);
+  val = max(val, vmin);
+  val;
+);
+
+
+/*
+// x=current val, p=curve coefficient, shapeorder=0->exponential, 1=quadratic spline, 2=cubic spline, 
+function CSplineCalculation(x, p, p_shapetype) local (retval)
+(
+  // S=(0,0), E=(1,1) - start and end point have fixed values
+  // C0=C1=(p,1-p), control points move together, descending vertically from 1 to 0 as p increases
+
+  // Cubic: ((1-t)^3)*S + 3*((1-t)^2)*t*C0 + 3*(1-t)*(t^2)*C1 + (t^3)*E
+  // X = ((1-t)^3)*Sx + 3*((1-t)^2)*t*C0x + 3*(1-t)*(t^2)*C1x + (t^3)*Ex
+  // X = 3*((1-t)^2)*t*p + 3*(1-t)*(t^2)*p + (t^3)
+  
+  (p_shapetype==2)?
+  (
+    retval = 3*((1-x)^2)*x*(1-p) + 3*(1-x)*(x^2)*(1-p) + (x^3);
+  );
+  
+  //Quadratic: ((1-x)^2)*Sy + 2*(1-x)*x*C0y + (x^2)*Ey
+  // ---> 2*(1-x)*x*(1-p) + (x^2)
+  (p_shapetype==1) ?
+  (
+    retval = 2*(1-x)*x*(1-p) + (x^2);
+  );
+  
+  retval;
+);
+*/
+
+
+function ApplyCurve(x, shapetype, shapebend) local(y, t)
+(
+  (shapetype == 0)?        // Exp Curve
+  (
+    shapebend = pow(10, (shapebend - 0.5) * 2);
+
+    y = pow(x, shapebend);     // apply exp
+  );
+
+  (shapetype == 1)?        // Log Curve
+  (
+    shapebend = pow(10, 5 - (shapebend * 10));
+
+    (shapebend == 1)?    // handle linear
+    (
+      y = x;
+    ):
+    (
+      y = log(1 + (shapebend - 1) * x) / log(shapebend); // apply log
+    );
+  );
+
+  (shapetype == 2)?        // Quadratic Spline
+  (
+    (shapebend == 0.5)?
+    (
+      t = 0;
+      y = x;
+    ):
+    (
+      t = ((-shapebend) +
+        sqrt((shapebend ^ 2) + x * (1 - 2 * shapebend))) / (1 - 2 * shapebend);
+      y = t * ((2 * (1 - t) * (1 - shapebend)) + t);
+    )
+  );
+  
+  y;
+);
+
+
+function CalcValue(x) local (y)
+(
+  (x == 1) ?
+  (y = 1):
+  (
+    (p_stepnum_x > 0)?    // quantize input
+    (
+      x = floor((x + step_offset_x) / step_size_x) * step_size_x;
+    );
+  
+    y = ApplyCurve(x, p_shapetype, p_shapebend);
+  
+    (p_stepnum_y > 0)?    // quantize output
+    (
+      y = floor((y + step_offset_y) / step_size_y) * step_size_y;
+    );
+  );
+  
+  y;
+);
+
+
+function SendMIDI(offset, outval) local(midival, midicmd, midiccnum) 
+(
+  (p_midimode == 1)?   // Midi 7 bit CC
+  (
+    midival = RestrictValue(floor(outval * 128), 0, 127);
+
+    midicmd = 0xB0 | p_midichannel;
+    midiccnum = p_midiccnum + 1;
+
+    mididata = (midicmd << 16) | (midiccnum << 8) | midival;
+    (mididata != old_mididata)?
+    (
+      midisend(offset, midicmd, midiccnum, midival);
+    );
+  );
+
+  (p_midimode == 2)?   // Midi 14 bit CC
+  (
+    midival = RestrictValue(floor(outval * 16384), 0, 16383);
+
+    midicmd = 0xB0 | p_midichannel;
+    midiccnum = p_midiccnum + 1;
+
+    mididata = (midicmd << 24) | (midiccnum << 16) | midival;
+    (mididata != old_mididata)?
+    (
+      midisend(offset, midicmd, midiccnum, midival >> 7);   // MSB
+      midisend(offset, midicmd, midiccnum + 32, midival & 0x7f);   // LSB
+    );
+  );
+  
+  (p_midimode == 3)?   // Pitch Bend
+  (
+    midival = RestrictValue(floor(outval * 16384), 0, 16383);
+    
+    midicmd = 0xE0 | p_midichannel;
+    
+    mididata = (midicmd << 16) | midival;
+    (mididata != old_mididata)?
+    (
+      midisend(offset, midicmd, midival & 0x7f, midival >> 7);
+    );
+  );
+  
+  (p_midimode == 4)?   // Channel Aftertouch
+  (
+    midival = RestrictValue(floor(outval * 128), 0, 127);
+
+    midicmd = 0xD0 | p_midichannel;
+
+    mididata = (midicmd << 8) | midival;
+    (mididata != old_mididata)?
+    (
+      midisend(offset, midicmd, midival & 0x7f);
+    );
+  );
+
+  old_mididata = mididata;
+);
+
+
+//-----------------------------------------------------
+@slider
+
+p_inputval = RestrictValue(p_inputval, 0, 1);
+p_minval = RestrictValue(p_minval, 0, 1);
+p_maxval = RestrictValue(p_maxval, 0, 1);
+p_shapebend = RestrictValue(p_shapebend, 0, 1);
+p_stepnum_x = floor(RestrictValue(p_stepnum_x, 0, 100));
+p_stepnum_y = floor(RestrictValue(p_stepnum_y, 0, 100));
+
+(p_stepnum_x > 0)?
+(
+  step_size_x = (1 / p_stepnum_x);
+  step_offset_x = (p_steplimit_x == 0) ? (0) : (step_size_x / 2);
+):
+(
+  step_size_x = 1;
+  step_offset_x = 0;
+);
+
+(p_stepnum_y > 0)?
+(
+  step_size_y = (1 / p_stepnum_y);
+  step_offset_y = (p_steplimit_y == 0) ? (0) : (step_size_y / 2);
+):
+(
+  step_size_y = 1;
+  step_offset_y = 0;
+);
+
+((cache_inputval !== p_inputval) ||
+ (cache_minval !== p_minval) ||
+ (cache_maxval !== p_maxval) ||
+ (cache_shapetype !== p_shapetype) ||
+ (cache_shapebend !== p_shapebend) ||
+ (cache_stepnum_x !== p_stepnum_x) ||
+ (cache_steplimit_x !== p_steplimit_x) ||
+ (cache_stepnum_y !== p_stepnum_y) ||
+ (cache_steplimit_y !== p_steplimit_y))?
+(
+  // get the number and normalize to output range
+  p_outputval = p_minval + ((p_maxval - p_minval) * CalcValue(p_inputval));
+  
+  cache_inputval = p_inputval;
+  cache_minval = p_minval;
+  cache_maxval = p_maxval;
+  cache_shapetype = p_shapetype;
+  cache_shapebend = p_shapebend;
+  cache_stepnum_x = p_stepnum_x;
+  cache_steplimit_x = p_steplimit_x;
+  cache_stepnum_y = p_stepnum_y;
+  cache_steplimit_y = p_steplimit_y;
+  
+  refreshreq = refreshreq + 1;
+);
+
+//slider_exec = slider_exec + 1;
+
+
+//-----------------------------------------------------
+@block
+(p_outputval != cache_outputval)?
+(
+  SendMIDI(0, p_outputval);
+
+  cache_outputval = p_outputval;
+);
+
+/*
+while(
+  nextoffset = slider_next_chg(1,nextval);   // get next change for output value
+  
+  ((nextoffset > 0) && (p_midimode > 0))?     // if found and MIDI send enabled try to send
+  (
+    lastnextoffset = nextoffset;
+    SendMIDI(nextoffset, nextval);
+  );
+  
+  nextoffset >= 0;     // no event - end!
+);
+*/
+
+@sample
+
+
+@gfx 200 200
+
+function DrawCurve() // local(x, chart_x, chart_y, chart_w, chart_h)
+(
+  chart_margin_x = 18;
+  chart_margin_y = 24;
+  
+  chart_size = min(gfx_w - 2 * chart_margin_x, gfx_h - 2 * chart_margin_y);
+  
+  gfx_setfont(2, "Helvetica", 16, 'b');
+  gfx_setfont(1, "Helvetica", 16, 'i');
+  
+  (chart_size >= 64)?
+  (
+    chart_x = (gfx_w - chart_size - 2) / 2;
+    chart_y = (gfx_h - chart_size - 2) / 2;
+
+    chart_w = chart_size;
+    chart_h = chart_size;
+
+    gfx_set(1, 1, 1);
+  //  gfx_drawstr("Curve");
+  
+    gfx_x = chart_x - 2;
+    gfx_y = chart_y + chart_h + 4;
+    gfx_drawnumber(p_minval, 2);
+  
+    gfx_x = chart_x + chart_w - 24;
+    gfx_y = chart_y - 18;
+    gfx_drawnumber(p_maxval, 2);
+  
+    gfx_setfont(2);
+
+    gfx_set(0.8, 0.7, 0.7);
+
+    gfx_x = chart_x;
+    gfx_y = chart_y - 18;
+    gfx_drawnumber(p_outputval, 2);
+
+    gfx_set(0.4, 0.4, 0.4);
+    gfx_rect(chart_x - 1, chart_y - 1, chart_w + 2, chart_h + 2, 1);
+  
+/*
+gfx_gradrect(chart_x, chart_y, chart_w, chart_h, 0.1, 0.1, 0.2, 1,
+      0.03 / chart_w, 0.04 / chart_w, 0.05 / chart_w, 0,
+      0.03 / chart_h, 0.04 / chart_h, 0.05 / chart_h, 0
+      );
+*/
+    gfx_gradrect(chart_x, chart_y, chart_w, chart_h, 0.08, 0.05, 0.1, 1,
+      0.07 / chart_w, 0.04 / chart_w, 0.05 / chart_w, 0,
+      0.15 / chart_h, 0.04 / chart_h, 0.05 / chart_h, 0
+      );
+
+    gfx_set(0.5, 0.5, 0.5, 0.25);
+  
+    (p_stepnum_x > 0)?    // grid for x axis
+    (
+      counter = 1;
+  
+      while (counter < p_stepnum_x)
+      (
+        gfx_line(chart_x + (counter * step_size_x) * chart_w, chart_y + chart_h,
+          chart_x + (counter * step_size_x) * chart_w, chart_y);
+  
+        counter = counter + 1;
+      );
+    );
+  
+    (p_stepnum_y > 0)?    // grid for y axis
+    (
+      counter = 1;
+  
+      while (counter < p_stepnum_y)
+      (
+        gfx_line(chart_x, chart_y + chart_h - ((counter * step_size_y) * chart_h),
+          chart_x + chart_w, chart_y + chart_h - ((counter * step_size_y) * chart_h));
+  
+        counter = counter + 1;
+      );
+    );
+  
+    gfx_set(0.9, 0.9, 0.2);
+  
+    cx = 0;
+    lx = 0;
+    ly = 0;
+    counter = 0;
+
+    while
+    (
+      cx = counter;
+      cy = CalcValue(cx / chart_w) * chart_h;
+  
+      (cx > chart_w)?(cx = chart_w);
+      (cy > chart_h)?(cy = chart_h);
+      
+      ((cx > 0) && (cy != ly))?
+      (
+        ((p_stepnum_x > 0) || (p_stepnum_y > 0))?
+        (
+          gfx_line(chart_x + lx, chart_y + chart_h - ly,
+            chart_x + cx, chart_y + chart_h - ly);
+          gfx_line(chart_x + cx, chart_y + chart_h - ly,
+            chart_x + cx, chart_y + chart_h - cy);
+  
+          gfx_circle(chart_x + lx, chart_y + chart_h - ly, 2, 1);
+        )
+        :
+        (
+          gfx_line(chart_x + lx, chart_y + chart_h - ly,
+            chart_x + cx, chart_y + chart_h - cy);
+        );
+  
+        lx = cx;
+        ly = cy;
+      );
+
+      counter = counter + 1;
+      cx < chart_w;
+    );
+
+    ((cx == ly) && (lx < chart_w))?
+    (gfx_line(chart_x + lx, chart_y + chart_h - ly,
+            chart_x + cx, chart_y + chart_h - cy));
+  
+//    gfx_set(0, 1, 0);
+    gfx_circle(chart_x + chart_w, chart_y, 2, 1);
+    gfx_circle(chart_x, chart_y + chart_h, 2, 1);
+  
+    x = chart_x + p_inputval * chart_w;
+    y = chart_y + chart_h - (CalcValue(p_inputval) * chart_h);
+
+    gfx_set(0, 1, 1, 0.4);
+    gfx_line(chart_x, y, chart_x + chart_w, y);
+    gfx_line(x, chart_y, x, chart_y + chart_h);
+    
+    gfx_set(1, 0, 0);
+    gfx_circle(chart_x + p_inputval * chart_w, y, 4, 1);
+    gfx_set(1, 1, 1);
+    gfx_circle(chart_x + p_inputval * chart_w, y, 2, 1);
+  );
+);
+
+
+while ((refreshreq > 0) || (old_gfx_w != gfx_w) || (old_gfx_h != gfx_h))
+(
+  cur_refreshreq = refreshreq;
+  DrawCurve();
+  refreshreq = refreshreq - cur_refreshreq;
+//  refreshed = refreshed + 1;
+  old_gfx_w = gfx_w;
+  old_gfx_h = gfx_h;
+);
+
