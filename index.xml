@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="4c623ee381675c5d754d54264d35644bc2a02e33">
+<index version="1" name="ReaTeam JSFX" commit="bd309de2616e145e29ba583b3964f829b8613047">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -361,6 +361,33 @@ here
       <version name="2.0" author="mabian" time="2020-05-14T20:42:11Z">
         <changelog><![CDATA[- First version (same as classic MB_Filter2) added to Reapack]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/0d26f30c50af08b8a4182a06224d9d551972fad0/MIDI/MB_MIDI%20Event%20Filter.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="MB_ReautoMate.jsfx" type="effect" desc="MB ReautoMate">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MB Reautomate\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 The idea\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This plugin was made to rescale full automation envelopes to a restricted interval for the target output MIDI parameter, allowing to achieve finer precision over settings like filter cutoff, resonance, and wherever narrow sweet spots or limited ranges are relevant or useful.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 How it works\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The full 0-1 automation envelope input range is remapped to a user-defined output range. Additional options are available to alter the transformation shape (exponential, logarithmic, quadratic bezier types are selectable) and to perform X/Y grid value quantizing (example: quantize pitch-bend envelopes to semitones or whole tones). The output result can be sent to various MIDI message types (7 bit CC, 14 bit CC, pitch bend, channel aftertouch).\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 Usage\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 1)\tx360\tab Add the FX to a track\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 2)\tx360\tab Set an automation envelope for the "input value" parameter\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 3)\tx360\tab set "min" and "max" output parameters to the actual minimum and maximum values desired in output.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 4)\tx360\tab Set quantization and curve options as desired.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 5)\tx360\tab Set parameter linking from "output value" to the desired plugin parameter\line OR\line Set MIDI output as wanted and have the desired plugin parameter respond to the matching MIDI message type\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 For additional information refer here: https://forum.cockos.com/showthread.php?t=251684\par}
+}
+]]></description>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?t=251684">Forum thread</link>
+      </metadata>
+      <version name="1.0" author="mabian" time="2022-01-08T04:14:55Z">
+        <changelog><![CDATA[First official ReaPack release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/bd309de2616e145e29ba583b3964f829b8613047/MIDI/MB_ReautoMate.jsfx</source>
       </version>
     </reapack>
     <reapack name="mbncp_Legato Control.jsfx" type="effect" desc="Legato control">
