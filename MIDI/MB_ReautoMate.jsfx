@@ -1,4 +1,4 @@
-desc: MB_Reautomate
+desc: MB ReautoMate
 author: mabian
 version: 1.0
 changelog: First official ReaPack release
@@ -24,12 +24,6 @@ about:
      Set MIDI output as wanted and have the desired plugin parameter respond to the matching MIDI message type
 
   For additional information refer here: https://forum.cockos.com/showthread.php?t=251684
-
-// MB ReautoMate
-// 2020-04-02
-// version: 1.0
-
-desc:MB ReautoMate
 
 slider1:p_inputval=0.5<0,1,0.001>Input Value
 slider3:p_minval=0<0,1,0.01>Output min
