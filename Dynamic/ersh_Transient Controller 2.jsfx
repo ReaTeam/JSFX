@@ -1,24 +1,18 @@
-/**
-  JSFX Name: Transient Controller 2 by ERSH
-  Author: ersh
-  Licence: Apache 2.0
-  REAPER: 6.0
-  Version: 2.1.1
-  About:
-    Extended version of standard TransientController.
-    Screenshot https://i.imgur.com/UMMDxQI.png
-    Video https://i.imgur.com/UMMDxQI.png
-  Screenshot: https://i.imgur.com/UMMDxQI.png
-  Link: https://i.imgur.com/UMMDxQI.png
-  Link: https://youtu.be/twKTY5g27fE
-  Changelog:
-    v2.0:
-    * Initial release
-    v2.1.1:
-    * Add gain smoothness parameter.
-    * Increased internal frame rate to 1500 for finer peak resolution.
-    * Performance optimization.
-*/
+desc: Transient Controller 2
+author: Ersh
+version: 2.1.1
+changelog:
+  Add gain smoothness parameter.
+  Increased internal frame rate to 1500 for finer peak resolution.
+  Performance optimization.
+screenshot: Screenshot https://i.imgur.com/UMMDxQI.png
+about:
+  # Transient Controller 2
+
+  A basic improvement of the standard TransientController supplied with Reaper64.
+
+  - Unhides internal parameters for finer adjustment.
+  - Adds graphical visualisation: [screenshot](https://i.imgur.com/UMMDxQI.png).
 
 // (C) 2007, Michael Gruhn.
 // (C) 2021, Yury Ershov.
@@ -38,7 +32,6 @@
 // Further more is this released under the GPL License:
 // http://www.gnu.org/licenses/gpl.html
 
-desc:Transient Controller 2
 //tags: processing dynamics transient
 //author: LOSER, ERSH
 
