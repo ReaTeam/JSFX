@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="ab7cc219407c03b318b8b1924d0d8fcee61aaa9e">
+<index version="1" name="ReaTeam JSFX" commit="3394b8f4f4b564607f9de2b32e6b9da2924a9e21">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2990,7 +2990,7 @@ Bug fixes]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/ab05b2e8278eb4f01e761571a77d641a10de58ef/Utility/mschnell_MIDI%20Display%20Patch%20Name.jsfx</source>
       </version>
     </reapack>
-    <reapack name="mschnell_Midi Fade.jsfx" type="effect" desc="Midi Fade X">
+    <reapack name="mschnell_MIDI Fade.jsfx" type="effect" desc="MIDI Fade X">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
@@ -3014,13 +3014,9 @@ Bug fixes]]></changelog>
 ]]></description>
         <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
       </metadata>
-      <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-02-24T17:27:59Z">
-        <changelog><![CDATA[initial release]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/64f6efb468c4fe4f1c0478d6d42be89fb9fa345d/Utility/mschnell_Midi%20Fade.jsfx</source>
-      </version>
-      <version name="2.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-03-28T00:34:03Z">
-        <changelog><![CDATA[Added Muting Notification CC value slider]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/98c128b768bb1c8ed1dbed002f441414b6813e5c/Utility/mschnell_Midi%20Fade.jsfx</source>
+      <version name="2.2" author="Michael Schnell (mschnell@bschnell.de)" time="2022-02-03T15:33:56Z">
+        <changelog><![CDATA[Fix initialization problems]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/3394b8f4f4b564607f9de2b32e6b9da2924a9e21/Utility/mschnell_MIDI%20Fade.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI Trigger CC.jsfx" type="effect" desc="MIDI Trigger CC">
