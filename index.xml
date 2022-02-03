@@ -3014,6 +3014,14 @@ Bug fixes]]></changelog>
 ]]></description>
         <link rel="donation" href="http://www.unfoundation.org/">United Nations Foundation</link>
       </metadata>
+      <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-02-24T17:27:59Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/64f6efb468c4fe4f1c0478d6d42be89fb9fa345d/Utility/mschnell_Midi%20Fade.jsfx</source>
+      </version>
+      <version name="2.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-03-28T00:34:03Z">
+        <changelog><![CDATA[Added Muting Notification CC value slider]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/98c128b768bb1c8ed1dbed002f441414b6813e5c/Utility/mschnell_Midi%20Fade.jsfx</source>
+      </version>
       <version name="2.2" author="Michael Schnell (mschnell@bschnell.de)" time="2022-02-03T15:33:56Z">
         <changelog><![CDATA[Fix initialization problems]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/3394b8f4f4b564607f9de2b32e6b9da2924a9e21/Utility/mschnell_MIDI%20Fade.jsfx</source>
