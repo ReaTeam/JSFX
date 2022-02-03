@@ -1,7 +1,7 @@
-desc:Midi Fade X
+desc: MIDI Fade X
 author: Michael Schnell (mschnell@bschnell.de)
-version: 2.1
-changelog: Added Muting Notification CC value slider
+version: 2.2
+changelog: Fix initialization problems
 donation: United Nations Foundation http://www.unfoundation.org/
 about:
   ## Description
@@ -17,17 +17,17 @@ about:
   Below the breakpoint, a linear curve is used so that with CC = 0 the amplification is Zero (-infinity dB).
 
   Two sliders defines the maximum fade-in (up) and fade-out (down) speed the amplification is modulated. This is set in dB per modulation step. Moreover the maximum speed used is reaching a new defined level in as many steps a samples in a block.
-  
+
   The slider "start fade in" defines the starting point of the upwards move of the amplification. Same is given as the equivalent of an input CC value (1 ... 31)
-  
+
   The "Muting Notification" sets a CC # which is sent out with a value of "Muting Notification CC value", when the amplification drops below the mute level (equivalent to an input CC value of one tenth of that defined for "start fade in").
-  
+
   The "send CC = 127" setting defines whether this CC is sent with value 127, when the amplification rises above the mute level or when it reaches 0 dB.
-  
+
   A graph shows as well the curve (linear, Amplification vs. CC steps), as the dynamic movement of the input CC and the amplification level.
-  
+
   Moreover, the fade in start and - if appropriate - the mute level is shown.
-  
+
   If the "Muting Notification CC" is set, the mute state is visualized by a green rectangle.
 
   ## Limitations
@@ -89,7 +89,8 @@ slider10:0<0,2,1{Never,-inf db,0 dB}>send CC = 127
   
   str1  = sprintf(#, "fade in start -> %.0f dB", log(f1)/r4);;
   str01 = sprintf(#, "mute level    -> %.0f dB", log(f01)/r4);;
-
+  outlevel < f1 ? outlevel = f1; // fix initialization problems
+  
 @block
   while (midirecv(offset, msg1, msg2, msg3)) (
     status = msg1 & $xF0;      // Extract message type
