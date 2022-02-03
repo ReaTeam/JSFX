@@ -1,4 +1,4 @@
-desc: Midi Fade X
+desc: MIDI Fade X
 author: Michael Schnell (mschnell@bschnell.de)
 version: 2.2
 changelog: Fix initialization problems
