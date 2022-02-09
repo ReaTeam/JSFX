@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="3394b8f4f4b564607f9de2b32e6b9da2924a9e21">
+<index version="1" name="ReaTeam JSFX" commit="a2d203eadfb492cf1f26750aad65cf06c19993ed">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -3025,6 +3025,10 @@ Bug fixes]]></changelog>
       <version name="2.2" author="Michael Schnell (mschnell@bschnell.de)" time="2022-02-03T15:33:56Z">
         <changelog><![CDATA[Fix initialization problems]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/3394b8f4f4b564607f9de2b32e6b9da2924a9e21/Utility/mschnell_MIDI%20Fade.jsfx</source>
+      </version>
+      <version name="2.3" author="Michael Schnell (mschnell@bschnell.de)" time="2022-02-09T21:52:49Z">
+        <changelog><![CDATA[Fix initialization problems better]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/a2d203eadfb492cf1f26750aad65cf06c19993ed/Utility/mschnell_MIDI%20Fade.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI Trigger CC.jsfx" type="effect" desc="MIDI Trigger CC">
