@@ -1,7 +1,7 @@
 desc: MIDI Fade X
 author: Michael Schnell (mschnell@bschnell.de)
-version: 2.2
-changelog: Fix initialization problems
+version: 2.3
+changelog: Fix initialization problems better
 donation: United Nations Foundation http://www.unfoundation.org/
 about:
   ## Description
@@ -89,7 +89,7 @@ slider10:0<0,2,1{Never,-inf db,0 dB}>send CC = 127
   
   str1  = sprintf(#, "fade in start -> %.0f dB", log(f1)/r4);;
   str01 = sprintf(#, "mute level    -> %.0f dB", log(f01)/r4);;
-  outlevel < f1 ? outlevel = f1; // fix initialization problems
+  low = 1;                       // fix initialization problems
   
 @block
   while (midirecv(offset, msg1, msg2, msg3)) (
