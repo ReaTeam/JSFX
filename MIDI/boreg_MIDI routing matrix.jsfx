@@ -1,0 +1,324 @@
+desc: MIDI routing matrix
+author: boreg
+version: 1.0
+link:
+  Stash website https://stash.reaper.fm/v/7304/midi_routing_matrix
+  Forum thread https://forum.cockos.com/showthread.php?t=67115
+about:
+  Handy little utility.
+
+  - Freely route any input MIDI channel to any output MIDI channel
+
+  - Possible to send a single input to multiple outputs, or vice versa
+
+  - Channel activity indicator
+
+  - Hanging note prevention (keep track of notes playing, send note-off when a connection is removed)
+
+desc:MIDI routing matrix
+
+slider1:1<0,1,1{Off,On}>Hanging note prevention
+
+// these lines tell Reaper the effect has no audio input/output,
+// which enables processing optimizations.
+// MIDI-only FX should always have these lines.
+in_pin:none
+out_pin:none
+
+
+@init
+
+ext_noinit = 1;
+
+NOTE_OFF = $x80;
+NOTE_ON = $x90;
+// Turn off channelStatus LEDs after specified timeout
+LED_TIMEOUT_MSEC = 200;
+LED_TIMEOUT_SAMPLES = LED_TIMEOUT_MSEC * srate / 1000;
+ActionReset = 1;
+ActionClear = 2;
+
+action = ActionReset;
+matrix = 0;
+prevCell = -1;
+
+noteSize = 2;
+notesBase = 256;
+lastIndex = notesBase;
+channelStatus = notesBase + 16*128*noteSize;
+sendNoteOffsFrom = sendNoteOffsTo = -1;
+
+INACTIVE = -100000;
+memset(channelStatus, INACTIVE, 16);
+
+@serialize
+	
+file_mem(0, matrix, 256);
+file_var(0, action);
+
+@slider
+
+sendNoteOffs = slider1;
+
+@block
+
+action ? (
+	memset(matrix, 0, 256);
+	action == ActionReset ? (
+		i = 0;
+		loop(16,
+			matrix[i * 17] = 1;
+			i += 1;
+		);
+	);
+	action = 0;
+);
+
+sendNoteOffs && sendNoteOffsFrom >= 0 && sendNoteOffsTo >= 0 ? (
+	i = notesBase;
+	while (
+		(i < lastIndex) && (i[1] == sendNoteOffsFrom) ? (
+			midisend(0, NOTE_OFF + sendNoteOffsTo, i[0]);
+		);
+		(i += noteSize) < lastIndex;
+	);
+	sendNoteOffsFrom = sendNoteOffsTo =-1;
+);
+
+while (
+	midirecv(offset, msg1, msg23) ? (
+		channel = msg1 & $x0F;
+		lastActive = channel;
+		channelStatus[channel] = -offset;
+		m = msg1 & $xF0;
+		m == NOTE_ON || m == NOTE_OFF ?
+		(
+			vel = (msg23 / 256) | 0;
+			vel < 1 ? m = NOTE_OFF;
+			note = msg23 & 127;
+			// Look for a note whose status has changed
+			i = notesBase;
+			found = 0;
+			while (
+				(i < lastIndex) && (i[0] == note) && (i[1] == channel) ? (
+					found = 1;
+				);
+				(i += noteSize) < lastIndex && !found;
+			);
+			m == NOTE_ON && !found ? (
+				// Add a new note
+				i = lastIndex;
+				i[0] = note;
+				i[1] = channel;
+				lastIndex += noteSize;
+			)
+			: m == NOTE_OFF && found ? (
+				// Remove a note
+				i < lastIndex ? memcpy(i - noteSize, i, lastIndex - i);
+				lastIndex -= noteSize;
+			);
+			
+		);
+		n = matrix + channel * 16;
+		outChannel = 0;
+		loop(16,
+			n[outChannel] > 0 ? (
+				midisend(offset, m + outChannel, msg23);
+			);
+			outChannel += 1;
+		);
+	);
+);
+
+channel = 0;
+loop(16,
+	s = channelStatus[channel];
+	s != INACTIVE ? (
+		channelStatus[channel] = (s < LED_TIMEOUT_SAMPLES) ? s + samplesblock : INACTIVE;
+	);
+	channel += 1;
+);
+
+@gfx 430 350
+xbase = 35;		// routing matrix left
+ybase = 30;		// routing matrix top
+b = 2;			// border size
+c = 20;			// cell inner size
+bc = b + c;		// total cell size (inner + border)
+totalSize = bc * 16;	// total matrix size
+
+gfx_clear = $xA0A0A0;
+
+// Matrix background color
+gfx_a = 1;
+gfx_r = 0.9;
+gfx_g = 0.9;
+gfx_b = 0.9;
+
+// Measure character width
+gfx_x = xbase;
+gfx_y = ybase;
+gfx_drawnumber(9, 0);
+textw = gfx_x - xbase;
+
+// Draw empty area
+gfx_x = xbase + b;
+gfx_y = ybase + b;
+gfx_rectto(xbase + totalSize, ybase + totalSize);
+
+// Draw top & left borders
+gfx_r = 0;
+gfx_g = 0;
+gfx_b = 0;
+
+gfx_x = 0;
+gfx_y = ybase - gfx_texth - 2;
+gfx_drawchar($'i');
+gfx_drawchar($'n');
+gfx_x = xbase - 3*textw;
+gfx_y = 2;
+gfx_drawchar($'o');
+gfx_drawchar($'u');
+gfx_drawchar($'t');
+
+gfx_x = gfx_y = 0;
+gfx_lineto(xbase, ybase, 1);
+
+gfx_rectto(gfx_x + b, gfx_y + totalSize + b);
+gfx_x = xbase;
+gfx_y = ybase;
+gfx_rectto(gfx_x + totalSize + b, gfx_y + b);
+xbase += b;
+ybase += b;
+
+// Draw other borders
+gfx_x = xbase;
+loop(16,
+	gfx_x += c;
+	gfx_y = ybase;
+	gfx_rectto(gfx_x + b, gfx_y + totalSize);
+);
+
+gfx_y = ybase;
+loop(16,
+	gfx_y += c;
+	gfx_x = xbase;
+	gfx_rectto(gfx_x + totalSize, gfx_y + b);
+);
+
+// Draw labels
+gfx_y = ybase + (c - gfx_texth) / 2;
+n = 0;
+loop(16,
+	active = (channelStatus[n] >= 0);
+	active ? (
+		gfx_g = gfx_b = 0;
+		gfx_r = 1;
+	) : (
+		gfx_r = gfx_b = 0;
+		gfx_g = 1;
+	);
+	n += 1;
+	gfx_x = xbase - ((n < 10) ? textw*2 : textw*3) - b - 3;
+	gfx_drawnumber(n, 0);
+	active ? gfx_drawchar($'*');
+	gfx_y += bc;
+);
+
+x = xbase;
+gfx_r = gfx_b = 0;
+gfx_g = 1;
+gfx_y = ybase - gfx_texth - b - 3;
+n = 0;
+loop(16,
+	n += 1;
+	gfx_x = x + c/2 - ((n < 10) ? textw/2 : textw);
+	gfx_drawnumber(n, 0);
+	x += bc;
+);
+
+// Draw cells
+gfx_r = gfx_g = gfx_b = 0.5;
+n = 0;
+loop(256,
+	matrix[n] > 0 ? (
+		row = (n / 16) | 0;
+		col = n & 15;
+		gfx_x = xbase + col * bc;
+		gfx_y = ybase + row * bc;
+		gfx_rectto(gfx_x + c, gfx_y + c);
+	);
+	n += 1;
+);
+
+// Button size and position
+btnPadding = 2;
+btnTop = ybase + totalsize + 5;
+btnBottom = btnTop + gfx_texth + 2 * btnPadding;
+btnResetLeft = xbase;
+btnResetRight = btnResetLeft + textw * 5 + 2 * btnPadding;
+btnClearLeft = btnResetRight + 20;
+btnClearRight = btnClearLeft + textw * 5 + 2 * btnPadding;
+
+// Draw buttons
+gfx_r = gfx_g = gfx_b = 0.0;
+gfx_x = btnResetLeft;
+gfx_y = btnTop;
+gfx_rectto(btnResetRight, btnBottom);
+
+gfx_x = btnClearLeft;
+gfx_y = btnTop;
+gfx_rectto(btnClearRight, btnBottom);
+
+gfx_g = 1.0;
+gfx_x = btnResetLeft + btnPadding;
+gfx_y = btnTop + btnPadding;
+gfx_drawchar($'r');
+gfx_drawchar($'e');
+gfx_drawchar($'s');
+gfx_drawchar($'e');
+gfx_drawchar($'t');
+gfx_x = btnClearLeft + btnPadding;
+gfx_drawchar($'c');
+gfx_drawchar($'l');
+gfx_drawchar($'e');
+gfx_drawchar($'a');
+gfx_drawchar($'r');
+
+mouse_cap & 1 ? (
+	button = 0;
+	mouse_x >= btnResetLeft && mouse_x <= btnResetRight &&
+	mouse_y >= btnTop && mouse_y <= btnBottom ? (
+		button = ActionReset;
+	);
+	mouse_x >= btnClearLeft && mouse_x <= btnClearRight &&
+	mouse_y >= btnTop && mouse_y <= btnBottom ? (
+		button = ActionClear;
+	);
+	button != prevButton ? (
+		action = button;
+	);
+	col = (mouse_x - xbase) / bc;
+	row = (mouse_y - ybase) / bc;
+	// Check that mouse is inside a cell, and not on a cell border
+	row >= 0 && row < 16 &&
+	col >= 0 && col < 16 &&
+	row - (row|0) < c/bc &&
+	col - (col|0) < c/bc ?
+	(
+		cell = (row|0) * 16 + (col|0);
+		cell != prevCell ? (
+			matrix[cell] ? (
+				sendNoteOffsFrom = row|0;
+				sendNoteOffsTo = col|0;
+				matrix[cell] = 0;
+			) : (
+				matrix[cell] = 1;
+			);
+			prevCell = cell;
+		);
+	);
+) : (
+	prevButton = 0;
+	prevCell = -1;
+);
