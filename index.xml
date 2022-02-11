@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="a2d203eadfb492cf1f26750aad65cf06c19993ed">
+<index version="1" name="ReaTeam JSFX" commit="761437a19ffb621af3404658151efd16ade63173">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -141,6 +141,26 @@ Performance optimization.]]></changelog>
       </metadata>
       <version name="1.0" author="Bert Bouwhuis" time="2019-03-18T16:31:00Z">
         <source>https://github.com/ReaTeam/JSFX/raw/dfa967305ea712ecef76ef4030937eb46971d802/MIDI/bertbouwhuis_MIDI%20controller%20for%20S8%20looper%20with%20fade%20in%20and%20out.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="boreg_MIDI routing matrix.jsfx" type="effect" desc="MIDI routing matrix">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Handy little utility.\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Freely route any input MIDI channel to any output MIDI channel\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Possible to send a single input to multiple outputs, or vice versa\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Channel activity indicator\par}
+{\pard \ql \f0 \sa180 \li360 \fi-360 \bullet \tx360\tab Hanging note prevention (keep track of notes playing, send note-off when a connection is removed)\sa180\par}
+}
+]]></description>
+        <link rel="website" href="https://stash.reaper.fm/v/7304/midi_routing_matrix">Stash website</link>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?t=67115">Forum thread</link>
+      </metadata>
+      <version name="1.0" author="boreg" time="2022-02-11T03:04:39Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/761437a19ffb621af3404658151efd16ade63173/MIDI/boreg_MIDI%20routing%20matrix.jsfx</source>
       </version>
     </reapack>
     <reapack name="cfillion_MIDI note length control.jsfx" type="effect" desc="MIDI note length control">
