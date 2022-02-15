@@ -1,7 +1,7 @@
 desc: MIDI Performer2
 author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.6.3
-changelog: - fix global transpose sometimes defaulting to -24
+version: 0.6.4
+changelog: - allow duplicate PC messages
 link: Forum thread https://forum.cockos.com/showthread.php?t=216034
 screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
@@ -10,7 +10,7 @@ about:
   MIDI multi-tool with hanging note prevention: out routing/filter/transpose don't cause hanging notes.
 
   [CTRL]/Command : mousewheel shift by 12 (only if the fx window is focused).
-  [Right click]: Return  values to default
+  [Right click]: Return values to default
 
 slider1:  dispOuts=8<0, 128,  1>-Rows
 slider2: globBusIn=0<0, 128, 1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -Global Bus In
@@ -91,7 +91,7 @@ slider64:128<   0, 128, 1{C -2,C#-2,D -2,D#-2,E -2,F -2,F#-2,G -2,G#-2,A -2,A#-2
 ////                      ////
 //////////////////////////////
 
-FONT_SIZE_FIXED = 1;
+FONT_SIZE_FIXED = 1; // default:1
 
 FONT_SIZE =16; // default:16
  
@@ -317,15 +317,16 @@ while (midirecv(offset,msg1,msg2,msg3)) (
   
   //Input & Keyboard monitor
   isNoteOn    ()?(inputMon = 0.6; value = msg3; slider64 = msg2; sliderchange(slider64); inputType=strcpy_fromslider(#, slider64); noteInfo[offsetNoteMon+msg2] = 1)
-  :isNoteOff  ()?(inputMon = 0.6; value = msg3; noteInfo[offsetNoteMon+msg2] = 0)
+  :isNoteOff  ()?(inputMon = 0.6; noteInfo[offsetNoteMon+msg2] = 0)
+  :isSusPedal ()?(inputMon = 0.6; value = msg3; inputType="Sus"  )
   :isAT       ()?(inputMon = 0.6; value = msg3; inputType="AT")
-  :isCC       ()?(inputMon = 0.6; value = msg3; inputType="CC") 
-  :isProgram  ()?(inputMon = 0.6; value = msg3; inputType="Prg")
+  :isCC       ()?(inputMon = 0.6; value = msg3; #cc="CC "; inputType=strcat( #cc , sprintf(#,"%d",msg2)))
+  :isProgram  ()?(inputMon = 0.6; value = msg2; inputType="Prg")
   :isMSB      ()?(inputMon = 0.6; value = msg3; inputType="MSB")
   :isLSB      ()?(inputMon = 0.6; value = msg3; inputType="LSB")
-  :isPressure ()?(inputMon = 0.6; value = msg3; inputType="Press")
-  :isPitchW   ()?(inputMon = 0.6; value = msg3; inputType="Pitch")
-  :isSusPedal ()?(inputMon = 0.6; value = msg3; inputType="Sus"  ); 
+  :isPressure ()?(inputMon = 0.6; value = msg2; inputType="Press")
+  :isPitchW   ()?(inputMon = 0.6; value = msg3; inputType="Pitch");
+
 
   i = j = 0;
 
@@ -381,15 +382,27 @@ while (midirecv(offset,msg1,msg2,msg3)) (
 
         ):isProgram() ? (
           
-          isRow(i) && isBussAndChannel(i) && outBus[i]-1>=0 && rowOnPC[i] ? ( prog[i]    = msg2 );
+          isRow(i) && isBussAndChannel(i) && outBus[i]-1>=0 && rowOnPC[i] ? ( 
+            prog[i] = _prog[i] = msg2;
+            midisend(0,statProgram + outChan[i] - 1, prog[i]);
+            outputMon[i]=0.6;
+            );
 
         ):isMSB() ? (
           
-          isRow(i) && isBussAndChannel(i) && outBus[i]-1>=0 && rowOnPC[i] ? ( bankMSB[i] = msg3 );
+          isRow(i) && isBussAndChannel(i) && outBus[i]-1>=0 && rowOnPC[i] ? (
+            bankMSB[i] = _bankMSB[i] = msg3;
+            midisend(0, statCC + outChan[i] - 1, 0,bankMSB[i]);
+            outputMon[i]=0.6;
+            );
 
         ):isLSB() ? (
           
-          isRow(i) && isBussAndChannel(i) && outBus[i]-1>=0 && rowOnPC[i] ? ( bankLSB[i] = msg3 );
+          isRow(i) && isBussAndChannel(i) && outBus[i]-1>=0 && rowOnPC[i] ? ( 
+            bankLSB[i] = _bankLSB[i] = msg3;
+            midisend(0, statCC + outChan[i] - 1, 32,bankLSB[i]);
+            outputMon[i]=0.6;
+            );
 
         ):isCC() || isAT() || isPressure() ? (
           
@@ -825,12 +838,12 @@ g=0; e=0; loop(dispOuts,
     gfx_gradrect(gfx_w/2, y-gfx_texth*0.4, gfx_w/2, gfx_texth*1.8, 0, 0, 0, 0.25, 0, 0, 0, -0.5/gfx_w);
 
 
-    CC1[g] =numSlide(CCsend1, "0",  "1",    CC1[g] , x, y, w, h, 64, 0, 127 ,0, "CC"); x += xgap;
-    CC2[g] =numSlide(CCsend2, "0",  "1",    CC2[g] , x, y, w, h, 64, 0, 127 ,0, "CC"); x += xgap;
-    CC3[g] =numSlide(CCsend3, "0",  "1",    CC3[g] , x, y, w, h, 64, 0, 127 ,0, "CC"); x += xgap;
-    CC4[g] =numSlide(CCsend4, "0",  "1",    CC4[g] , x, y, w, h, 64, 0, 127 ,0, "CC"); x += xgap;
-    CC5[g] =numSlide(CCsend5, "0",  "1",    CC5[g] , x, y, w, h, 64, 0, 127 ,0, "CC"); x += xgap;
-    CC6[g] =numSlide(CCsend6, "0",  "1",    CC6[g] , x, y, w, h, 64, 0, 127 ,0, "CC"); x += xgap;
+    CC1[g] =numSlide(CCsend1, "0",  "1",    CC1[g] , x, y, w, h, 64, 0, 128 ,0, "CC"); x += xgap;
+    CC2[g] =numSlide(CCsend2, "0",  "1",    CC2[g] , x, y, w, h, 64, 0, 128 ,0, "CC"); x += xgap;
+    CC3[g] =numSlide(CCsend3, "0",  "1",    CC3[g] , x, y, w, h, 64, 0, 128 ,0, "CC"); x += xgap;
+    CC4[g] =numSlide(CCsend4, "0",  "1",    CC4[g] , x, y, w, h, 64, 0, 128 ,0, "CC"); x += xgap;
+    CC5[g] =numSlide(CCsend5, "0",  "1",    CC5[g] , x, y, w, h, 64, 0, 128 ,0, "CC"); x += xgap;
+    CC6[g] =numSlide(CCsend6, "0",  "1",    CC6[g] , x, y, w, h, 64, 0, 128 ,0, "CC"); x += xgap;
   ):Yadd = 0;
 
   drawLabel = 0;
