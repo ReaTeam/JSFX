@@ -1,0 +1,1232 @@
+desc: VU Meter (ZenoMOD)
+author: ZenoMOD
+version: 1.7.0
+changelog:
+  fix: playback initialization error
+  fix: intelligent hiding of UI elements
+  fix: bug when drawing objects in embedded UI pastel.
+  fix: anti-aliasing in embedded mode
+
+  Default graphic height reduced
+  Hide all generic UI sliders
+  Discard  UI slider mask
+
+  Add settings mask
+  Add graphics slider in settings mask and bottom bar
+  Add volume adjustment in embedded UI (by aurelien)
+  Add context-sensitive mouse-over help text
+provides: . > VU Meter (ZenoMOD)
+link: Forum Thread https://forum.cockos.com/showthread.php?t=262611
+donation: Donate via PayPal https://www.paypal.me/ZenoBock
+
+
+tags: analysis analyzer vu meter loudness
+
+   Disclaimer: Use of this software is on your own risk!
+
+
+   About:
+   Simple VU Meter - a fine freeware by chris-s, modified and functionally extended by Zeno.
+   Some hidden sliders can be used for parameter modulation !! ;)
+
+
+
+
+
+
+
+
+
+
+//*************************************** END INFO **************************************************/
+
+
+
+
+/***************************************** DESC *****************************************************/
+
+
+// Sliders                                                                                // Name
+
+slider1: 1<0,7,1{Classic,Knight,Purple,Mint,Pastel,Warm,Ivory,Trooper}>                   -UI Style
+slider2: 0<0,2,1{Stereo,Summed,Mid / Side}>                                               -Mode
+slider3: -18<-36,0,1>                                                                     -Ref Level
+slider4: -6<-20,0,1>                                                                      -Warn Level
+slider5: 50<0,100>                                                                        -Response
+slider6: 0.0053<0,.01,0.0001>                                                             -Damping
+
+slider7: 0<-18,18,0.1>                                                                    -Volume (dB)
+
+slider11: 30<10,100,1>                                                                    -LED Hold
+
+
+// Parameter Modulation sliders...
+
+slider50: -20<-20,0,3>                                                                    -VU Left/Mid
+slider51: -20<-20,0,3>                                                                    -VU Right/Side
+slider52: 0<0,1,1>                                                                        -Peak LED L
+slider53: 0<0,1,1>                                                                        -Peak LED R
+
+
+// Bottom Bar settings...
+
+slider60: 0.50<0,1,0.01>                                                                  -Transparency
+
+
+
+
+// Hide side meters / Set refresh rate
+
+options: no_meter
+options: gfx_hz=60
+
+
+in_pin: left input
+in_pin: right input
+out_pin: left output
+out_pin: right output
+
+
+
+
+
+
+
+
+
+
+
+
+@init
+
+//===================================== VERSION NUMBER ==============================================/
+  version = ("v1.7.0");
+
+
+
+
+//========================================= VOLUME ==================================================/
+  AMP_dB_i = 1/8.68588963806504;
+  db = slider7; // initialize here but not in @slider for playback start
+
+
+
+
+
+//========================================= VU METER ================================================/
+
+  // bg col
+  gfx_clear = 30 + 60 * 256 + 110 * 65536;
+
+
+  errcnt = 0;
+  tot_nbr_spl = 0;
+  scnt = 0;
+  fact_up = 0;
+  offset = 0.0074;
+  nd_posL = nd_posR = 0;
+  nd_speedL = nd_speedR = 0;
+  dt = 10 / srate;
+  mom = 0.00042;
+  damp = 1 - 0.0053 * (48000 / srate);
+  dbL = dbR = 0;
+  overL = overR = 0;
+
+
+  print = 10;
+  print[0] = -20;
+  print[1] = -10;
+  print[2] = -7;
+  print[3] = -5;
+  print[4] = -3;
+  print[5] = -2;
+  print[6] = -1;
+  print[7] = 0;
+  print[8] = 1;
+  print[9] = 2;
+  print[10] = 3;
+
+
+  pos = 30;
+  pos[0] = 0;
+  pos[1] = .1650;
+  pos[2] = .2641;
+  pos[3] = .3519;
+  pos[4] = .4626;
+  pos[5] = .5284;
+  pos[6] = .6022;
+  pos[7] = .6849;
+  pos[8] = .7779;
+  pos[9] = .8822;
+  pos[10] = 1;
+
+
+
+
+//======================================= SLIDER MASK ===============================================/
+  TEXT_COLOR = $xffffff; //white
+  PREFERENCE_MASK = 0;
+
+
+
+
+
+
+
+
+
+
+
+
+@slider
+
+//======================================== VOLUME ===================================================/
+  ddb=0.0;
+
+
+//======================================== VU METER =================================================/
+  fact_up = 10 ^ (( -slider3 - 10)/20) * 0.3785 ;
+  wl   = slider4;
+  mode = slider2;
+  lim = 10 ^ (wl / 20);
+  mom = 0.00010 + 0.00032 *  slider5^3 / 125000;
+  damp = 1 - slider6 * (48000 / srate);
+
+
+//======================================== SETTINGS =================================================/
+
+  bb_t = slider60;
+
+
+
+
+
+
+
+
+
+
+@block
+
+//========================================= VOLUME ==================================================/
+  cnt=0;
+  ddb=0.0;
+
+  db_chg_splpos=slider_next_chg(1, tgtdb);
+  db_chg_splpos > 0 ? (db=slider7;) : (tgtdb = slider7; db_chg_splpos = samplesblock;);
+
+  ddb=(tgtdb-db)/db_chg_splpos;
+
+
+
+
+
+
+
+
+
+
+
+
+@sample
+
+//========================================= VOLUME ==================================================/
+
+  cnt == db_chg_splpos ? (ddb=0.0; db_chg_splpos=slider_next_chg(1, tgtdb);
+     db_chg_splpos > cnt ? (ddb=(tgtdb-db)/(db_chg_splpos-cnt);););
+
+  adj=exp(db*AMP_DB_i);
+
+  spl0 *= adj;
+  spl1 *= adj;
+
+  db += ddb;
+  cnt += 1;
+
+
+
+
+//======================================== VU METER =================================================/
+
+  tot_nbr_spl += 1;
+
+  smpL = spl0;
+  smpR = spl1;
+
+  mode == 1 ? (smpL = (spl0 + spl1) * 0.5; smpR = smpL;);
+  mode >= 2 ? (smpL = (spl0 + spl1) * 0.5; smpR = (spl0 - spl1) * 0.5;);
+
+  smpL = abs(smpL);
+  smpR = abs(smpR);
+
+  scnt += 1;
+  scnt === 10 ? (
+
+
+//************************************* move left needle *********************************************
+
+      force = smpL * fact_up  -  (nd_posL * .1 + offset);
+
+      nd_speedL += force * dt / mom;
+      nd_speedL = nd_speedL * damp;
+      nd_posL += nd_speedL * dt;
+      nd_posL < 0 || nd_posL > 1 ? nd_speedL = 0;
+
+      nd_posL = min(max(nd_posL,0),1);
+
+
+//************************************* move right needle ********************************************
+
+      force = smpR * fact_up  - (nd_posR * .1 + offset);
+
+      nd_speedR += force * dt / mom;
+      nd_speedR = nd_speedR * damp;
+      nd_posR += nd_speedR * dt;
+      nd_posR < 0 || nd_posR > 1 ? nd_speedR = 0;
+
+      nd_posR = min(max(nd_posR,0),1);
+
+      overL -= slider11;
+      overR -= slider11;
+
+      scnt = 0;
+  ); //scnt
+
+
+//*****************************************************************************************************
+
+  smpL > lim ? overL = srate;
+  smpR > lim ? overR = srate;
+
+
+  slider50 = dbL;
+  slider51 = dbR;
+  slider52 = overL_g;
+  slider53 = overR_g;
+
+
+
+
+
+
+
+
+
+
+
+
+@gfx 480 235
+
+
+  tot_nbr_spl_g  = tot_nbr_spl;
+
+  overL_g = overL;
+  overR_g = overR;
+  nd_posL_g = nd_posL;
+  nd_posR_g = nd_posR;
+
+  tot_nbr_spl_g === tot_nbr_spl ? (
+  dbL = (nd_posL_g * 23) - 20;
+  dbR = (nd_posR_g * 23) - 20;
+  ) : (
+  errcnt += 1; // thread collision
+  );
+
+
+
+
+//========================================= GFX INIT ================================================/
+
+  // override drawing functions for graphical window scaling
+  gsc = min(gfx_w/480,gfx_h/235); igsc = 1.5/gsc;
+  gxo = max(0,  gfx_w/2 - gfx_h*480/235/2);
+
+
+  function gfx_lineto(x,y,aa) ( gfx_x*=gsc; gfx_y*=gsc; gfx_x+=gxo;
+       gfx_lineto(x*gsc+gxo,y*gsc,aa); gfx_x-=gxo; gfx_x*=igsc; gfx_y*=igsc; );
+
+  function gfx_rectto(x,y)(gfx_x*=gsc; gfx_y*=gsc; gfx_x+=gxo; gsc>.5 ?
+       gfx_rectto(x*gsc+gxo,y*gsc); gfx_x-=gxo;  gfx_x*=igsc; gfx_y*=igsc; );
+
+  function gfx_drawnumber(y,x) (
+       gsc>.5 ? (
+          gsc<.7 && x>1 ? x=1;
+          gfx_x*=gsc; gfx_y*=gsc; gfx_x+=gxo; gfx_drawnumber(y,x);
+          gfx_x-=gxo;  gfx_x*=igsc; gfx_y*=igsc;
+       );
+  );
+
+
+  function gfx_drawchar(x) (gsc>.5 ? gfx_drawchar(x););
+  function gfx_drawstr(x) (gsc>.5 ? gfx_drawstr(x););
+  function gfx_printf(x,y) ( gsc>.5 ? gfx_printf(x,y); );
+  function gfx_arc(x, y, r, a1, a2, aa) (gsc>.5 ?
+      gfx_arc(x, y, r, a1, a2, aa) : gfx_arc(x, y, r, a1, a2, 1);
+  );
+
+
+  //slider function
+  function drag_slider(x, y, z, dx)
+    globals(mouse_y, cap_last_y, cap_drag)
+  (
+    x = min(max(x + dx * (cap_last_y-mouse_y),y),z);
+    cap_last_y=mouse_y;
+    cap_drag=1;
+    x;
+  );
+
+  function drag_slider_precise(x, y, z, dx)
+    globals(mouse_cap)
+  (
+  (mouse_cap & 4) ? dx *= 0.1;
+  drag_slider(x, y, z, dx);
+  );
+
+  function cycle_slider(x, y, z, dx)
+    globals(last_mouse_cap)
+  (
+    (last_mouse_cap & 16) ? x -= dx : x += dx;
+    y > z ? ( dx=y; y=z; z=dx; );
+    x > z ? y : x < y ? z : x;
+  );
+
+  function draw_buttonsize(xp, yp, wp,hp)
+    instance(w,h,x,y)
+    globals(g_button_right_extent,gfx_r,gfx_g,gfx_b,gfx_x,gfx_y,gfx_w) 
+  (
+    w=wp; h=hp; x=xp; y=yp;
+  );
+
+  function hit_button(xp,yp,cm)
+    instance(w,h,x,y)
+    globals(cap_mode, cap_last_x, cap_last_y)
+  (
+    xp>=x&&yp>=y&&xp<x+w&&yp<y+h  ? (
+      cap_last_x = xp;
+      cap_last_y = yp;
+      cap_mode = cm;
+    );
+  );
+
+
+  // font init
+  fontinit != 1 ? (
+      gfx_setfont(1, "Arial", 14, '');
+      gfx_setfont(2, "Arial", 20, 'b');
+      gfx_setfont(3, "Arial", 17, 'u' );
+      gfx_setfont(4, "Arial", 15, '');
+      fontinit = 1;
+  );
+
+
+
+
+//======================================= MOUSE LOGIC ===============================================/
+
+  has_click = (mouse_cap&1) && !(last_cap&1) ? 1 : 0;
+  last_cap = mouse_cap;
+
+
+  (mouse_cap & 1) ? (
+          !(last_mouse_cap & 1) ? (
+              !cap_drag && cap_timer < 12 ? (
+                  cap_mode == 3 ? ( slider3 = -18; slider_automate(slider3) );
+                  cap_mode == 4 ? ( slider4 = -6; slider_automate(slider4) );
+                  cap_mode == 5 ? ( slider5 = 50; slider_automate(slider5) );
+                  cap_mode == 6 ? ( slider6 = 0.0053; slider_automate(slider6) );
+              );
+
+              (cap_mode == 7) && !cap_drag && cap_timer < 12 ? (
+                  cap_mode == 7 ? ( slider7 = 0; slider_automate(slider7) );
+                  cap_mode=0;
+                ) : (
+                  cap_mode = cap_drag = cap_timer = 0;
+
+                  gfx_ext_flags == 1 ? (
+                      cap_last_x = mouse_x;
+                      cap_last_y = mouse_y;
+                      cap_mode=7;
+                  );
+          
+                  uistyle_button.hit_button(mouse_x,mouse_y,1);
+                  mode_button.hit_button(mouse_x,mouse_y,2);
+                  reflevel_button.hit_button(mouse_x,mouse_y,3);
+                  warnlevel_button.hit_button(mouse_x,mouse_y,4);
+                  response_button.hit_button(mouse_x,mouse_y,5);
+                  damping_button.hit_button(mouse_x,mouse_y,6);
+                  volume_button.hit_button(mouse_x,mouse_y,7);
+                );
+          );
+
+
+          // drag
+          cap_mode == 3 && cap_last_y != mouse_y ? (
+              slider3=drag_slider(slider3,-36,0,1); slider_automate(slider3) );
+          cap_mode == 4 && cap_last_y != mouse_y ? (
+              slider4=drag_slider(slider4,-20,0,1); slider_automate(slider4) );
+          cap_mode == 5 && cap_last_y != mouse_y ? (
+              slider5=drag_slider(slider5,0,100,1); slider_automate(slider5) );
+          cap_mode == 6 && cap_last_y != mouse_y ? (
+              slider6=drag_slider(slider6,0,0.01,0.0001); slider_automate(slider6) );
+          cap_mode == 7 && cap_last_y != mouse_y ? (
+              slider7=drag_slider_precise(slider7,-18,18,0.1); slider_automate(slider7) );
+
+          ) : (
+
+          // cycle click
+            cap_mode == 1 && !cap_drag ? (
+                slider1=cycle_slider(slider1,0,7,1); slider_automate(slider1); cap_mode=0 ) : (
+            cap_mode == 2 && !cap_drag ? (
+                slider2=cycle_slider(slider2,0,2,1); slider_automate(slider2); cap_mode=0 );
+          );
+  );
+
+  cap_mode && cap_timer < 12 ? cap_timer += 1;
+
+  last_mouse_cap = mouse_cap;
+
+
+
+
+
+
+//========================================== STYLES =================================================/
+
+  style = slider1;
+
+  style == 0 ? ( gfx_clear = 30 + 60 * 256 + 110 * 65536; );
+  style == 1 ? ( gfx_clear = 18 + 18 * 256 + 18 * 65536; );
+  style == 2 ? ( gfx_clear = 16 + 10 * 256 + 26 * 65536; );
+  style == 3 ? ( gfx_clear = 52 + 89 * 256 + 86 * 65536; );
+  style == 4 ? ( gfx_clear = 245 + 169 * 256 + 171 * 65536; );
+  style == 5 ? ( gfx_clear = 26 + 25 * 256 + 21 * 65536; );
+  style == 6 ? ( gfx_clear = 204 + 199 * 256 + 180 * 65536; );
+  style == 7 ? ( gfx_clear = 163 + 162 * 256 + 158 * 65536; );
+
+
+  w1 = $pi * 16.5 / 180;
+  w2 = $pi * 45 / 180;
+  xw = max(1,floor((gfx_w-30) / 2));
+  yw = floor(xw / 1.5);
+  r1 = floor(yw * 0.85);
+
+  chan = 0;
+
+  while (chan <= 1) (
+      xd = 10 + chan*(xw+10);
+      mode === 1 ? xd += floor(xw/2);
+      yd = 10;
+      xa = floor(xd + xw / 2);
+      ya = floor(yd + yw * 1.1);
+
+
+
+
+    //************************************* meter background styles **************************************
+
+      // background style 0: classic
+      style == 0 ? ( gfx_r=1; gfx_g=1; gfx_b=0.7;  gfx_rect(xd,yd,xw,yw);  );
+
+      // background style 1: dark knight
+      style == 1 ? ( gfx_r=gfx_g=0.18431 ;gfx_b = 0.2;  gfx_rect(xd,yd,xw,yw);   );
+
+      // background style 2: purple
+      style == 2 ? ( gfx_r=0.14110; gfx_g=0.09020; gfx_b=0.21961;  gfx_rect(xd,yd,xw,yw);  );
+
+      // background style 3: mint
+      style == 3 ? ( gfx_r=0.65490; gfx_g=0.94902; gfx_b=0.92157;  gfx_rect(xd,yd,xw,yw);  );
+
+      // background style 4: pastel
+      style == 4 ? ( gfx_r=0;gfx_g=1;gfx_b=.9;  gfx_rect(xd,yd,xw,yw);
+                     gfx_r=0.65; gfx_g=0.37; gfx_b=0.6;  gfx_rect(xd,yd+yw;,xw-(xw/1.35),yw*yw );
+                     gfx_r=0.85490; gfx_g=0.85490; gfx_b=0.96078;  gfx_rect(xd,yd,xw,yw); gfx_a=0.79; );
+
+      // background style 5: warm
+      style == 5 ? ( gfx_r=1; gfx_g=0.76471; gfx_b=0.32549; gfx_a=1;  gfx_rect(xd,yd,xw,yw);
+                     gfx_r=0.87451; gfx_g=0.49412; gfx_b=0.08235; gfx_a=.10; gfx_rect(xd,yd,xw,yw/yd*1.6);
+                     gfx_r=0.87451; gfx_g=0.49412; gfx_b=0.08235; gfx_a=.13; gfx_rect(xd,yd,xw,yw/yd*1.5);
+                     gfx_r=0.87451; gfx_g=0.49412; gfx_b=0.08235; gfx_a=.15; gfx_rect(xd,yd,xw,yw/yd*1.4);
+                     gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.1/2; gfx_rect(xd,ya*.76,xw,yw/yd*1.7);
+                     gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.10; gfx_circle(xa,ya*1.15,r1*0.87,1,1);
+                     gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.13; gfx_circle(xa,ya*1.20,r1*0.87,1,1);
+                     gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.15; gfx_circle(xa,ya*1.25,r1*0.87,1,1);
+                     gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.18; gfx_circle(xa,ya*1.30,r1*0.87,1,1);
+                     gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.25; gfx_circle(xa,ya*1.27,r1*0.77,1,1);
+                     gfx_r=0.10196; gfx_g=0.09804; gfx_b=0.08235; gfx_a=1;  gfx_rect(xd,ya*0.91,xw,yw*2); );
+
+      // background style 6: ivory
+      style == 6 ? ( gfx_r=0.86667; gfx_g=0.85490; gfx_b=0.78039;  gfx_rect(xd,yd,xw,yw); );
+
+      // background style 7: trooper
+      style == 7 ? ( gfx_r=gfx_g=gfx_b=0.0; gfx_a=1;  gfx_rect(xd,yd,xw,yw);
+                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.1; gfx_rect(xd,yd,xw,yw/yd*1.6);
+                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.2; gfx_rect(xd,yd,xw,yw/yd*1.5);
+                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.3; gfx_rect(xd,yd,xw,yw/yd*1.4);
+                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.1; gfx_rect(xd,ya*.76,xw,yw/yd*1.7);
+                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.10; gfx_circle(xa,ya*1.10,r1*0.87,1,1);
+                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.12; gfx_circle(xa,ya*1.15,r1*0.87,1,1);
+                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.14; gfx_circle(xa,ya*1.20,r1*0.87,1,1);
+                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.15; gfx_circle(xa,ya*1.29,r1*0.87,1,1);
+                     gfx_r=0.63922; gfx_g=0.63529; gfx_b=0.61961; gfx_a=1;  gfx_rect(xd,ya*0.91,xw,yw*2); );
+
+
+
+      //EXT_FLAGS*****************
+
+      // tcp / mcp scaling & summing
+      gfx_ext_flags == 1 ? (
+          chan = 0;
+          xd = chan*(xw/2);
+          yd = 2;
+          xw = max(1,floor(gfx_w / 1.4));
+          yw = floor(xw / 1.5);
+          mode = 1;
+          mode === 1 ? xd = floor(xw/4.5);
+          r1 = floor(yw * 0.90);
+          xa = floor(xd + xw / 2);
+          ya = floor(yd + yw * 1.12);
+
+
+          // background styles
+          //
+          style == 0 ? ( gfx_r=1; gfx_g=1; gfx_b=0.7;  gfx_rect(xd*.5,yd,xw*1.2,yw);  );
+          style == 1 ? ( gfx_r=gfx_g=0.18431; gfx_b=0.2;  gfx_rect(xd*0.5,yd,xw*1.2,yw);  );
+          style == 2 ? ( gfx_r=0.14110; gfx_g=0.09020; gfx_b=0.21961;  gfx_rect(xd*.5,yd,xw*1.2,yw);  );
+          style == 3 ? ( gfx_r=0.65490; gfx_g=0.94902; gfx_b=0.92157;  gfx_rect(xd*.5,yd,xw*1.2,yw);  );
+          style == 4 ? ( gfx_r=0; gfx_g=1; gfx_b=.9;  gfx_rect(xd*.5,yd,xw*1.2,yw);
+                         gfx_r=0.85490; gfx_g=0.85490; gfx_b=0.96078;  gfx_rect(xd*.5,yd,xw*1.2,yw);
+                         gfx_a=0.79; );
+          style == 5 ? ( gfx_r=1; gfx_g=0.76471; gfx_b=0.32549; gfx_a=1;  gfx_rect(xd*.5,yd,xw*1.2,yw);
+                         gfx_r=0.87451; gfx_g=0.49412; gfx_b=0.08235; gfx_a=.10; gfx_rect(xd*.5,yd,xw*1.2,yw/yd*.30);
+                         gfx_r=0.87451; gfx_g=0.49412; gfx_b=0.08235; gfx_a=.13; gfx_rect(xd*.5,yd,xw*1.2,yw/yd*.27);
+                         gfx_r=0.87451; gfx_g=0.49412; gfx_b=0.08235; gfx_a=.15; gfx_rect(xd*.5,yd,xw*1.2,yw/yd*.24);
+                         gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.22; gfx_rect(xd*.5,ya*.76,xw*1.2,yw/yd*0.5);
+                         gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.10; gfx_circle(xa,ya*1.15,r1*0.87,1,1);
+                         gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.13; gfx_circle(xa,ya*1.20,r1*0.87,1,1);
+                         gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.15; gfx_circle(xa,ya*1.25,r1*0.87,1,1);
+                         gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.18; gfx_circle(xa,ya*1.30,r1*0.87,1,1);
+                         gfx_r=0.10196; gfx_g=0.09804; gfx_b=0.08235; gfx_a=1;  gfx_rect(xd*.5,ya*0.9,xw*1.2,yw*2); );
+          style == 6 ? ( gfx_r=0.86667; gfx_g=0.85490; gfx_b=0.78039;  gfx_rect(xd*.5,yd,xw*1.2,yw); );
+          style == 7 ? ( gfx_r=gfx_g=gfx_b=0.0; gfx_a=1;  gfx_rect(xd*.5,yd,xw*1.2,yw);
+                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.2; gfx_rect(xd*.5,yd,xw*1.2,yw/yd*.30);
+                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.3; gfx_rect(xd*.5,yd,xw*1.2,yw/yd*.27);
+                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.4; gfx_rect(xd*.5,yd,xw*1.2,yw/yd*.24);
+                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.1; gfx_rect(xd*.5,ya*.76,xw,yw/yd*.22);
+                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.10; gfx_circle(xa,ya*1.10,r1*0.87,1,1);
+                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.12; gfx_circle(xa,ya*1.15,r1*0.87,1,1);
+                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.14; gfx_circle(xa,ya*1.20,r1*0.87,1,1);
+                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.15; gfx_circle(xa,ya*1.29,r1*0.87,1,1);
+                         gfx_r=0.63922; gfx_g=0.63529; gfx_b=0.61961; gfx_a=1;  gfx_rect(xd*.5,ya*0.9,xw*1.2,yw*2); );
+      );
+
+      //EXT_FLAGS END*************
+
+
+
+
+    //*************************************** meter scale styles *****************************************
+
+      // scale  style 0: classic
+      style == 0 ? (gfx_set(0,0,0); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
+        gfx_set(.95,0,0); // bold line
+        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
+        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
+      );
+
+      // scale style 1: dark knight
+      style == 1 ? (gfx_set(1,1,1); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
+        gfx_set(.94902,.32157,.72941); // bold line
+        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
+        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
+      );
+
+      // scale style 2: purple
+      style == 2 ? (gfx_set(.63922,.45882,1); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
+        gfx_set(.16863,.73333,1); // bold line
+        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
+        gfx_arc(xa, ya, r1 + 3, w1, w2, 1);  gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
+      );
+
+      // scale style 3: mint
+      style == 3 ? (gfx_set(0,0,0); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
+        gfx_set(.29020,.85098,.69020); // bold line
+        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
+        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
+      );
+
+      // scale style 4: pastel
+      style == 4 ? (gfx_set(.37647,.55294,.70980); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
+        gfx_set(.96078,.86667,.60392); // bold line
+        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
+        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
+      );
+
+      // scale style 5: warm
+      style == 5 ? (gfx_set(0,0,0); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
+        gfx_set(.81373,.08627,.09412); // bold line
+        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
+        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
+      );
+
+      // scale style 6: ivory
+      style == 6 ? (gfx_set(.36070,.34902,.31373); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
+        gfx_set(.89412,.29412,.23922); // bold line
+        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
+        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
+      );
+
+      // scale style 7: trooper
+      style == 7 ? (gfx_set(.84706,.85098,.85882); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
+        gfx_set(.95,0,0); // bold line
+        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
+        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
+      );
+
+
+
+
+    //*************************************** meter font styles ******************************************
+
+
+    // -20dB - 0dB *********************
+      gfx_setfont(1);
+
+      style == 0 ? (gfx_set(.2,.2,.2));
+      style == 1 ? (gfx_set(1,1,1));
+      style == 2 ? (gfx_set(.63922,.45882,1));
+      style == 3 ? (gfx_set(.2,.2,.2));
+      style == 4 ? (gfx_set(.37647,.55294,.70980));
+      style == 5 ? (gfx_set(.2,.2,.2));
+      style == 6 ? (gfx_set(.36070,.34902,.31373));
+      style == 7 ? (gfx_set(.84706,.85098,.85882));
+
+
+    // Draw scale notches and values if scaling allows
+
+
+      //EXT_FLAGS*****************
+
+      gsc <=.5 ? (
+            jj = 0;
+            while ( jj <=10 ) (
+                //ii = print[jj];
+                ph =  pos[jj];
+                ph = (45 + ph*90) * $pi / 180;
+                cosp = cos(ph) * r1;
+                sinp = sin(ph) * r1;
+                x1 = xa - cosp ;
+                y1 = ya - sinp ;
+                x2 = xa - cosp * 1.1;
+                y2 = ya - sinp * 1.1;
+                gfx_x = x1;
+                gfx_y = y1;
+                gfx_lineto(x2, y2);
+                jj += 1.8;
+            );
+      );  //gsc
+
+      //EXT_FLAGS END*************
+
+
+      gsc >.5 ? (
+          jj = 0;
+          while ( jj <= 10 ) (
+              ii = print[jj];
+
+              ph =  pos[jj];
+              ph = (45 + ph*90) * $pi / 180;
+
+              cosp = cos(ph) * r1;
+              sinp = sin(ph) * r1;
+
+              x1 = xa - cosp ;
+              y1 = ya - sinp ;
+              x2 = xa - cosp * 1.1;
+              y2 = ya - sinp * 1.1;
+              x3 = xa - cosp * 1.15;
+              y3 = ya - sinp * 1.11;
+
+              gfx_x = x1;
+              gfx_y = y1;
+              gfx_lineto(x2, y2);
+
+              gfx_x = x3 - 8;
+              gfx_y = y3 - gfx_texth;
+              gfx_printf("%3d", ii);
+
+              jj += 1;
+
+
+
+
+            // +1dB - +3dB *********************
+              jj == 8 ? (
+                  style == 0 ? ( gfx_set(1,0,0) );                // font style 0: classic
+                  style == 1 ? ( gfx_set(.94902,.32157,.72941) ); // font style 1: knight
+                  style == 2 ? ( gfx_set(.16863,.73333,1) );      // font style 2: purple
+                  style == 3 ? ( gfx_set(0,0,0) );                // font style 3: mint
+                  style == 4 ? ( gfx_set(.37647,.55294,.70980) ); // font style 4: pastel
+                  style == 5 ? ( gfx_set(.81373,.08627,.09412) ); // font style 5: warm
+                  style == 6 ? ( gfx_set(.89412,.29412,.23922) ); // font style 6: ivory
+                  style == 7 ? ( gfx_set(.84706,.85098,.85882) ); // font style 7: trooper
+              );
+
+          );
+
+
+
+        //**************************************** peak font styles ******************************************
+
+          gfx_x = xd + xw * .9 - 30; gfx_y = yd + yw * .9 - 10;
+
+          style == 0 ? ( gfx_set(0,0,0) );                // peak style 0: classic
+          style == 1 ? ( gfx_set(.44706,.85882,1) );      // peak style 1: knight
+          style == 2 ? ( gfx_set(.30980,.39216,.83922) ); // peak style 2: purple
+          style == 3 ? ( gfx_set(.37647,.65098,.62745) ); // peak style 3: mint
+          style == 4 ? ( gfx_set(.37647,.55294,.70980) ); // peak style 4: pastel
+          style == 5 ? ( gfx_set(0,0,0) );                // peak style 5: warm
+          style == 6 ? ( gfx_set(.40784,.39608,.36078) ); // peak style 6: ivory
+          style == 7 ? ( gfx_set(.84706,.85098,.85882) ); // peak style 7: trooper
+          gfx_drawstr("PEAK");
+
+
+
+        //****************************************** VU font styles ******************************************
+
+          gfx_setfont(2); // large
+          gfx_x = xa - 10; gfx_y = yd + yw * .6;
+
+          embedded_gain_sldr == 0 ? (
+              style == 0 ? ( gfx_set(0,0,0) );                // VU style 0: classic
+              style == 1 ? ( gfx_set(.94902,.32157,.72941) ); // VU style 1: knight
+              style == 2 ? ( gfx_set(.30980,.39216,.83922) ); // VU style 2: purple
+              style == 3 ? ( gfx_set(.37647,.65098,.62745) ); // VU style 3: mint
+              style == 4 ? ( gfx_set(.37647,.55294,.70980) ); // VU style 4: pastel
+              style == 5 ? ( gfx_set(0,0,0) );                // VU style 5: warm
+              style == 6 ? ( gfx_set(.40784,.39608,.36078) ); // VU style 6: ivory
+              style == 7 ? ( gfx_set(.95,0,0) );              // VU style 7: trooper
+              gfx_drawstr("VU");
+          );
+
+      );  //gsc
+
+
+      //EXT_FLAGS*****************
+
+      // MCP gain slider
+      embedded_gain_sldr = (
+          gfx_ext_flags == 1 ? (
+              slider7!= 0 ? (
+                  style == 0 ? ( gfx_set(0.00000,0.00000,0.00000,.65) );
+                  style == 1 ? ( gfx_set(1.00000,1.00000,1.00000,.65) );
+                  style == 2 ? ( gfx_set(0.30980,0.39216,0.83922,.95) );
+                  style == 3 ? ( gfx_set(0.00000,0.00000,0.00000,.45) );
+                  style == 4 ? ( gfx_set(0.37647,0.55294,0.70980,.95) );
+                  style == 5 ? ( gfx_set(0.00000,0.00000,0.00000,.65) );
+                  style == 6 ? ( gfx_set(0.40784,0.39608,0.36078,.85) );
+                  style == 7 ? ( gfx_set(0.84706,0.85098,0.85882,.65) );
+                  slider7 > 0 ? gfx_x= xa -10;
+                  slider7 < 0 ? gfx_x = xa -13;
+                  slider7 >= 10 ? gfx_x = xa -14;
+                  slider7 <= -10 ? gfx_x = xa -17;
+                  gfx_y = yd + yw * .6;
+                  gfx_printf("%.2f",slider7,true);
+              );
+          );
+      );
+
+
+      //EXT_FLAGS END*************
+
+
+
+
+        //******************************************** LED styles ********************************************
+
+          // LEDs style 0: classic
+          style == 0 ? (gfx_set(.95,.1,.1); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
+            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
+          );
+
+          // LEDs style 1: knight
+          style == 1 ? (gfx_set(.14510,.14510,.15294); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
+          style == 1 ? (gfx_set(.94902,.32157,.72941); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
+            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
+          );
+
+          // LEDs style 2: purple
+          style == 2 ? (gfx_set(.07843,.05098,.12157); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
+          style == 2 ? (gfx_set(.94118,.31765,.98824); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
+            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
+          );
+
+          // LEDs style 3: mint
+          style == 3 ? (gfx_set(.56078,.85098,.81961); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
+          style == 3 ? (gfx_set(.05098,.94902,.01961); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
+            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
+          );
+
+          // LEDs style 4: pastel
+          style == 4 ? (gfx_set(.80784,.80784,.91373); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
+          style == 4 ? (gfx_set(.63922,1,.65098); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
+            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
+          );
+
+          // LEDs style 5: warm
+          style == 5 ? (gfx_set(.93725,.70196,.26275); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
+          style == 5 ? (gfx_set(1,.05882,.10980,1); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
+            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
+            gfx_set(1,1,.94532,.2); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
+            gfx_circle(xd+xw*0.9+4, yd+yw*0.9 - 4,4,1,1) );
+          );
+
+          // LEDs style 6: ivory
+          style == 6 ? (gfx_set(.81569,.79608,.72157); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
+          style == 6 ? (gfx_set(.89412,.29412,.17647); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
+            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
+          );
+
+          // LEDs style 7: trooper
+          style == 7 ? (gfx_set(.10980,.10588,.12549); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
+          style == 7 ? (gfx_set(.95,0,0); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
+            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
+          );
+
+
+
+
+    //******************************************* needle styles ******************************************
+
+      // draw needle
+      chan == 0 ? ph = dbL : ph = dbR;
+
+      ph = 45 + (ph+20)/23*90;
+      ph = ph * ($pi / 180);
+
+      cosp = cos(ph);
+      sinp = sin(ph);
+
+      x1 = xa - cosp * r1 * 0.15;
+      y1 = ya - sinp * r1 * 0.15;
+      x2 = xa - cosp * r1 * 1.1;
+      y2 = ya - sinp * r1 * 1.1;
+
+
+      style == 0 ? (gfx_set(0,0,0); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
+      style == 1 ? (gfx_set(.44706,.85882,1); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
+      style == 2 ? (gfx_set(.16863,.73333,1); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
+      style == 3 ? (gfx_set(0,0,0); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
+      style == 4 ? (gfx_set(.45490,.67059,.85882); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
+      style == 5 ? (gfx_set(.37647,.19216,.07059); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
+      style == 6 ? (gfx_set(.32941,.31765,.28235); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
+      style == 7 ? (gfx_set(.63922,.63529,.61961); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
+
+
+      // draw thick needle lines and shadows if scaling allows
+      gsc >.5 ? (
+          gfx_x = x1+1; gfx_y = y1; gfx_lineto(x2+1, y2);
+
+          //needle shadow
+          style == 0 ? gfx_set(.60000,.60000,.60000); // needle shadow style 0: classic
+          style == 1 ? gfx_set(.07059,.07059,.09412); // needle shadow style 1: knight
+          style == 2 ? gfx_set(.07843,.05098,.12157); // needle shadow style 2: purple
+          style == 3 ? gfx_set(.29020,.85098,.69020); // needle shadow style 3: mint
+          style == 4 ? gfx_set(.60000,.60000,.60000,.3); // needle shadow style 4: pastel
+          style == 5 ? gfx_set(.87451,.49412,.08235); // needle shadow style 5: warm
+          style == 6 ? gfx_set(.64314,.63137,.59608); // needle shadow style 6: ivory
+          style == 7 ? gfx_set(.18824,.18431,.20392); // needle shadow style 7: trooper
+          gfx_x = x1+4; gfx_y = y1; gfx_lineto(x2+4, y2);
+
+      );
+
+
+
+
+    //******************************************** needle circle *****************************************
+
+      style == 0 ? (gfx_set(.12,.24,.43);          gfx_circle(xa,ya,r1*0.16,1,1));      // needle circle style 0: classic
+      style == 1 ? (gfx_set(.07059,.07059,.07059); gfx_circle(xa,ya,r1*0.16,1,1));      // needle circle style 1: knigh
+      style == 2 ? (gfx_set(.06275,.03922,.10196); gfx_circle(xa,ya,r1*0.16,1,1));      // needle circle style 2: purpl
+      style == 3 ? (gfx_set(.20392,.34902,.33725); gfx_circle(xa,ya,r1*0.16,1,1));      // needle circle style 3: mint
+      style == 4 ? (gfx_set(.96078,.66275,.67059); gfx_circle(xa,ya,r1*0.16,1,1));      // needle circle style 4: pastel
+      style == 5 ? (gfx_set(.10196,.09804,.08235); gfx_circle(xa,ya*1.32,r1*.65,1,1));  // needle circle style 5: warm
+      style == 6 ? (gfx_set(.8,.78039,.70588);     gfx_circle(xa,ya,r1*0.16,1,1));      // needle circle style 6: ivory
+      style == 7 ? (gfx_set(.63922,.63529,.61961); gfx_circle(xa,ya,r1*0.2,1,1));       // needle circle style 7: trooper
+
+
+
+
+    //******************************************* channel labels *****************************************
+
+    // channel labeling
+      !PREFERENCE_MASK ? (
+          gfx_set(1,1,1,1); gfx_x = xd; gfx_y = yd+yw+4; ):( gfx_set(0,0,0,0)
+      );
+          gfx_h <= yw+32 ? gfx_set(0,0,0,0);
+
+
+      chan == 0 ?
+          gfx_drawstr("LEFT / MID") : gfx_drawstr("RIGHT / SIDE") ;
+
+      chan += 1; mode === 1 ? chan += 1;
+
+      gfx_a=1;  // fix meter bg issue
+
+
+  ); // close channel section - see === STYLES ===
+
+
+
+
+
+
+//==================================== PREFERENCE MASK ============================================/
+
+  gfx_ext_flags == 0 && PREFERENCE_MASK ? (
+
+      mode == 1 ? (xd = xd*2) : (xd = xd);
+
+      // mask background
+      gfx_set(.1,.1,.1,.95); gfx_rect(3,3,gfx_w-6,gfx_h-28);
+
+      // slider() bg
+      gfx_set(.5,.5,.5,.15);
+      gfx_rect(xd+27,80,54,15);  reflevel_button.draw_buttonsize(xd+27,80,54,15);
+      gfx_rect(xd+27,100,54,15); warnlevel_button.draw_buttonsize(xd+27,100,54,15);
+      gfx_rect(xd+27,130,54,15); response_button.draw_buttonsize(xd+27,130,54,15);
+      gfx_rect(xd+27,150,54,15); damping_button.draw_buttonsize(xd+27,150,54,15);
+
+      // preferences: mask header
+      gfx_setfont(2); gfx_r=gfx_g=gfx_b=1;gfx_a=.4; gfx_printf("*** Preferences ***",gfx_x=xd-79,gfx_y=10 );
+
+      // preferences: meter options
+      gfx_setfont(3); gfx_r=gfx_g=gfx_b=1;gfx_a=1; gfx_printf("Meter Options",gfx_x=xd-52,gfx_y=50 );
+
+      // reference level
+      gfx_setfont(4); gfx_r=gfx_g=gfx_b=1; gfx_a=1; gfx_drawstr("Reference Level :",gfx_x=xd-86,gfx_y=80 );
+      slider3 > -10 ? gfx_drawstr(sprintf(#,"%.f dB",slider3),gfx_x=xd+40,gfx_y=80);
+      slider3 <= -10 ? gfx_drawstr(sprintf(#,"%.f dB",slider3),gfx_x=xd+35,gfx_y=80);
+
+      // peak warn level
+      gfx_setfont(4); gfx_r=gfx_g=gfx_b=1; gfx_a=1; gfx_drawstr("Peak Warn Level :",gfx_x=xd-86,gfx_y=100 );
+      slider4 > -10 ? gfx_drawstr(sprintf(#,"%.f dB",slider4),gfx_x=xd+40,gfx_y=100);
+      slider4 <= -10 ? gfx_drawstr(sprintf(#,"%.f dB",slider4),gfx_x=xd+35,gfx_y=100);
+
+      // meter response
+      gfx_setfont(4); gfx_r=gfx_g=gfx_b=1; gfx_a=1; gfx_drawstr("Meter Response :",gfx_x=xd-86,gfx_y=130 );
+      slider5 == 100 ? gfx_drawstr(sprintf(#,"%.f %%",slider5),gfx_x=xd+36,gfx_y=130);
+      slider5 >= 10 && slider5 <= 99 ? gfx_drawstr(sprintf(#,"%.f %%",slider5),gfx_x=xd+40,gfx_y=130);
+      slider5 < 10 ? gfx_drawstr(sprintf(#,"%.f %%",slider5),gfx_x=xd+43,gfx_y=130);
+
+      // meter damping
+      gfx_setfont(4); gfx_r=gfx_g=gfx_b=1; gfx_a=1; gfx_drawstr("Meter Damping :",gfx_x=xd-86,gfx_y=150 );
+      slider6 == 0.01 ? gfx_drawstr(sprintf(#,"%.f %%",slider6*10000),gfx_x=xd+36,gfx_y=150);
+      slider6 >= 0.001 && slider6 != 0.01 ? gfx_drawstr(sprintf(#,"%.f %%",slider6*10000),gfx_x=xd+40,gfx_y=150);
+      slider6 < 0.001 ? gfx_drawstr(sprintf(#,"%.f %%",slider6*10000),gfx_x=xd+43,gfx_y=150);
+
+
+      // button & slider positions
+      ref_level_slider = abs(mouse_x) >= xd+27 && abs(mouse_x) <= xd+81 && abs(mouse_y) > 80 && abs(mouse_y) < 95;
+      warn_level_slider = abs(mouse_x) >= xd+27 && abs(mouse_x) <= xd+81 && abs(mouse_y) > 100 && abs(mouse_y) < 115;
+      meter_resp_slider = abs(mouse_x) >= xd+27 && abs(mouse_x) <= xd+81 && abs(mouse_y) > 130 && abs(mouse_y) < 145;
+      meter_damp_slider = abs(mouse_x) >= xd+27 && abs(mouse_x) <= xd+81 && abs(mouse_y) > 150 && abs(mouse_y) < 165;
+
+
+      // mouse-over help text
+      gfx_h >= 225 && show_help == 1 ? (
+          gfx_setfont(1); gfx_set(1,1,1,.65);
+
+          ref_level_slider ? ( gfx_x = xd-105; gfx_y = ylo-38;
+          gfx_drawstr ("Sets the dBFS reference level for 0dB VU.") );
+
+          warn_level_slider ? ( gfx_x = xd-106; gfx_y = ylo-38;
+          gfx_drawstr ("Sets the dBFS warn level for the Peak LED.") );
+
+          meter_resp_slider ? (
+            gfx_w >= 408 ? (
+              gfx_x = xd-75; gfx_y = ylo-46; gfx_drawstr ("Sets the meter response time.");
+              gfx_x = xd-210; gfx_y = ylo-32;
+              gfx_drawstr ("Small values result in shorter response times, large values in longer response times.")
+              ) : (
+              gfx_x = xd-75; gfx_y = ylo-38; gfx_drawstr ("Sets the meter response time.") );
+          );
+
+          meter_damp_slider ? (
+            gfx_w >= 420 ? (
+              gfx_x = xd-85; gfx_y = ylo-46; gfx_drawstr ("Sets the momentum for the needle.");
+              gfx_x = xd-215; gfx_y = ylo-32;
+              gfx_drawstr ("Small values result in a higher overshoot, large values in a smoother needle movement.")
+              ) : (
+              gfx_x = xd-85; gfx_y = ylo-38; gfx_drawstr ("Sets the momentum for the needle.") );
+          );
+      );
+
+  );  // close PREFERENCE_MASK
+
+
+
+
+
+
+//********************************************* bottom bar *******************************************
+
+  xw2 = max(1,floor((gfx_w) / 2));
+  yw2 = floor(xw / 1.025);
+  gfx_setfont(2); // large
+
+  // button & slider positions
+  ui_color_slider = abs(mouse_x) >= 50 && abs(mouse_x) < 114 && abs(mouse_y-ylo) < gfx_texth/2;
+  mode_slider = abs(mouse_x) >= 124 && abs(mouse_x) < 188 && abs(mouse_y-ylo) < gfx_texth/2;
+  volume_slider = abs(mouse_x) >= 198 && abs(mouse_x) < 272 && abs(mouse_y-ylo) < gfx_texth/2;
+  help_text_button = abs(mouse_x) >= 282 && abs(mouse_x) < 306 && abs(mouse_y-ylo) < gfx_texth/2;
+
+
+  gfx_ext_flags == 0 ? (
+      gfx_h >= yw+55 && gfx_w >= 275 ? (
+
+          // bottom bar bg
+          gfx_set(0,0,0,bb_t); gfx_rect(gfx_x=x,gfx_y=ylo-gfx_texth/1.7,xw2*2.01,gfx_texth+10,yw2);
+
+          // separator line
+          gfx_set(.15,.15,.15,.15); gfx_line(gfx_x=x,gfx_y=ylo-gfx_texth/1.6,xw2*2.01,ylo-gfx_texth/1.6);
+
+          // version txt
+          gfx_setfont(1); gfx_set(1,1,1,1); gfx_drawstr(version,1|4,gfx_x+gfx_texth+35,gfx_y+gfx_texth+11);
+
+          // gui color selector
+          style == 0 ? gfx_set(0.12000,.24000,.43000,.3); style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
+          style == 2 ? gfx_set(0.14110,.09020,.21961,.6); style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
+          style == 4 ? gfx_set(0.96078,.66275,.67059,.1); style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
+          style == 6 ? gfx_set(0.80000,.78039,.70588,.1); style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
+          gfx_rect(gfx_x=50,gfx_y=ylo-gfx_texth/2,gfx_texth+50,gfx_texth+1,1);
+          uistyle_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+50,gfx_texth+1);
+
+
+          gfx_setfont(1); // small
+          style == 0 ? gfx_set(1.00000,1.00000,0.70000,.8); style == 1 ? gfx_set(0.44706,0.85882,1.00000,.9);
+          style == 2 ? gfx_set(0.16863,0.73333,1.00000,.9); style == 3 ? gfx_set(0.29020,0.85098,0.69020,1);
+          style == 4 ? gfx_set(0.71373,0.86667,0.93725,1); style == 5 ? gfx_set(1.00000,0.88235,0.53725,.9);
+          style == 6 ? gfx_set(0.86667,0.85490,0.78039,.9); style == 7 ? gfx_set(0.84706,0.85098,0.85882,.9);
+          gfx_drawstr( strcpy_fromslider(UI,slider1),1,gfx_x+gfx_texth+50,gfx_y+gfx_texth+1);
+
+
+          // mode selector
+          style == 0 ? gfx_set(0.12000,.24000,.43000,.3); style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
+          style == 2 ? gfx_set(0.14110,.09020,.21961,.6); style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
+          style == 4 ? gfx_set(0.96078,.66275,.67059,.1); style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
+          style == 6 ? gfx_set(0.80000,.78039,.70588,.1); style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
+          gfx_rect(gfx_x=124,gfx_y=ylo-gfx_texth/2,gfx_texth+50,gfx_texth+1,1);
+          mode_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+50,gfx_texth+1);
+
+          gfx_setfont(1); // small
+          style == 0 ? gfx_set(1.00000,1.00000,0.70000,.8); style == 1 ? gfx_set(0.44706,0.85882,1.00000,.9);
+          style == 2 ? gfx_set(0.16863,0.73333,1.00000,.9); style == 3 ? gfx_set(0.29020,0.85098,0.69020,1);
+          style == 4 ? gfx_set(0.71373,0.86667,0.93725,1);  style == 5 ? gfx_set(1.00000,0.88235,0.53725,.9);
+          style == 6 ? gfx_set(0.86667,0.85490,0.78039,.9); style == 7 ? gfx_set(0.84706,0.85098,0.85882,.9);
+          gfx_drawstr(  strcpy_fromslider(Mode,slider2),1,gfx_x+gfx_texth+50,gfx_y+gfx_texth+1);
+
+
+          // volume level
+          style == 0 ? gfx_set(0.12000,.24000,.43000,.3); style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
+          style == 2 ? gfx_set(0.14110,.09020,.21961,.6); style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
+          style == 4 ? gfx_set(0.96078,.66275,.67059,.1); style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
+          style == 6 ? gfx_set(0.80000,.78039,.70588,.1); style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
+          gfx_rect(gfx_x=198,gfx_y=ylo-gfx_texth/2,gfx_texth+60,gfx_texth+1,1);
+          volume_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+60,gfx_texth+1);
+
+          gfx_setfont(1); // small
+          style == 0 ? gfx_set(1.00000,1.00000,0.70000,.8); style == 1 ? gfx_set(0.44706,0.85882,1.00000,.9);
+          style == 2 ? gfx_set(0.16863,0.73333,1.00000,.9); style == 3 ? gfx_set(0.29020,0.85098,0.69020,1);
+          style == 4 ? gfx_set(0.71373,0.86667,0.93725,1);  style == 5 ? gfx_set(1.00000,0.88235,0.53725,.9);
+          style == 6 ? gfx_set(0.86667,0.85490,0.78039,.9); style == 7 ? gfx_set(0.84706,0.85098,0.85882,.9);
+          gfx_drawstr(sprintf(#,"VOL :  %.2f",slider7),1,gfx_x+gfx_texth+60,gfx_y+gfx_texth+1);
+
+
+          // help text?
+          gfx_w >= 336 ? (
+              style == 0 ? gfx_set(0.12000,.24000,.43000,.3); style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
+              style == 2 ? gfx_set(0.14110,.09020,.21961,.6); style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
+              style == 4 ? gfx_set(0.96078,.66275,.67059,.1); style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
+              style == 6 ? gfx_set(0.80000,.78039,.70588,.1); style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
+              gfx_rect(gfx_x=282,gfx_y=ylo-gfx_texth/2,gfx_texth+10,gfx_texth+1,1);
+
+              gfx_setfont(1); // small
+              style == 0 ? gfx_set(1.00000,1.00000,0.70000,.8); style == 1 ? gfx_set(0.44706,0.85882,1.00000,.9);
+              style == 2 ? gfx_set(0.16863,0.73333,1.00000,.9); style == 3 ? gfx_set(0.29020,0.85098,0.69020,1);
+              style == 4 ? gfx_set(0.71373,0.86667,0.93725,1);  style == 5 ? gfx_set(1.00000,0.88235,0.53725,.9);
+              style == 6 ? gfx_set(0.86667,0.85490,0.78039,.9); style == 7 ? gfx_set(0.84706,0.85098,0.85882,.9);
+              gfx_drawstr(sprintf(#,"?",help_text),1,gfx_x+gfx_texth+10,gfx_y+gfx_texth+1);
+
+              show_help == 1 ? (
+                gfx_a=0.7; gfx_rect(gfx_x=282,gfx_y=ylo-gfx_texth/2-1,gfx_texth+11,gfx_texth+3,0) );
+                  has_click && help_text_button ? (
+                    show_help == 1 ? ( show_help = 0; has_click = 0; ) : ( show_help = 1; has_click = 0; ) ;
+              );    gfx_a=1;
+          );
+
+
+          gfx_h >= 204 && show_help == 1 ? (
+              gfx_setfont(1); style == 4 ? gfx_set(1,1,1,1);
+              style == 6 ? gfx_set(.32941,.31765,.28235); style == 7 ? gfx_set(1,1,1,1);
+
+              ui_color_slider ? ( gfx_x = 10; gfx_y = ylo-28;
+                gfx_drawstr ("Click left mouse button to cycle through UI Styles.") );
+
+              mode_slider ? ( gfx_x = 10; gfx_y = ylo-28;
+                gfx_drawstr ("Click left mouse button to cycle through channel modes.") );
+
+              volume_slider ? ( gfx_x = 10; gfx_y = ylo-28;
+                gfx_drawstr ("Click & drag to adjust volume / hold shift for fine tuning.") );
+                gfx_w >= 412 ? ( volume_slider ? ( gfx_x = 277; gfx_y = ylo-28;
+                gfx_drawstr ("Double-click to reset slider.") ) );
+
+          );
+
+      );
+
+  ); // close !gfx_ext_flags
+
+
+
+
+//======================================= SLIDER MASK ===============================================/
+
+  yu = gfx_texth*7/8;
+  ylo = gfx_h-yu;
+
+
+  function set_color(trgb)(
+  gfx_set((trgb&$xff0000)/$xff0000,(trgb&$xff00)/$xff00,(trgb&$xff)/$xff);
+  );
+
+  // button & slider positions
+  ui_slider_button = abs(mouse_x-tx) < gfx_texth/2 && abs(mouse_y-ylo) < gfx_texth/2;
+
+  gfx_ext_flags == 0 ? (
+      gfx_w > 300 && gfx_h >= yw+55 ? (
+          !(gfx_ext_flags&1) ? (
+              mode = slider2;
+              set_color(TEXT_COLOR);
+              tx = gfx_w-(gfx_texth+0.5)*3/2;
+              gfx_rect(gfx_x=tx-gfx_texth/4, gfx_y=ylo-gfx_texth/2, gfx_texth+1, gfx_texth+1, 0);
+              gfx_drawstr("☰",1|4, gfx_x+gfx_texth+1, gfx_y+gfx_texth+1);
+
+              has_click && ui_slider_button ? ( PREFERENCE_MASK == 0 ?
+                  ( PREFERENCE_MASK = 1; has_click = 0; ) :
+                  ( PREFERENCE_MASK = 0; has_click = 0; ) ;
+              );
+          );
+      );
+  );
+
+
+
+
+
+
+
+
+
+
+/****************************************** END OF CODE *********************************************\
+
