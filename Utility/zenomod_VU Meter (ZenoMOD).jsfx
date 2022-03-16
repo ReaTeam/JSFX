@@ -15,10 +15,8 @@ changelog:
   Add graphics slider in settings mask and bottom bar
   Add volume adjustment in embedded UI (by aurelien)
   Add context-sensitive mouse-over help text
-provides: . > VU Meter (ZenoMOD)
 link: Forum Thread https://forum.cockos.com/showthread.php?t=262611
 donation: Donate via PayPal https://www.paypal.me/ZenoBock
-
 
 tags: analysis analyzer vu meter loudness
 
