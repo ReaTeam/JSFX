@@ -1,24 +1,18 @@
 desc: VU Meter (ZenoMOD)
 author: ZenoMOD
-version: 1.7.0
+version: 1.7.1
 changelog:
-  fix: playback initialization error
-  fix: intelligent hiding of UI elements
-  fix: bug when drawing objects in embedded UI pastel.
-  fix: anti-aliasing in embedded mode
+  fix: typo in help texts corrected (Volume: Hold Ctrl, instead of Shift for fine adjustments)
+  fix: minor adjustments when certain primitives are drawn and when not (again: Pastel)
 
-  Default graphic height reduced
-  Hide all generic UI sliders
-  Discard  UI slider mask
+  Add new UI Style: Ultimate
+  Add new UI Style: Mooncake
 
-  Add settings mask
-  Add graphics slider in settings mask and bottom bar
-  Add volume adjustment in embedded UI (by aurelien)
-  Add context-sensitive mouse-over help text
+  ...
 link: Forum Thread https://forum.cockos.com/showthread.php?t=262611
 donation: Donate via PayPal https://www.paypal.me/ZenoBock
 
-tags: analysis analyzer vu meter loudness
+	 tags: analysis analyzer vu meter loudness
 
    Disclaimer: Use of this software is on your own risk!
 
@@ -46,7 +40,7 @@ tags: analysis analyzer vu meter loudness
 
 // Sliders                                                                                // Name
 
-slider1: 1<0,7,1{Classic,Knight,Purple,Mint,Pastel,Warm,Ivory,Trooper}>                   -UI Style
+slider1: 1<0,9,1{Classic,Knight,Purple,Mint,Pastel,Warm,Ivory,Trooper,Ultimate,Mooncake}> -UI Style
 slider2: 0<0,2,1{Stereo,Summed,Mid / Side}>                                               -Mode
 slider3: -18<-36,0,1>                                                                     -Ref Level
 slider4: -6<-20,0,1>                                                                      -Warn Level
@@ -98,7 +92,7 @@ out_pin: right output
 @init
 
 //===================================== VERSION NUMBER ==============================================/
-  version = ("v1.7.0");
+  version = ("v1.7.1");
 
 
 
@@ -390,7 +384,7 @@ out_pin: right output
 
   function draw_buttonsize(xp, yp, wp,hp)
     instance(w,h,x,y)
-    globals(g_button_right_extent,gfx_r,gfx_g,gfx_b,gfx_x,gfx_y,gfx_w) 
+    globals(g_button_right_extent,gfx_r,gfx_g,gfx_b,gfx_x,gfx_y,gfx_w)
   (
     w=wp; h=hp; x=xp; y=yp;
   );
@@ -445,7 +439,7 @@ out_pin: right output
                       cap_last_y = mouse_y;
                       cap_mode=7;
                   );
-          
+
                   uistyle_button.hit_button(mouse_x,mouse_y,1);
                   mode_button.hit_button(mouse_x,mouse_y,2);
                   reflevel_button.hit_button(mouse_x,mouse_y,3);
@@ -455,7 +449,6 @@ out_pin: right output
                   volume_button.hit_button(mouse_x,mouse_y,7);
                 );
           );
-
 
           // drag
           cap_mode == 3 && cap_last_y != mouse_y ? (
@@ -468,19 +461,16 @@ out_pin: right output
               slider6=drag_slider(slider6,0,0.01,0.0001); slider_automate(slider6) );
           cap_mode == 7 && cap_last_y != mouse_y ? (
               slider7=drag_slider_precise(slider7,-18,18,0.1); slider_automate(slider7) );
-
           ) : (
-
           // cycle click
             cap_mode == 1 && !cap_drag ? (
-                slider1=cycle_slider(slider1,0,7,1); slider_automate(slider1); cap_mode=0 ) : (
+                slider1=cycle_slider(slider1,0,9,1); slider_automate(slider1); cap_mode=0 ) : (
             cap_mode == 2 && !cap_drag ? (
                 slider2=cycle_slider(slider2,0,2,1); slider_automate(slider2); cap_mode=0 );
           );
   );
 
   cap_mode && cap_timer < 12 ? cap_timer += 1;
-
   last_mouse_cap = mouse_cap;
 
 
@@ -500,6 +490,8 @@ out_pin: right output
   style == 5 ? ( gfx_clear = 26 + 25 * 256 + 21 * 65536; );
   style == 6 ? ( gfx_clear = 204 + 199 * 256 + 180 * 65536; );
   style == 7 ? ( gfx_clear = 163 + 162 * 256 + 158 * 65536; );
+  style == 8 ? ( gfx_clear = 46 + 46 * 256 + 46 * 65536; );
+  style == 9 ? ( gfx_clear = 30 + 31 * 256 + 35 * 65536; );
 
 
   w1 = $pi * 16.5 / 180;
@@ -536,7 +528,7 @@ out_pin: right output
 
       // background style 4: pastel
       style == 4 ? ( gfx_r=0;gfx_g=1;gfx_b=.9;  gfx_rect(xd,yd,xw,yw);
-                     gfx_r=0.65; gfx_g=0.37; gfx_b=0.6;  gfx_rect(xd,yd+yw;,xw-(xw/1.35),yw*yw );
+      !gfx_ext_flags ? (gfx_r=0.65; gfx_g=0.37; gfx_b=0.6;  gfx_rect(xd,yd+yw;,xw-(xw/1.35),yw*yw ) );
                      gfx_r=0.85490; gfx_g=0.85490; gfx_b=0.96078;  gfx_rect(xd,yd,xw,yw); gfx_a=0.79; );
 
       // background style 5: warm
@@ -567,6 +559,14 @@ out_pin: right output
                      gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.15; gfx_circle(xa,ya*1.29,r1*0.87,1,1);
                      gfx_r=0.63922; gfx_g=0.63529; gfx_b=0.61961; gfx_a=1;  gfx_rect(xd,ya*0.91,xw,yw*2); );
 
+      // background style 8: ultimate
+      style == 8 ? ( gfx_r=0.55294; gfx_g=0.55294; gfx_b=0.55294;  gfx_rect(xd,yd,xw,yw);
+                     gfx_r=0.42745; gfx_g=0.42745; gfx_b=0.42745;  gfx_a=.65;
+                     gfx_rect(xd+1,yd,xw-1,yw-1,0); gfx_a=1; );
+
+      // background style 9: mooncake
+      style == 9 ? ( gfx_r=0.03922; gfx_g=0.04314; gfx_b=0.04314;  gfx_rect(xd,yd,xw,yw); );
+
 
 
       //EXT_FLAGS*****************
@@ -584,9 +584,7 @@ out_pin: right output
           xa = floor(xd + xw / 2);
           ya = floor(yd + yw * 1.12);
 
-
-          // background styles
-          //
+          // background style
           style == 0 ? ( gfx_r=1; gfx_g=1; gfx_b=0.7;  gfx_rect(xd*.5,yd,xw*1.2,yw);  );
           style == 1 ? ( gfx_r=gfx_g=0.18431; gfx_b=0.2;  gfx_rect(xd*0.5,yd,xw*1.2,yw);  );
           style == 2 ? ( gfx_r=0.14110; gfx_g=0.09020; gfx_b=0.21961;  gfx_rect(xd*.5,yd,xw*1.2,yw);  );
@@ -615,6 +613,8 @@ out_pin: right output
                          gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.14; gfx_circle(xa,ya*1.20,r1*0.87,1,1);
                          gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.15; gfx_circle(xa,ya*1.29,r1*0.87,1,1);
                          gfx_r=0.63922; gfx_g=0.63529; gfx_b=0.61961; gfx_a=1;  gfx_rect(xd*.5,ya*0.9,xw*1.2,yw*2); );
+          style == 8 ? ( gfx_r=0.55294; gfx_g=0.55294; gfx_b=0.55294;  gfx_rect(xd*.5,yd,xw*1.2,yw); );
+          style == 9 ? ( gfx_r=0.03922; gfx_g=0.04314; gfx_b=0.04314;  gfx_rect(xd*.5,yd,xw*1.2,yw); );
       );
 
       //EXT_FLAGS END*************
@@ -640,9 +640,8 @@ out_pin: right output
 
       // scale style 2: purple
       style == 2 ? (gfx_set(.63922,.45882,1); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
-        gfx_set(.16863,.73333,1); // bold line
         gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
-        gfx_arc(xa, ya, r1 + 3, w1, w2, 1);  gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
+        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
       );
 
       // scale style 3: mint
@@ -680,27 +679,37 @@ out_pin: right output
         gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
       );
 
+      // scale style 8: ultimate
+      style == 8 ? (gfx_set(.18039,.18039,.18039); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
+        gfx_set(.18039,.18039,.18039); // bold line
+        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
+        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
+      );
+
+      // scale style 8: ultimate
+      style == 9 ? (gfx_set(.35686,.36471,.40392); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
+        gfx_set(.01961,.95686,.56471); // bold line
+        gfx_arc(xa, ya, r1 + 0, w1, w2, 1); gfx_arc(xa, ya, r1 + 1, w1, w2, 1);
+        gfx_arc(xa, ya, r1 + 2, w1, w2, 1); gfx_arc(xa, ya, r1 + 3, w1, w2, 1);
+        gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
+      );
+
 
 
 
     //*************************************** meter font styles ******************************************
 
-
     // -20dB - 0dB *********************
       gfx_setfont(1);
 
-      style == 0 ? (gfx_set(.2,.2,.2));
-      style == 1 ? (gfx_set(1,1,1));
-      style == 2 ? (gfx_set(.63922,.45882,1));
-      style == 3 ? (gfx_set(.2,.2,.2));
-      style == 4 ? (gfx_set(.37647,.55294,.70980));
-      style == 5 ? (gfx_set(.2,.2,.2));
-      style == 6 ? (gfx_set(.36070,.34902,.31373));
-      style == 7 ? (gfx_set(.84706,.85098,.85882));
+      style == 0 ? (gfx_set(.20000,.20000,.20000));   style == 1 ? (gfx_set(1.0000,1.0000,1.0000));
+      style == 2 ? (gfx_set(.63922,.45882,1.0000));   style == 3 ? (gfx_set(.20000,.20000,.20000));
+      style == 4 ? (gfx_set(.37647,.55294,.70980));   style == 5 ? (gfx_set(.20000,.20000,.20000));
+      style == 6 ? (gfx_set(.36070,.34902,.31373));   style == 7 ? (gfx_set(.84706,.85098,.85882));
+      style == 8 ? (gfx_set(.18039,.18039,.18039));   style == 9 ? (gfx_set(.35686,.36471,.40392));
 
 
     // Draw scale notches and values if scaling allows
-
 
       //EXT_FLAGS*****************
 
@@ -759,14 +768,11 @@ out_pin: right output
 
             // +1dB - +3dB *********************
               jj == 8 ? (
-                  style == 0 ? ( gfx_set(1,0,0) );                // font style 0: classic
-                  style == 1 ? ( gfx_set(.94902,.32157,.72941) ); // font style 1: knight
-                  style == 2 ? ( gfx_set(.16863,.73333,1) );      // font style 2: purple
-                  style == 3 ? ( gfx_set(0,0,0) );                // font style 3: mint
-                  style == 4 ? ( gfx_set(.37647,.55294,.70980) ); // font style 4: pastel
-                  style == 5 ? ( gfx_set(.81373,.08627,.09412) ); // font style 5: warm
-                  style == 6 ? ( gfx_set(.89412,.29412,.23922) ); // font style 6: ivory
-                  style == 7 ? ( gfx_set(.84706,.85098,.85882) ); // font style 7: trooper
+                  style == 0 ? (gfx_set(1.0000,.00000,.00000));   style == 1 ? (gfx_set(.94902,.32157,.72941));
+                  style == 2 ? (gfx_set(.63922,.45882,1.0000));   style == 3 ? (gfx_set(.20000,.20000,.20000));
+                  style == 4 ? (gfx_set(.37647,.55294,.70980));   style == 5 ? (gfx_set(.81373,.08627,.09412));
+                  style == 6 ? (gfx_set(.89412,.29412,.23922));   style == 7 ? (gfx_set(.84706,.85098,.85882));
+                  style == 8 ? (gfx_set(.18039,.18039,.18039));   style == 9 ? (gfx_set(.01961,.95686,.56471));
               );
 
           );
@@ -777,14 +783,11 @@ out_pin: right output
 
           gfx_x = xd + xw * .9 - 30; gfx_y = yd + yw * .9 - 10;
 
-          style == 0 ? ( gfx_set(0,0,0) );                // peak style 0: classic
-          style == 1 ? ( gfx_set(.44706,.85882,1) );      // peak style 1: knight
-          style == 2 ? ( gfx_set(.30980,.39216,.83922) ); // peak style 2: purple
-          style == 3 ? ( gfx_set(.37647,.65098,.62745) ); // peak style 3: mint
-          style == 4 ? ( gfx_set(.37647,.55294,.70980) ); // peak style 4: pastel
-          style == 5 ? ( gfx_set(0,0,0) );                // peak style 5: warm
-          style == 6 ? ( gfx_set(.40784,.39608,.36078) ); // peak style 6: ivory
-          style == 7 ? ( gfx_set(.84706,.85098,.85882) ); // peak style 7: trooper
+          style == 0 ? (gfx_set(.00000,.00000,.00000));   style == 1 ? (gfx_set(.44706,.85882,1.0000));
+          style == 2 ? (gfx_set(.30980,.39216,.83922));   style == 3 ? (gfx_set(.37647,.65098,.62745));
+          style == 4 ? (gfx_set(.37647,.55294,.70980));   style == 5 ? (gfx_set(.00000,.00000,.00000));
+          style == 6 ? (gfx_set(.40784,.39608,.36078));   style == 7 ? (gfx_set(.84706,.85098,.85882));
+          style == 8 ? (gfx_set(.18039,.18039,.18039));   style == 9 ? (gfx_set(.24706,.25490,.29412));
           gfx_drawstr("PEAK");
 
 
@@ -795,14 +798,11 @@ out_pin: right output
           gfx_x = xa - 10; gfx_y = yd + yw * .6;
 
           embedded_gain_sldr == 0 ? (
-              style == 0 ? ( gfx_set(0,0,0) );                // VU style 0: classic
-              style == 1 ? ( gfx_set(.94902,.32157,.72941) ); // VU style 1: knight
-              style == 2 ? ( gfx_set(.30980,.39216,.83922) ); // VU style 2: purple
-              style == 3 ? ( gfx_set(.37647,.65098,.62745) ); // VU style 3: mint
-              style == 4 ? ( gfx_set(.37647,.55294,.70980) ); // VU style 4: pastel
-              style == 5 ? ( gfx_set(0,0,0) );                // VU style 5: warm
-              style == 6 ? ( gfx_set(.40784,.39608,.36078) ); // VU style 6: ivory
-              style == 7 ? ( gfx_set(.95,0,0) );              // VU style 7: trooper
+              style == 0 ? (gfx_set(.00000,.00000,.00000));   style == 1 ? (gfx_set(.94902,.32157,.72941));
+              style == 2 ? (gfx_set(.30980,.39216,.83922));   style == 3 ? (gfx_set(.37647,.65098,.62745));
+              style == 4 ? (gfx_set(.37647,.55294,.70980));   style == 5 ? (gfx_set(.00000,.00000,.00000));
+              style == 6 ? (gfx_set(.40784,.39608,.36078));   style == 7 ? (gfx_set(.95000,.00000,.00000));
+              style == 8 ? (gfx_set(.18039,.18039,.18039));   style == 9 ? (gfx_set(.24706,.25490,.29412));
               gfx_drawstr("VU");
           );
 
@@ -815,24 +815,17 @@ out_pin: right output
       embedded_gain_sldr = (
           gfx_ext_flags == 1 ? (
               slider7!= 0 ? (
-                  style == 0 ? ( gfx_set(0.00000,0.00000,0.00000,.65) );
-                  style == 1 ? ( gfx_set(1.00000,1.00000,1.00000,.65) );
-                  style == 2 ? ( gfx_set(0.30980,0.39216,0.83922,.95) );
-                  style == 3 ? ( gfx_set(0.00000,0.00000,0.00000,.45) );
-                  style == 4 ? ( gfx_set(0.37647,0.55294,0.70980,.95) );
-                  style == 5 ? ( gfx_set(0.00000,0.00000,0.00000,.65) );
-                  style == 6 ? ( gfx_set(0.40784,0.39608,0.36078,.85) );
-                  style == 7 ? ( gfx_set(0.84706,0.85098,0.85882,.65) );
-                  slider7 > 0 ? gfx_x= xa -10;
-                  slider7 < 0 ? gfx_x = xa -13;
-                  slider7 >= 10 ? gfx_x = xa -14;
-                  slider7 <= -10 ? gfx_x = xa -17;
-                  gfx_y = yd + yw * .6;
-                  gfx_printf("%.2f",slider7,true);
+                  style == 0 ? (gfx_set(.00000,.00000,.00000,.65));   style == 1 ? (gfx_set(1.0000,1.0000,1.0000,.65));
+                  style == 2 ? (gfx_set(.30980,.39216,.83922,.95));   style == 3 ? (gfx_set(.00000,.00000,.00000,.45));
+                  style == 4 ? (gfx_set(.37647,.55294,.70980,.95));   style == 5 ? (gfx_set(.00000,.00000,.00000,.65));
+                  style == 6 ? (gfx_set(.40784,.39608,.36078,.85));   style == 7 ? (gfx_set(.84706,.85098,.85882,.65));
+                  style == 8 ? (gfx_set(.18039,.18039,.18039,.85));   style == 9 ? (gfx_set(.01961,.95686,.56471) );
+                  slider7 > 0 ? gfx_x= xa -10;  slider7 < 0 ? gfx_x = xa -13;
+                  slider7 >= 10 ? gfx_x = xa -14; slider7 <= -10 ? gfx_x = xa -17;
+                  gfx_y = yd + yw * .6; gfx_printf("%.2f",slider7,true);
               );
           );
       );
-
 
       //EXT_FLAGS END*************
 
@@ -890,6 +883,18 @@ out_pin: right output
             gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
           );
 
+          // LEDs style 8: ultimate
+          style == 8 ? (gfx_set(.49020,.49020,.49020); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
+          style == 8 ? (gfx_set(.04314,.88235,.04314); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
+            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
+          );
+
+          // LEDs style 9: mooncake
+          style == 9 ? (gfx_set(.10196,.10588,.10588); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
+          style == 9 ? (gfx_set(.01961,.95686,.56471); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
+            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
+          );
+
 
 
 
@@ -918,6 +923,8 @@ out_pin: right output
       style == 5 ? (gfx_set(.37647,.19216,.07059); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
       style == 6 ? (gfx_set(.32941,.31765,.28235); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
       style == 7 ? (gfx_set(.63922,.63529,.61961); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
+      style == 8 ? (gfx_set(.18039,.18039,.18039); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
+      style == 9 ? (gfx_set(.01961,.95686,.56471); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
 
 
       // draw thick needle lines and shadows if scaling allows
@@ -925,16 +932,12 @@ out_pin: right output
           gfx_x = x1+1; gfx_y = y1; gfx_lineto(x2+1, y2);
 
           //needle shadow
-          style == 0 ? gfx_set(.60000,.60000,.60000); // needle shadow style 0: classic
-          style == 1 ? gfx_set(.07059,.07059,.09412); // needle shadow style 1: knight
-          style == 2 ? gfx_set(.07843,.05098,.12157); // needle shadow style 2: purple
-          style == 3 ? gfx_set(.29020,.85098,.69020); // needle shadow style 3: mint
-          style == 4 ? gfx_set(.60000,.60000,.60000,.3); // needle shadow style 4: pastel
-          style == 5 ? gfx_set(.87451,.49412,.08235); // needle shadow style 5: warm
-          style == 6 ? gfx_set(.64314,.63137,.59608); // needle shadow style 6: ivory
-          style == 7 ? gfx_set(.18824,.18431,.20392); // needle shadow style 7: trooper
+          style == 0 ? gfx_set(.60000,.60000,.60000);   style == 1 ? gfx_set(.07059,.07059,.09412);
+          style == 2 ? gfx_set(.07843,.05098,.12157);   style == 3 ? gfx_set(.29020,.85098,.69020);
+          style == 4 ? gfx_set(.60000,.60000,.60,.3);   style == 5 ? gfx_set(.87451,.49412,.08235);
+          style == 6 ? gfx_set(.64314,.63137,.59608);   style == 7 ? gfx_set(.18824,.18431,.20392);
+          style == 8 ? gfx_set(.42745,.42745,.42745);   style == 9 ? gfx_set(.10196,.10588,.10588);
           gfx_x = x1+4; gfx_y = y1; gfx_lineto(x2+4, y2);
-
       );
 
 
@@ -942,14 +945,16 @@ out_pin: right output
 
     //******************************************** needle circle *****************************************
 
-      style == 0 ? (gfx_set(.12,.24,.43);          gfx_circle(xa,ya,r1*0.16,1,1));      // needle circle style 0: classic
-      style == 1 ? (gfx_set(.07059,.07059,.07059); gfx_circle(xa,ya,r1*0.16,1,1));      // needle circle style 1: knigh
-      style == 2 ? (gfx_set(.06275,.03922,.10196); gfx_circle(xa,ya,r1*0.16,1,1));      // needle circle style 2: purpl
-      style == 3 ? (gfx_set(.20392,.34902,.33725); gfx_circle(xa,ya,r1*0.16,1,1));      // needle circle style 3: mint
-      style == 4 ? (gfx_set(.96078,.66275,.67059); gfx_circle(xa,ya,r1*0.16,1,1));      // needle circle style 4: pastel
-      style == 5 ? (gfx_set(.10196,.09804,.08235); gfx_circle(xa,ya*1.32,r1*.65,1,1));  // needle circle style 5: warm
-      style == 6 ? (gfx_set(.8,.78039,.70588);     gfx_circle(xa,ya,r1*0.16,1,1));      // needle circle style 6: ivory
-      style == 7 ? (gfx_set(.63922,.63529,.61961); gfx_circle(xa,ya,r1*0.2,1,1));       // needle circle style 7: trooper
+      style == 0 ? (gfx_set(.12,.24,.43);          gfx_circle(xa,ya,r1*0.16,1,1));
+      style == 1 ? (gfx_set(.07059,.07059,.07059); gfx_circle(xa,ya,r1*0.16,1,1));
+      style == 2 ? (gfx_set(.06275,.03922,.10196); gfx_circle(xa,ya,r1*0.16,1,1));
+      style == 3 ? (gfx_set(.20392,.34902,.33725); gfx_circle(xa,ya,r1*0.16,1,1));
+      style == 4 ? (gfx_set(.96078,.66275,.67059); gfx_circle(xa,ya,r1*0.16,1,1));
+      style == 5 ? (gfx_set(.10196,.09804,.08235); gfx_circle(xa,ya*1.32,r1*.65,1,1));
+      style == 6 ? (gfx_set(.8,.78039,.70588);     gfx_circle(xa,ya,r1*0.16,1,1));
+      style == 7 ? (gfx_set(.63922,.63529,.61961); gfx_circle(xa,ya,r1*0.2,1,1));
+      style == 8 ? (gfx_set(.18039,.18039,.18039); gfx_circle(xa,ya,r1*0.2,1,1));
+      style == 9 ? (gfx_set(.11765,.12157,.13725); gfx_circle(xa,ya,r1*0.2,1,1));
 
 
 
@@ -1092,27 +1097,29 @@ out_pin: right output
           gfx_setfont(1); gfx_set(1,1,1,1); gfx_drawstr(version,1|4,gfx_x+gfx_texth+35,gfx_y+gfx_texth+11);
 
           // gui color selector
-          style == 0 ? gfx_set(0.12000,.24000,.43000,.3); style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
-          style == 2 ? gfx_set(0.14110,.09020,.21961,.6); style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
-          style == 4 ? gfx_set(0.96078,.66275,.67059,.1); style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
-          style == 6 ? gfx_set(0.80000,.78039,.70588,.1); style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
+          style == 0 ? gfx_set(0.12000,.24000,.43000,.3);   style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
+          style == 2 ? gfx_set(0.14110,.09020,.21961,.6);   style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
+          style == 4 ? gfx_set(0.96078,.66275,.67059,.1);   style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
+          style == 6 ? gfx_set(0.80000,.78039,.70588,.1);   style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
+          style == 8 ? gfx_set(0.55294,.55294,.55294,.1);   style == 9 ? gfx_set(.11765,.12157,.13725,.6);
           gfx_rect(gfx_x=50,gfx_y=ylo-gfx_texth/2,gfx_texth+50,gfx_texth+1,1);
           uistyle_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+50,gfx_texth+1);
-
 
           gfx_setfont(1); // small
           style == 0 ? gfx_set(1.00000,1.00000,0.70000,.8); style == 1 ? gfx_set(0.44706,0.85882,1.00000,.9);
           style == 2 ? gfx_set(0.16863,0.73333,1.00000,.9); style == 3 ? gfx_set(0.29020,0.85098,0.69020,1);
-          style == 4 ? gfx_set(0.71373,0.86667,0.93725,1); style == 5 ? gfx_set(1.00000,0.88235,0.53725,.9);
+          style == 4 ? gfx_set(0.71373,0.86667,0.93725,1);  style == 5 ? gfx_set(1.00000,0.88235,0.53725,.9);
           style == 6 ? gfx_set(0.86667,0.85490,0.78039,.9); style == 7 ? gfx_set(0.84706,0.85098,0.85882,.9);
+          style == 8 ? gfx_set(0.74902,0.74902,0.74902,.9); style == 9 ? gfx_set(0.01961,0.95686,0.56471,.9);
           gfx_drawstr( strcpy_fromslider(UI,slider1),1,gfx_x+gfx_texth+50,gfx_y+gfx_texth+1);
 
 
           // mode selector
-          style == 0 ? gfx_set(0.12000,.24000,.43000,.3); style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
-          style == 2 ? gfx_set(0.14110,.09020,.21961,.6); style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
-          style == 4 ? gfx_set(0.96078,.66275,.67059,.1); style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
-          style == 6 ? gfx_set(0.80000,.78039,.70588,.1); style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
+          style == 0 ? gfx_set(0.12000,.24000,.43000,.3);   style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
+          style == 2 ? gfx_set(0.14110,.09020,.21961,.6);   style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
+          style == 4 ? gfx_set(0.96078,.66275,.67059,.1);   style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
+          style == 6 ? gfx_set(0.80000,.78039,.70588,.1);   style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
+          style == 8 ? gfx_set(0.55294,.55294,.55294,.1);   style == 9 ? gfx_set(.11765,.12157,.13725,.6);
           gfx_rect(gfx_x=124,gfx_y=ylo-gfx_texth/2,gfx_texth+50,gfx_texth+1,1);
           mode_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+50,gfx_texth+1);
 
@@ -1121,14 +1128,16 @@ out_pin: right output
           style == 2 ? gfx_set(0.16863,0.73333,1.00000,.9); style == 3 ? gfx_set(0.29020,0.85098,0.69020,1);
           style == 4 ? gfx_set(0.71373,0.86667,0.93725,1);  style == 5 ? gfx_set(1.00000,0.88235,0.53725,.9);
           style == 6 ? gfx_set(0.86667,0.85490,0.78039,.9); style == 7 ? gfx_set(0.84706,0.85098,0.85882,.9);
+          style == 8 ? gfx_set(0.74902,0.74902,0.74902,1);  style == 9 ? gfx_set(0.01961,0.95686,0.56471,.9);
           gfx_drawstr(  strcpy_fromslider(Mode,slider2),1,gfx_x+gfx_texth+50,gfx_y+gfx_texth+1);
 
 
           // volume level
-          style == 0 ? gfx_set(0.12000,.24000,.43000,.3); style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
-          style == 2 ? gfx_set(0.14110,.09020,.21961,.6); style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
-          style == 4 ? gfx_set(0.96078,.66275,.67059,.1); style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
-          style == 6 ? gfx_set(0.80000,.78039,.70588,.1); style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
+          style == 0 ? gfx_set(0.12000,.24000,.43000,.3);   style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
+          style == 2 ? gfx_set(0.14110,.09020,.21961,.6);   style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
+          style == 4 ? gfx_set(0.96078,.66275,.67059,.1);   style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
+          style == 6 ? gfx_set(0.80000,.78039,.70588,.1);   style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
+          style == 8 ? gfx_set(0.55294,.55294,.55294,.1);   style == 9 ? gfx_set(.11765,.12157,.13725,.6);
           gfx_rect(gfx_x=198,gfx_y=ylo-gfx_texth/2,gfx_texth+60,gfx_texth+1,1);
           volume_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+60,gfx_texth+1);
 
@@ -1137,15 +1146,17 @@ out_pin: right output
           style == 2 ? gfx_set(0.16863,0.73333,1.00000,.9); style == 3 ? gfx_set(0.29020,0.85098,0.69020,1);
           style == 4 ? gfx_set(0.71373,0.86667,0.93725,1);  style == 5 ? gfx_set(1.00000,0.88235,0.53725,.9);
           style == 6 ? gfx_set(0.86667,0.85490,0.78039,.9); style == 7 ? gfx_set(0.84706,0.85098,0.85882,.9);
+          style == 8 ? gfx_set(0.74902,0.74902,0.74902,1);  style == 9 ? gfx_set(0.01961,0.95686,0.56471,.9);
           gfx_drawstr(sprintf(#,"VOL :  %.2f",slider7),1,gfx_x+gfx_texth+60,gfx_y+gfx_texth+1);
 
 
           // help text?
           gfx_w >= 336 ? (
-              style == 0 ? gfx_set(0.12000,.24000,.43000,.3); style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
-              style == 2 ? gfx_set(0.14110,.09020,.21961,.6); style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
-              style == 4 ? gfx_set(0.96078,.66275,.67059,.1); style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
-              style == 6 ? gfx_set(0.80000,.78039,.70588,.1); style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
+              style == 0 ? gfx_set(0.12000,.24000,.43000,.3);   style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
+              style == 2 ? gfx_set(0.14110,.09020,.21961,.6);   style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
+              style == 4 ? gfx_set(0.96078,.66275,.67059,.1);   style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
+              style == 6 ? gfx_set(0.80000,.78039,.70588,.1);   style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
+              style == 8 ? gfx_set(0.55294,.55294,.55294,.1);   style == 9 ? gfx_set(.11765,.12157,.13725,.6);
               gfx_rect(gfx_x=282,gfx_y=ylo-gfx_texth/2,gfx_texth+10,gfx_texth+1,1);
 
               gfx_setfont(1); // small
@@ -1153,6 +1164,7 @@ out_pin: right output
               style == 2 ? gfx_set(0.16863,0.73333,1.00000,.9); style == 3 ? gfx_set(0.29020,0.85098,0.69020,1);
               style == 4 ? gfx_set(0.71373,0.86667,0.93725,1);  style == 5 ? gfx_set(1.00000,0.88235,0.53725,.9);
               style == 6 ? gfx_set(0.86667,0.85490,0.78039,.9); style == 7 ? gfx_set(0.84706,0.85098,0.85882,.9);
+              style == 8 ? gfx_set(0.74902,0.74902,0.74902,1);  style == 9 ? gfx_set(0.01961,0.95686,0.56471,.9);
               gfx_drawstr(sprintf(#,"?",help_text),1,gfx_x+gfx_texth+10,gfx_y+gfx_texth+1);
 
               show_help == 1 ? (
@@ -1174,9 +1186,9 @@ out_pin: right output
                 gfx_drawstr ("Click left mouse button to cycle through channel modes.") );
 
               volume_slider ? ( gfx_x = 10; gfx_y = ylo-28;
-                gfx_drawstr ("Click & drag to adjust volume / hold shift for fine tuning.") );
-                gfx_w >= 412 ? ( volume_slider ? ( gfx_x = 277; gfx_y = ylo-28;
-                gfx_drawstr ("Double-click to reset slider.") ) );
+                gfx_drawstr ("Click & drag to adjust volume... hold Ctrl for fine tuning.") );
+                gfx_w >= 380 ? ( volume_slider ? ( gfx_x = 277; gfx_y = ylo-28;
+                gfx_drawstr ("Double-click to reset.") ) );
 
           );
 
@@ -1227,4 +1239,3 @@ out_pin: right output
 
 
 /****************************************** END OF CODE *********************************************\
-
