@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="22fc25d5c2045166f7335f445a765321f9acf809">
+<index version="1" name="ReaTeam JSFX" commit="6ab1d7309e902496167c21859c28ff82f10f4bb9">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -3255,19 +3255,41 @@ add "Time Asymmetry" slider, bugfixes.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/4f4eac539c384e374d2d434f9fe712789c01a73e/Utility/TimeWaster%20MIDI-Mouse.jsfx</source>
       </version>
     </reapack>
+    <reapack name="zenomod_VU Meter (ZenoMOD).jsfx" type="effect" desc="VU Meter (ZenoMOD)">
+      <metadata>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?t=262611">Forum Thread</link>
+        <link rel="donation" href="https://www.paypal.me/ZenoBock">Donate via PayPal</link>
+      </metadata>
+      <version name="1.7.0" author="ZenoMOD" time="2022-03-16T17:41:20Z">
+        <changelog><![CDATA[fix: playback initialization error
+fix: intelligent hiding of UI elements
+fix: bug when drawing objects in embedded UI pastel.
+fix: anti-aliasing in embedded mode
+
+Default graphic height reduced
+Hide all generic UI sliders
+Discard  UI slider mask
+
+Add settings mask
+Add graphics slider in settings mask and bottom bar
+Add volume adjustment in embedded UI (by aurelien)
+Add context-sensitive mouse-over help text]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/6ab1d7309e902496167c21859c28ff82f10f4bb9/Utility/zenomod_VU%20Meter%20(ZenoMOD).jsfx</source>
+      </version>
+    </reapack>
   </category>
   <metadata>
-    <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+    <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 ReaTeam JSFX Repository\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel0 \b \fs36 ReaTeam JSFX Repository\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 {\cf1 [image: https://github.com/ReaTeam/JSFX/workflows/check/badge.svg]\cf0}\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Community-maintained collection of JS effects for REAPER.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Installation\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 Installation\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Copy and paste this URL in Extensions > ReaPack > Import a repository:\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \f1 https://github.com/ReaTeam/JSFX/raw/master/index.xml\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Contributing\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 Contributing\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Use {\field{\*\fldinst{HYPERLINK "https://reapack.com/upload/jsfx"}}{\fldrslt{\ul
 https://reapack.com/upload/jsfx
 }}}
