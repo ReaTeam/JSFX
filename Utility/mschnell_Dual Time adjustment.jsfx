@@ -1,7 +1,7 @@
 desc: Dual Time adjustment +/- Delay
 author: Michael Schnell (mschnell@bschnell.de)
-version: 2.0
-changelog: add positive Midi delay
+version: 2.1
+changelog: Fix: Loading the plugin with Dual mode resulted in equal delay for both channels due to some weird way Reaper calls @slider multiple times
 donation: United Nations Foundation http://www.unfoundation.org/
 about:
   ## Description
@@ -21,7 +21,6 @@ about:
 
     Midi positive delay part based on Cockos "Midi Delay"
 
-
 // (C) 2007, Michael Gruhn, 2019, Michael Schnell, 2018, Paweł Łyżwa
 
 // NO WARRANTY IS GRANTED. THIS PLUG-IN IS PROVIDED ON AN "AS IS" BASIS, WITHOUT
@@ -40,7 +39,7 @@ slider1:0<-100,100,0.01>Delay L (ms)
 slider2:0<-100,100,0.01>Delay R (ms)
 slider3:0<-1000,1000,1>Delay L (spls)
 slider4:0<-1000,1000,1>Delay R (spls)
-slider5: 0<0,1,1{Stereo,Dual}>Mode
+slider5: 1<0,1,1{Stereo,Dual}>Mode
 slider6:22<-10,30,1>°C (1 bar)
 slider7: 0<0,1,1{No,Average L/R}>Midi delay
 //slider7: 0<0,2,1{No,only negative,negative and positive}>Midi delay   //positive Midi delay not yet implemented
