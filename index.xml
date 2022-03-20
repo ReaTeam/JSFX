@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="31ee12aeed2a02841069148848165bb2b94e4720">
+<index version="1" name="ReaTeam JSFX" commit="a966971f4f6a8b56fe0d357acdfc604ff9d6f567">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2813,6 +2813,10 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       <version name="2.0" author="Michael Schnell (mschnell@bschnell.de)" time="2019-09-14T16:21:09Z">
         <changelog><![CDATA[add positive Midi delay]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/4d0e7e7b08904da4764a331348b45fb1c8995dab/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
+      </version>
+      <version name="2.1" author="Michael Schnell (mschnell@bschnell.de)" time="2022-03-20T13:45:18Z">
+        <changelog><![CDATA[Fix: Loading the plugin with Dual mode resulted in equal delay for both channels due to some weird way Reaper calls @slider multiple times]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/a966971f4f6a8b56fe0d357acdfc604ff9d6f567/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Midi Auto Engage.jsfx" type="effect" desc="Midi Auto Engage">
