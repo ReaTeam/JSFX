@@ -1,4 +1,4 @@
-desc: Keyboard Mirror/Invert (Juan_R)
+desc: Keyboard Mirror/Invert
 author: Juan_R
 version: 1.0
 changelog: Initial release
@@ -9,20 +9,7 @@ about:
   so that playing e.g. B3 yields C#4, playing E4 yields G#3 etc.
   This trick was made popular by Joe Zawinul.
 
-author: Juan_R
-version: 1.0
-about:
-  # Keyboard Mirror/Invert (Juan_R)
-
-  Mirror the keyboard around a user-selectable pivot point (e.g., C4)
-  so that playing e.g. B3 yields C#4, playing E4 yields G#3 etc.
-  This trick was made popular by Joe Zawinul.
-
-
-// Mirror the keyboard around a pivot key, Joe Zawinul style
 // juan riccio at gmail com
-
-desc: Keyboard Mirror/Invert (Juan_R)
 
 // No audio input/output: this is a MIDI-only FX. Let Reaper know that.
 in_pin:none
