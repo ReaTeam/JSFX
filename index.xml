@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="a966971f4f6a8b56fe0d357acdfc604ff9d6f567">
+<index version="1" name="ReaTeam JSFX" commit="5f69f81737210bd2057467274b56efa068dc7ff0">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -337,6 +337,22 @@ Easier setting of mask by right mouse button drag over grid lines.]]></changelog
       <version name="1.15" author="Eran Talmor" time="2021-07-25T23:24:52Z">
         <changelog><![CDATA[Fixed bug masking / unmasking the 32nd division]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/b58605d9295dccc5269b41e8c34603f1b6a62cbd/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="juan_r_Keyboard MirrorInvert (Juan_R).jsfx" type="effect" desc="Keyboard Mirror/Invert">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Keyboard Mirror/Invert (Juan_R)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Mirror the keyboard around a user-selectable pivot point (e.g., C4) so that playing e.g. B3 yields C#4, playing E4 yields G#3 etc. This trick was made popular by Joe Zawinul.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Juan_R" time="2022-05-14T18:33:16Z">
+        <changelog><![CDATA[Initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/5f69f81737210bd2057467274b56efa068dc7ff0/MIDI/juan_r_Keyboard%20MirrorInvert%20(Juan_R).jsfx</source>
       </version>
     </reapack>
     <reapack name="mathphreak_Learningbaby.jsfx" type="effect" desc="Learningbaby">
