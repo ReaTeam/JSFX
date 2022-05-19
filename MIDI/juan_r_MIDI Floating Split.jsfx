@@ -1,9 +1,7 @@
 desc: MIDI Floating Split
 author: Juan_R
 version: 0.02a
-changelog:
-  0.01a  initial release
-  0.02a  it works but still needs some knowing it.
+changelog: it works but still needs some knowing it.
 about:
   # MIDI Floating Split
 
