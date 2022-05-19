@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="5f69f81737210bd2057467274b56efa068dc7ff0">
+<index version="1" name="ReaTeam JSFX" commit="9b15e7d94c275f6d89c8098edc09ac3bd4e8d4e4">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -353,6 +353,44 @@ Easier setting of mask by right mouse button drag over grid lines.]]></changelog
       <version name="1.0" author="Juan_R" time="2022-05-14T18:33:16Z">
         <changelog><![CDATA[Initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/5f69f81737210bd2057467274b56efa068dc7ff0/MIDI/juan_r_Keyboard%20MirrorInvert%20(Juan_R).jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="juan_r_MIDI Floating Split.jsfx" type="effect" desc="MIDI Floating Split">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MIDI Floating Split\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Move the splitpoint along, tracking both hands.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This is alpha. No hurry to actually see it committed before it goes out of alpha.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Hoping to improve it. More sophisticated heuristics anyone? The plug's collecting some data that isn't used yet.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 I'm submitting this as the snapshot of a working version: Something to get back to if experiments go astray. Todo - Manage one hand left alone corner case more gracefully.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Presets would be helpful. Switching presets = change to a slightly different FA. Some automated switching? Expose switching parameters?\par}
+}
+]]></description>
+      </metadata>
+      <version name="0.02a" author="Juan_R" time="2022-05-19T01:57:28Z">
+        <changelog><![CDATA[it works but still needs some knowing it.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/9b15e7d94c275f6d89c8098edc09ac3bd4e8d4e4/MIDI/juan_r_MIDI%20Floating%20Split.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="juan_r_MIDI Fret and Pick.jsfx" type="effect" desc="MIDI Fret and Pick">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MIDI Fret and Pick (Juan_R)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Create two ranges on the keyboard: The fretting range and the picking range. Keys in the fretting range produce no note by themselves. Keys in the picking range trigger the fretting notes, one by one, in their respective low-high order. Triggering may happen for all picking keys, only white keys, or only black keys. Keys in the picking range that would go beyond the highest fretted note ("idle"): option to discard, recycle through the same fretted notes, recycle at ascending octaves, or mixed recycle+octaves.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This plugin is left-right hand agnostic: picking and fretting range can be on either side, as long as they do not overlap, which can cause unpredictable results.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The fretting range can be arbitrarily transposed, so that any range of notes can be reached, no matter where the range actually is on the keyboard.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.02" author="Juan_R" time="2022-05-19T01:56:17Z">
+        <changelog><![CDATA[improved "about" docs]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/d7090b18c7843a19e5a9508fd3622890a01346fd/MIDI/juan_r_MIDI%20Fret%20and%20Pick.jsfx</source>
       </version>
     </reapack>
     <reapack name="mathphreak_Learningbaby.jsfx" type="effect" desc="Learningbaby">
