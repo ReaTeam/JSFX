@@ -1,11 +1,7 @@
 desc: MIDI Fret and Pick
 author: Juan_R
 version: 1.03
-changelog:
-  1.00  initial release
-  1.01  clean code, add idle option: mixed recycle+octave
-  1.02  improved "about" docs
-  1.03  added options to make fretting notes play immediately
+changelog: added options to make fretting notes play immediately
 about:
   # MIDI Fret and pick (Juan_R)
 
