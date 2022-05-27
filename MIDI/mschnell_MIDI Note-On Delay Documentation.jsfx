@@ -1,0 +1,10 @@
+desc: MIDI Note-On Delay Documentation
+author: mschnell
+version: 0.0
+about:
+  # MIDI Note-On Delay Documentation
+  Delays any note-On Event by a random time
+
+  *This is a Reaper Stock plugin and hence does not need to be installed*
+
+@init
