@@ -1,0 +1,113 @@
+desc: MIDI Round Robin Transpose Notes
+author: Juan_R
+version: 1.0
+changelog: 1.0  initial release
+about:
+  # MIDI Round Robin Transpose Notes
+
+  Transposes each note in a sequence by different amounts, in a round robin fashion.
+  Produces uncommon, sometimes beautiful, arpeggio patterns.
+  Inspired by this video:
+  06:29 RETUNED ROUND ROBIN
+  https://www.youtube.com/watch?v=KPcAUHvnQi4&t=389s
+
+slider1:0<0,16,1> Midi Channel to listen to (0=All)
+slider2:LK=0<0,127,1>Lowest Key (MIDI Note #)
+slider3:HK=127<0,127,1>Highest Key (MIDI Note #)
+slider4:seq_len=4<1,13,1>Sequence length
+slider5:transp1=0<-12,12,1>  Step   1 Transpose
+slider6:transp2=1<-12,12,1>  Step   2 Transpose
+slider7:transp3=2<-12,12,1>  Step   3 Transpose
+slider8:transp4=3<-12,12,1>  Step   4 Transpose
+slider9:transp5=0<-12,12,1>  Step   5 Transpose
+slider10:transp6=0<-12,12,1> Step   6 Transpose
+slider11:transp7=0<-12,12,1> Step   7 Transpose
+slider12:transp8=0<-12,12,1> Step   8 Transpose
+slider13:transp9=0<-12,12,1> Step   9 Transpose
+slider14:transp10=0<-12,12,1> Step  10 Transpose
+slider15:transp11=0<-12,12,1> Step  11 Transpose
+slider16:transp11=0<-12,12,1> Step  12 Transpose
+slider17:transp11=0<-12,12,1> Step  13 Transpose
+
+// these lines tell Reaper the effect has no audio input/output,
+// which enables processing optimizations.
+// MIDI-only FX should always have these lines.
+in_pin:none
+out_pin:none
+
+@init
+// OpenNotes array, contains actual sent note
+OpenNotes = 0;                                   // array location [0, 127] => end at 127
+OpenNotesSize = 128;                             // array size for mem alloc
+
+LastMem = OpenNotes + OpenNotesSize;             // Last mem location
+
+i = OpenNotes;                                   // init array at -1
+while(
+    OpenNotes[i] = -1;
+    i += 1;
+    i < LastMem;
+);
+
+seq_step = 0;                                    // our position in the sequence (0 to seqlen - 1)
+step1slider = 5;                                 // slider number where transpositions begin (step1 transpose)
+
+function is_note(status) (
+    status == 0x90 || status == 0x80;
+);
+
+function is_not_note(status) (
+    status != 0x90 && status != 0x80;
+);
+
+function is_noteon(status, vel)     (
+    status == 0x90 && vel > 0;
+);
+
+function is_noteoff(status, vel) (
+    status == 0x80 || (status == 0x90 && vel == 0);
+);
+
+function is_out_of_scope(notenum) (
+    notenum < LK || notenum > HK;
+);
+
+@slider
+midi_ch = slider1 - 1;
+
+@block
+
+while (midirecv(offset, msg1, msg2, msg3)) (
+    chan = msg1 & 0x0F;
+    (midi_ch != -1 && midi_ch != chan) ?            // mode=not_omni and msg not_on_selected_channel?
+    (
+        midisend(offset, msg1, msg2, msg3);         // pass through
+    )
+    : // channel is right
+    status = msg1 & 0xF0;
+    is_not_note(status) ?
+    (
+        midisend(offset, msg1, msg2, msg3);         // non-note events go through immediately
+    )
+    : // it is a note
+    is_out_of_scope(msg2) ?
+    (
+        midisend(offset, msg1, msg2, msg3);         // out of range notes go through immediately
+    )
+    : // it is a note in range
+    is_noteon(status, msg3) ?
+    (
+        newnote = msg2 + slider(step1slider + seq_step);
+        (newnote < 0) ? newnote = 0;
+        (newnote > 127) ? newnote = 127;
+        midisend(offest, msg1, newnote, msg3);
+        OpenNotes[msg2] = newnote;                  // remember the transposed note we've sent
+        seq_step = (seq_step + 1) % seq_len;        // advance in sequence
+    )
+    : // it should be a note off, but let's just check anyway
+    is_noteoff(status, msg3) ?
+    (
+        midisend(offset, msg1, OpenNotes[msg2], msg3); // send note off, remembered note number
+        OpenNotes[msg2] = -1;
+    );
+);
