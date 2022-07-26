@@ -1,0 +1,73 @@
+desc: JRK/Juan_R bend by semitones
+author: Juan_R
+version: 1.02
+changelog:
+  1.00  initial release
+  1.01  removed unneeded channel variable
+  1.02  added about: documentation
+about:
+  # Bend by semitones (JRK/Juan_R)
+
+    Based on JRK's code, modified by Juan_R
+    Quantize the pitch bend wheel to work in semitone steps
+    The Range slider should reflect the synth's Pitch Bend Range parameter,
+    unless you know what you're doing (or don't, but just want some fun).
+
+desc:JRK/Juan_R bend by semitones
+version: 1.02
+changelog:
+	1.00  initial release
+	1.01  removed unneeded channel variable
+	1.02  added about: documentation
+
+about:
+  # Bend by semitones (JRK/Juan_R)
+
+  Based on JRK's code, modified by Juan_R
+  Quantize the pitch bend wheel to work in semitone steps
+  The Range slider should reflect the synth's Pitch Bend Range parameter,
+  unless you know what you're doing (or don't, but just want some fun).
+
+in_pin:none;
+out_pin:none;
+
+
+slider1:halfrange=2<1,12,1>Range +/- semitones
+slider3:0<0,16383,1>Output
+
+@slider
+nearsemitone = floor(8191 / (halfrange + 1));
+semitone = floor((8192 / halfrange) + 0.5);
+
+@init
+
+PBEND   = 0xE0;
+
+function convert_mod_bend(input)
+(
+  shift = input - 8192;
+  output = 8192 + floor(shift / nearsemitone) * semitone;
+  (output > 16383) ? output = 16383;
+  (output < 0) ? output = 0;
+  output;
+);
+
+
+
+@block
+
+
+while (midirecv(offset,msg1,msg2,msg3))
+(
+   msg_t  = msg1 & 0xF0;
+   msg_t == PBEND ?
+   (
+		pb_in = msg3 << 7 + msg2;
+		pb_out = convert_mod_bend(pb_in);
+		slider3 = pb_out;
+		
+		msg2 = pb_out & 0x7F; // fine
+		msg3 = pb_out  >>7; // coarse
+    );
+    midisend(offset,msg1,msg2,msg3);
+);
