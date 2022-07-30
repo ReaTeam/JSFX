@@ -1,0 +1,13 @@
+version: 1.0
+author: John Smith
+changelog: Initial release
+desc:Macro Controller for Mid/Side OTT
+
+//a
+slider1:0<0, 100, 1>Mid Depth
+slider3:0<0, 100, 1>Side Depth
+slider5:50<0, 100, 1> Mid Gain
+slider7:50<0, 100, 1> Side Gain
+
+function soIcanUpload() (
+);

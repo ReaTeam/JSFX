@@ -1,0 +1,13 @@
+desc: MidSideOTTMacroRack
+author: John Smith
+version: 1.0
+provides:
+  . > midsideottrack
+  midsideottrack/midsidemacro
+screenshot: https://imgur.com/n4Qnd4B
+about: just a slider macro rack
+
+slider1:0<0, 100, 1>Mid Depth
+slider3:0<0, 100, 1>Side Depth
+slider5:50<0, 100, 1> Mid Gain
+slider7:50<0, 100, 1> Side Gain
