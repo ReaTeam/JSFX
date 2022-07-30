@@ -1,0 +1,125 @@
+desc: Juan_R MIDI Round Robin Channelize Notes
+author: Juan_R
+version: 1.0
+changelog: 1.0   initial release
+about:
+  # MIDI Round Robin Channelize Notes (Juan_R)
+
+  Sends each note in a sequence to a different channel, in a round robin fashion.
+  Produces timbral alternance patterns.
+  Suggested by valankar
+  https://forum.cockos.com/showpost.php?p=2581890&postcount=13
+
+desc:Juan_R MIDI Round Robin Channelize Notes
+tags: MIDI processing
+author: Juan_R
+version: 1.0
+changelog:
+  1.0   initial release
+about:
+# MIDI Round Robin Channelize Notes (Juan_R)
+
+Sends each note in a sequence to a different channel, in a round robin fashion.
+Produces timbral alternance patterns.
+Suggested by valankar
+https://forum.cockos.com/showpost.php?p=2581890&postcount=13
+
+slider1:0<0,16,1> Midi Channel to listen to (0=All)
+slider2:LK=0<0,127,1>Lowest Key (MIDI Note #)
+slider3:HK=127<0,127,1>Highest Key (MIDI Note #)
+slider4:seq_len=4<1,13,1>Sequence length
+slider5:chan1=1<1,16,1>  Step   1 Channel
+slider6:chan2=2<1,16,1>  Step   2 Channel
+slider7:chan3=3<1,16,1>  Step   3 Channel
+slider8:chan4=4<1,16,1>  Step   4 Channel
+slider9:chan5=5<1,16,1>  Step   5 Channel
+slider10:chan6=6<1,16,1> Step   6 Channel
+slider11:chan7=7<1,16,1> Step   7 Channel
+slider12:chan8=8<1,16,1> Step   8 Channel
+slider13:chan9=9<1,16,1> Step   9 Channel
+slider14:chan10=10<1,16,1> Step  10 Channel
+slider15:chan11=11<1,16,1> Step  11 Channel
+slider16:chan12=12<1,16,1> Step  12 Channel
+slider17:chan13=13<1,16,1> Step  13 Channel
+
+// these lines tell Reaper the effect has no audio input/output,
+// which enables processing optimizations.
+// MIDI-only FX should always have these lines.
+in_pin:none
+out_pin:none
+
+@init
+// OpenChans array, contains actual channels for each sent note
+OpenChans = 0;                                   // array location [0, 127] => end at 127
+OpenChansSize = 128;                             // array size for mem alloc
+
+LastMem = OpenChans + OpenChansSize;             // Last mem location
+
+i = OpenChans;                                   // init array to -1
+while(
+    OpenChans[i] = -1;
+    i += 1;
+    i < LastMem;
+);
+
+seq_step = 0;                                    // our position in the sequence (0 to seqlen - 1)
+step1slider = 5;                                 // slider number where channels begin (step1 channel)
+
+function is_note(status) (
+    status == 0x90 || status == 0x80;
+);
+
+function is_not_note(status) (
+    status != 0x90 && status != 0x80;
+);
+
+function is_noteon(status, vel)     (
+    status == 0x90 && vel > 0;
+);
+
+function is_noteoff(status, vel) (
+    status == 0x80 || (status == 0x90 && vel == 0);
+);
+
+function is_out_of_scope(notenum) (
+    notenum < LK || notenum > HK;
+);
+
+@slider
+listen_midi_ch = slider1 - 1;
+
+@block
+
+while (midirecv(offset, msg1, msg2, msg3)) (
+    chan = msg1 & 0x0F;
+    (listen_midi_ch != -1 && listen_midi_ch != chan) ? // mode=not_omni and msg not_on_selected_channel?
+    (
+        midisend(offset, msg1, msg2, msg3);         // pass through
+    )
+    : // so, channel is the one we're listening to
+    status = msg1 & 0xF0;
+    is_not_note(status) ?
+    (
+        midisend(offset, msg1, msg2, msg3);         // non-note events go through immediately
+    )
+    : // so, it is a note
+    is_out_of_scope(msg2) ?
+    (
+        midisend(offset, msg1, msg2, msg3);         // out of range notes go through immediately
+    )
+    : // so, it is a note in range
+    newchan = slider(step1slider + seq_step) - 1;
+    is_noteon(status, msg3) ?
+    (
+        newstatus = (msg1 & 0xF0) | newchan;
+        midisend(offset, newstatus, msg2, msg3);
+        OpenChans[msg2] = newstatus & 0x0F;         // remember the channel we've sent this note to
+        seq_step = (seq_step + 1) % seq_len;        // advance in sequence
+    )
+    : // so, it should be a note off, but let's just check anyway
+    is_noteoff(status, msg3) ?
+    (                                               // send note off, but on remembered channel
+        midisend(offset, (status & 0xF0) | OpenChans[msg2], msg2, msg3);
+        OpenChans[msg2] = -1;
+    );
+);
