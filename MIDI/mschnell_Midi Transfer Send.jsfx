@@ -1,0 +1,56 @@
+desc: Midi Transfer Send
+author: mschnell
+version: 1.0
+about:
+  ## Description 
+    The Midi Transfer jsfxes are mostly used to route Midi events between project tabs.
+  
+  This JSFX sends Midi events to a Midi Transfer Receive instance.
+  
+  Multiple instances of Midi Transfer Send - e.g. in different tracks or different project tabs are allowed. The Midi messages are combined to be received.
+  
+  The slider "Midi Bus" determines which Midi bus is use to take the messages from. Midi Buses can be used to allow for up to 16 independent Midi streams in an FX chain.
+  
+  All Messages are passed through unchanged.
+  
+  Beware: As the FX chains of different tracks are at the same computing instance can be handling different audio blocks, the Midi Transfer JSFXes can induce decent timing issues when used for (virtual) "real time" messages. They should only be used for not time critical control information.
+
+options:gmem=MIDI_TRANSFER
+
+in_pin:none
+out_pin:none
+
+slider1: 0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>In Midi Bus  
+
+@init
+  ext_midi_bus = 1; 
+  gmem[0] = 4; // write pointer for writers (needs atomic)
+  gmem[1] = 4; // write pointer for readers
+  gmem[2] = 4; // read pointer
+
+@block
+  while (midirecv(mpos, msg1, msg2, msg3) ) (         
+    midisend(mpos, msg1, msg2, msg3);  // pass through
+    midi_bus == slider1 ? (
+      ptr_if = 1;
+      while (ptr_if)  (
+      ptr = atomic_get(gmem[0]);
+        ptr_4 =  ptr+4;
+        ptr_4 >= 4+4*10000 ? ptr_4 = 4;
+        ptr ==  atomic_setifequal(gmem[0], ptr, ptr_4)  ? (  // qmwm[0] not changend by another sending instance
+          gmem[ptr] = mpos; // we can do this, as the other only reads the prevoisly stored values
+          ptr +=1;
+          gmem[ptr] = msg1;
+          ptr +=1;
+          gmem[ptr] = msg2;
+          ptr +=1;
+          gmem[ptr] = msg3;
+          ptr +=1;
+          gmem[1] = ptr_4; // allow reading 
+          ptr_if = 0;  // successfully queued
+//         ):(
+//          _1 += 1; 
+        );
+      );
+    ); 
+  );
