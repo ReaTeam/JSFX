@@ -1,0 +1,53 @@
+desc: Midi Transfer Receive
+author: mschnell
+version: 1.0
+about:
+  ## Description 
+  The Midi Transfer jsfxes are mostly used to route Midi events between project tabs.
+
+  This JSFX receives Midi events sent by any Midi Transfer Send instance.
+
+  Only a single instance of Midi Transfer Receive is allowed in a Multi-Project consisting of several project Tabs.
+  
+  The slider "Midi Bus" determines which Midi bus is use to send the messages out. Midi Buses can be used to allow for up to 16 independent Midi streams in an FX chain.
+
+  All Messages in the FX chain are passed through unchanged.
+  
+  Beware: As the FX chains of different tracks are at the same computing instance can be handling different audio blocks, the Midi Transfer JSFXes can induce decent timing issues when used for (virtual) "real time" messages. They should only be used for not time critical control information.
+
+  
+options:gmem=MIDI_TRANSFER
+
+in_pin:none
+out_pin:none
+
+slider1: 0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>In Midi Bus  
+
+@init
+  ext_midi_bus = 1; 
+  gmem[0] = 4; // write pointer for writers
+  gmem[1] = 4; // write pointer for readers
+  gmem[2] = 4; // read pointer
+
+@slider
+  midi_bus = slider1;
+
+@block
+  ptr_wr = gmem[1];
+  ptr_rd = gmem[2];
+  while (ptr_rd != ptr_wr) (
+    mpos = gmem[ptr_rd];
+    ptr_rd +=1;
+    msg1 = gmem[ptr_rd];
+    ptr_rd +=1;
+    msg2 = gmem[ptr_rd];
+    ptr_rd +=1;
+    msg3 = gmem[ptr_rd];
+    ptr_rd +=1;
+    ptr_rd >= 4+4*10000 ? ptr_rd = 4;
+    ptr_wr = gmem[1];
+    midisend(mpos, msg1, msg2, msg3);
+    ptr_rd == ptr_wr ? (  // all read  
+      gmem[2] = ptr_rd;
+    );
+  );
