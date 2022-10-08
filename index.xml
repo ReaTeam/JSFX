@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="db38bbce18becbbf9b19843537446e07d8f37265">
+<index version="1" name="ReaTeam JSFX" commit="080e6025bf2eb3ded10251c9ca0d2bb37b0ae588">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -735,6 +735,30 @@ bugfix]]></changelog>
       <version name="1.4" author="Michael Schnell (mschnell@bschnell.de)" time="2020-06-30T19:00:55Z">
         <changelog><![CDATA[bugfix]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/dd1b433e61f10919d9c9d897a63415f417ba75a0/MIDI/mschnell_MIDI%20Slider%20and%20MIDI%20CC.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_MIDI Transfer.jsfx" type="effect" desc="MIDI Transfer">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The MIDI Transfer JSFXare mostly used to route MIDI events between project tabs, as Reaper naively can't do that.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The JSFX in "Sender" mode sends MIDI events to MIDI Transfer instances in "Receiver" mode.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Multiple instances in Sender mode are allowed. The MIDI messages are combined to be received.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Multiple instances in Receiver mode are allowed, as long as they don't share the same transfer bus. If two Receivers work on the same Transfer Bus, the behavior is undefined.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "Mode" sets the Sender or Receiver mode.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "MIDI Bus" determines which MIDI bus is use to take the messages from or to send midi messages to. MIDI Buses can be used to allow for up to 16 independent MIDI streams in an FX chain.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The slider "Transfer Bus" selects one of 16 transfer buses. A receiver will get only the messages from a sender set to the same Transfer Bus.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 All MIDI Messages are passed through unchanged by a the plugin.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Beware: As the FX chains of different tracks at the same computing time can be handling audio/MIDI blocks associated with different positions in the virtual audio time, the MIDI Transfer JSFXes can induce decent timing issues when used for (virtual) "real time" messages. They should only be used for not time critical control information. A change of a slider in any instance will asynchronously clean all transfer bus queues. So be very careful with automating this plugin.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2022-10-08T14:55:23Z">
+        <changelog><![CDATA[Bugfix]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/080e6025bf2eb3ded10251c9ca0d2bb37b0ae588/MIDI/mschnell_MIDI%20Transfer.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Note On under X velocity to Note Off and send All Notes Off.jsfx" type="effect" desc="Note On under X velocity to Note Off and send All Notes Off">
