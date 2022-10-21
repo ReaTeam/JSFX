@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="080e6025bf2eb3ded10251c9ca0d2bb37b0ae588">
+<index version="1" name="ReaTeam JSFX" commit="030b9a53dd1ac3d03c524e7000aeee8c45ecc066">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -1557,6 +1557,22 @@ And a bit of source code cleaning.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/e7ed9a1ccc661d901153d5e07d8357142d864a4b/MIDI/urtzurd_MIDI%20Glissando.jsfx</source>
       </version>
     </reapack>
+    <reapack name="willdevelop_every_note_the_same.jsfx" type="effect" desc="every_note_the_same">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 This script slips all MIDI notes to the same note.\par}
+}
+]]></description>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?p=2297569#post2297569">Forum</link>
+      </metadata>
+      <version name="2.0" author="Will Develop" time="2022-10-21T13:54:15Z">
+        <changelog><![CDATA[Fix Bugs]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/030b9a53dd1ac3d03c524e7000aeee8c45ecc066/MIDI/willdevelop_every_note_the_same.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="willdevelop_MIDI every note the same.jsfx" type="effect" desc="MIDI every note the same">
       <metadata>
         <link rel="website" href="https://forum.cockos.com/showthread.php?p=2297569#post2297569">Forum Thread</link>
@@ -2755,6 +2771,22 @@ channel).]]></changelog>
     </reapack>
   </category>
   <category name="Utility">
+    <reapack name="az_Automute.jsfx" type="effect" desc="Automute">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Automute\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Utility plugin. Like Muteomatic, just in-box and stereo.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Damps the signal by amount. Triggered by play state.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="AZ" time="2022-10-21T13:52:59Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/8bb5f6225c7655b2697d89abbd1009460ece30c1/Utility/az_Automute.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="belovw_Goniometer.jsfx" type="effect" desc="Goniometer">
       <version name="0.16alpha" author="Belovw" time="2020-05-17T02:29:36Z">
         <source>https://github.com/ReaTeam/JSFX/raw/52e08b257d44b6184ecccc117a9ad026cf163148/Utility/belovw_Goniometer.jsfx</source>
