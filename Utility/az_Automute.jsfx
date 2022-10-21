@@ -1,0 +1,33 @@
+desc: Automute
+author: AZ
+version: 1.0
+about:
+  # Automute
+
+  Utility plugin. Like Muteomatic, just in-box and stereo.
+
+  Damps the signal by amount. Triggered by play state.
+
+
+slider1:Stop=0 <0,1,1{Unmute,MUTE}> Stop and Pause
+slider2:Play=1 <0,1,1{Unmute,MUTE}> Playing
+slider3:Rec=0 <0,1,1{Unmute,MUTE}> Recording
+slider4:Damp=-150 <-150, 12, 0.1> Mute dampening (dB)
+
+
+@sample
+d=2 ^ (Damp/6);
+
+state = play_state;
+(state == 0 || 2 || 3)?(act = Stop);
+(state == 1)?(act = Play);
+(state == 5)?(act = Rec);
+
+(act == 0) ? (
+spl0=spl0;
+spl1=spl1;
+):(
+spl0=spl0*d;
+spl1=spl1*d;
+);
+
