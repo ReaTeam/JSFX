@@ -1,9 +1,11 @@
 desc: MIDI CC Mapper X
 author: Talagan
-version: 4.2
+version: 4.3
 changelog:
-  - Default value for KB Range transposition is now ON instead of OFF (it feels more logical in the main flow)
-  - Added pass through option per control to keep original events and allow event duplication
+  - Moved HighRes MIDI input option from global settings to per-control setting
+  - Reworked HighRes MIDI CC input with one-event-forward lookup for LSB, and output with MSB/LSB order 
+  - Reworked pitch bend MSB/LSB calculations to fix corner cases
+  - Added pitch bend reverse button
 screenshot:
   Dark Theme https://stash.reaper.fm/39718/MIDICCMapperX-4-1-Dark.png
   Light Theme https://stash.reaper.fm/39719/MIDICCMapperX-4-1-Light.png
@@ -21,7 +23,7 @@ provides:
 about:
   # Midi CC Mapper X
 
-  This JSFX  is an extended version of the original plugin called "MIDI CC Mapper" with many more features. It allows to modify the behavior and the real-time feel of a MIDI controller, by acting as a pre-filter on the MIDI input. It can : 
+  This JSFX  is an extended version of the original plugin called "MIDI CC Mapper" with many more features. It allows to modify the behavior and the real-time feel of a MIDI controller, by acting as a pre-filter on the MIDI input. It can :
 
   - Tweak CC response curves :
     - By using predefined curves, some of them being parametric
@@ -54,43 +56,43 @@ about:
 
   ## CC Routing/Curve tweaking
 
-  Located in the bottom of the main window. This module UI is contextual to the selected control. When selected, a control can be enabled or disabled individually with the button located in the module title bar. 
-  
+  Located in the bottom of the main window. This module UI is contextual to the selected control. When selected, a control can be enabled or disabled individually with the button located in the module title bar.
+
   There are 4 types of control, depending on the MIDI feature, which can be (from left to right) :
-  
+
   - Pitch Bend (1 pitch wheel)
   - CC or Channel Pressure (1 mod wheel, 4 pedals, 10 faders, 10 knobs, 10 pads)
   - Velocity (5 Velocity controls, one for each keyboard color range)
   - After-Touch (5 AfterTouch controls, one for each keyboard color range)
-  
+
   For each control, the response curve :
-  
+
   - can be defined from one of the templates on the right
   - can be pendrawn by hand with the mouse
   - can be smoothed with the smooth button
   - may be restricted to a user-defined space by configuring MIDI min/max values.
 
   For CC (or CP) controls :
-  
+
   - A description can be given that will appear in the title bar
   - A short description can be given that will appear close to the control for convenience
   - An input CC can be assigned (except for the velocity control which is tied to the keyboard velocity)
   - This input CC can be CC learned
   - An output CC can be assigned
   - This output CC can be copied from the input CC
-  
+
   Note that MIDI Channel Pressure is not technically a MIDI CC# and uses a different type of MIDI message. However, MIDI CC Mapper X unifies CC and CP by proposing a virtual "Channel Pressure" CC #128. If selected as input and routing is ok, messages of type Channel Pressure will be converted to CC messages and reversely if selected as output.
-  
+
   Additionally, for Pitch Bend and CC controls, channel routing may be achieved.
 
   ## Customizing the function library
-  
+
   The function library is customizable. You can rearrange things, remove sets and functions, and add your own functions after having generated them or having exported them from REAPER. Please refer to the library manual, which is located in <REAPER_RESOURCE_PATH>/Data/talagan_MIDI CC Mapper X/README.md .
 
   ## Reaper forum thread
 
   https://forum.cockos.com/showthread.php?t=172630
-  
+
   ## Notes
 
   Older versions (v1 and v2) can be found on the forum thread.
@@ -139,16 +141,16 @@ function galloc(msize)
 
 function sharedGlobalVarInit()
 (
-  CURVESIZE                 = 128; 
+  CURVESIZE                 = 128;
   PREVIEWSIZE               = 32;
-  RESOLUTION                = 2;  
+  RESOLUTION                = 2;
 );
 
-function instanceGlobalVarInit() 
+function instanceGlobalVarInit()
 (
   // Map PTR
   MEM_PTR                   = 0;
-  
+
   // MIDI Messages according to MIDI spec
   MSG_NOTE_OFF              = 8;
   MSG_NOTE_ON               = 9;
@@ -157,7 +159,7 @@ function instanceGlobalVarInit()
   MSG_PROGRAM_CHANGE        = 12; // 0x0C
   MSG_CHAN_PRESSURE         = 13; // 0x0D
   MSG_PITCH_BEND            = 14; // 0x0E
-  
+
   // Plugin Controls parameters
   CONTROL_MOD_WHEEL         = 0;  // 1 wheel
   CONTROL_PEDALS_START      = 1;  // 4 peds
@@ -168,30 +170,30 @@ function instanceGlobalVarInit()
   CONTROL_AFTERTOUCH_START  = 40; // 5 after touch
   CONTROL_PITCH_BEND        = 45;
   CONTROL_COUNT             = 46;
-  
+
   // Various UI dimensions
   KEYBOARD_FILTERING_TOP    = 0;
   CONTROL_PANEL_TOP         = 130;
   GUI_CONTROL_PARAMS_TOP    = 260;
   KEYBOARD_PANEL_WIDTH      = 710;
-  
+
   // Design pattern constants
   ANY                       = 0;
   AS_SRC                    = 0;
   KEEP                      = 0;
   DROP                      = -1;
   NONE                      = -1;
-  
+
   // Current theme pseudo object
   TH                        = 0;
-  
+
   // Theme nums
   DARK_THEME                = 0;
   LIGHT_THEME               = 1;
-  
+
   // Number of color ranges
   KB_RANGE_COUNT            = 5;
-  
+
   // Attribute cc 128 for channel pressure
   CHANNEL_PRESSURE_FAKE_CC_NUM = 128;
 );
@@ -206,11 +208,11 @@ function gmemGlobalVarInit()
   FSET_MAX_COUNT          = 21; // 3 lines of 7 tabs
   FSET_ROW_COUNT          = 5;
   FSET_COL_COUNT          = 6;
-  
+
   FSET_ID_MAXLEN          = 10;
   FSET_TAB_MAXLEN         = 8;
   FSET_DESC_MAXLEN        = 50;
-  
+
   // Define some ids for the parametric sets
   FSET_PARAMETRIC_LINEAR_ID = 40;
   FSET_PARAMETRIC_XN_ID     = 41;
@@ -226,27 +228,27 @@ function gmemMemoryMapInit()
   FSET_ID_MAXSLOT         = roundi(FSET_ID_MAXLEN/4) + 1;
   FSET_TAB_MAXSLOT        = roundi(FSET_TAB_MAXLEN/4) + 1;
   FSET_DESC_MAXSLOT       = roundi(FSET_DESC_MAXLEN/4) + 1;
-  
+
   // FSETS : Function set memory mapping
-  FSET_OFFSET_ID            = 0; 
-  FSET_OFFSET_IS_PARAMETRIC = FSET_OFFSET_ID            + 1;  
-  FSET_OFFSET_PARAMETRIC_ID = FSET_OFFSET_IS_PARAMETRIC + 1;  
+  FSET_OFFSET_ID            = 0;
+  FSET_OFFSET_IS_PARAMETRIC = FSET_OFFSET_ID            + 1;
+  FSET_OFFSET_PARAMETRIC_ID = FSET_OFFSET_IS_PARAMETRIC + 1;
   FSET_OFFSET_PARAM         = FSET_OFFSET_PARAMETRIC_ID + 1;
-  FSET_OFFSET_TAB           = FSET_OFFSET_PARAM         + FSET_ID_MAXSLOT;  
+  FSET_OFFSET_TAB           = FSET_OFFSET_PARAM         + FSET_ID_MAXSLOT;
   FSET_OFFSET_DESC          = FSET_OFFSET_TAB           + FSET_TAB_MAXSLOT;
   FSET_OFFSET_FUNCTIONS     = FSET_OFFSET_DESC          + FSET_DESC_MAXSLOT;
-  
+
   // FSETS : FSET Function memory mapping
   FSF_OFFSET_DEFINED      = 0;
   FSF_OFFSET_CURVE        = FSF_OFFSET_DEFINED + 1;
   FSF_OFFSET_PREVIEW      = FSF_OFFSET_CURVE   + CURVESIZE;
   // Sub-Total size       ------
   FSF_SIZE                = FSF_OFFSET_PREVIEW + PREVIEWSIZE;
-  
+
   // Total size           -----
   FSET_SIZE               = FSET_OFFSET_FUNCTIONS + (FSET_ROW_COUNT * FSET_COL_COUNT * FSF_SIZE);
-  
-  // (galloc does not write memory so this will 
+
+  // (galloc does not write memory so this will
   // not squash memory from an instance to the other)
   // But only realign the mem ptr
   GMEM_LOADER_ID        = galloc(1); // The ID of the instance that has filled gmem
@@ -263,60 +265,60 @@ function gmemMemoryMapInit()
 //////////////////////////////////////////////////////
 // Instance Mapping : Unshared, per instance memory //
 //////////////////////////////////////////////////////
-function instanceMemoryMapInit() 
+function instanceMemoryMapInit()
 (
   /////////////////////////////////
   // Persistent data (user conf) //
   /////////////////////////////////
   LOADED_VERSION                      = malloc(1);
-  
+
   CONTROL_ENABLED                     = malloc(CONTROL_COUNT);  // Per-control enabled flags
   CONTROL_SRCS                        = malloc(CONTROL_COUNT);  // CC srcs
   CONTROL_DSTS                        = malloc(CONTROL_COUNT);  // CC dsts
   CONTROL_HIGHRES_OUTPUT_ENABLED      = malloc(CONTROL_COUNT);  // Per-control option
   CURVES                              = malloc(CONTROL_COUNT*CURVESIZE);
-  
+
   KEYBOARD_FILTERING_ENABLED          = malloc(1);
   _OBS_KEYBOARD_FILTERED_NOTES        = malloc(88); // Now 128 long, replaced
-  KEYBOARD_TRANSPOSE_ENABLED          = malloc(1); 
+  KEYBOARD_TRANSPOSE_ENABLED          = malloc(1);
   _OBS_KEYBOARD_TRANSPOSE_8VA         = malloc(1);  // Was shared before between all ranges
   _OBS_KEYBOARD_TRANSPOSE_SEMI_TONES  = malloc(1);  // Was shared before between all ranges
-  
-  HIGHRES_INPUT_ENABLED               = malloc(1); // Global option              
+
+  _OBS_HIGHRES_INPUT_ENABLED          = malloc(1); // Global option
   DROP_UNROUTED_CC_MESSAGES           = malloc(1); // Global option
-  
+
   /////////////////////////////////
   // Buffers, used for computation
   /////////////////////////////////
-  
+
   // Cosinus and sinus tables for all possible eleven angles
   KNOB_TICS_X                 = malloc(11); // This is not spinal tap... 0..10 == 11 tics!
-  KNOB_TICS_Y                 = malloc(11); 
-  
+  KNOB_TICS_Y                 = malloc(11);
+
   // Curve smoothing buffer
   SCURVE                      = malloc(CURVESIZE);
-  
+
   // Control states memorization
   CONTROL_LAST_IN             = malloc(CONTROL_COUNT);
   CONTROL_LAST_OUT            = malloc(CONTROL_COUNT);
-  
+
   // Various helpers for keyboard drawing
   OCTAVE_BLACK_KEY_LOOKUP     = malloc(12);
   OCTAVE_TOP_KEY_WIDTHS       = malloc(12);
   OCTAVE_TOP_KEY_OFFSETS      = malloc(12);
   OCTAVE_LOOKUP_BOTTOM        = malloc(7);
-  
+
   _OBS_KEY_VELOCITIES         = malloc(88); // Replaced, now 128 long
-  
+
   // CC state memorization
   CC_RECEIVED_VALUES          = malloc(128+1); // 128 CCs + Channel Pressure
-  
+
   // Conf/Global settings mode
   GUI_MODE                    = malloc(1);
-  
+
   // Current theme
   CURRENT_THEME_NUM           = malloc(1);
-  
+
   // Added 3.3
   CONTROL_CHAN_SRCS                 = malloc(CONTROL_COUNT);  // Controls routing in
   CONTROL_CHAN_DSTS                 = malloc(CONTROL_COUNT);  // Controls routing out
@@ -325,26 +327,26 @@ function instanceMemoryMapInit()
   _OBS_KBR_OUTPUT_CHANNEL           = malloc(1); // Red out : Now included in KB_RANGE_etc
   _OBS_KEYBOARD_TRANSPOSE_APPLY_TO  = malloc(1); // Enable flag R/G : Now included in KB_RANGE_etc
   _OBS_KEYBOARD_VELOCITY_APPLY_TO   = malloc(1); // Enable flag R/G : Now included in each KB_RANGE widget
-  CONTROL_MAXS_MSB                  = malloc(CONTROL_COUNT);  // Controls curve max limit (MSB)       
+  CONTROL_MAXS_MSB                  = malloc(CONTROL_COUNT);  // Controls curve max limit (MSB)
   CONTROL_MAXS_LSB                  = malloc(CONTROL_COUNT);  // Controls curve min limit (LSB)
   CONTROL_MINS_MSB                  = malloc(CONTROL_COUNT);  // Controls curve max limit (MSB)
   CONTROL_MINS_LSB                  = malloc(CONTROL_COUNT);  // Controls curve min limit (LSB)
   DROP_UNROUTED_NOTE_MESSAGES       = malloc(1);
-  
+
   // Added 3.4
   CURRENT_FSET                = malloc(1); // Selected FSet in the UI
-  
-  // Added 3.5 
+
+  // Added 3.5
   // (these buffers have been extended but for update compatibility reasons
   // old ones are kept in the mem map)
   KEYBOARD_KEY_COLORS         = malloc(128);
   KEY_VELOCITIES              = malloc(128);
   _OBS_CURRENT_OCTAVA_OFFSET  = malloc(1); //  Removed, the full keyboard is shown now.
-  
+
   // Added 3.6
   MIDI_BUS_INPUT              = malloc(1);
   MIDI_BUS_OUTPUT             = malloc(1);
-  
+
   // Added 4.0
   KB_RANGE_TRANSPOSE_ENABLED              = malloc(KB_RANGE_COUNT);
   KB_RANGE_TRANSPOSE_8VA                  = malloc(KB_RANGE_COUNT);
@@ -357,6 +359,10 @@ function instanceMemoryMapInit()
 
   // Added 4.2
   CONTROL_PASS_THROUGH = malloc(CONTROL_COUNT);
+
+  // Added 4.3
+  CONTROL_HIGHRES_INPUT_ENABLED = malloc(CONTROL_COUNT);
+  REVERSE_PITCH_BEND = malloc(1);
 );
 
 function initMidiCCNames()
@@ -393,7 +399,7 @@ function initMidiCCNames()
   strcpy(29,"CC 29");
   strcpy(30,"CC 30");
   strcpy(31,"CC 31");
-  
+
   strcpy(32+0,"Bank Select");
   strcpy(32+1,"Modulation Wheel");
   strcpy(32+2,"Breath");
@@ -449,9 +455,9 @@ function initMidiCCNames()
   strcpy(83,"General Purpose On/Off 4");
   strcpy(83,"General Purpose On/Off 4");
   strcpy(84,"Portamento Amount");
-  
+
   strcpy(88,"Keyboard velocity");
-  
+
   strcpy(91,"Effect 1 Level (Reverb)");
   strcpy(92,"Effect 2 Level (Tremolo)");
   strcpy(93,"Effect 3 Level (Chorus)");
@@ -468,12 +474,12 @@ function initMidiCCNames()
 function initPluginControlNames()
 (
   strcpy(128+CONTROL_MOD_WHEEL,"Modulation Wheel");
-  
+
   strcpy(128+CONTROL_PEDALS_START+0,"Pedal Sustain");
   strcpy(128+CONTROL_PEDALS_START+1,"Pedal 2");
   strcpy(128+CONTROL_PEDALS_START+2,"Pedal 3");
   strcpy(128+CONTROL_PEDALS_START+3,"Pedal 4");
-  
+
   strcpy(128+CONTROL_FADERS_START+0,"Fader 1");
   strcpy(128+CONTROL_FADERS_START+1,"Fader 2");
   strcpy(128+CONTROL_FADERS_START+2,"Fader 3");
@@ -484,7 +490,7 @@ function initPluginControlNames()
   strcpy(128+CONTROL_FADERS_START+7,"Fader 8");
   strcpy(128+CONTROL_FADERS_START+8,"Fader 9");
   strcpy(128+CONTROL_FADERS_START+9,"Fader 10");
-  
+
   strcpy(128+CONTROL_KNOBS_START+0,"Knob 1");
   strcpy(128+CONTROL_KNOBS_START+1,"Knob 2");
   strcpy(128+CONTROL_KNOBS_START+2,"Knob 3");
@@ -495,7 +501,7 @@ function initPluginControlNames()
   strcpy(128+CONTROL_KNOBS_START+7,"Knob 8");
   strcpy(128+CONTROL_KNOBS_START+8,"Knob 9");
   strcpy(128+CONTROL_KNOBS_START+9,"Knob 10");
-  
+
   strcpy(128+CONTROL_PADS_START+0,"Pad 1");
   strcpy(128+CONTROL_PADS_START+1,"Pad 2");
   strcpy(128+CONTROL_PADS_START+2,"Pad 3");
@@ -506,7 +512,7 @@ function initPluginControlNames()
   strcpy(128+CONTROL_PADS_START+7,"Pad 8");
   strcpy(128+CONTROL_PADS_START+8,"Pad 9");
   strcpy(128+CONTROL_PADS_START+9,"Pad 10");
-  
+
   strcpy(128+CONTROL_VELOCITY_START+0,"Keyboard velocity (Green)");
   strcpy(128+CONTROL_VELOCITY_START+1,"Keyboard velocity (Red)");
   strcpy(128+CONTROL_VELOCITY_START+2,"Keyboard velocity (Blue)");
@@ -523,7 +529,7 @@ function initPluginControlNames()
 );
 
 function initOctaveLookups() (
-  
+
   OCTAVE_LOOKUP_BOTTOM[0] = 0; // C
   OCTAVE_LOOKUP_BOTTOM[1] = 2; // D
   OCTAVE_LOOKUP_BOTTOM[2] = 4; // E
@@ -531,7 +537,7 @@ function initOctaveLookups() (
   OCTAVE_LOOKUP_BOTTOM[4] = 7; // G
   OCTAVE_LOOKUP_BOTTOM[5] = 9; // A
   OCTAVE_LOOKUP_BOTTOM[6] = 11; // B
-  
+
   OCTAVE_BLACK_KEY_LOOKUP[ 0] = 0; // C
   OCTAVE_BLACK_KEY_LOOKUP[ 1] = 1; // C#/Db
   OCTAVE_BLACK_KEY_LOOKUP[ 2] = 0; // D
@@ -540,11 +546,11 @@ function initOctaveLookups() (
   OCTAVE_BLACK_KEY_LOOKUP[ 5] = 0; // F
   OCTAVE_BLACK_KEY_LOOKUP[ 6] = 1; // F#/Gb
   OCTAVE_BLACK_KEY_LOOKUP[ 7] = 0; // G
-  OCTAVE_BLACK_KEY_LOOKUP[ 8] = 1; // G#/Ab     
+  OCTAVE_BLACK_KEY_LOOKUP[ 8] = 1; // G#/Ab
   OCTAVE_BLACK_KEY_LOOKUP[ 9] = 0; // A
   OCTAVE_BLACK_KEY_LOOKUP[10] = 1; // A#/Bb
   OCTAVE_BLACK_KEY_LOOKUP[11] = 0; // B
-  
+
   OCTAVE_TOP_KEY_WIDTHS[ 0]   = 0.5; // C
   OCTAVE_TOP_KEY_WIDTHS[ 1]   = 1;   // C#/Db
   OCTAVE_TOP_KEY_WIDTHS[ 2]   = 0;   // D
@@ -553,11 +559,11 @@ function initOctaveLookups() (
   OCTAVE_TOP_KEY_WIDTHS[ 5]   = 0.5; // F
   OCTAVE_TOP_KEY_WIDTHS[ 6]   = 1;   // F#/Gb
   OCTAVE_TOP_KEY_WIDTHS[ 7]   = 0;   // G
-  OCTAVE_TOP_KEY_WIDTHS[ 8]   = 1;   // G#/Ab  
+  OCTAVE_TOP_KEY_WIDTHS[ 8]   = 1;   // G#/Ab
   OCTAVE_TOP_KEY_WIDTHS[ 9]   = 0;   // A
   OCTAVE_TOP_KEY_WIDTHS[10]   = 1;   // A#/Bb
   OCTAVE_TOP_KEY_WIDTHS[11]   = 0.5; // B
-  
+
   OCTAVE_TOP_KEY_OFFSETS[ 0]  = 0;   // C
   OCTAVE_TOP_KEY_OFFSETS[ 1]  = 0.5; // C#/Db
   OCTAVE_TOP_KEY_OFFSETS[ 2]  = 1.5; // D
@@ -566,7 +572,7 @@ function initOctaveLookups() (
   OCTAVE_TOP_KEY_OFFSETS[ 5]  = 3;   // F
   OCTAVE_TOP_KEY_OFFSETS[ 6]  = 3.5; // F#/Gb
   OCTAVE_TOP_KEY_OFFSETS[ 7]  = 4.5; // G
-  OCTAVE_TOP_KEY_OFFSETS[ 8]  = 4.5; // G#/Ab 
+  OCTAVE_TOP_KEY_OFFSETS[ 8]  = 4.5; // G#/Ab
   OCTAVE_TOP_KEY_OFFSETS[ 9]  = 5.5; // A
   OCTAVE_TOP_KEY_OFFSETS[10]  = 5.5; // A#/Bb
   OCTAVE_TOP_KEY_OFFSETS[11]  = 6.5;   // B
@@ -581,10 +587,10 @@ function switchToDarkTheme() (
   TH.LIGHTGREEN = 0x80E580;
   TH.MIDGREEN   = 0x20A020;
   TH.LOWGREEN   = 0x10A010;
-  
+
   TH.BACKGROUND          = 0x000000;
   TH.DEFAULT_FONT        = 0xCCCCCC; // Default font color
-  
+
   TH.HEADER              = 0x202066;
   TH.HEADER_TEXT         = TH.DEFAULT_FONT;
 
@@ -595,32 +601,32 @@ function switchToDarkTheme() (
   TH.EN_B_OFF            = 0x202020; // Toggle button off
   TH.EN_B_OFF_H          = 0x606060; // Toggle button off+hover
   TH.EN_B_OFF_TEXT       = TH.DEFAULT_FONT;
-  
+
   // Switch button (Bistate button, but does not change color)
   // Used for changing tabs for example
-  TH.SW_B_ON             = 0x202020; 
-  TH.SW_B_ON_H           = 0x505050; 
+  TH.SW_B_ON             = 0x202020;
+  TH.SW_B_ON_H           = 0x505050;
   TH.SW_B_ON_TEXT        = TH.DEFAULT_FONT;
   TH.SW_B_OFF            = 0x202020;
   TH.SW_B_OFF_H          = 0x505050;
   TH.SW_B_OFF_TEXT       = TH.DEFAULT_FONT;
-  
+
   // Mono state button (cannot be toggled)
-  TH.MONO_B              = 0x202020; 
+  TH.MONO_B              = 0x202020;
   TH.MONO_B_H            = 0x505050;
-  TH.MONO_B_TEXT         = 0xAAAAFF; 
+  TH.MONO_B_TEXT         = 0xAAAAFF;
   TH.MONO_B_CURVE        = 0xFF5050;
-  
+
   TH.CC_LEARN_ON         = 0x666600;
   TH.CC_LEARN_ON_H       = 0x888800;
   TH.CC_LEARN_ON_TEXT    = 0xFFFF00;
-  
+
   // Dynamic labels (Control information display)
   TH.DYN_LABEL           = 0x8080FF;
   TH.DYN_LABEL_HIGHLIGHT = 0xFFFFFF;
   TH.DYN_LABEL_NEUTRAL   = 0x808080;
   TH.DYN_LABEL_DISABLED  = 0x505050;
-  
+
   // Curve
   TH.CURVE               = 0x6060FF;
   TH.CURVE_BG            = 0x191919;
@@ -628,28 +634,28 @@ function switchToDarkTheme() (
   TH.CURVE_GRID          = 0x353535;
   TH.CURVE_BORDER        = 0x474747;
   TH.CURVE_CURRENT_VALUE = 0xFF4040;
-  
+
   // Controls
   TH.CONTROL_HIGHLIGHT              = 0x7070F0;
   TH.CONTROL_HIGHLIGHT_H            = 0xA0A000;
-  
+
   TH.CONTROL_ENABLED_CONTRAST_HIGH  = 0xF0F0F0;
   TH.CONTROL_ENABLED_CONTRAST_MID   = 0xB0B0B0;
   TH.CONTROL_ENABLED_CONTRAST_LOW   = 0x6C6C6C;
-  
+
   TH.CONTROL_DISABLED_CONTRAST_HIGH = 0x505050;
   TH.CONTROL_DISABLED_CONTRAST_MID  = 0x454545;
   TH.CONTROL_DISABLED_CONTRAST_LOW  = 0x202020;
-  
+
   // Edit input lines
   TH.INPUTLINE_BG        = TH.MONO_B;
   TH.INPUTLINE_BG_H      = TH.MONO_B_H;
   TH.INPUTLINE_TEXT      = TH.MONO_B_TEXT;
-  
+
   TH.INPUTLINE_EDIT_BG   = TH.CC_LEARN_ON;
   TH.INPUTLINE_EDIT_BG_H = TH.CC_LEARN_ON_H;
   TH.INPUTLINE_EDIT_TEXT = TH.CC_LEARN_ON_TEXT;
-  
+
   // Function tabs
   TH.TAB_BG     = 0x181818;
   TH.TAB_BG_H   = 0x303030;
@@ -657,43 +663,43 @@ function switchToDarkTheme() (
   TH.TAB_BG_S_H = 0x505050;
   TH.TAB_TEXT   = 0x909090;
   TH.TAB_TEXT_S = TH.DEFAULT_FONT;
-  
+
   // Src/Dst labels
   TH.ROUTING_INFO_CCNAME = TH.DYN_LABEL;
   TH.ROUTING_INFO_NOT_OK = 0xFF5533;
   TH.ROUTING_INFO_OK     = 0x00FF00;
-  
+
   // Keyboard
   TH.KEY_MARKER_BORDER  = 0x000000;
   TH.KEY_MARKER_BG      = 0xFFFFFF;
-  
-  TH.KEY_WHITE_DISABLED = 0x608060; 
+
+  TH.KEY_WHITE_DISABLED = 0x608060;
   TH.KEY_BLACK_DISABLED = 0x306030;
-  
+
   TH.KEY_WHITE_COLOR_0    = TH.LIGHTGREEN;
   TH.KEY_BLACK_COLOR_0    = TH.MIDGREEN;
   TH.KEY_BLACK_COLOR_0_D  = 0x173017;
-  
+
   TH.KEY_WHITE_COLOR_1    = 0xFF7070;
   TH.KEY_BLACK_COLOR_1    = 0xF34C4C;
   TH.KEY_BLACK_COLOR_1_D  = 0x381818;
-  
+
   TH.KEY_WHITE_COLOR_2    = 0x7CC0FC;
-  TH.KEY_BLACK_COLOR_2    = 0x1F85DE; 
+  TH.KEY_BLACK_COLOR_2    = 0x1F85DE;
   TH.KEY_BLACK_COLOR_2_D  = 0x1F2838;
-  
+
   TH.KEY_WHITE_COLOR_3    = 0xFFCA79;
-  TH.KEY_BLACK_COLOR_3    = 0xFC990B; 
+  TH.KEY_BLACK_COLOR_3    = 0xFC990B;
   TH.KEY_BLACK_COLOR_3_D  = 0x403020;
-  
+
   TH.KEY_WHITE_COLOR_4    = 0xCA6DFF;
   TH.KEY_BLACK_COLOR_4    = 0xB433FE;
   TH.KEY_BLACK_COLOR_4_D  = 0x403040;
-    
+
   TH.KEY_OCTAVA_NUMBER    = 0x303030;
   TH.KEY_SEP_LINES        = TH.BACKGROUND;
-  TH.KEY_COLOR_RANGE_TEXT = TH.BACKGROUND; 
-  
+  TH.KEY_COLOR_RANGE_TEXT = TH.BACKGROUND;
+
 );
 
 function switchToLightTheme() (
@@ -701,10 +707,10 @@ function switchToLightTheme() (
   TH.LIGHTGREEN = 0x50D050;
   TH.MIDGREEN   = 0x20A020;
   TH.LOWGREEN   = 0x10A010;
-  
+
   TH.BACKGROUND          = 0xE0E0E0;
   TH.DEFAULT_FONT        = 0x101010; // Default font color
-  
+
   TH.HEADER              = 0xC0C0C0;
   TH.HEADER_TEXT         = TH.DEFAULT_FONT;
 
@@ -715,32 +721,32 @@ function switchToLightTheme() (
   TH.EN_B_OFF            = 0xA0A0A0; // Toggle button off
   TH.EN_B_OFF_H          = 0xD0D0D0; // Toggle button off+hover
   TH.EN_B_OFF_TEXT       = TH.DEFAULT_FONT;
-  
+
   // Switch button (Bistate button, but does not change color)
   // Used for changing tabs for example
-  TH.SW_B_ON             = 0xA0A0A0; 
-  TH.SW_B_ON_H           = 0xD0D0D0; 
+  TH.SW_B_ON             = 0xA0A0A0;
+  TH.SW_B_ON_H           = 0xD0D0D0;
   TH.SW_B_ON_TEXT        = TH.DEFAULT_FONT;
   TH.SW_B_OFF            = 0xA0A0A0;
   TH.SW_B_OFF_H          = 0xD0D0D0;
   TH.SW_B_OFF_TEXT       = TH.DEFAULT_FONT;
-  
+
   // Mono state button (cannot be toggled)
-  TH.MONO_B              = 0xA0A0A0; 
+  TH.MONO_B              = 0xA0A0A0;
   TH.MONO_B_H            = 0xD0D0D0;
-  TH.MONO_B_TEXT         = 0xFFFFFF; 
+  TH.MONO_B_TEXT         = 0xFFFFFF;
   TH.MONO_B_CURVE        = 0xFF2020;
-  
+
   TH.CC_LEARN_ON         = 0x666600;
   TH.CC_LEARN_ON_H       = 0x888800;
   TH.CC_LEARN_ON_TEXT    = 0xFFFF00;
-  
+
   // Dynamic labels (Control information display)
   TH.DYN_LABEL           = 0x6060FF;
   TH.DYN_LABEL_HIGHLIGHT = 0x000000;
   TH.DYN_LABEL_NEUTRAL   = 0x808080;
   TH.DYN_LABEL_DISABLED  = 0x505050;
-  
+
   // Curve
   TH.CURVE               = 0x6060FF;
   TH.CURVE_BG            = 0x393939;
@@ -748,28 +754,28 @@ function switchToLightTheme() (
   TH.CURVE_GRID          = 0x555555;
   TH.CURVE_BORDER        = 0x676767;
   TH.CURVE_CURRENT_VALUE = 0xFF4040;
-  
+
   // Controls
   TH.CONTROL_HIGHLIGHT              = 0xC7C7FF;
   TH.CONTROL_HIGHLIGHT_H            = 0xA0A000;
-  
+
   TH.CONTROL_ENABLED_CONTRAST_HIGH  = 0xA0A0A0;//0xF0F0F0;
   TH.CONTROL_ENABLED_CONTRAST_MID   = 0x707070;//0x909090;
   TH.CONTROL_ENABLED_CONTRAST_LOW   = 0x606060;//0x4C4C4C;
-  
+
   TH.CONTROL_DISABLED_CONTRAST_HIGH = 0xD3D3D3;
   TH.CONTROL_DISABLED_CONTRAST_MID  = 0xD3D3D3;
   TH.CONTROL_DISABLED_CONTRAST_LOW  = 0xC7C7C7;
-  
+
   // Edit input lines
   TH.INPUTLINE_BG        = TH.MONO_B;
   TH.INPUTLINE_BG_H      = TH.MONO_B_H;
   TH.INPUTLINE_TEXT      = TH.MONO_B_TEXT;
-  
+
   TH.INPUTLINE_EDIT_BG   = TH.CC_LEARN_ON;
   TH.INPUTLINE_EDIT_BG_H = TH.CC_LEARN_ON_H;
   TH.INPUTLINE_EDIT_TEXT = TH.CC_LEARN_ON_TEXT;
-  
+
   // Function tabs
   TH.TAB_BG     = TH.MONO_B;
   TH.TAB_BG_H   = TH.MONO_B_H;
@@ -777,39 +783,39 @@ function switchToLightTheme() (
   TH.TAB_BG_S_H = 0xD0D0D0;
   TH.TAB_TEXT   = TH.MONO_B_TEXT;
   TH.TAB_TEXT_S = 0xFFFFFF;
-  
+
   // Src/Dst labels
   TH.ROUTING_INFO_CCNAME = TH.DYN_LABEL;
   TH.ROUTING_INFO_NOT_OK = 0xFF0000;
   TH.ROUTING_INFO_OK     = 0x008F00;
-  
+
   // Keyboard
   TH.KEY_MARKER_BORDER  = 0x000000;
-  TH.KEY_MARKER_BG      = 0xFFFFFF; 
-  
+  TH.KEY_MARKER_BG      = 0xFFFFFF;
+
   TH.KEY_BLACK_DISABLED = 0x70A070;
   TH.KEY_WHITE_DISABLED = 0x90C090;
-  
+
   TH.KEY_WHITE_COLOR_0    = TH.LIGHTGREEN;
   TH.KEY_BLACK_COLOR_0    = TH.MIDGREEN;
   TH.KEY_BLACK_COLOR_0_D  = 0xA0D0A0;
-  
+
   TH.KEY_WHITE_COLOR_1    = 0xFF7070;
   TH.KEY_BLACK_COLOR_1    = 0xF34C4C;
   TH.KEY_BLACK_COLOR_1_D  = 0xE0B2B2;
-  
+
   TH.KEY_WHITE_COLOR_2    = 0x7CC0FC;
-  TH.KEY_BLACK_COLOR_2    = 0x1F85DE; 
+  TH.KEY_BLACK_COLOR_2    = 0x1F85DE;
   TH.KEY_BLACK_COLOR_2_D  = 0xAFC8D8;
-  
+
   TH.KEY_WHITE_COLOR_3    = 0xFFCA79;
-  TH.KEY_BLACK_COLOR_3    = 0xFC990B; 
+  TH.KEY_BLACK_COLOR_3    = 0xFC990B;
   TH.KEY_BLACK_COLOR_3_D  = 0xDBCBA8;
-  
+
   TH.KEY_WHITE_COLOR_4    = 0xCA6DFF;
   TH.KEY_BLACK_COLOR_4    = 0xB433FE;
   TH.KEY_BLACK_COLOR_4_D  = 0xD0B0D0;
-  
+
   TH.KEY_OCTAVA_NUMBER    = 0x505050;
   TH.KEY_SEP_LINES        = 0x404040;
   TH.KEY_COLOR_RANGE_TEXT = 0xFFFFFF;
@@ -838,22 +844,22 @@ function initThemes() (
 ////////////////////////
 
 // Applies a curve from gmem
-function applyGmemCurve(curve_address, x01) 
+function applyGmemCurve(curve_address, x01)
   local(x01, sample_num_f, sample_num_il, sample_num_ir, sample_l, sample_r, curve_interp, alpha)
-( 
+(
   // Do some clamping cleanup first
   x01 = min(max(x01,0),1);
-  
+
   // Normalize reference space > Curve space
   sample_num_f  = 127 * x01;
   sample_num_il = floor(sample_num_f);
   sample_num_ir = ceil(sample_num_f);
-  
+
   // Get left sample, right sample, and linear interpolation factor
   sample_l      = gmem[curve_address+sample_num_il];
   sample_r      = gmem[curve_address+sample_num_ir];
   alpha         = sample_num_f - sample_num_il;
-  
+
   // Lerp : this will return a value between 0 and 127
   curve_interp  = (1-alpha) * sample_l + alpha * sample_r;
 
@@ -879,10 +885,10 @@ function putStringInGmem(gmem_start_index, gmem_slots, str)
   while(i<slen && i<max_len)
   (
     c = str_getchar(str,i);
-    
+
     // Write byte.
     gmem[si] = gmem[si] | (c<<bi);
-    
+
     i   += 1;
     bi  += 8;
     (bi==32)?(
@@ -900,17 +906,17 @@ function getStringFromGmem(gmem_start_index, gmem_slots)
   str = #; strcpy(str,"");
 
   max_len = gmem_slots * 4; // Keep one byte for \0
-   
+
   i = 0; bi = 0; si = gmem_start_index; c = 1;
 
   while(i<max_len && c!=0)
   (
     c = (gmem[si]>>bi) & 0xFF;
-  
+
     (c!=0)?(
       str_setchar(str,i,c);
     );
-    
+
     i   += 1;
     bi  += 8;
     (bi==32)?(
@@ -980,54 +986,54 @@ function findFSetById(set_id)
   local(s,sn,si,found,fset_addr)
 (
   s = #;
-  strncpy(s,set_id,FSET_ID_MAXLEN); // Clamp to max chars      
+  strncpy(s,set_id,FSET_ID_MAXLEN); // Clamp to max chars
 
   si    = 0;
   found = NONE;
-  
+
   while(si<gmem[GMEM_FSET_COUNT] && found == NONE)
   (
-  
+
     fset_addr = getFSetAddress(si);
     sn        = getStringFromGmem(fset_addr + FSET_OFFSET_ID, 2);
-    
+
     (strcmp(sn,s) == 0)?(
       found = si;
     );
-    
+
     si += 1;
   );
-  
+
   found;
 );
 
 // Creates a new FSet
-function createFSet(fset_id, fset_tab, fset_desc) 
+function createFSet(fset_id, fset_tab, fset_desc)
   local(fset_addr, fset_num, s, mi)
 (
   // Allocate set
   fset_addr     = galloc(FSET_SIZE);
- 
+
   // Update counts
   fset_num = gmem[GMEM_FSET_COUNT];
   gmem[GMEM_FSET_COUNT] += 1;
-  
+
   // Nullify everything. Full memory cleanup.
   mi = 0;
   while(mi < FSET_SIZE) (
     gmem[fset_addr+mi]=0;
     mi+=1;
   );
-  
-  // Initialize name/tab/desc limit to max chars  
+
+  // Initialize name/tab/desc limit to max chars
   s = #;
-  strncpy(s, fset_id, FSET_ID_MAXLEN);     
+  strncpy(s, fset_id, FSET_ID_MAXLEN);
   putStringInGmem(fset_addr + FSET_OFFSET_ID, FSET_ID_MAXSLOT, s);
-  strncpy(s, fset_tab, FSET_TAB_MAXLEN);     
-  putStringInGmem(fset_addr + FSET_OFFSET_TAB, FSET_TAB_MAXSLOT, s);  
+  strncpy(s, fset_tab, FSET_TAB_MAXLEN);
+  putStringInGmem(fset_addr + FSET_OFFSET_TAB, FSET_TAB_MAXSLOT, s);
   strncpy(s,fset_desc, FSET_DESC_MAXLEN);
   putStringInGmem(fset_addr + FSET_OFFSET_DESC, FSET_DESC_MAXSLOT, s);
-  
+
   fset_num;
 );
 
@@ -1046,40 +1052,40 @@ function getParametricFSetParamRounding(pid) (
   );
 );
 
-function getParametricFSetParameterName(pid) 
+function getParametricFSetParameterName(pid)
   local(param_label)
 (
   // Draw slider
   param_label = "";
-  
+
   (pid == FSET_PARAMETRIC_LINEAR_ID)?(param_label = "Cut");
   (pid == FSET_PARAMETRIC_EXPNX_ID)?(param_label = "N");
   (pid == FSET_PARAMETRIC_XN_ID)?(param_label = "N");
-  
+
   param_label;
 );
 
-function getParametricFSetParameterMin(pid) 
+function getParametricFSetParameterMin(pid)
   local(mv)
 (
   mv = 0;
-  
+
   (pid == FSET_PARAMETRIC_LINEAR_ID)?(mv = 0);
   (pid == FSET_PARAMETRIC_EXPNX_ID)?(mv = 1);
   (pid == FSET_PARAMETRIC_XN_ID)?(mv = 1);
-  
+
   mv;
 );
 
-function getParametricFSetParameterMax(pid) 
+function getParametricFSetParameterMax(pid)
   local(mv)
 (
   mv = 0;
-  
+
   (pid == FSET_PARAMETRIC_LINEAR_ID)?(mv = 1);
   (pid == FSET_PARAMETRIC_EXPNX_ID)?(mv = 10);
   (pid == FSET_PARAMETRIC_XN_ID)?(mv = 10);
-  
+
   mv;
 );
 
@@ -1088,7 +1094,7 @@ function getParametricFSetParameterMax(pid)
 //  Parsing tools  //
 /////////////////////
 
-function isBlankChar(char) 
+function isBlankChar(char)
 (
   (char == 0x20 || char == 0x0A || char == 0x0D || char == 0x09);
 );
@@ -1099,7 +1105,7 @@ function FSCTX_EatBlank()
   local(is_space, c)
 (
   is_space = 1;
-  
+
   while(is_space && this.cursor < this.len)
   (
     c         = str_getchar(this.str, this.cursor);
@@ -1127,15 +1133,15 @@ function FSCTX_EatNextToken()
   local()
 (
   ctx.tok_start = this.cursor;
-  
+
   // 0x7C == '|', it's the pipe character
   while(!ctx.FSCTX_AtEnd() && ctx.FSCTX_NextChar() != 0x7C)
   (
     this.cursor += 1;
   );
-  
+
   ctx.tok_len = this.cursor - ctx.tok_start;
-  
+
   // Also eat separator
   (ctx.FSCTX_NextChar() == 0x7C)?(
     this.cursor += 1;
@@ -1148,10 +1154,10 @@ function FSCTX_BuildFromLine(str)
   this.str    = str;
   this.len    = strlen(str);
   this.cursor = 0;
-  
+
   // Trim the line end
   (this.len > 0)?(
-  
+
     trimmed = 0;
     while(this.len > 0 && !trimmed)
     (
@@ -1163,7 +1169,7 @@ function FSCTX_BuildFromLine(str)
       );
     );
   );
-  
+
   // Trim the line start
   this.FSCTX_EatBlank();
 );
@@ -1200,58 +1206,58 @@ function addFunctionToFSet(set_num, row_num, col_num, func_path)
   local(handle, ctx, set_addr, curve_addr, preview_addr, set_name, val, vcount, vi, fname, cnum, p1, str)
 (
   set_addr = getFSetAddress(set_num);
-  
+
   fname = #;
   sprintf(fname,"talagan_MIDI CC Mapper X/func/%s.txt",func_path);
-  
+
   handle = file_open(fname);
-    
+
   (handle != -1)?(
     vcount = 0;
-  
+
     while(file_avail(handle)>0)
     (
       str = #;
       file_string(handle,str);
-    
+
       ctx = 0;
       ctx.FSCTX_BuildFromLine(str);
-    
+
       // Coments are available through # or @, ignore these lines.
       // Also ignore blank lines.
       // (reapack uses @ for some directives).
       (!ctx.FSCTX_AtEnd() && ctx.FSCTX_NextChar() != 0x23 && ctx.FSCTX_NextChar() != 0x40)?(
-      
+
         p1 = #;
         ctx.FSCTX_ReadLibParam(p1);
         match("%f",p1,val);
-      
+
         (vcount < CURVESIZE)?(
           gmem[GMEM_LOAD_CURVE_BUF + vcount] = val;
         );
-      
+
         vcount += 1;
       );
     );
-  
+
     (vcount == CURVESIZE)?(
-  
+
       // File is OK, accept curve
       // Copy to destination.
       vi         = 0;
       curve_addr = getFSetFunctionCurveAddress(set_num, row_num, col_num);
-      
+
       while(vi < CURVESIZE)
       (
         // Copy
         gmem[curve_addr+vi] = gmem[GMEM_LOAD_CURVE_BUF+vi];
         vi+=1;
       );
-      
+
       precalcFSetFunctionPreview(set_num, row_num, col_num);
       setFSetFunctionDefined(set_num, row_num, col_num, 1);
     );
-  
+
     file_close(handle);
   );
 );
@@ -1314,7 +1320,7 @@ function xfStepTL(pid, x01, n) (
   );
 );
 
-function xnExpnxFamilyVal(pid, row_num, col_num, x01, n, point_count) 
+function xnExpnxFamilyVal(pid, row_num, col_num, x01, n, point_count)
   local(ret)
 (
   ret = -1;
@@ -1331,7 +1337,7 @@ function xnExpnxFamilyVal(pid, row_num, col_num, x01, n, point_count)
       ret = 1 - ixf(pid, x01, n);
     );
     (col_num == 4)?(
-      ret = 1 - ixf(pid, x01, n); 
+      ret = 1 - ixf(pid, x01, n);
     );
   );
   (row_num == 1)?(
@@ -1374,7 +1380,7 @@ function xnExpnxFamilyVal(pid, row_num, col_num, x01, n, point_count)
       x01 = 1 - x01;
       ret = xfStepTR(pid, x01, n);
     );
-  
+
     (col_num == 3)?(
       ret = xfStepTL(pid, x01, n);
     );
@@ -1424,7 +1430,7 @@ function xnExpnxFamilyVal(pid, row_num, col_num, x01, n, point_count)
   ret;
 );
 
-function linFamilyVal(row_num, col_num, x01, cut, point_count) 
+function linFamilyVal(row_num, col_num, x01, cut, point_count)
   local(ret, granu)
 (
   // Because we generate some discontinuous functions
@@ -1433,21 +1439,21 @@ function linFamilyVal(row_num, col_num, x01, cut, point_count)
   (cut != 0 && cut !=1)?(
     (cut < granu)?(
       // Force rounding to first non-zero slot
-      cut = granu; 
+      cut = granu;
     ):(
       (cut > (1 - granu))?(
         // Force rounding to last non-1 slot
-        cut = 1-granu; 
+        cut = 1-granu;
       ):(
         // Round to closest slot
         cut = granu * roundi(cut*(point_count-1));
       );
     );
   );
-  
+
   ret = -1;
   (row_num == 0)?(
-  
+
     (col_num == 0)?(
       ret = x01;
     );
@@ -1455,7 +1461,7 @@ function linFamilyVal(row_num, col_num, x01, cut, point_count)
       ret = 1 - x01;
     );
   );
-  
+
   (row_num == 1)?(
     (col_num == 0)?(
       ret = (cut == 0)?(1):( (x01<=cut)?(x01/cut):(1));
@@ -1474,12 +1480,12 @@ function linFamilyVal(row_num, col_num, x01, cut, point_count)
     (col_num == 4)?(
       (cut > 0.5)?(cut = 1 - cut);
       ret = (x01 < cut)?(0):( (x01 > 1 - cut)?(1):( (x01-cut)/(1-2*cut)));
-    ); 
+    );
     (col_num == 5)?(
       ret = (cut == 1)?(0):( (x01<cut)?(0):(1));
     );
   );
-  
+
   (row_num == 2)?(
     (col_num == 1)?(
       ret = (x01>=cut)?((x01-cut)/(1-cut)):(0);
@@ -1490,22 +1496,22 @@ function linFamilyVal(row_num, col_num, x01, cut, point_count)
     (col_num == 2)?(
       (cut > 0.5)?(cut = 1 - cut);
       ret = 1 -((x01 < cut)?( x01/cut ):( (x01 > 1 - cut)?( (1 - x01)/cut ):( 1 )));
-    ); 
+    );
     (col_num == 3)?(
       (cut > 0.5)?(cut = 1 - cut);
       ret = ( (x01 < cut || x01 > (1-cut) )?(1):(0));
-    );     
+    );
     (col_num == 4)?(
       (cut > 0.5)?(cut = 1 - cut);
       ret = 1 - ((x01 < cut)?(0):( (x01 > 1 - cut)?(1):( (x01-cut)/(1-2*cut))));
-    ); 
+    );
     (col_num == 5)?(
       ret = (cut == 1)?(1):( (x01>=cut)?(0):(1));
-    );   
+    );
   );
-  
+
   (row_num == 3)?(
-  
+
     (col_num == 0)?(
       ret = (cut == 0)?(0):( (x01<=cut)?(x01/cut):(0));
     );
@@ -1525,7 +1531,7 @@ function linFamilyVal(row_num, col_num, x01, cut, point_count)
       ret = (cut == 0)?(0):( (x01<=cut)?(1-x01):(0));
     );
   );
-  
+
   (row_num == 4)?(
     (col_num == 0)?(
       ret = 1 - ((cut == 0)?(0):( (x01<=cut)?(x01/cut):(0)));
@@ -1546,7 +1552,7 @@ function linFamilyVal(row_num, col_num, x01, cut, point_count)
       ret = 1 - ((cut == 0)?(0):( (x01<=cut)?(1-x01):(0)));
     );
   );
-  
+
   ret;
 );
 
@@ -1563,42 +1569,42 @@ function precalcParametricSet(set_num)
 (
   param = getFSetParameter(set_num);
   pid   = getFSetParametricID(set_num);
-    
+
   ri = 0;
-  while(ri < FSET_ROW_COUNT) 
+  while(ri < FSET_ROW_COUNT)
   (
     ci = 0;
-    while(ci < FSET_COL_COUNT) 
+    while(ci < FSET_COL_COUNT)
     (
       // Calculate value at 0. If -1, the col/row is not supported.
       (parametricSetVal(pid, ri, ci, 0, param, CURVESIZE) != -1)?(
-        
+
         // Compute CURVE and PREVIEW.
-        
+
         // For the preview, use fine-grained computation
         // instead of sub-sampling algorithm.
         // results will benefit from the visual "hacks"
-      
+
         // CURVE
         func_address = getFSetFunctionCurveAddress(set_num, ri, ci);
         si = 0;
-        while(si < CURVESIZE) 
-        (  
+        while(si < CURVESIZE)
+        (
           x01 = si/(CURVESIZE - 1);
           gmem[func_address + si] = parametricSetVal(pid, ri, ci, x01, param, CURVESIZE);
           si += 1;
-        );  
-        
+        );
+
         // PREVIEW
         preview_address = getFSetFunctionPreviewAddress(set_num, ri, ci);
-        si = 0;   
-        while(si < PREVIEWSIZE) 
-        (  
+        si = 0;
+        while(si < PREVIEWSIZE)
+        (
           x01 = si/(PREVIEWSIZE - 1);
           gmem[preview_address + si] = parametricSetVal(pid, ri, ci, x01, param, PREVIEWSIZE);
           si += 1;
-        );  
-        
+        );
+
         setFSetFunctionDefined(set_num, ri, ci, 1);
       );
       ci += 1;
@@ -1610,13 +1616,13 @@ function precalcParametricSet(set_num)
 function createLinearParametricFSet()
   local(set_num)
 (
-  set_num = createFSet("|lin|",   "Linear",   "Parametric linear fset");  
+  set_num = createFSet("|lin|",   "Linear",   "Parametric linear fset");
   setFSetIsParametric(set_num,1);
   setFSetParametricID(set_num, FSET_PARAMETRIC_LINEAR_ID);
   setFSetParameter(set_num, 0.5);
-  precalcParametricSet(set_num);       
+  precalcParametricSet(set_num);
 );
-     
+
 function createExpNXParametricFSet()
   local(set_num)
 (
@@ -1624,7 +1630,7 @@ function createExpNXParametricFSet()
   setFSetIsParametric(set_num,1);
   setFSetParametricID(set_num, FSET_PARAMETRIC_EXPNX_ID);
   setFSetParameter(set_num, 2);
-  precalcParametricSet(set_num);        
+  precalcParametricSet(set_num);
 );
 
 function createXNParametricFset()
@@ -1634,89 +1640,89 @@ function createXNParametricFset()
   setFSetIsParametric(set_num,1);
   setFSetParametricID(set_num, FSET_PARAMETRIC_XN_ID);
   setFSetParameter(set_num, 2);
-  precalcParametricSet(set_num);       
-);        
+  precalcParametricSet(set_num);
+);
 
 // Reads functions library from file file 'file_name'
-function readLibFile(lib_name) 
+function readLibFile(lib_name)
   local(handle, lc, str, fset_num, p1, p2, p3, p4, p5, p6, row_num, col_num, file_ok)
 (
   handle  = file_open(lib_name);
   file_ok = (handle != -1);
 
   lc = 0;
-  
+
   while(file_avail(handle)>0)
   (
     str = #;
     file_string(handle,str);
-    
+
     ctx = 0;
     ctx.FSCTX_BuildFromLine(str);
-    
-    // Comments are available through # or @ 
+
+    // Comments are available through # or @
     // (reapack uses @ for some directives)
     (!ctx.FSCTX_AtEnd() && ctx.FSCTX_NextChar() != 0x23 && ctx.FSCTX_NextChar() != 0x40)?(
 
       // Ok, we have a non commented line. Parse it.
       p1 = #; p2 = #; p3 = #; p4 = #; p5 = #; p6 = #;
-      
+
       (!ctx.FSCTX_AtEnd())?(ctx.FSCTX_ReadLibParam(p1));
       (!ctx.FSCTX_AtEnd())?(ctx.FSCTX_ReadLibParam(p2));
       (!ctx.FSCTX_AtEnd())?(ctx.FSCTX_ReadLibParam(p3));
       (!ctx.FSCTX_AtEnd())?(ctx.FSCTX_ReadLibParam(p4));
       (!ctx.FSCTX_AtEnd())?(ctx.FSCTX_ReadLibParam(p5));
       (!ctx.FSCTX_AtEnd())?(ctx.FSCTX_ReadLibParam(p6));
-      
+
       // Parametric sets commands
       (strcmp(p1, "addpset") == 0)?(
         (strcmp(p2,"linear")  == 0)?( createLinearParametricFSet() );
         (strcmp(p2,"expnx")   == 0)?( createExpNXParametricFSet() );
         (strcmp(p2,"xn")      == 0)?( createXNParametricFset() );
       );
-      
+
       // Non parametric set command
       (strcmp(p1, "addset") == 0)?(
-        (strlen(p2)>0)?(           
+        (strlen(p2)>0)?(
           fset_num = findFSetById(p2);
           (fset_num == -1)?(
             createFSet(p2, p3, p4);
           );
         );
       );
-  
+
       // Add function file to non-parametric set
       (strcmp(p1, "addfunc") == 0)?(
-        // p2 : set 
-        // p3 : row 
-        // p4 : col 
+        // p2 : set
+        // p3 : row
+        // p4 : col
         // p5 : subpath
         (strlen(p2)>0 && strlen(p3)>0 && strlen(p4)>0 && strlen(p5)>0)?(
-        
+
           fset_num = findFSetById(p2);
           (fset_num != -1)?(
-            
+
             row_num = 0;
             col_num = 0;
             match("%d",p3,row_num);
             match("%d",p4,col_num);
-                                    
+
             (row_num >= 1 && row_num <= FSET_ROW_COUNT && col_num >= 1 && col_num <= FSET_COL_COUNT)?(
               row_num -= 1; // Human > Index
               col_num -= 1; // Human > Index
-              
+
               addFunctionToFset(fset_num, row_num, col_num, p5);
             );
           );
         );
       );
-       
+
     );
-    
+
     lc+=1;
   );
   file_close(handle);
-  
+
   (file_ok);
 );
 
@@ -1729,18 +1735,18 @@ function clearLoadedLibs()
 );
 
 // Read lib files
-function readLibFiles() 
+function readLibFiles()
   local(success)
 (
   clearLoadedLibs();
-  
+
   // Try 'user_lib.txt'
   success = readLibFile("talagan_MIDI CC Mapper X/user_lib.txt");
   (!success)?(
     // If not present, try 'lib.txt'
     readLibFile("talagan_MIDI CC Mapper X/lib.txt");
   );
-  
+
   (getFsetCount()>0)?(
     setCurrentFSet(0);
   );
@@ -1756,15 +1762,15 @@ g_hres_l = 0;
 // Converts a floating value of a CC **between 0 and 1**
 // To high/low parts of a 14-bit hres
 // For CC #0 to #31 (with respective #32 to #63).
-function midiCCHresF012I(f01) 
-  local(ival) 
-(  
+function midiCCHresF012I(f01)
+  local(ival)
+(
   // Clamp to 0..1 for safety
   f01  = max(min(f01,1),0);
-  
+
   // Convert to 14-bit space
   ival = roundi(f01 * 16383);
-  
+
   // Floor to int for the high part
   g_hres_h  = (ival >> 7);
   g_hres_l  = ival & 0x7F;
@@ -1774,14 +1780,14 @@ function midiCCHresF012I(f01)
 function midiCCHresI2F01(high,low)
   local(val01, high, low, ival)
 (
-  
+
   // Sanitize
   high = max(min(high,127),0);
   low  = max(min(low,127),0);
-  
+
   // 14-bit value
   ival = (high << 7) + low;
-  
+
   // Put it in 0-1 space
   val01 = ival/16383;
 );
@@ -1791,10 +1797,10 @@ function midiCCHresI2F01(high,low)
 //
 // Specification for this
 // https://forum.cockos.com/showthread.php?t=83782
-function midiVelocityHresF012I(f01) 
-  local(ival) 
+function midiVelocityHresF012I(f01)
+  local(ival)
 (
-  
+
   // Clamp to 0..1 for safety
   f01  = max(min(f01,1),0);
 
@@ -1802,13 +1808,13 @@ function midiVelocityHresF012I(f01)
   // Caution : only 16256+1 values are possible (127*128 non zero values + the zero case)
   // (All LSB values for MSB=0 NOTE OFF are not allowed)
   ival = roundi(f01 * 16256);
-  
+
   (ival==0)?(
     g_hres_h = 0;
     g_hres_l = 0;
   ):(
     // ival is in [1..16256] so put it in [0..16255]
-    ival -= 1; 
+    ival -= 1;
     // Floor to int for the high part
     // Add 1 for NOTE_ON
     g_hres_h  = (ival >> 7)+1;
@@ -1817,30 +1823,30 @@ function midiVelocityHresF012I(f01)
 );
 
 // Inverse of midiVelocityHresF012I
-function midiVelocityHresI2F01(high,low) 
-  local(val01, ival) 
+function midiVelocityHresI2F01(high,low)
+  local(val01, ival)
 (
 
   // Sanitize
   high = max(min(high,127),0);
   low  = max(min(low,127),0);
-    
+
   high==0?(
     // If high is equal to 0
     // Low = 0 is not allowed for NOTE OFF compatibility
     // So just return 0, it's a NOTE OFF, period.
     0;
   ):(
-  
+
     // This said, we can start at 0.
     high = high-1;
-    
+
     // 14-bit value
     ival = (high << 7) + low;
-    
+
     // Avoid the zero case, ival is between [0..16255] so put all between [1..16256]
     ival += 1;
-    
+
     // Put it in 0-1 space
     // Only 16256+1 values are available since we rejected all LSB values for MSB=0
     val01 = ival/16256;
@@ -1887,38 +1893,50 @@ function keyToMidiNote(key) (
 // CC Functions  //
 ///////////////////
 
+function midiCCName(midi_cnum) (
+  (midi_cnum == 128)?("Channel Pressure (virtual CC)"):(midi_cnum);
+);
+
 // For a #CC, returns LSB counterpart or -1 if it hasn't.
 function ccLsbCounterpart(ccnum) local(ret) (
   ret = NONE;
-  
+
   (ccnum>=0 && ccnum < 32)?(
     ret = ccnum + 32;
   );
-  
+
   ret;
 );
 
 // For a #CC, returns MSB counterpart or -1 if it hasn't.
 function ccMsbCounterpart(ccnum) local(ret) (
   ret = NONE;
-  
+
   (ccnum>=32 && ccnum < 64)?(
     ret = ccnum - 32;
   );
-  
+
   ret;
 );
 
-function midiCCName(midi_cnum) (
-  (midi_cnum == 128)?("Channel Pressure (virtual CC)"):(midi_cnum);
+function msbCCForAggregatedHRCC(ccnum) (
+  (ccnum >= 32 && ccnum < 64)?(ccnum - 32):(ccnum);
 );
-function isALsbCC(ccnum) (
-  // 88 is the LSB Channel for velocity.
-  (ccMsbCounterpart(ccnum) != NONE || ccnum == 88);
+function lsbCCForAggregatedHRCC(ccnum) (
+  (ccnum >= 0 && ccnum < 32)?(ccnum + 32):(ccnum);
 );
 function isAMsbCC(ccnum) (
-  // 88 is the LSB Channel for velocity.
-  (ccLsbCounterpart(ccnum) != NONE);
+  (ccnum >= 0 && ccnum < 32);
+);
+function isALsbCC(ccnum) (
+  (ccnum >= 32 && ccnum < 64);
+);
+function isAHighResComponentCC(ccnum) (
+  (ccnum >= 0 && ccnum < 64); // MSB or LSB
+);
+
+function isHighResPrefixCC(ccnum) (
+  (ccnum == 88);
 );
 
 
@@ -1942,11 +1960,6 @@ function isKeyboardTranspositionEnabled() (
 );
 function keyboardInputChannel() (
   KB_INPUT_CHANNEL[0];
-);
-
-// High res midi input? (it's a global param)
-function isHighResMidiInputEnabled() (
-  (HIGHRES_INPUT_ENABLED[0] == 1);
 );
 function shouldDropUnroutedCCMessages() (
   (DROP_UNROUTED_CC_MESSAGES[0] == 1);
@@ -1973,24 +1986,24 @@ function curveAddress(cnum)
 );
 
 // Applies a curve, returns a value from 0 to 1.
-function applyCurve(blk_control, x01) 
+function applyCurve(blk_control, x01)
   local(attached_curve, x01, sample_num_f, sample_num_il, sample_num_ir, sample_l, sample_r, curve_interp, alpha)
 (
   attached_curve = curveAddress(blk_control);
-  
+
   // Do some clamping cleanup first
   x01 = min(max(x01,0),1);
-  
+
   // Normalize reference space > Curve space
   sample_num_f  = 127 * x01;
   sample_num_il = floor(sample_num_f);
   sample_num_ir = ceil(sample_num_f);
-  
+
   // Get left sample, right sample, and linear interpolation factor
   sample_l      = attached_curve[sample_num_il];
   sample_r      = attached_curve[sample_num_ir];
   alpha         = sample_num_f - sample_num_il;
-  
+
   // Lerp : this will return a value between 0 and 127
   curve_interp  = (1-alpha) * sample_l + alpha * sample_r;
 
@@ -2008,7 +2021,7 @@ function controlOutputChannel(control) (
 function isControlEnabled(control) (
   (CONTROL_ENABLED[control] == 1);
 );
-function isControlARealCC(control) (
+function isControlForRealCC(control) (
   (control >=0 && control<CONTROL_VELOCITY_START);
 );
 function isControlVelocity(control) (
@@ -2021,9 +2034,13 @@ function isControlPitchBend(control) (
   (control == CONTROL_PITCH_BEND);
 );
 
-function isControlHighResCapable(control) (
-  (isControlVelocity(control) || (isControlARealCC(control) && ccLsbCounterpart(CONTROL_DSTS[control]) != NONE));
+function isControlHighResCapableForInput(control) (
+  (isControlVelocity(control) || (isControlForRealCC(control) && isAHighResComponentCC(CONTROL_SRCS[control])));
 );
+function isControlHighResCapableForOutput(control) (
+  (isControlVelocity(control) || (isControlForRealCC(control) && isAHighResComponentCC(CONTROL_DSTS[control])));
+);
+
 
 function controlKBRange(control) (
   (isControlVelocity(control))?(control - CONTROL_VELOCITY_START):(
@@ -2042,22 +2059,25 @@ function afterTouchControlForKBRange(kbr) (
 function isHighResMidiOutputEnabledForControl(control) (
   (CONTROL_HIGHRES_OUTPUT_ENABLED[control] == 1);
 );
+function isHighResMidiInputEnabledForControl(control) (
+  (CONTROL_HIGHRES_INPUT_ENABLED[control] == 1);
+);
 
 function controlHasOperationalHighResOutput(control)
   local(hr_is_legit_for_control, hr_is_enabled)
 (
-  hr_is_legit_for_control = isControlHighResCapable(control);
+  hr_is_legit_for_control = isControlHighResCapableForOutput(control);
   hr_is_enabled           = isHighResMidiOutputEnabledForControl(control);
-  
+
   (hr_is_legit_for_control && hr_is_enabled);
 );
 
 function controlHasOperationalHighResInput(control)
   local(hr_is_legit_for_control, hr_is_enabled)
 (
-  hr_is_legit_for_control = isControlHighResCapable(control);
-  hr_is_enabled           = isHighResMidiInputEnabled();
-  
+  hr_is_legit_for_control = isControlHighResCapableForInput(control);
+  hr_is_enabled           = isHighResMidiInputEnabledForControl(control);
+
   (hr_is_legit_for_control && hr_is_enabled);
 );
 
@@ -2066,10 +2086,10 @@ function controlCurrentBound01(control,is_min)
   local(lsb,msb)
 (
   msb = (is_min)?(CONTROL_MINS_MSB[control]):(CONTROL_MAXS_MSB[control]);
- 
+
   (controlHasOperationalHighResOutput(control))?(
     lsb = (is_min)?(CONTROL_MINS_LSB[control]):(CONTROL_MAXS_LSB[control]);
-    
+
     (isControlVelocity(control))?(
       midiVelocityHresI2F01(msb,lsb);
     ):(
@@ -2146,9 +2166,14 @@ function kbRangeOutputChannel(cr) (
 //     CC LEARN    //
 /////////////////////
 
-// Is the CC learnable? (in high res, we don't allow LSB controls to be learnable)
-function isCCLearnable(ccnum) (
-  (!isHighResMidiInputEnabled())?(1):(!isALsbCC(ccnum););
+// Is the CC learnable? (in high res, we don't allow
+// MSB controls to be learnable)
+function isCCLearnableForControl(control, ccnum) (
+  //(!isHighResMidiInputEnabledForControl(control))?(1):(!isAMsbCC(ccnum););
+  // A CC is always learnable.
+  // But we will lock the learn function on MSB if HR is enabled (MSB -> MSB, LSB -> MSB)
+  // To avoid jittering
+  1;
 );
 function enableCCLearn() (
   g_cc_learn = 1;
@@ -2178,28 +2203,28 @@ function initKnobTics() local(t, angle)
   );
 );
 
-function knobTic(val, x_or_y) 
+function knobTic(val, x_or_y)
   local(ret, v1, v2)
 (
   // Clamp val between 0 and 1
   val = min(val,0.99999);
   val = max(0,val);
-  
+
   val = 10*val;
-  
+
   v1 = floor(val) | 0; // intify, v1 between 0 and 9
   v2 = (v1 + 1) | 0;
-  
+
   (x_or_y == 1)?
-  ( 
+  (
     ret = KNOB_TICS_X[v1] + (val-v1)*(KNOB_TICS_X[v2]-KNOB_TICS_X[v1]);
   ):
   (
-    ret = KNOB_TICS_Y[v1] + (val-v1)*(KNOB_TICS_Y[v2]-KNOB_TICS_Y[v1]); 
+    ret = KNOB_TICS_Y[v1] + (val-v1)*(KNOB_TICS_Y[v2]-KNOB_TICS_Y[v1]);
   );
 );
 
-function definitionInit() 
+function definitionInit()
 (
   sharedGlobalVarInit();
   instanceGlobalVarInit();
@@ -2208,12 +2233,12 @@ function definitionInit()
   gmemMemoryMapInit();
 );
 
-function firstInit() 
+function firstInit()
   local(c, curve, i)
-( 
+(
   // Draw actor id
   g_actor_id = rand();
-  
+
   // Load lib files if not loaded.
   (gmem[GMEM_LOADER_ID] == 0)?(
     gmem[GMEM_LOADER_ID] = g_actor_id;
@@ -2226,89 +2251,89 @@ function firstInit()
 
   // Init theme colors
   initThemes();
-  
+
   // Init knob tics
   initKnobTics();
-  
+
   // Init octave lookups
   initOctaveLookups();
 
   // Init curves for each control
   c = 0;
-  while(c<CONTROL_COUNT) ( 
+  while(c<CONTROL_COUNT) (
 
-    // Init to identity.   
+    // Init to identity.
     CONTROL_ENABLED[c] = 1;
 
     curve = curveAddress(c);
-    i = 0; 
-    while(i<CURVESIZE) ( 
+    i = 0;
+    while(i<CURVESIZE) (
       curve[i] = i;
-      i+=1; 
-    ); 
-    
-    c += 1; 
+      i+=1;
+    );
+
+    c += 1;
   );
-  
+
   // Init channel options
   KB_INPUT_CHANNEL[0]     = 0;
-  
+
   // Init controls
-  c = 0; while(c<CONTROL_COUNT) (  
+  c = 0; while(c<CONTROL_COUNT) (
     CONTROL_LAST_IN[c]                  = 0;
     CONTROL_LAST_OUT[c]                 = 0;
-    CONTROL_ENABLED[c]                  = 0;    
-    CONTROL_SRCS[c]                     = 127; 
+    CONTROL_ENABLED[c]                  = 0;
+    CONTROL_SRCS[c]                     = 127;
     CONTROL_DSTS[c]                     = 127;
-    CONTROL_CHAN_SRCS[c]                = ANY; 
+    CONTROL_CHAN_SRCS[c]                = ANY;
     CONTROL_CHAN_DSTS[c]                = AS_SRC;
-    CONTROL_HIGHRES_OUTPUT_ENABLED[c]   = 0; 
+    CONTROL_HIGHRES_OUTPUT_ENABLED[c]   = 0;
     CONTROL_MINS_LSB[c]                 = 0;
     CONTROL_MINS_MSB[c]                 = 0;
     CONTROL_MAXS_LSB[c]                 = 127;
     CONTROL_MAXS_MSB[c]                 = 127;
     CONTROL_PASS_THROUGH[c]             = DROP;
-    c+=1 
+    c+=1
   );
-  
+
   // Init kb range params
   c=0; while(c<KB_RANGE_COUNT) (
     KB_RANGE_TRANSPOSE_ENABLED[c]     = 1; // Enable by default, we already have a global switch
     KB_RANGE_TRANSPOSE_8VA[c]         = 0;
-    KB_RANGE_TRANSPOSE_SEMI_TONES[c]  = 0;  
+    KB_RANGE_TRANSPOSE_SEMI_TONES[c]  = 0;
     KB_RANGE_OUTPUT_CHANNEL[c]        = 0;
     c+=1;
   );
-  
+
   // Init channel pressure range
   _OBS_CP_ASSOCIATED_KB_RANGE[0] = NONE;
-  
+
   // Init other global params
-  HIGHRES_INPUT_ENABLED[0]                    = 0;
+  _OBS_HIGHRES_INPUT_ENABLED[0]               = 0;
   DROP_UNROUTED_CC_MESSAGES[0]                = 0;
   DROP_UNROUTED_NOTE_MESSAGES[0]              = 0;
   _OBS_DROP_UNROUTED_CP_MESSAGES[0]           = 0;
   DROP_UNROUTED_PITCH_BEND_MESSAGES[0]        = 0;
   DROP_UNROUTED_AT_POLY_MESSAGES[0]           = 0;
-  
+
   // Init BUS Routing options
-  MIDI_BUS_INPUT[0]   = 1;      // Set to 1, because it's what REAPER does by default 
+  MIDI_BUS_INPUT[0]   = 1;      // Set to 1, because it's what REAPER does by default
   MIDI_BUS_OUTPUT[0]  = AS_SRC;
-  
+
   // Init mod wheel (don't enable by default anymore)
   CONTROL_SRCS[CONTROL_MOD_WHEEL]       = 1; // Midi mod wheel
   CONTROL_DSTS[CONTROL_MOD_WHEEL]       = 1; // Midi mod wheel
-  
+
   // Init sustain pedal (don't enable by default anymore)
   CONTROL_SRCS[CONTROL_PEDALS_START]    = 64; // Midi sustain pedal
   CONTROL_DSTS[CONTROL_PEDALS_START]    = 64; // Midi sustain pedal
-  
+
   GUI_MODE[0] = 1;
 );
 
 function fontInit() (
-  gfx_setfont(2,"Arial",10,'b');  // Configure font number 2           
-  gfx_setfont(1,"Arial",10,'b');  // Configure font number 1         
+  gfx_setfont(2,"Arial",10,'b');  // Configure font number 2
+  gfx_setfont(1,"Arial",10,'b');  // Configure font number 1
   gfx_setfont(0);
 );
 
@@ -2348,18 +2373,18 @@ g_firstInitDone=1;
 FILE_FORMAT_1_0             = (1<<8)+0; // 1.0 (==256)
 CURRENT_FILE_FORMAT_VERSION = FILE_FORMAT_1_0;
 
-function memwr(is_saving, ver) 
+function memwr(is_saving, ver)
   local(ccount,s,avail,obsolval,
     green_vel_ctrl,red_vel_ctrl,green_curve,red_curve
-  ) 
+  )
 (
-  
+
   ccount = (is_saving)?(CONTROL_COUNT):(0);
-    
+
   // version and control count bytes introduced in V3.1a
   (ver>0)?(
-    // Version number already managed 
-    // Now the control count. 
+    // Version number already managed
+    // Now the control count.
     // Read it if we're reading, or save it if we're writing
     file_var(0,ccount);
     // And the first curve
@@ -2369,43 +2394,43 @@ function memwr(is_saving, ver)
       // In that version there were 35 controls
       ccount = 35;
     );
-  
+
     // Version number was in fact the first sample of the first curve.
     // There are still n-1 samples to read afterwards.
     file_mem(0,CURVES+1,CURVESIZE-1);
   );
-  
+
   // Read/Write other (ccount-1) curves (first one handled separately for bw compatibility)
   file_mem(0,CURVES+CURVESIZE , (ccount-1) * CURVESIZE);
- 
+
   // Flags
   file_mem(0,CONTROL_ENABLED  , ccount);
-  
+
   // Srcs and dests
   file_mem(0,CONTROL_SRCS     , ccount);
   file_mem(0,CONTROL_DSTS     , ccount);
-  
+
   // Descriptions
-  s=0;while(s<ccount) 
-  ( 
-    file_string(0,controlDescription(s)); 
+  s=0;while(s<ccount)
+  (
+    file_string(0,controlDescription(s));
     s+=1;
   );
-  
+
   // Short descriptions
-  s=0;while(s<ccount) 
-  ( 
-    file_string(0,controlLabel(s)); 
+  s=0;while(s<ccount)
+  (
+    file_string(0,controlLabel(s));
     s+=1;
   );
-  
+
   // Introduced in V3 (keyboard filtering)
   avail = file_avail(0);
   (is_saving || avail>0)?( // Avoid squashing default values if reading old format
     file_mem(0,KEYBOARD_FILTERING_ENABLED,1);
     file_mem(0,KEYBOARD_KEY_COLORS+21,88);
   );
-  
+
   // Introduced in V3.1a (transpose green / high res)
   avail = file_avail(0);
   (is_saving || avail>0)?( // Avoid squashing default values if reading old format
@@ -2413,9 +2438,9 @@ function memwr(is_saving, ver)
     file_mem(0,KEYBOARD_TRANSPOSE_ENABLED,1);
     file_mem(0,_OBS_KEYBOARD_TRANSPOSE_8VA,1);
     file_mem(0,_OBS_KEYBOARD_TRANSPOSE_SEMI_TONES,1);
-    file_mem(0,HIGHRES_INPUT_ENABLED,1);
+    file_mem(0,_OBS_HIGHRES_INPUT_ENABLED,1);
     file_mem(0,DROP_UNROUTED_CC_MESSAGES,1);
-    
+
     (!is_saving)?(
       // Copy old global params to green range.
       // If newer params are available in the file data
@@ -2423,19 +2448,33 @@ function memwr(is_saving, ver)
       KB_RANGE_TRANSPOSE_ENABLED[0]     = KEYBOARD_TRANSPOSE_ENABLED[0]; // Deduce from global conf
       KB_RANGE_TRANSPOSE_8VA[0]         = _OBS_KEYBOARD_TRANSPOSE_8VA[0];
       KB_RANGE_TRANSPOSE_SEMI_TONES[0]  = _OBS_KEYBOARD_TRANSPOSE_SEMI_TONES[0];
+
+      // HR MIDI Moved in 4.3 to individual params per control.
+      // So convert the global option to individual option
+      // For any control that would match.
+      (_OBS_HIGHRES_INPUT_ENABLED[0] == 1)?(
+        s=0;while(s<ccount)
+        (
+          ( isControlHighResCapableForInput(s) )?(
+            CONTROL_HIGHRES_INPUT_ENABLED[s] = 1;
+          );
+          s+=1;
+        );
+      );
+
     );
   );
-  
+
   // Introduced in V3.1d (theme selection)
   avail = file_avail(0);
   (is_saving || avail>0)?( // Avoid squashing default values if reading old format
     file_mem(0,CURRENT_THEME_NUM,1);
   );
-  
+
   // Introduced in V3.3 (channel routing + min/max)
   avail = file_avail(0);
   (is_saving || avail>0)?( // Avoid squashing default values if reading old format
-  
+
     file_mem(0,CONTROL_CHAN_SRCS, ccount);
     file_mem(0,CONTROL_CHAN_DSTS, ccount);
     file_mem(0,KB_INPUT_CHANNEL,1);
@@ -2448,46 +2487,46 @@ function memwr(is_saving, ver)
     file_mem(0,CONTROL_MAXS_MSB, ccount);
     file_mem(0,CONTROL_MAXS_LSB, ccount);
     file_mem(0,DROP_UNROUTED_NOTE_MESSAGES,1);
-    
+
     (!is_saving)?(
       (ccount <= 36)?(
-      
+
         // Retro-compatibility for >= 3.3 and < 4.0
         // At that time there were only 36 controls (hence the test on ccount)
         // Only one velocity control (velocity was # 35)
         // So if ccount <= 36 it means there is no per-kbrange velocity handling
         // We have to reflect these settings to the new split structure
-        
+
         // Loading old params : convert to new ones.
         KB_RANGE_OUTPUT_CHANNEL[0]        = _OBS_KBG_OUTPUT_CHANNEL[0]; // Green
         KB_RANGE_OUTPUT_CHANNEL[1]        = _OBS_KBR_OUTPUT_CHANNEL[0]; // Red
-            
+
         // Copy green to red since that was shared at the time of 3.3.
         KB_RANGE_TRANSPOSE_8VA[1]         = KB_RANGE_TRANSPOSE_8VA[0];
         KB_RANGE_TRANSPOSE_SEMI_TONES[1]  = KB_RANGE_TRANSPOSE_SEMI_TONES[0];
-   
+
         green_vel_ctrl = velocityControlForKBRange(0);
         red_vel_ctrl   = velocityControlForKBRange(1);
-   
+
         // If val == 0, G and R are enabled
         obsolval = _OBS_KEYBOARD_TRANSPOSE_APPLY_TO[0];
         KB_RANGE_TRANSPOSE_ENABLED[0] = (obsolval == ANY || obsolval == 1); // Green
         KB_RANGE_TRANSPOSE_ENABLED[1] = (obsolval == ANY || obsolval == 2); // Red
-      
+
         // Apply to => G/R ctrl enabled or not
         obsolval = _OBS_KEYBOARD_VELOCITY_APPLY_TO[0];
         CONTROL_ENABLED[green_vel_ctrl] = (obsolval == ANY || obsolval == 1); // Green
         CONTROL_ENABLED[red_vel_ctrl]   = (obsolval == ANY || obsolval == 2); // Red
-        
+
         // Copy highres param
         CONTROL_HIGHRES_OUTPUT_ENABLED[red_vel_ctrl] = CONTROL_HIGHRES_OUTPUT_ENABLED[green_vel_ctrl];
-        
+
         // Copy min/max
         CONTROL_MINS_LSB[red_vel_ctrl] = CONTROL_MINS_LSB[green_vel_ctrl];
         CONTROL_MINS_MSB[red_vel_ctrl] = CONTROL_MINS_MSB[green_vel_ctrl];
         CONTROL_MAXS_LSB[red_vel_ctrl] = CONTROL_MAXS_LSB[green_vel_ctrl];
         CONTROL_MAXS_MSB[red_vel_ctrl] = CONTROL_MAXS_MSB[green_vel_ctrl];
-        
+
         // Curve was shared, so copy G to R.
         green_curve = curveAddress(green_vel_ctrl);
         red_curve   = curveAddress(red_vel_ctrl);
@@ -2498,22 +2537,22 @@ function memwr(is_saving, ver)
       );
     );
   );
-  
+
   // Introduced in V3.5 (full keyboard filtering)
   avail = file_avail(0);
   (is_saving || avail>0)?( // Avoid squashing default values if reading old format
-    file_mem(0,KEYBOARD_KEY_COLORS,21);       // 
+    file_mem(0,KEYBOARD_KEY_COLORS,21);       //
     file_mem(0,KEYBOARD_KEY_COLORS+109,19);   // Skipped 21+88
     file_mem(0,_OBS_CURRENT_OCTAVA_OFFSET,1); // Was : octava offset (kb vis), removed and ignored.
   );
-  
+
   // Introduced in V3.6
   avail = file_avail(0);
   (is_saving || avail>0)?( // Avoid squashing default values if reading old format
     file_mem(0,MIDI_BUS_INPUT,1);
     file_mem(0,MIDI_BUS_OUTPUT,1);
   );
-  
+
   // Introduced in V4.0
   avail = file_avail(0);
   (is_saving || avail>0)?( // Avoid squashing default values if reading old format
@@ -2526,40 +2565,49 @@ function memwr(is_saving, ver)
     file_mem(0,DROP_UNROUTED_AT_POLY_MESSAGES, 1);
     file_mem(0,_OBS_CP_ASSOCIATED_KB_RANGE, 1);
   );
-  
+
   // Introduced in V4.2
   avail = file_avail(0);
   (is_saving || avail>0)?( // Avoid squashing default values if reading old format
     file_mem(0, CONTROL_PASS_THROUGH, ccount);
   );
+
+  // Introduced in V4.3
+  avail = file_avail(0);
+  (is_saving || avail>0)?(
+    file_mem(0, CONTROL_HIGHRES_INPUT_ENABLED, ccount);
+    file_mem(0, REVERSE_PITCH_BEND, 1);
+  );
+
+
 );
 
 function backupOrRestore() local(is_saving, check_ver, old_format) (
 
   is_saving = (file_avail(0)<0);
-  
+
   (is_saving)?(
 
     file_var(0, CURRENT_FILE_FORMAT_VERSION);
     memwr(is_saving, CURRENT_FILE_FORMAT_VERSION);
   ):
-  (  
+  (
     // Reading the file
     // Have to manage the old format ...
     check_ver = 0;
     file_var(0,check_ver);
-    
+
     // Now, we put a version number >= 256.
     // The old format had a curve point on the first slot, so < 256.
     old_format = (check_ver < 256);
-    
-    (old_format)?( 
-      // Repair first curve 
+
+    (old_format)?(
+      // Repair first curve
       // The "ver" would not exist and is in fact the first sample of the first curve
       CURVES[0] = check_ver; // Yuuuk!!
       // Force the file format to 0.0
       memwr(is_saving, 0);
-    ):( 
+    ):(
       // 1.0 format, 36 controls
       memwr(is_saving, FILE_FORMAT_1_0);
     );
@@ -2578,7 +2626,7 @@ backupOrRestore();
 //////////////////////////
 
 function gfx_rgb(hex_col) (
-  gfx_r = ((hex_col>>16)&0xFF)/255; 
+  gfx_r = ((hex_col>>16)&0xFF)/255;
   gfx_g = ((hex_col>>8)&0xFF)/255;
   gfx_b = ((hex_col>>0)&0xFF)/255;
 );
@@ -2598,8 +2646,8 @@ function gfx_rgb_control_low(control_num) (
  gfx_rgb( (CONTROL_ENABLED[control_num] == 1)?(TH.CONTROL_ENABLED_CONTRAST_LOW):(TH.CONTROL_DISABLED_CONTRAST_LOW) );
 );
 
-function gfx_rgb_kbr_low(kbr,enabled) 
-  local(col) 
+function gfx_rgb_kbr_low(kbr,enabled)
+  local(col)
 (
   col = (enabled)?(TH.SW_B_OFF_H):(TH.SW_B_OFF);
   (enabled)?(
@@ -2624,13 +2672,13 @@ function bgColorForComboBox(combo_id)
   local(ret)
 (
   ret = TH.BACKGROUND;
-  
+
   (combo_id == "chan_out_range_0_spinbox" || combo_id == "kr_0_8va" || combo_id == "kr_0_st")?(ret = TH.KEY_BLACK_COLOR_0);
   (combo_id == "chan_out_range_1_spinbox" || combo_id == "kr_1_8va" || combo_id == "kr_1_st")?(ret = TH.KEY_BLACK_COLOR_1);
   (combo_id == "chan_out_range_2_spinbox" || combo_id == "kr_2_8va" || combo_id == "kr_2_st")?(ret = TH.KEY_BLACK_COLOR_2);
   (combo_id == "chan_out_range_3_spinbox" || combo_id == "kr_3_8va" || combo_id == "kr_3_st")?(ret = TH.KEY_BLACK_COLOR_3);
   (combo_id == "chan_out_range_4_spinbox" || combo_id == "kr_4_8va" || combo_id == "kr_4_st")?(ret = TH.KEY_BLACK_COLOR_4);
-  
+
   ret;
 );
 
@@ -2638,13 +2686,13 @@ function txtColorForComboBox(combo_id)
   local(ret)
 (
   ret = TH.DYN_LABEL;
-  
+
   (combo_id == "chan_out_range_0_spinbox" || combo_id == "kr_0_8va" || combo_id == "kr_0_st")?(ret = TH.KEY_COLOR_RANGE_TEXT);
   (combo_id == "chan_out_range_1_spinbox" || combo_id == "kr_1_8va" || combo_id == "kr_1_st")?(ret = TH.KEY_COLOR_RANGE_TEXT);
   (combo_id == "chan_out_range_2_spinbox" || combo_id == "kr_2_8va" || combo_id == "kr_2_st")?(ret = TH.KEY_COLOR_RANGE_TEXT);
   (combo_id == "chan_out_range_3_spinbox" || combo_id == "kr_3_8va" || combo_id == "kr_3_st")?(ret = TH.KEY_COLOR_RANGE_TEXT);
   (combo_id == "chan_out_range_4_spinbox" || combo_id == "kr_4_8va" || combo_id == "kr_4_st")?(ret = TH.KEY_COLOR_RANGE_TEXT);
-  
+
   ret;
 );
 
@@ -2690,12 +2738,12 @@ function isInputChannelSpinbox(combo_id)
 
 function isOutputChannelSpinbox(combo_id)
 (
-  ( 
+  (
     combo_id == "chan_dst_spinbox" ||
     combo_id == "midi_bus_output_widget" ||
     combo_id == "chan_out_range_0_spinbox" ||
-    combo_id == "chan_out_range_1_spinbox" || 
-    combo_id == "chan_out_range_2_spinbox" || 
+    combo_id == "chan_out_range_1_spinbox" ||
+    combo_id == "chan_out_range_2_spinbox" ||
     combo_id == "chan_out_range_3_spinbox" ||
     combo_id == "chan_out_range_4_spinbox"
   );
@@ -2724,27 +2772,27 @@ function textForComboBox(combo_id, val)
 // This button is linked to an adress in memory : flag_address[flag_local_address].
 // The only way I had found in EEL to use "pointers" was an array trick.
 // I've just discovered pseudo objects, it could be a solution too.
-function drawBistateButton(flag_address,flag_local_address,t,l,ontext,offtext,color_on,color_off,color_on_hover,color_off_hover,text_color_on,text_color_off) 
-  local(tmp, ontextw, offtextw, 
-        bb, br, bw, bh, bl, bt, 
+function drawBistateButton(flag_address,flag_local_address,t,l,ontext,offtext,color_on,color_off,color_on_hover,color_off_hover,text_color_on,text_color_off)
+  local(tmp, ontextw, offtextw,
+        bb, br, bw, bh, bl, bt,
         in_rect, enabled)
 (
   tmp = 0; ontextw = 0; offtextw = 0;
   gfx_measurestr(ontext, ontextw, tmp);
   gfx_measurestr(offtext, offtextw, tmp);
-  
+
   bw = max(ontextw,offtextw) + 10;
   bh = 15;
-  
+
   bl = l;
   bt = t;
-  
+
   br = bl + bw;
   bb = bt + bh;
-  
+
   enabled = flag_address[flag_local_address];
   in_rect = mouse_x >= bl && mouse_x <= br && mouse_y >= bt && mouse_y <= bb;
-  
+
   in_rect ?(
     // Hover color
     gfx_rgb((enabled)?(color_on_hover):(color_off_hover));
@@ -2757,14 +2805,14 @@ function drawBistateButton(flag_address,flag_local_address,t,l,ontext,offtext,co
     // Not-hovered color
     gfx_rgb((enabled)?(color_on):(color_off));
   );
-  gfx_rect(bl,bt,bw,bh); 
-  
+  gfx_rect(bl,bt,bw,bh);
+
   // Text color
   gfx_rgb((enabled)?(text_color_on):(text_color_off));
   gfx_y = t + 4;
   enabled?(
-    gfx_x = l+(bw-ontextw)/2; 
-    gfx_drawstr(ontext); 
+    gfx_x = l+(bw-ontextw)/2;
+    gfx_drawstr(ontext);
   ):(
     gfx_x = l+(bw-offtextw)/2;
     gfx_drawstr(offtext)
@@ -2776,7 +2824,7 @@ function drawStandardBistateButton(flag_address,flag_local_address,t,l,on_text,o
 );
 
 function drawSwitchButton(flag_address,flag_local_address,t,l,on_text,off_text) (
- drawBistateButton (flag_address,flag_local_address,t,l,on_text,off_text, TH.SW_B_ON ,TH.SW_B_OFF, TH.SW_B_ON_H, TH.SW_B_OFF_H, TH.SW_B_ON_TEXT, TH.SW_B_OFF_TEXT); 
+ drawBistateButton (flag_address,flag_local_address,t,l,on_text,off_text, TH.SW_B_ON ,TH.SW_B_OFF, TH.SW_B_ON_H, TH.SW_B_OFF_H, TH.SW_B_ON_TEXT, TH.SW_B_OFF_TEXT);
 );
 
 
@@ -2803,66 +2851,66 @@ function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_s
 
   bl = l;
   bt = t;
-   
+
   br = bl + 15;
   bb = bt + 15;
-  
-  in_rect = (mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt); 
-   
+
+  in_rect = (mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt);
+
   (mouse_click == 1 && in_rect)?(
     mouse_capturator = button_id;
-  ); 
-   
+  );
+
   in_rect  ?
   (
-    gfx_rgb(TH.MONO_B_H);   
+    gfx_rgb(TH.MONO_B_H);
     val_shift = 0;
-   
+
     mouse_cap == 1 && mouse_capturator == button_id ? (
       // Limit this to 20 calls / seconds
       new_srcdstbtn_time = time_precise();
       (new_srcdstbtn_time - last_srcdstbtn_time > 0.03 || mouse_click) ? (
         val_shift = (add_or_sub)?(1):(-1);
-        last_srcdstbtn_time = new_srcdstbtn_time; 
+        last_srcdstbtn_time = new_srcdstbtn_time;
         mouse_click == 1 ? (last_srcdstbtn_time += 0.3);
       );
-    ); 
+    );
     /*
       // maybe too dangerous ?
       mouse_wheeli != 0 ? (
         val_shift = mouse_wheeli;
       );
     */
-    val_shift != 0 ? (  
+    val_shift != 0 ? (
       val_address[val_local_address] += val_shift;
-      
+
       (should_wrap)?(
-        (val_address[val_local_address]>maxval)?(val_address[val_local_address]=minval);   
-        (val_address[val_local_address]<minval)?(val_address[val_local_address]=maxval);        
+        (val_address[val_local_address]>maxval)?(val_address[val_local_address]=minval);
+        (val_address[val_local_address]<minval)?(val_address[val_local_address]=maxval);
       ):(
-        val_address[val_local_address] = min(max(val_address[val_local_address],minval),maxval);         
+        val_address[val_local_address] = min(max(val_address[val_local_address],minval),maxval);
       );
       got_event = val_shift;
     );
-  
-  ):( gfx_rgb(TH.MONO_B) );  
- 
-  // Button background 
+
+  ):( gfx_rgb(TH.MONO_B) );
+
+  // Button background
   gfx_x   = bl;
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
- 
+
   // Button text
   gfx_x   = bl+3;
   gfx_y   = bt+4;
-  gfx_rgb(TH.MONO_B_TEXT);  
-  
+  gfx_rgb(TH.MONO_B_TEXT);
+
   (should_wrap)?(
-    add_or_sub == 0?(gfx_drawstr("<")):(gfx_drawstr(">"));  
+    add_or_sub == 0?(gfx_drawstr("<")):(gfx_drawstr(">"));
   ):(
-    add_or_sub == 0?(gfx_drawstr("-")):(gfx_drawstr("+"));    
+    add_or_sub == 0?(gfx_drawstr("-")):(gfx_drawstr("+"));
   );
-  
+
   got_event;
 );
 
@@ -2871,43 +2919,43 @@ function drawAddOrSubWidget(widget_id, val_address, val_local_address, l, t, min
    local(tmp, roffset, got_event, w, h, loff, bt, bl, bb, br)
 (
   // Offset of the right button
-  roffset = labelwidth + 15; 
-  
+  roffset = labelwidth + 15;
+
   got_event = 0;
-  
+
   // Buttons -/+
   got_event |= drawAddOrSubButton(widget_id,val_address,val_local_address,l,t,0,minval,maxval,should_wrap);
   got_event |= drawAddOrSubButton(widget_id,val_address,val_local_address,l+roffset,t,1,minval,maxval,should_wrap);
 
   (labelwidth > 0)?(
-  
+
     gfx_rgb(bgColorForComboBox(widget_id));
     bt = t; bl=l+15; br=bl+labelwidth; bb = bt+15;
     gfx_rect(bl,bt,br-bl,bb-bt);
-    
+
     g_add_or_sub_hover = (mouse_x >= bl && mouse_x <= br && mouse_y >= bt && mouse_y <= bb);
-  
+
     // Inner text
     gfx_rgb(txtColorForComboBox(widget_id));
     tmp = textForComboBox(widget_id, val_address[val_local_address]);
-    
+
     w = 0; h = 0; gfx_measurestr(tmp,w,h);
     loff = (labelwidth - w) / 2;
     gfx_xy(l+15+loff, t+4);
     gfx_drawStr(tmp);
   );
-  
+
   got_event;
 );
 
 function drawInputLine(input_id, bl, bt, br, bb, str)
   local(in_rect,new_char,dstr) (
-  
-  in_rect = ( mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt ); 
+
+  in_rect = ( mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt );
   in_rect ?
   (
-    gfx_rgb( (g_edited_input==input_id)?(TH.INPUTLINE_EDIT_BG_H):(TH.INPUTLINE_BG_H));   
-   
+    gfx_rgb( (g_edited_input==input_id)?(TH.INPUTLINE_EDIT_BG_H):(TH.INPUTLINE_BG_H));
+
     mouse_click == 1 ? (
       (g_edited_input != input_id)?(
         g_edited_input = input_id;
@@ -2916,15 +2964,15 @@ function drawInputLine(input_id, bl, bt, br, bb, str)
       :(
         g_edited_input = "";
       );
-    ); 
+    );
   ):(
     gfx_rgb( (g_edited_input==input_id)?(TH.INPUTLINE_EDIT_BG):(TH.INPUTLINE_BG) )
-  );  
-  
+  );
+
   g_edited_input == input_id?
   (
     new_char = gfx_getchar();
-    
+
     // Alpha num
     new_char >= 32 && new_char <= 126 ?
     (
@@ -2933,7 +2981,7 @@ function drawInputLine(input_id, bl, bt, br, bb, str)
     // Del
     new_char == 8?
     (
-      strncpy(str, str, max(strlen(str)-1,0)); 
+      strncpy(str, str, max(strlen(str)-1,0));
     );
     // Return / Esc
     new_char == 13 || new_char == 27?
@@ -2941,14 +2989,14 @@ function drawInputLine(input_id, bl, bt, br, bb, str)
       g_edited_input = "";
     );
   );
-  
+
   gfx_x   = bl;
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
   gfx_x   = bl+3;
   gfx_y   = bt+4;
   gfx_rgb((g_edited_input==input_id)?(TH.INPUTLINE_EDIT_TEXT):(TH.INPUTLINE_TEXT));
-  
+
   g_edited_input == input_id?
   (
     // If in edition, show a caret
@@ -2958,7 +3006,7 @@ function drawInputLine(input_id, bl, bt, br, bb, str)
   ):(
     gfx_drawstr(str);
   );
-  
+
 );
 
 /////////////////////
@@ -2967,35 +3015,35 @@ function drawInputLine(input_id, bl, bt, br, bb, str)
 
 function mousePenCallback(gzone)
    local(curve,in_rect,px,py,x1,x2,y1,y2,alpha,i,min_bound,max_bound)
-(   
+(
   curve = selectedControlCurveAddress();
-  
+
   in_rect = (mouse_x >= gzone.l && mouse_x < gzone.r && mouse_y >= gzone.t && mouse_y < gzone.b);
 
   // Remember that first click was in drawing zone (click focus)
   (mouse_click == 1 && in_rect)?(
     mouse_capturator = "curvezone";
   );
-  
+
   // Only handle events if we have click focus
-  mouse_cap == 1 && mouse_capturator == "curvezone" && g_pen_is_active ? (  
+  mouse_cap == 1 && mouse_capturator == "curvezone" && g_pen_is_active ? (
     // Drawing callback
     in_rect ?
     (
       px = (mouse_x-gzone.il)/(RESOLUTION);
       py = (gzone.ib-mouse_y+2)/(RESOLUTION);
-      
+
       min_bound = controlCurrentMinBound01(g_selected_control);
       max_bound = controlCurrentMaxBound01(g_selected_control);
-      
+
       // If inside the margin around the draw zone, clamp
       px < 0 ? px = 0;
       px > CURVESIZE - 1 ? px = CURVESIZE-1;
       (py < min_bound * (CURVESIZE - 1)) ? (py = min_bound * (CURVESIZE-1));
       (py > max_bound * (CURVESIZE - 1)) ? (py = max_bound * (CURVESIZE-1));
       px = roundi(px);
-      py = roundi(py); 
-      
+      py = roundi(py);
+
       last_modified == -1 || last_modified == px ? (
         curve[px]     = py;
         last_modified = px;
@@ -3003,7 +3051,7 @@ function mousePenCallback(gzone)
       (
         // Perform some interpolation since mouse positions are not continuous
         x1=x2=y1=y2=0;
-        px <= last_modified ? 
+        px <= last_modified ?
         ( x1 = px; x2 = last_modified; y1 = py; y2 = curve[last_modified]; ):
         ( x1 = last_modified; x2 = px; y1 = curve[last_modified]; y2 = py; );
         i = x1;
@@ -3024,14 +3072,14 @@ function smoothButtonCallback()
   local(curve, i, new_smooth_time, last_smooth_time)
 (
   curve = selectedControlCurveAddress();
-  
+
   // Limit this to 20 calls / seconds
   new_smooth_time = time_precise();
   (new_smooth_time - last_smooth_time > 0.05) ? (
-    
+
     SCURVE[0]           = curve[0];
     SCURVE[CURVESIZE-1] = curve[CURVESIZE-1];
-    
+
     // Blur the curve
     i = 1;
     while(i<CURVESIZE-1)
@@ -3039,7 +3087,7 @@ function smoothButtonCallback()
       SCURVE[i] = (CURVE[i-1] + CURVE[i] + CURVE[i+1])/3;
       i+=1;
     );
-    
+
     i=0; while(i<CURVESIZE) ( CURVE[i] = SCURVE[i]; i+=1 );
     last_smooth_time = new_smooth_time;
   );
@@ -3053,9 +3101,9 @@ function drawMousePenButton(gzone)
   bt = gzone.b;
   br = bl + 44;
   bb = bt + 20;
-  
+
   in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
- 
+
   (in_rect && mouse_click == 1 && !g_pen_is_active)?(
     g_pen_is_active = 1;
   ):(
@@ -3073,55 +3121,55 @@ function drawMousePenButton(gzone)
   gfx_x   = bl;
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
-  
+
 
   gfx_rgb( (g_pen_is_active)?(TH.CC_LEARN_ON_TEXT):(TH.MONO_B_TEXT) );
   gfx_x   = bl + 10;
   gfx_y   = bt+7;
-  gfx_drawstr("Pen");   
+  gfx_drawstr("Pen");
 );
 
 
 // Smooth button
-function drawSmoothButton(gzone) 
+function drawSmoothButton(gzone)
   local(bl,bt,br,bb, in_rect)
 (
   bl = gzone.l+58;
   bt = gzone.b;
   br = bl + 68;
   bb = bt + 20;
-   
+
   in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
   in_rect ?
   (
    gfx_rgb(TH.MONO_B_H);
-   
+
    mouse_click == 1 ? ( mouse_capturator = "smoothbutton" );
-   
+
    mouse_cap == 1 && mouse_capturator == "smoothbutton" ? (
      smoothButtonCallback();
-   ); 
-  ):(gfx_rgb(TH.MONO_B));  
-  
+   );
+  ):(gfx_rgb(TH.MONO_B));
+
   gfx_x   = bl;
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
   gfx_x   = bl+10;
   gfx_y   = bt+7;
   gfx_rgb(TH.MONO_B_TEXT);
-  gfx_drawstr("Smooth");  
+  gfx_drawstr("Smooth");
 );
 
-function drawCopyCurveButton(gzone) 
+function drawCopyCurveButton(gzone)
   local(bl,bt,br,bb, in_rect, cad,i,copied_timer,recently_copied)
 (
   bl = gzone.l+196;
   bt = gzone.b;
   br = bl + 42;
   bb = bt + 20;
-   
+
   in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
-  
+
   recently_copied = (time_precise() - copied_timer < 0.2);
   (recently_copied)?(
     gfx_rgb(in_rect ? TH.KEY_BLACK_COLOR_0 : TH.KEY_BLACK_COLOR_0_D);
@@ -3129,7 +3177,7 @@ function drawCopyCurveButton(gzone)
     gfx_rgb(in_rect ? TH.MONO_B_H : TH.MONO_B);
   );
   gfx_rect(bl,bt,br-bl,bb-bt);
-  
+
   (recently_copied)?(
     gfx_rgb(TH.KEY_COLOR_RANGE_TEXT);
   ):(
@@ -3137,9 +3185,9 @@ function drawCopyCurveButton(gzone)
   );
   gfx_xy(bl+10,bt+7);
   gfx_drawstr("Cpy");
-  
+
   cad = curveAddress(g_selected_control);
-  (in_rect && mouse_click == 1) ? ( 
+  (in_rect && mouse_click == 1) ? (
     i=0;while(i<CURVESIZE) (
       gmem[GMEM_DUMP_CURVE_BUF+i] = cad[i];
       i+=1;
@@ -3148,25 +3196,25 @@ function drawCopyCurveButton(gzone)
   );
 );
 
-function drawPasteCurveButton(gzone) 
+function drawPasteCurveButton(gzone)
   local(bl,bt,br,bb,in_rect,cad,i,in_validation,validation_timer)
 (
   bl = gzone.l+242;
   bt = gzone.b;
   br = bl + 42;
   bb = bt + 20;
-   
+
   in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
-  
+
   (in_validation == 1)?(
     gfx_rgb(in_rect ? TH.KEY_BLACK_COLOR_1 : TH.KEY_BLACK_COLOR_1_D);
   ):(
     gfx_rgb(in_rect ? TH.MONO_B_H : TH.MONO_B);
   );
   gfx_rect(bl,bt,br-bl,bb-bt);
-  
+
   gfx_xy(bl+10,bt+7);
-  
+
   (in_validation == 1)?(
     gfx_rgb(TH.KEY_COLOR_RANGE_TEXT);
     gfx_drawstr("Ok?");
@@ -3174,14 +3222,14 @@ function drawPasteCurveButton(gzone)
     gfx_rgb(TH.MONO_B_TEXT);
     gfx_drawstr("Pst");
   );
-  
+
   (time_precise() - validation_timer > 2.0) ? (
     in_validation = 0;
   );
-  
+
   cad = curveAddress(g_selected_control);
 
-  (in_rect && mouse_click == 1) ? ( 
+  (in_rect && mouse_click == 1) ? (
     (in_validation == 1)?(
       i=0;while(i<CURVESIZE) (
         cad[i] = gmem[GMEM_DUMP_CURVE_BUF+i];
@@ -3197,7 +3245,7 @@ function drawPasteCurveButton(gzone)
 
 // Gets the curve in GMEM cooresponding to button
 // And builds a curve for the user.
-function fsetCurveButtonCallback(set_num, row_num, col_num) 
+function fsetCurveButtonCallback(set_num, row_num, col_num)
   local(i,curve,curve_addr,min_bound,max_bound)
 (
   curve       = selectedControlCurveAddress();
@@ -3213,50 +3261,50 @@ function fsetCurveButtonCallback(set_num, row_num, col_num)
   );
 );
 
-function drawFsetCurveButton(bzone, voffset, set_num, row_num, col_num) 
+function drawFsetCurveButton(bzone, voffset, set_num, row_num, col_num)
   local(preview_address,bl,bt,br,bb,i,curve_addr)
-( 
+(
   preview_address = getFSetFunctionPreviewAddress(set_num, row_num, col_num);
 
   bl = bzone.margin + 5 + bzone.l + col_num*41;
   bt = bzone.margin + bzone.t + row_num*42 + voffset + 10;
   br = bl + 32;
   bb = bt + 32;
-   
+
   mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt ?
   (
-   gfx_rgb(TH.MONO_B_H);   
+   gfx_rgb(TH.MONO_B_H);
    // Handle the callback in the draw function... erm
    (mouse_click==1) ? (
       fsetCurveButtonCallback(set_num, row_num, col_num);
-   ); 
+   );
   ):
-  ( 
+  (
     gfx_rgb(TH.MONO_B);
   );
-  
+
   // Draw the button rect
   gfx_x   = bl;
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
-     
+
   // Draw the button points
   gfx_rgb(TH.MONO_B_CURVE);
-  gfx_x = bl; gfx_y = bb -31*gmem[preview_address+0] - 0.5; 
-  
+  gfx_x = bl; gfx_y = bb -31*gmem[preview_address+0] - 0.5;
+
   i = 1;
   while(i<PREVIEWSIZE)
   (
     gfx_lineto(bl+i, bb - 31*gmem[preview_address+i] - 0.5);
     i+=1;
-  );  
+  );
 );
 
 
 // Curve buttons
-function drawCurveButtons(bzone) 
-  local(bt, bb, bl, br, by, r, c, 
-    has_sets, cur_set_num, is_selected, 
+function drawCurveButtons(bzone)
+  local(bt, bb, bl, br, by, r, c,
+    has_sets, cur_set_num, is_selected,
     cur_set_adr, cur_set_desc, got_event, ri, ci, in_rect,
     w, h, bww, bwx, bwy, si, sc, loff, offx, offy, offr,
     slider_l, slider_w, slider_t, sli_l, sli_r, sli_t, sli_b,
@@ -3266,12 +3314,12 @@ function drawCurveButtons(bzone)
 (
   sc = getFSetCount();
   cur_set_num = getCurrentFSet();
-     
+
   tabs_per_row  = 7;
   tab_width     = 70;
   tab_height    = 16;
   loff          = 6;
-  
+
   (sc == 0)?(
     gfx_rgb(TH.DEFAULT_FONT);
     gfx_xy(bzone.l, bzone.t + bzone.margin + 50);
@@ -3281,56 +3329,56 @@ function drawCurveButtons(bzone)
     gfx_x = bzone.l; gfx_y += 20;
     gfx_drawstr("plugin through ReaPack and read the");
     gfx_x = bzone.l; gfx_y += 20;
-    gfx_drawstr("README.md file in the Data folder of");    
+    gfx_drawstr("README.md file in the Data folder of");
     gfx_x = bzone.l; gfx_y += 20;
-    gfx_drawstr("MIDI CC Mapper X located here :");   
+    gfx_drawstr("MIDI CC Mapper X located here :");
     gfx_x = bzone.l; gfx_y += 40;
-    gfx_drawstr("<RSRC>/Data/talagan_MIDI CC Mapper X");            
+    gfx_drawstr("<RSRC>/Data/talagan_MIDI CC Mapper X");
   );
-    
+
   si    = 0;
   offy  = 0;
   while(si < sc)
-  (   
+  (
     is_selected = (si == cur_set_num);
-        
+
     offx  = 10 + (si % tabs_per_row) * (tab_width + 1);
     offy  = floor(si / tabs_per_row) * (tab_height + 1);
     offr  = floor(si / tabs_per_row) * loff;
-        
+
     bl = bzone.l + offx + offr;
     br = bl + tab_width;
     bt = bzone.t + bzone.margin + offy;
     bb = bt + tab_height;
-    
-    in_rect = (mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt); 
-        
+
+    in_rect = (mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt);
+
     (in_rect)? (
       gfx_rgb((is_selected)?(TH.TAB_BG_S_H):(TH.TAB_BG_H));
       (mouse_click == 1)?(
         setCurrentFset(si);
       );
-    ):( 
+    ):(
       gfx_rgb((is_selected)?(TH.TAB_BG_S):(TH.TAB_BG));
     );
-        
+
     gfx_rect(bl,bt,br-bl,bb-bt);
-        
+
     // Create a tab
     gfx_rgb((is_selected)?(TH.TAB_TEXT_S):(TH.TAB_TEXT));
-        
+
     tab_text = getFSetTab(si);
     w = 0; h = 0; gfx_measurestr(tab_text,w,h);
     to = (tab_width - w)/2;
     gfx_x = bl+to+1;
-    gfx_y = bt+4;        
+    gfx_y = bt+4;
     gfx_drawstr(tab_text);
     si += 1;
   );
-  
+
   voff = offy+20;
   (sc > 0)?(
-      
+
     // Curve buttons
     ri = 0;
     while(ri < FSET_ROW_COUNT) (
@@ -3343,74 +3391,74 @@ function drawCurveButtons(bzone)
       );
       ri += 1;
     );
-    
+
     (isFSetParametric(cur_set_num))?(
-                  
-      pid         = getFSetParametricID(cur_set_num);             
-      
+
+      pid         = getFSetParametricID(cur_set_num);
+
       param_label = getParametricFSetParameterName(pid);
       vmin        = getParametricFSetParameterMin(pid);
       vmax        = getParametricFSetParameterMax(pid);
       rounding    = getParametricFSetParamRounding(pid);
-                  
+
       bwx = bzone.l + 10;
       bwy = bzone.t + voff + 5*50;
       bww = 220;
-      
+
       gfx_measurestr(param_label,w,h);
       gfx_rgb(TH.DEFAULT_FONT);
       gfx_x   = bwx; gfx_y = bwy;
-      gfx_drawstr(param_label); 
-      
+      gfx_drawstr(param_label);
+
       slider_w = bww - w;
       slider_l = bwx + w + 10;
       slider_t = bwy + 2;
-      
+
       gfx_rgb(TH.MONO_B);
       gfx_rect(slider_l, slider_t, slider_w, 3);
-      
+
       gfx_rgb(TH.DEFAULT_FONT);
       gfx_xy(slider_l + slider_w + 10, bwy);
-      
+
       pval = getFSetParameter(cur_set_num);
-      
+
       pos = (pval - vmin)/(vmax - vmin);
-      
+
       gfx_rect(slider_l + (pos * slider_w) - 4, slider_t - 4, 7, 11);
-      
+
       sli_l = slider_l;
       sli_r = slider_l + slider_w;
       sli_t = slider_t - 4;
       sli_b = slider_t + 7;
-      
+
       in_rect = (mouse_x >= sli_l-5 && mouse_x <= sli_r+5 && mouse_y >= sli_t-5 && mouse_y <= sli_b+5);
-      
+
       (in_rect)?(
         (mouse_click == 1)?(
           mouse_capturator = "fset_param_slider";
         );
       );
-      
+
       (mouse_cap == 1 && mouse_capturator == "fset_param_slider")?(
         new_pos = (mouse_x - sli_l)/(sli_r - sli_l);
         new_val = vmin + new_pos * (vmax - vmin);
         (new_val < vmin)?(new_val = vmin);
         (new_val > vmax)?(new_val = vmax);
-        
+
         new_val = (rounding * roundi((new_val * 100)/rounding))/100.0;
         setFSetParameter(cur_set_num, new_val);
         precalcParametricSet(cur_set_num);
       );
-      
+
       str = #;
       sprintf(str, "%.2f", pval+0.0001);
       gfx_drawstr(str);
-      
+
     ):
     (
       gfx_rgb(TH.DEFAULT_FONT);
       gfx_x   = bzone.l+10; gfx_y = bzone.t + voff + 5*50;
-      gfx_drawstr(getFSetDescription(cur_set_num)); 
+      gfx_drawstr(getFSetDescription(cur_set_num));
     );
   );
 );
@@ -3421,68 +3469,68 @@ function drawBoundariesPanel()
   gfx_rgb(TH.DEFAULT_FONT);
 
   with_lsb = controlHasOperationalHighResOutput(g_selected_control);
-  
+
   left = 670;
   top  = 170;
-  
+
   gfx_xy(left+74, GUI_CONTROL_PARAMS_TOP + top + 2);
   gfx_drawStr("Curve limits");
-  
+
   gfx_xy((with_lsb)?(left+73):(left+112), GUI_CONTROL_PARAMS_TOP + top + 42);
   gfx_drawStr("MSB");
-  
+
   (with_lsb)?(
     gfx_xy(left+152, GUI_CONTROL_PARAMS_TOP + top + 42);
     gfx_drawStr("LSB");
   );
-  
+
   gfx_xy((with_lsb)?(left):(left+40), GUI_CONTROL_PARAMS_TOP + top + 72);
   gfx_drawStr("Min");
-  
+
   gfx_xy((with_lsb)?(left):(left+40), GUI_CONTROL_PARAMS_TOP + top + 102);
   gfx_drawStr("Max");
-  
+
   got_event = 0;
-  
-  got_event |= drawAddOrSubWidget("min_spinbox_msb",CONTROL_MINS_MSB,g_selected_control,(with_lsb)?(left+50):(left+90),GUI_CONTROL_PARAMS_TOP+top+70,0,127,40,0); 
-  got_event |= drawAddOrSubWidget("max_spinbox_msb",CONTROL_MAXS_MSB,g_selected_control,(with_lsb)?(left+50):(left+90),GUI_CONTROL_PARAMS_TOP+top+100,0,127,40,0); 
-  
+
+  got_event |= drawAddOrSubWidget("min_spinbox_msb",CONTROL_MINS_MSB,g_selected_control,(with_lsb)?(left+50):(left+90),GUI_CONTROL_PARAMS_TOP+top+70,0,127,40,0);
+  got_event |= drawAddOrSubWidget("max_spinbox_msb",CONTROL_MAXS_MSB,g_selected_control,(with_lsb)?(left+50):(left+90),GUI_CONTROL_PARAMS_TOP+top+100,0,127,40,0);
+
   (with_lsb)?(
     got_event |= drawAddOrSubWidget("min_spinbox_lsb",CONTROL_MINS_LSB,g_selected_control,left+130,GUI_CONTROL_PARAMS_TOP+top+70,0,127,40,0);
-    got_event |= drawAddOrSubWidget("max_spinbox_lsb",CONTROL_MAXS_LSB,g_selected_control,left+130,GUI_CONTROL_PARAMS_TOP+top+100,0,127,40,0); 
+    got_event |= drawAddOrSubWidget("max_spinbox_lsb",CONTROL_MAXS_LSB,g_selected_control,left+130,GUI_CONTROL_PARAMS_TOP+top+100,0,127,40,0);
   );
 
   got_event?(
-  
+
     min_bound = controlCurrentMinBound01(g_selected_control)*127;
     max_bound = controlCurrentMaxBound01(g_selected_control)*127;
-   
+
     curve = curveAddress(g_selected_control);
-         
+
     // Reclamp the curve.
     i = 0;
     while(i<CURVESIZE) (
-    
+
       (curve[i]<min_bound)?(curve[i] = min_bound);
       (curve[i]>max_bound)?(curve[i] = max_bound);
-      
+
       i+=1;
     );
   );
 );
 
-function drawCurvezone() 
+function drawCurvezone()
   local(curve, curve_panel_top, left, top, right, bottom, gridstep, gzone, bzone, i, t1,t2,t3,t4)
 (
    // Curve zone
-    curve_panel_top = GUI_CONTROL_PARAMS_TOP+90;  
+    curve_panel_top = GUI_CONTROL_PARAMS_TOP+90;
     curve = selectedControlCurveAddress();
-   
+
     gzone = 0;
     gzone.margin = 20;
-    
+
     gzone.l   = 10;
-    gzone.t   = curve_panel_top; 
+    gzone.t   = curve_panel_top;
     gzone.ih  = (CURVESIZE-1)*RESOLUTION;
     gzone.iw  = (CURVESIZE-1)*RESOLUTION;
     gzone.it  = gzone.t  + gzone.margin;
@@ -3491,31 +3539,31 @@ function drawCurvezone()
     gzone.ib  = gzone.it + gzone.ih;
     gzone.r   = gzone.ir + gzone.margin;
     gzone.b   = gzone.ib + gzone.margin;
-  
+
     left   = gzone.il;
     right  = gzone.ir;
     top    = gzone.it;
-    bottom = gzone.ib; 
-   
+    bottom = gzone.ib;
+
     bzone         = 0;
     bzone.margin  = 20;
     bzone.l       = gzone.r;
     bzone.t       = gzone.t;
-    
+
     t1        = top;
     t2        = bottom - gzone.ih * controlCurrentMaxBound01(g_selected_control);
     t3        = bottom - gzone.ih * controlCurrentMinBound01(g_selected_control);
     t4        = bottom;
-    
+
     // Draw background
     gfx_rgb(TH.CURVE_BG);
     gfx_rect(gzone.l+10,gzone.t+10,gzone.r-gzone.l-20,gzone.b-gzone.t-20);
-    
+
     gfx_rgb(TH.CURVE_BG_EXCL);
     gfx_rect(left,t1,right-left,t2-t1);
     gfx_rect(left,t3,right-left,t4-t3);
-    
-      
+
+
     // Draw grid
     gfx_rgb(TH.CURVE_GRID);
     gridstep = (CURVESIZE/4)*RESOLUTION;
@@ -3525,7 +3573,7 @@ function drawCurvezone()
     gfx_line(left,top+1*gridstep,right,top+1*gridstep);
     gfx_line(left,top+2*gridstep,right,top+2*gridstep);
     gfx_line(left,top+3*gridstep,right,top+3*gridstep);
-      
+
     // Draw border
     gfx_rgb(TH.CURVE_BORDER);
     gfx_x = left;
@@ -3534,30 +3582,30 @@ function drawCurvezone()
     gfx_lineto(right,bottom);
     gfx_lineto(left,bottom);
     gfx_lineto(left,top);
-     
+
     // Draw curve
     gfx_rgb(TH.CURVE);
     gfx_x = left;
     gfx_y = bottom-roundi(RESOLUTION*curve[0]);
-      
+
     i = 1; while(i<CURVESIZE)(
       gfx_lineto(left+i*RESOLUTION, bottom - roundi(RESOLUTION*curve[i]));
-      i+=1; 
+      i+=1;
     );
-      
-    gfx_rgb(TH.CURVE_CURRENT_VALUE);   
+
+    gfx_rgb(TH.CURVE_CURRENT_VALUE);
     // Draw last event
     // Use abs because the wheel may use negative value here
     gfx_circle(left + abs(CONTROL_LAST_IN[g_selected_control])*RESOLUTION ,bottom-floor(1.5 + RESOLUTION*CONTROL_LAST_OUT[g_selected_control]),3);
-        
-    mousePenCallback(gzone);    
-        
+
+    mousePenCallback(gzone);
+
     drawCurveButtons(bzone);
     drawMousePenButton(bzone);
     drawSmoothButton(bzone);
     drawCopyCurveButton(bzone);
     drawPasteCurveButton(bzone);
-    
+
     drawBoundariesPanel();
 );
 
@@ -3576,7 +3624,7 @@ function onControlSelect()
   g_edited_input = "";
 );
 
-function drawWheel(wh_num) 
+function drawWheel(wh_num)
   local(control_num, in_rect, slider_zone_x_offset, slider_zone_y_offset,
         slider_h, slider_w, slider_l, slider_t, slider_b, slider_r,
         slider_zone_x_offset, slider_zone_y_offset,
@@ -3584,43 +3632,43 @@ function drawWheel(wh_num)
         cval)
 (
   control_num = (wh_num == 0)?(CONTROL_MOD_WHEEL):(CONTROL_PITCH_BEND);
- 
+
   slider_zone_x_offset = (wh_num == 0)?(45):(20);
   slider_zone_y_offset = CONTROL_PANEL_TOP + 32;
-  
-  slider_h     = 70 + 5;  
+
+  slider_h     = 70 + 5;
   slider_w     = 15;
   slider_t     = slider_zone_y_offset;
-  slider_l     = slider_zone_x_offset; 
+  slider_l     = slider_zone_x_offset;
   slider_b     = slider_t + slider_h;
   slider_r     = slider_l + slider_w;
 
   in_rect = (mouse_x >= slider_l && mouse_x <= slider_r && mouse_y <= slider_b && mouse_y >= slider_t);
-  
+
   // Click event
   mouse_click == 1 && in_rect ?
   (
     g_selected_control == control_num?(g_selected_control = NONE):(g_selected_control = control_num);
     onControlSelect();
   );
-  
+
   // Draw background
   g_selected_control == control_num ?
   (
     gfx_rgb(TH.CONTROL_HIGHLIGHT);
     gfx_rect(slider_l-5,slider_t-5,slider_w+10,slider_h+10);
   );
-  
-  // Draw wheel body 
+
+  // Draw wheel body
   gfx_rgb_control_high(control_num);
   gfx_rect(slider_l,slider_t,slider_w,slider_h);
-    
+
   // Draw Cursor
   cval = CONTROL_LAST_IN[control_num]/127.0;
   gfx_rgb_control_low(control_num);
-      
+
   rect_x = slider_l;
-  
+
   (wh_num == 0)?(
     // Mod wheel
     rect_y = slider_b - cval*65 - 10;
@@ -3632,7 +3680,7 @@ function drawWheel(wh_num)
     rect_y = slider_b - cval*64 - 10;
     gfx_circle(rect_x+7,rect_y+4,4,1);
   );
- 
+
 );
 
 function drawPad(pad_num, is_pedal)
@@ -3643,10 +3691,10 @@ function drawPad(pad_num, is_pedal)
          str, str_h, str_w)
 (
   control_num = (is_pedal==1)?(CONTROL_PEDALS_START + pad_num):(CONTROL_PADS_START + pad_num);
- 
-  slider_h     = is_pedal == 1?(12):(22);  
+
+  slider_h     = is_pedal == 1?(12):(22);
   slider_w     = is_pedal == 1?(15):(32);
- 
+
   slider_zone_x_offset = (is_pedal==1)?(77):(
     537 + (pad_num % 5) * (slider_w+9);
   );
@@ -3654,28 +3702,28 @@ function drawPad(pad_num, is_pedal)
   (
     30 + floor(pad_num / 5) * (slider_h+23);
   );
-  
+
   slider_t     = CONTROL_PANEL_TOP + slider_zone_y_offset;
-  slider_l     = slider_zone_x_offset; 
+  slider_l     = slider_zone_x_offset;
   slider_b     = slider_t + slider_h;
   slider_r     = slider_l + slider_w;
-  
+
   in_rect = (mouse_x >= slider_l && mouse_x <= slider_r && mouse_y <= slider_b && mouse_y >= slider_t);
-  
+
   // Handle events
   mouse_click == 1 && in_rect ?
   (
     g_selected_control == control_num?(g_selected_control = NONE):(g_selected_control = control_num);
     onControlSelect();
   );
-  
+
   // Draw highlight
   g_selected_control == control_num ?
   (
-    gfx_rgb(TH.CONTROL_HIGHLIGHT);  
+    gfx_rgb(TH.CONTROL_HIGHLIGHT);
     gfx_rect(slider_l-3,slider_t-3,slider_w+6,slider_h+((is_pedal==1)?(7):(17)) );
   );
-  
+
   cval = CONTROL_LAST_IN[control_num]/127.0;
 
   // Draw body
@@ -3690,30 +3738,30 @@ function drawPad(pad_num, is_pedal)
       gfx_rgb_control_mid(control_num);
     );
     gfx_rect(slider_l,slider_t,slider_w,slider_h);
-     
+
     // Draw small line pattern that make this look like a pedal
     gfx_rgb( (g_selected_control == control_num)?(TH.CONTROL_HIGHLIGHT):(TH.BACKGROUND) );
-    gfx_line(slider_l,slider_t+4,slider_r,slider_t+4);  
-    gfx_line(slider_l+3,slider_t,slider_l+3,slider_t+4);  
-    gfx_line(slider_l+7,slider_t,slider_l+7,slider_t+4);  
-    gfx_line(slider_l+11,slider_t,slider_l+11,slider_t+4);  
-     
+    gfx_line(slider_l,slider_t+4,slider_r,slider_t+4);
+    gfx_line(slider_l+3,slider_t,slider_l+3,slider_t+4);
+    gfx_line(slider_l+7,slider_t,slider_l+7,slider_t+4);
+    gfx_line(slider_l+11,slider_t,slider_l+11,slider_t+4);
+
   ):(
-   
+
     gfx_rgb_control_mid(control_num);
     gfx_rect(slider_l,slider_t,slider_w,slider_h);
-    
+
     // Growing center rect
     (CONTROL_ENABLED[control_num] == 1)?(
       slider_w_inner = roundi(slider_w * cval / 2)*2;
       slider_h_inner = roundi(slider_h * cval / 2)*2;
       slider_l_inner = slider_l + (slider_w - slider_w_inner) * 0.5;
       slider_t_inner = slider_t + (slider_h - slider_h_inner) * 0.5;
-            
+
       gfx_rgb_control_high(control_num);
       gfx_rect(slider_l_inner,slider_t_inner,slider_w_inner,slider_h_inner);
-    );  
-  
+    );
+
     // Draw Label
     gfx_rgb_control_high(control_num);
     gfx_setfont(1);
@@ -3723,7 +3771,7 @@ function drawPad(pad_num, is_pedal)
     gfx_x = slider_l + slider_w/2 - str_w/2; gfx_y = slider_b+1;
     gfx_drawstr(str);
     gfx_setfont(0);
-  ); 
+  );
 );
 
 function drawPedal(ped_num)
@@ -3731,7 +3779,7 @@ function drawPedal(ped_num)
   drawPad(ped_num,1);
 );
 
-function drawFader(sl_num) 
+function drawFader(sl_num)
    local(control_num, cval, rect_x, rect_y,
          str, str_w, str_h,
          slider_zone_x_offset, slider_zone_y_offset,
@@ -3739,32 +3787,32 @@ function drawFader(sl_num)
          slider_w, slider_h, slider_t, slider_l, slider_b, slider_r, s)
 (
   control_num = CONTROL_FADERS_START + sl_num;
- 
+
   slider_zone_x_offset = 110;
   slider_zone_y_offset = 32;
-  
+
   slider_inter = 6;
   slider_w     = 15;
-  slider_h     = slider_inter*10 + 5;  
+  slider_h     = slider_inter*10 + 5;
   slider_t     = CONTROL_PANEL_TOP + slider_zone_y_offset;
-  slider_l     = slider_zone_x_offset + sl_num * 20; 
+  slider_l     = slider_zone_x_offset + sl_num * 20;
   slider_b     = slider_t + slider_h;
   slider_r     = slider_l + slider_w;
-  
+
   // Handle events
   mouse_click == 1 && mouse_x >= slider_l && mouse_x <= slider_r && mouse_y <= slider_b && mouse_y >= slider_t ?
   (
     g_selected_control == control_num?(g_selected_control = NONE):(g_selected_control = control_num);
     onControlSelect();
   );
-  
+
   // Draw background
   g_selected_control == control_num ?
   (
-    gfx_rgb(TH.CONTROL_HIGHLIGHT); 
+    gfx_rgb(TH.CONTROL_HIGHLIGHT);
     gfx_rect(slider_l-2,slider_t-6,slider_w+4,slider_h+20);
   );
-  
+
   // Draw tics
   gfx_rgb_control_mid(control_num);
   s = 0;
@@ -3773,14 +3821,14 @@ function drawFader(sl_num)
     gfx_line(slider_l + 3, 2 + slider_t + s*slider_inter, slider_r - 4, 2 + slider_t + s*slider_inter);
     s += 1;
   );
-  
+
   // Draw Cursor
   cval = CONTROL_LAST_IN[control_num]/127.0;
   gfx_rgb_control_high(control_num);
   rect_x = slider_l;
   rect_y = slider_b - cval*slider_inter*10-5;
   gfx_rect(rect_x, rect_y, slider_w,5);
-  
+
   // Draw Label
   gfx_rgb_control_high(control_num);
   gfx_setfont(1);
@@ -3801,24 +3849,24 @@ function drawKeyIcon(control_num, kbr, l, icon_top, txt)
   gfx_rect(l,    icon_top + 6, 9, 2);
   gfx_rect(l+10, icon_top + 6, 9, 2);
   gfx_rect(l+20, icon_top + 6, 9, 2);
-  
-  gfx_rect(l+1,  icon_top + 9, 8, 6); 
+
+  gfx_rect(l+1,  icon_top + 9, 8, 6);
   gfx_rect(l+10, icon_top + 9, 9, 6);
-  gfx_rect(l+20, icon_top + 9, 8, 6); 
-  
+  gfx_rect(l+20, icon_top + 9, 8, 6);
+
   // Black keys
-  //(en)?(gfx_rgb_kbr_low(kbr, en)):(gfx_rgb_control_low(control_num));  
+  //(en)?(gfx_rgb_kbr_low(kbr, en)):(gfx_rgb_control_low(control_num));
   gfx_rgb_control_low(control_num);
-  gfx_rect(l+5,  icon_top, 7, 5); 
-  gfx_rect(l+16, icon_top, 7, 5); 
-  
-  gfx_rgb_control_high(control_num);  
+  gfx_rect(l+5,  icon_top, 7, 5);
+  gfx_rect(l+16, icon_top, 7, 5);
+
+  gfx_rgb_control_high(control_num);
   gfx_setfont(1);
   gfx_measurestr(txt,w,h);
   gfx_xy(l+(29-w)/2,icon_top + 17);
   gfx_drawstr(txt);
   gfx_setfont(0);
-  
+
 );
 
 function drawVelAtWidget(kbr,isVel)
@@ -3830,39 +3878,39 @@ function drawVelAtWidget(kbr,isVel)
   control_num          = ((isVel)?(CONTROL_VELOCITY_START):(CONTROL_AFTERTOUCH_START)) + kbr;
   is_control_enabled   = (CONTROL_ENABLED[control_num] == 1);
   is_control_selected  = (g_selected_control == control_num);
- 
+
   slider_w      = 30;
   slider_h      = 20;
   slider_full_h = 28;
- 
+
   slider_t      = CONTROL_PANEL_TOP + 32 + ((isVel)?(0):(42));
-  slider_l      = 752 + kbr*42; 
-  
+  slider_l      = 752 + kbr*42;
+
   slider_r      = slider_l + slider_w;
   slider_b      = slider_t + slider_full_h;
-  
+
   in_rect = (mouse_x >= slider_l && mouse_x <= slider_r && mouse_y <= slider_b && mouse_y >= slider_t);
-  
+
   // Click event
   mouse_click == 1 && in_rect ?
   (
     is_control_selected?(g_selected_control = NONE):(g_selected_control = control_num);
     onControlSelect();
   );
-  
+
   in_rect?(
     g_kbr_to_highlight = kbr;
   );
-  
+
   // Draw background
   is_control_selected ?
   (
-    gfx_rgb(TH.CONTROL_HIGHLIGHT); 
+    gfx_rgb(TH.CONTROL_HIGHLIGHT);
     gfx_rect(slider_l-5,slider_t-5,slider_w+10,slider_full_h+10);
   );
-  
+
   // Icon
-  drawKeyIcon(control_num, kbr, slider_l, slider_t+2, 
+  drawKeyIcon(control_num, kbr, slider_l, slider_t+2,
     (isVel)?("Vel"):("AT");
   );
 );
@@ -3870,44 +3918,44 @@ function drawVelAtWidget(kbr,isVel)
 function drawVelocityWidget(kbr)    ( drawVelAtWidget(kbr,1); );
 function drawAftertouchWidget(kbr)  ( drawVelAtWidget(kbr,0); );
 
-function drawKnob(knob_num) 
-  local(kb_zone_x_offset, kb_zone_y_offset, 
+function drawKnob(knob_num)
+  local(kb_zone_x_offset, kb_zone_y_offset,
         kb_l, kb_r, kb_t, kb_b,
-        kb_center_x, kb_center_y, 
+        kb_center_x, kb_center_y,
         control_num,
-        xpos, ypos, t, cval, x, y, 
+        xpos, ypos, t, cval, x, y,
         str_w, str_h, str)
 (
   control_num = CONTROL_KNOBS_START + knob_num;
 
   kb_zone_x_offset = 335;
   kb_zone_y_offset = 41;
-  
+
   xpos = (knob_num % 5);
   ypos = floor(knob_num / 5);
-  
+
   kb_center_x = kb_zone_x_offset + xpos*43;
   kb_center_y =  CONTROL_PANEL_TOP + kb_zone_y_offset + ypos*44;
-  
+
   kb_l        = kb_center_x - 16;
   kb_r        = kb_center_x + 17;
   kb_t        = kb_center_y - 16;
   kb_b        = kb_center_y + 17;
-  
+
   // Handle events
   mouse_click == 1 && mouse_x >= kb_l && mouse_x <= kb_r && mouse_y <= kb_b && mouse_y >= kb_t ?
   (
     (g_selected_control == control_num)?(g_selected_control = NONE):(g_selected_control = control_num);
-    onControlSelect();   
+    onControlSelect();
   );
-  
+
   // Draw background
   g_selected_control == control_num ?
   (
-    gfx_rgb(TH.CONTROL_HIGHLIGHT);  
+    gfx_rgb(TH.CONTROL_HIGHLIGHT);
     gfx_rect(kb_l,kb_t,33,43);
   );
-  
+
   // KB Tics
   gfx_rgb_control_high(control_num);
   t = 0;
@@ -3915,25 +3963,25 @@ function drawKnob(knob_num)
   (
     gfx_line(kb_center_x,kb_center_y,kb_center_x + floor(14*KNOB_TICS_X[t]+0.5), kb_center_y + floor(14*KNOB_TICS_Y[t]+0.5));
     t += 1;
-  ); 
-  
+  );
+
   // KB Background
   gfx_rgb_control_mid(control_num);
   gfx_circle(kb_center_x,kb_center_y,12,1,0);
-  
+
   // KB Border
   gfx_rgb((g_selected_control == control_num)?(TH.CONTROL_HIGHLIGHT):(TH.BACKGROUND));
   gfx_circle(kb_center_x,kb_center_y,12,0,1);
-  
+
   // Cursor
   gfx_rgb_control_high(control_num);
-  
+
   cval = CONTROL_LAST_IN[control_num]/127.0;
   x = floor(knobTic(cval,1)*12 + 0.5);
   y = floor(knobTic(cval,0)*12 + 0.5);
-  
+
   gfx_line(kb_center_x, kb_center_y, kb_center_x + x, kb_center_y + y);
-  
+
   // Draw Label
   gfx_rgb_control_high(control_num);
   gfx_setfont(1);
@@ -3946,65 +3994,65 @@ function drawKnob(knob_num)
 );
 
 // CC Learn widget
-function drawCCLearnButton(cnum) 
+function drawCCLearnButton(cnum)
    local(bl,bt,br,bb,in_rect)
 (
   bl = 253;
   bt = GUI_CONTROL_PARAMS_TOP+24;
   br = bl + 70;
   bb = bt + 15;
-   
+
   in_rect = (mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt);
-  in_rect ? 
+  in_rect ?
   (
-    (isCCLearning())?(gfx_rgb(TH.CC_LEARN_ON_H)):(gfx_rgb(TH.MONO_B_H));   
-    
+    (isCCLearning())?(gfx_rgb(TH.CC_LEARN_ON_H)):(gfx_rgb(TH.MONO_B_H));
+
     mouse_click == 1 ? (
       (isCCLearning())?(disableCCLearn()):(enableCCLearn());
-    ); 
+    );
   ):
   (
-    (isCCLearning())?(gfx_rgb(TH.CC_LEARN_ON)):(gfx_rgb(TH.MONO_B));   
-  );  
+    (isCCLearning())?(gfx_rgb(TH.CC_LEARN_ON)):(gfx_rgb(TH.MONO_B));
+  );
   gfx_x   = bl;
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
-  
+
   // Now the text
   gfx_x   = bl+3;
   gfx_y   = bt+4;
-  (isCCLearning())?(gfx_rgb(TH.CC_LEARN_ON_TEXT)):(gfx_rgb(TH.MONO_B_TEXT));  
+  (isCCLearning())?(gfx_rgb(TH.CC_LEARN_ON_TEXT)):(gfx_rgb(TH.MONO_B_TEXT));
   gfx_drawstr("CC Learn");
 );
 
 // CC Learn widget
-function drawCopySrcButton(cnum) 
+function drawCopySrcButton(cnum)
    local(bl,bt,br,bb,in_rect)
 (
   bl = 253;
   bt = GUI_CONTROL_PARAMS_TOP+44;
   br = bl + 70;
   bb = bt + 15;
-   
+
   in_rect = (mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt);
   in_rect ?
   (
     // Hover in color
-    gfx_rgb(TH.MONO_B_H); 
+    gfx_rgb(TH.MONO_B_H);
     // Handle the callback in the draw function... erm
     mouse_click == 1 ? (
       CONTROL_DSTS[cnum] = CONTROL_SRCS[cnum];
-    ); 
+    );
   ):
   (
     // Hover out color
     gfx_rgb(TH.MONO_B);
-  );  
-  
+  );
+
   gfx_x   = bl;
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
- 
+
   // Now the text
   gfx_x   = bl+3;
   gfx_y   = bt+4;
@@ -4013,7 +4061,7 @@ function drawCopySrcButton(cnum)
 );
 
 // Description label widget
-function drawDescriptionInputLine() 
+function drawDescriptionInputLine()
    local(bl,bt,br,bb,str)
 (
   bl = 130;
@@ -4021,19 +4069,19 @@ function drawDescriptionInputLine()
   br = bl + 146;
   bb = bt + 15;
   str = controlDescription(g_selected_control);
-  
+
   drawInputLine("input_desc", bl, bt, br, bb, str);
 );
 
 // Small label edition widget
-function drawSmallLabelInputLine() 
+function drawSmallLabelInputLine()
    local(bl,bt,br,bb,str)
 (
   bl = 395;
   bt = GUI_CONTROL_PARAMS_TOP+4;
   br = bl + 40;
   bb = bt + 15;
-  
+
   str = controlLabel(g_selected_control);
   drawInputLine("input_sl", bl, bt, br, bb, str);
 );
@@ -4042,23 +4090,23 @@ function passThroughMayClashForControl(control)
    local(kbr,ic,oc)
 (
   (controlShouldPassThrough(control))?(
-    
+
     (isControlVelocity(control) || isControlAfterTouch(control))?(
       // Velo / AT
       kbr = controlKBRange(control);
       ic  = keyboardInputChannel();
       oc  = kbRangeOutputChannel(kbr);
-      
+
       (oc == AS_SRC || ic == oc);
     ):(
       ic  = controlInputChannel(control);
       oc  = controlOutputChannel(control);
-    
+
       (isControlPitchBend(control))?(
         // PB
         (oc == AS_SRC || ic == oc);
       ):(
-        // CC / CP 
+        // CC / CP
         (oc == AS_SRC || ic == oc) && (CONTROL_SRCS[control] == CONTROL_DSTS[control]);
       );
     );
@@ -4068,62 +4116,62 @@ function passThroughMayClashForControl(control)
 );
 
 // Control editor sub panel for midi cc assignment
-function drawAssignZone() 
+function drawAssignZone()
    local(src_cc, src_name, src_is_lsb, src_is_msb,
          dst_cc, dst_name, dst_is_lsb, dst_is_msb,
          kbr, str, w, h)
 (
   gfx_rgb(TH.DEFAULT_FONT);
-    
+
   gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+8;
   gfx_drawStr("Description");
-  
+
   gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+28;
   gfx_drawStr("In  ->");
-  
+
   gfx_x = 30; gfx_y = GUI_CONTROL_PARAMS_TOP+48;
   gfx_drawStr("Out ->");
-  
-  gfx_rgb(TH.DEFAULT_FONT); 
-  gfx_x=90; gfx_y = GUI_CONTROL_PARAMS_TOP+28;  
-  gfx_drawStr("Chan");  
-  
-  gfx_rgb(TH.DEFAULT_FONT); 
-  gfx_x=90; gfx_y = GUI_CONTROL_PARAMS_TOP+48;  
+
+  gfx_rgb(TH.DEFAULT_FONT);
+  gfx_x=90; gfx_y = GUI_CONTROL_PARAMS_TOP+28;
   gfx_drawStr("Chan");
-  
+
+  gfx_rgb(TH.DEFAULT_FONT);
+  gfx_x=90; gfx_y = GUI_CONTROL_PARAMS_TOP+48;
+  gfx_drawStr("Chan");
+
   // Channel In/Out
   (isControlVelocity(g_selected_control) || isControlAfterTouch(g_selected_control)) ?(
-    
+
     kbr = controlKBRange(g_selected_control);
-    
+
     str = textForChannelIn(keyboardInputChannel());
     gfx_measureStr(str, w, h);
-    gfx_rgb(TH.DYN_LABEL); 
-    gfx_xy( 140 + (65-w)/2, GUI_CONTROL_PARAMS_TOP+28);  
+    gfx_rgb(TH.DYN_LABEL);
+    gfx_xy( 140 + (65-w)/2, GUI_CONTROL_PARAMS_TOP+28);
     gfx_drawStr(str);
-    
+
     str = textForChannelOut(kbRangeOutputChannel(kbr));
     gfx_measureStr(str, w, h);
-    gfx_rgb(TH.DYN_LABEL); 
-    gfx_xy( 140 + (65-w)/2, GUI_CONTROL_PARAMS_TOP+48); 
+    gfx_rgb(TH.DYN_LABEL);
+    gfx_xy( 140 + (65-w)/2, GUI_CONTROL_PARAMS_TOP+48);
     gfx_drawStr(str);
-    
+
   ):(
-    drawAddOrSubWidget("chan_src_spinbox",CONTROL_CHAN_SRCS,g_selected_control,130,GUI_CONTROL_PARAMS_TOP+24,0,16,56,0);  
+    drawAddOrSubWidget("chan_src_spinbox",CONTROL_CHAN_SRCS,g_selected_control,130,GUI_CONTROL_PARAMS_TOP+24,0,16,56,0);
     drawAddOrSubWidget("chan_dst_spinbox",CONTROL_CHAN_DSTS,g_selected_control,130,GUI_CONTROL_PARAMS_TOP+44,0,16,56,0);
   );
-  
+
   gfx_rgb(TH.DEFAULT_FONT);
   gfx_x=230; gfx_y = GUI_CONTROL_PARAMS_TOP+28;
   gfx_drawStr("CC");
   gfx_x=230; gfx_y = GUI_CONTROL_PARAMS_TOP+48;
   gfx_drawStr("CC");
-  
+
   (isControlVelocity(g_selected_control) || isControlAfterTouch(g_selected_control) || isControlPitchBend(g_selected_control) ) ?(
-  
+
     // Description
-    
+
     (isControlVelocity(g_selected_control) || isControlAfterTouch(g_selected_control))?(
       kbr = controlKBRange(g_selected_control);
       gfx_rgb_kbr_low(kbr,1);
@@ -4132,77 +4180,83 @@ function drawAssignZone()
     );
     gfx_xy(140, GUI_CONTROL_PARAMS_TOP+8);
     gfx_drawStr(controlName(g_selected_control));
-    
+
     (isControlPitchBend(g_selected_control))?(
       gfx_rgb(TH.DYN_LABEL_DISABLED);
       gfx_xy(275, GUI_CONTROL_PARAMS_TOP+8);
       gfx_drawStr("(Symmetrical - only the positive half of the curve is drawn)");
+
+      gfx_rgb(TH.DEFAULT_FONT);
+      gfx_xy(780, GUI_CONTROL_PARAMS_TOP+8);
+      gfx_drawStr("Reverse");
+
+      drawYesNobutton(REVERSE_PITCH_BEND,0,GUI_CONTROL_PARAMS_TOP+5,850);
     );
-    
+
     // Src CC
     gfx_rgb(TH.DYN_LABEL_DISABLED);
     gfx_x = 260; gfx_y = GUI_CONTROL_PARAMS_TOP+28;
-    gfx_drawStr(controlName(g_selected_control));  
-    (isHighResMidiInputEnabled())?(
-      gfx_rgb(TH.ROUTING_INFO_OK);
-      gfx_drawStr(" [High Res]");
-    );
-    
-    // Dst
-    gfx_rgb(TH.DYN_LABEL_DISABLED);
-    gfx_x = 260; gfx_y = GUI_CONTROL_PARAMS_TOP+48;
-    gfx_drawStr(controlName(g_selected_control));    
-    (isHighResMidiOutputEnabledForControl(g_selected_control))?(
+    gfx_drawStr(controlName(g_selected_control));
+
+    // HR
+    (isControlVelocity(g_selected_control) && isHighResMidiInputEnabledForControl(g_selected_control))?(
       gfx_rgb(TH.ROUTING_INFO_OK);
       gfx_drawStr(" [High Res]");
     );
 
+    // Dst
+    gfx_rgb(TH.DYN_LABEL_DISABLED);
+    gfx_x = 260; gfx_y = GUI_CONTROL_PARAMS_TOP+48;
+    gfx_drawStr(controlName(g_selected_control));
+
+    // HR
+    (isControlVelocity(g_selected_control) && isHighResMidiOutputEnabledForControl(g_selected_control))?(
+      gfx_rgb(TH.ROUTING_INFO_OK);
+      gfx_drawStr(" [High Res]");
+    );
   );
-  
+
   // Standard CC Routing / Renaming
-  (isControlARealCC(g_selected_control))?(
+  (isControlForRealCC(g_selected_control))?(
     // CC or CP
     gfx_x = 295; gfx_y = GUI_CONTROL_PARAMS_TOP+8;
     gfx_drawStr("Small Label");
-    
+
     drawDescriptionInputLine();
     drawSmallLabelInputLine();
 
     drawCCLearnButton(g_selected_control);
     drawCopySrcButton(g_selected_control);
-   
+
     drawAddOrSubWidget("cc_src_spinbox",CONTROL_SRCS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+24,0,128,42,0);
     drawAddOrSubWidget("cc_dst_spinbox",CONTROL_DSTS,g_selected_control,332,GUI_CONTROL_PARAMS_TOP+44,0,128,42,0);
-  
+
     // Name of the src CC
     gfx_rgb(TH.ROUTING_INFO_CCNAME);
     gfx_x = 412;  gfx_y = GUI_CONTROL_PARAMS_TOP+28;
     src_cc     = CONTROL_SRCS[g_selected_control];
     src_name   = midiCCName(src_cc);
-    
+
     src_is_lsb = isALsbCC(src_cc);
     src_is_msb = isAMsbCC(src_cc);
-    
+
     gfx_drawStr(src_name);
-    
-    (src_is_lsb)?(
-      (isHighResMidiInputEnabled())?(
-        gfx_rgb(TH.ROUTING_INFO_NOT_OK);
-        gfx_drawStr(" [LSB not routable in High-Res]");
-      ):(
+
+    (controlHasOperationalHighResInput(g_selected_control))?(
+      gfx_rgb(TH.ROUTING_INFO_OK);
+      str = #;
+      sprintf(str," [High Res 14-bit %d+%d]", (src_is_lsb)?(src_cc-32):(src_cc), (src_is_lsb)?(src_cc):(src_cc+32) );
+      gfx_drawStr(str);
+    ):(
+      (src_is_lsb)?(
         gfx_drawStr(" (LSB)");
       );
-    );
-    
-    (src_is_msb)?(
-      (isHighResMidiInputEnabled())?(
-        gfx_rgb(TH.ROUTING_INFO_OK);
-        gfx_drawStr(" [High Res]");
-      ):(
+      (src_is_msb)?(
         gfx_drawStr(" (MSB)");
       );
     );
-    
+
+
     // Name of the dst CC
     gfx_rgb(TH.ROUTING_INFO_CCNAME);
     gfx_x = 412;  gfx_y = GUI_CONTROL_PARAMS_TOP+48;
@@ -4210,77 +4264,86 @@ function drawAssignZone()
     dst_name   = midiCCName(dst_cc);
     dst_is_lsb = isALsbCC(dst_cc);
     dst_is_msb = isAMsbCC(dst_cc);
-    
+
     gfx_drawStr(dst_name);
-    
-    (dst_is_msb)?(
-      (isHighResMidiOutputEnabledForControl(g_selected_control))?(
-       gfx_rgb(TH.ROUTING_INFO_OK);
-        gfx_drawStr(" [High Res]");
-      ):(
+
+    (controlHasOperationalHighResOutput(g_selected_control))?(
+      gfx_rgb(TH.ROUTING_INFO_OK);
+      str = #;
+      sprintf(str," [High Res 14-bit %d+%d]", (dst_is_lsb)?(dst_cc-32):(dst_cc), (dst_is_lsb)?(dst_cc):(dst_cc+32) );
+      gfx_drawStr(str);
+    ):(
+      (dst_is_lsb)?(
+        gfx_drawStr(" (LSB)");
+      );
+      (dst_is_msb)?(
         gfx_drawStr(" (MSB)");
       );
     );
-    
-    (dst_is_lsb)?(
-      gfx_drawStr(" (LSB)");
-    );
-  ); 
-  
+
+  );
+
   // Potential high res controls
-  (isControlVelocity(g_selected_control) || ccLsbCounterpart(CONTROL_DSTS[g_selected_control]) != NONE)?(
-    
+  ( isControlHighResCapableForInput(g_selected_control) )?(
     gfx_rgb(TH.DEFAULT_FONT);
     gfx_x = (isControlVelocity(g_selected_control))?(365):(455); gfx_y = GUI_CONTROL_PARAMS_TOP+8;
-    gfx_drawStr("High res output");  
-    drawYesNobutton(CONTROL_HIGHRES_OUTPUT_ENABLED,g_selected_control,GUI_CONTROL_PARAMS_TOP+5,(isControlVelocity(g_selected_control))?(500):(590));
+    gfx_drawStr("High res input");
+    drawYesNobutton(CONTROL_HIGHRES_INPUT_ENABLED,g_selected_control,GUI_CONTROL_PARAMS_TOP+5,(isControlVelocity(g_selected_control))?(490):(580));
   );
-  
+
+  // Potential high res controls
+  ( isControlHighResCapableForOutput(g_selected_control) )?(
+    gfx_rgb(TH.DEFAULT_FONT);
+    gfx_x = (isControlVelocity(g_selected_control))?(545):(635); gfx_y = GUI_CONTROL_PARAMS_TOP+8;
+    gfx_drawStr("High res output");
+    drawYesNobutton(CONTROL_HIGHRES_OUTPUT_ENABLED,g_selected_control,GUI_CONTROL_PARAMS_TOP+5,(isControlVelocity(g_selected_control))?(680):(770));
+  );
+
   // In all cases, draw the pass through
   gfx_xy(30,GUI_CONTROL_PARAMS_TOP+68);
   gfx_rgb(TH.DEFAULT_FONT);
   gfx_drawStr("Pass through original event");
   drawAddOrSubWidget("pt_spinbox",CONTROL_PASS_THROUGH,g_selected_control,262,GUI_CONTROL_PARAMS_TOP+64,-1,0,102,1);
-  
+
   (passThroughMayClashForControl(g_selected_control))?(
     gfx_xy(410,GUI_CONTROL_PARAMS_TOP+68);
     gfx_rgb(TH.ROUTING_INFO_NOT_OK);
     gfx_drawStr("Warning! New and original events are likely to interfere.");
   );
-  
+
 );
 
-function drawControlPanel() 
+function drawControlPanel()
    local(i, maxi, str)
 (
   // Header Background
   gfx_rgb(TH.HEADER);
   gfx_rect(0,CONTROL_PANEL_TOP,gfx_w,20);
-       
+
   (g_selected_control != NONE)?(
-  
+
     // Header text
     gfx_rgb(TH.HEADER_TEXT);
     gfx_x = 88; gfx_y = CONTROL_PANEL_TOP+7;
     str = #;
     sprintf(str,"%s / %s", controlName(g_selected_control), controlDescription(g_selected_control));
     gfx_drawstr(str);
-    
+
     // Enable / Disable
     drawEnableDisableButtonForControl(g_selected_control);
   ):(
     gfx_rgb(TH.HEADER_TEXT);
-    gfx_x = 10; gfx_y = CONTROL_PANEL_TOP+7;  
-    gfx_drawstr("Select a control to edit it."); 
+    gfx_x = 10; gfx_y = CONTROL_PANEL_TOP+7;
+    gfx_drawstr("Select a control to edit it.");
   );
-  
+
   drawWheel(0);
   drawWheel(1);
   drawPedal(0);
   drawPedal(1);
   drawPedal(2);
   drawPedal(3);
-  
+
   i = 0; while(i<10)
   (
     drawKnob(i);
@@ -4307,11 +4370,11 @@ function drawControlPanel()
     drawAftertouchWidget(i);
     i += 1;
   );
-  
+
   // Edition of the selected control
   (g_selected_control != NONE)?(
     (CONTROL_ENABLED[g_selected_control] == 1 )?(
-      // Assignment zone   
+      // Assignment zone
       drawAssignZone();
       drawCurveZone();
     ):(
@@ -4326,13 +4389,13 @@ function drawControlPanel()
 //   KEYBOARD PANEL  //
 ////////////////////////
 
-function keyboardKeyColor(k) 
+function keyboardKeyColor(k)
   local(en,bk,cr,col,fac, r,g,b,offset)
 (
   en = isKeyboardFilteringEnabled();
   bk = keyIsBlack(k);
   cr = keyKBRange(k);
-  
+
   col = (en)?(
     (cr == 0)?( (bk)?(TH.KEY_BLACK_COLOR_0):(TH.KEY_WHITE_COLOR_0); ):(
     (cr == 1)?( (bk)?(TH.KEY_BLACK_COLOR_1):(TH.KEY_WHITE_COLOR_1); ):(
@@ -4346,19 +4409,19 @@ function keyboardKeyColor(k)
   ):(
     (bk)?(TH.KEY_BLACK_DISABLED):(TH.KEY_WHITE_DISABLED);
   );
-  
+
   (g_kbr_to_highlight == cr || !en)?(
-   
+
     (offset == -1)?(offset = time_precise());
     fac = 1 + 0.2 * sin(10*(time_precise()-offset));
-    
+
     r = (col>>16)&0xFF; r *= fac; (r>0xFF)?(r=0xFF);
     g = (col>>8)&0xFF;  g *= fac; (g>0xFF)?(g=0xFF);
     b = (col>>0)&0xFF;  b *= fac; (b>0xFF)?(b=0xFF);
-    
+
     col = (r<<16) | (g<<8) | b;
   );
-  
+
   (g_kbr_to_highlight == NONE)?(
     offset = -1;
   );
@@ -4383,40 +4446,40 @@ function drawKBRangeTransposeRow(cr,col,off,name8Va,nameSt)
   gfx_rgb(TH.DEFAULT_FONT);
   gfx_xy(hoff, KEYBOARD_FILTERING_TOP+3+off);
   gfx_drawstr("8vi");
-  
+
   hoff += 27;
   drawAddOrSubWidget(name8Va, KB_RANGE_TRANSPOSE_8VA+cr, 0,hoff,KEYBOARD_FILTERING_TOP+off,  -2,2,   27,0);
   (g_add_or_sub_hover)?(g_kbr_to_highlight = cr);
- 
+
   hoff += 63;
   gfx_rgb(TH.DEFAULT_FONT);
   gfx_xy( hoff, KEYBOARD_FILTERING_TOP+3+off);
   gfx_drawstr("Semi");
-  
+
   hoff += 36;
   drawAddOrSubWidget(nameSt  , KB_RANGE_TRANSPOSE_SEMI_TONES+cr,   0,hoff,KEYBOARD_FILTERING_TOP+off, -12,12, 37,0);
   (g_add_or_sub_hover)?(g_kbr_to_highlight = cr);
-   
+
   hoff += 74;
   drawOnOffButton(KB_RANGE_TRANSPOSE_ENABLED,cr, KEYBOARD_FILTERING_TOP+off, hoff);
 );
 
-function drawTransposePanel() 
-   local(enabled) 
+function drawTransposePanel()
+   local(enabled)
 (
   // Header Background
   gfx_rgb(TH.HEADER);
   gfx_rect(KEYBOARD_PANEL_WIDTH+2,KEYBOARD_FILTERING_TOP,gfx_w - KEYBOARD_PANEL_WIDTH-2,20);
 
-  // Button 
+  // Button
   drawEnableDisableButton(KEYBOARD_TRANSPOSE_ENABLED,0,KEYBOARD_FILTERING_TOP + 3,10 + KEYBOARD_PANEL_WIDTH);
-  
+
   // Title
   gfx_x = 88 + KEYBOARD_PANEL_WIDTH; gfx_y = KEYBOARD_FILTERING_TOP + 7;
- 
+
   gfx_rgb(TH.HEADER_TEXT);
-  gfx_drawstr("Transpose"); 
-  
+  gfx_drawstr("Transpose");
+
   (isKeyboardTranspositionEnabled())?(
     (isKeyboardFilteringEnabled())?(
       drawKBRangeTransposeRow(0,TH.KEY_BLACK_COLOR_0,6+27,"kr_0_8va","kr_0_st");
@@ -4430,8 +4493,8 @@ function drawTransposePanel()
   );
 );
 
-function drawKeyboardChannelsPanel() 
-   local(kf_enabled) 
+function drawKeyboardChannelsPanel()
+   local(kf_enabled)
 (
   kf_enabled = isKeyboardFilteringEnabled();
 
@@ -4447,33 +4510,33 @@ function drawKeyboardChannelsPanel()
   gfx_xy(223,KEYBOARD_PANEL_TOP + 106);
   gfx_rgb(TH.DEFAULT_FONT);
   gfx_drawstr("Out");
-  
+
   (mouse_capturator != "keyboard")?(
     g_kbr_to_highlight = NONE;
   );
-  
+
   drawAddOrSubWidget("chan_out_range_0_spinbox",KB_RANGE_OUTPUT_CHANNEL,0,257,KEYBOARD_PANEL_TOP+102,0,16,46,0);
   (g_add_or_sub_hover)?(g_kbr_to_highlight = 0);
-  
+
   (kf_enabled)?(
-    drawAddOrSubWidget("chan_out_range_1_spinbox",KB_RANGE_OUTPUT_CHANNEL+1,0,347,KEYBOARD_PANEL_TOP+102,-1,16,46,0);  
+    drawAddOrSubWidget("chan_out_range_1_spinbox",KB_RANGE_OUTPUT_CHANNEL+1,0,347,KEYBOARD_PANEL_TOP+102,-1,16,46,0);
     (g_add_or_sub_hover)?(g_kbr_to_highlight = 1);
 
-    drawAddOrSubWidget("chan_out_range_2_spinbox",KB_RANGE_OUTPUT_CHANNEL+2,0,437,KEYBOARD_PANEL_TOP+102,-1,16,46,0);  
+    drawAddOrSubWidget("chan_out_range_2_spinbox",KB_RANGE_OUTPUT_CHANNEL+2,0,437,KEYBOARD_PANEL_TOP+102,-1,16,46,0);
     (g_add_or_sub_hover)?(g_kbr_to_highlight = 2);
-    
-    drawAddOrSubWidget("chan_out_range_3_spinbox",KB_RANGE_OUTPUT_CHANNEL+3,0,527,KEYBOARD_PANEL_TOP+102,-1,16,46,0);  
+
+    drawAddOrSubWidget("chan_out_range_3_spinbox",KB_RANGE_OUTPUT_CHANNEL+3,0,527,KEYBOARD_PANEL_TOP+102,-1,16,46,0);
     (g_add_or_sub_hover)?(g_kbr_to_highlight = 3);
-    
-    drawAddOrSubWidget("chan_out_range_4_spinbox",KB_RANGE_OUTPUT_CHANNEL+4,0,617,KEYBOARD_PANEL_TOP+102,-1,16,46,0);  
+
+    drawAddOrSubWidget("chan_out_range_4_spinbox",KB_RANGE_OUTPUT_CHANNEL+4,0,617,KEYBOARD_PANEL_TOP+102,-1,16,46,0);
     (g_add_or_sub_hover)?(g_kbr_to_highlight = 4);
-    
+
   );
 );
 
 function keyboardKeyClickEvent(i) (
 
-  (mouse_click == 1)?( 
+  (mouse_click == 1)?(
     // Remember that the keybord has click focus
     mouse_capturator      = "keyboard";
     // We clicked on a key, we are colorizing all future hovered keys
@@ -4483,18 +4546,18 @@ function keyboardKeyClickEvent(i) (
     (g_keyboard_color_brush >= KB_RANGE_COUNT)?(g_keyboard_color_brush = 0;);
     (g_keyboard_color_brush < 0)?(g_keyboard_color_brush = KB_RANGE_COUNT - 1;);
   );
-  
+
   ( (mouse_cap == 1 || mouse_cap == 2) && mouse_capturator == "keyboard")?(
-    
+
     // Ok we are changing the status of this key
     KEYBOARD_KEY_COLORS[i] = g_keyboard_color_brush;
     g_kbr_to_highlight = g_keyboard_color_brush;
-  );  
+  );
 );
 
 
-function drawKeyboardPanel() 
-   local(kf_enabled, loff, left, top, white_key_width, key_height_top, key_height_bottom, key_height_full, 
+function drawKeyboardPanel()
+   local(kf_enabled, loff, left, top, white_key_width, key_height_top, key_height_bottom, key_height_full,
          bk, fk, key_top, key_offset, key_width, oct, in_oct_pos, in_rect, i, imax,
          normalized_key_offset, normalized_key_width, str,
          wkcount)
@@ -4504,70 +4567,70 @@ function drawKeyboardPanel()
   // Header Background
   gfx_rgb(TH.HEADER);
   gfx_rect(0,KEYBOARD_FILTERING_TOP,KEYBOARD_PANEL_WIDTH,20);
-  
+
   // Enable/Disable
   drawEnableDisableButton(KEYBOARD_FILTERING_ENABLED,0,KEYBOARD_FILTERING_TOP + 3,10);
 
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 87; gfx_y = KEYBOARD_FILTERING_TOP+7;
-  
+
   gfx_drawstr((kf_enabled)?("Keyboard splitting"):("Keyboard splitting (All keys are green)"));
-  
+
   // 88 keys keyboard
   // A0 : midi note 21
   // C8 : midi note 108
-  
+
   loff              = 20;
   white_key_width   = 9;
   key_height_top    = 35;
   key_height_bottom = 25;
   key_height_full   = key_height_top + key_height_bottom;
-  
+
   key_top           = KEYBOARD_FILTERING_TOP + 30; // Header skip
-  
+
   // Top part of the keyboard
-  i      = 0; 
+  i      = 0;
   imax   = i + (12 * 11); (imax > 128)?(imax = 128);
   fk     = 1;
   while(i<imax) (
     bk = keyIsBlack(i);
-      
+
     oct         = floor(i / 12);
     in_oct_pos  = i%12;
-    
+
     normalized_key_offset = OCTAVE_TOP_KEY_OFFSETS[in_oct_pos];
     normalized_key_width  = OCTAVE_TOP_KEY_WIDTHS[in_oct_pos];
-    
+
     // G9
     (i == 127)?(normalized_key_width = 0.5);
-    
-    key_offset = loff + (normalized_key_offset + oct * 7) * white_key_width; 
+
+    key_offset = loff + (normalized_key_offset + oct * 7) * white_key_width;
     key_width  = normalized_key_width * white_key_width;
-    
+
     (key_width != 0)?(
-    
+
       // Key should appear at the top part of the keyboard
       left = key_offset;
       top  = key_top;
-      
+
       // Draw white keys
       (!kf_enabled)?(
         // Keyboard filtering not enabled, all keys are grayed out
         gfx_rgb(keyboardKeyColor(i));
         gfx_rect(left,top,key_width,key_height_top);
       ):(
-      
+
         // Keyboard filtering enabled, color depends on key conf
         gfx_rgb(keyboardKeyColor(i));
         gfx_rect(left,top,key_width,key_height_top);
-        
-        in_rect = (mouse_x >= left && mouse_y >= top && mouse_x <= (left+key_width) && mouse_y <= (top+key_height_top));       
+
+        in_rect = (mouse_x >= left && mouse_y >= top && mouse_x <= (left+key_width) && mouse_y <= (top+key_height_top));
         (in_rect)?(
-        
+
           keyboardKeyClickEvent(i);
         );
-        
+
       );
 
       // Black separation lines
@@ -4577,11 +4640,11 @@ function drawKeyboardPanel()
       (fk)?(
         gfx_line(left-1,top,left-1,top+key_height_top-1);
       );
-      
+
       (bk)?(
         gfx_line(left,top+key_height_top-1,left+key_width-1,top+key_height_top-1);
         gfx_line(left,top,left+key_width-1,top);
-                
+
         // Key press marker
         (KEY_VELOCITIES[i] > 0)?(
           drawKeyboardKeyMarker(left + floor(key_width/2)-1,top+floor(key_height_top/2));
@@ -4593,19 +4656,19 @@ function drawKeyboardPanel()
   );
 
   // Bottom part of the keyboard
-  wkcount = 0; 
-  i       = 0; 
+  wkcount = 0;
+  i       = 0;
   imax    = i + (12 * 11); (imax > 128)?(imax = 128);
   fk      = 1;
   while(i<imax) (
-  
+
     oct = floor(i / 12);
     bk  = keyIsBlack(i);
-    
+
     (!bk)?(
       left = loff+wkcount*white_key_width;
       top  = key_top + key_height_top;
-    
+
       // Draw white keys
       (!kf_enabled)?(
         // Keyboard filtering not enabled, all keys are grayed out
@@ -4615,14 +4678,14 @@ function drawKeyboardPanel()
       (
         // Keyboard filtering enabled, color depends on key conf
         gfx_rgb(keyboardKeyColor(i));
-        gfx_rect(left,top,white_key_width,key_height_bottom); 
-      
-        in_rect = (mouse_x >= left && mouse_y >= top && mouse_x <= (left+white_key_width) && mouse_y <= (top+key_height_bottom));       
+        gfx_rect(left,top,white_key_width,key_height_bottom);
+
+        in_rect = (mouse_x >= left && mouse_y >= top && mouse_x <= (left+white_key_width) && mouse_y <= (top+key_height_bottom));
         (in_rect)?(
           keyboardKeyClickEvent(i);
         );
-      );  
-            
+      );
+
       // Black separation line
       gfx_rgb(TH.KEY_SEP_LINES);
       gfx_line(left+white_key_width-1,top,left+white_key_width-1,top+key_height_bottom-1);
@@ -4630,12 +4693,12 @@ function drawKeyboardPanel()
       (fk)?(
         gfx_line(left-1,top,left-1,top+key_height_bottom-1);
       );
-      
+
       // Key press marker
       (KEY_VELOCITIES[i] > 0)?(
         drawKeyboardKeyMarker(left + floor(white_key_width/2),top+floor(key_height_bottom/2.1));
       );
-      
+
       (i%12 == 0)?(
         gfx_rgb(TH.KEY_OCTAVA_NUMBER);
         gfx_xy(left+1,top+13);
@@ -4645,21 +4708,21 @@ function drawKeyboardPanel()
         ):(
           sprintf(str, "%d", oct-1);
         );
-        
+
         gfx_setfont(2);
         gfx_drawstr(str);
         gfx_setfont(0);
       );
-      
+
       // Increment white key counter
       wkcount += 1;
     );
-    
+
     // Next key
-    i += 1; 
+    i += 1;
     fk = 0;
   );
-  
+
   drawKeyboardChannelsPanel();
   drawTransposePanel();
 );
@@ -4669,112 +4732,100 @@ function drawBottomBanner()
   // Header Background
   gfx_rgb(TH.HEADER);
   gfx_rect(0,gfx_h-20,gfx_w,20);
-      
+
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("Midi CC Mapper X (4.2) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai"); 
+  gfx_drawstr("Midi CC Mapper X (4.3) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai");
 
   drawSwitchButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin");
 );
 
-function drawGlobalSettingsPanel() 
+function drawGlobalSettingsPanel()
   local(l ,t, r, b, w, in_rect, hh)
 (
   // Header Background
   gfx_rgb(TH.HEADER);
   gfx_rect(0,0,gfx_w,20);
-  
+
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x= 10; gfx_y = 7;
-  gfx_drawstr("Global Settings"); 
-  
+  gfx_drawstr("Global Settings");
+
   // Add an additional button for going back (one never knows)
   drawSwitchButton(GUI_MODE,0,4,gfx_w - 134,"Global settings","Back to plugin");
-  
+
   // MIDI Bus Routing
   hh = 54;
   gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
   gfx_xy(100,hh);
-  gfx_drawstr("MIDI Bus Routing"); 
+  gfx_drawstr("MIDI Bus Routing");
   hh += 22;
   gfx_rgb(TH.DYN_LABEL_NEUTRAL);
   gfx_xy(100,hh);
-  gfx_drawstr("In"); 
+  gfx_drawstr("In");
   gfx_xy(250,hh);
   gfx_drawstr("Out");
   drawAddOrSubWidget("midi_bus_input_widget",MIDI_BUS_INPUT,0,133,hh-4,0,16,56,0);
   drawAddOrSubWidget("midi_bus_output_widget",MIDI_BUS_OUTPUT,0,293,hh-4,0,16,56,0);
   gfx_rgb(TH.DYN_LABEL_NEUTRAL);
   gfx_xy(100,hh+22);
-  gfx_drawstr("MIDI events not matching the input bus will pass through."); 
+  gfx_drawstr("MIDI events not matching the input bus will pass through.");
   hh += 58; // 134
-  
-  // High Res input option
-  drawOnOffButton(HIGHRES_INPUT_ENABLED,0,hh-4,50);
-  gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
-  gfx_xy(100, hh);
-  gfx_drawstr("High-Res midi input");
-  gfx_rgb(TH.DYN_LABEL_NEUTRAL);
-  gfx_xy(100, hh+20);
-  gfx_drawstr("If this option is on, all LSB CCs become 'unroutable' : they are aggregated to their MSB counterparts"); 
-  gfx_xy(100, hh+34);
-  gfx_drawstr("to form High-Res midi CC values. To route these values in that configuration, you should route the MSB CC."); 
-  hh += 75; // 214
- 
-  // Firewall option 
+
+  // Firewall option
   drawOnOffButton(DROP_UNROUTED_CC_MESSAGES,0,hh-4,50);
   gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
   gfx_xy(100, hh);
-  gfx_drawstr("Drop unrouted CC messages"); 
+  gfx_drawstr("Drop unrouted CC messages");
   gfx_rgb(TH.DYN_LABEL_NEUTRAL);
   gfx_xy(100, hh+20);
-  gfx_drawstr("If this option is on, all CC messages from unrouted controls are dropped."); 
+  gfx_drawstr("If this option is on, all CC messages from unrouted controls are dropped.");
   gfx_xy(100, hh+34);
-  gfx_drawstr("This makes the plugin acts as a firewall for the CC controls."); 
+  gfx_drawstr("This makes the plugin acts as a firewall for the CC controls.");
   hh += 55; // 284
-  
+
   // Pitch Bend
   drawOnOffButton(DROP_UNROUTED_PITCH_BEND_MESSAGES,0,hh-4,50);
   gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
   gfx_xy(100, hh);
-  gfx_drawstr("Drop unrouted PitchBend messages"); 
+  gfx_drawstr("Drop unrouted PitchBend messages");
   gfx_rgb(TH.DYN_LABEL_NEUTRAL);
   gfx_xy(100, hh+20);
-  gfx_drawstr("If this option is on, all PitchBend messages that are not routed are dropped."); 
+  gfx_drawstr("If this option is on, all PitchBend messages that are not routed are dropped.");
   gfx_xy(100, hh+34);
-  gfx_drawstr("This makes the plugin acts as a firewall for PitchBend messages."); 
+  gfx_drawstr("This makes the plugin acts as a firewall for PitchBend messages.");
   hh += 55; // 354
-  
+
   // Firewall note
   drawOnOffButton(DROP_UNROUTED_NOTE_MESSAGES,0,hh-4,50);
   gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
   gfx_xy(100, hh);
-  gfx_drawstr("Drop unrouted Note messages"); 
+  gfx_drawstr("Drop unrouted Note messages");
   gfx_rgb(TH.DYN_LABEL_NEUTRAL);
   gfx_xy(100, hh+20);
-  gfx_drawstr("If this option is on, all Note messages that do not match the keyboard input channel are dropped."); 
+  gfx_drawstr("If this option is on, all Note messages that do not match the keyboard input channel are dropped.");
   gfx_xy(100, hh+34);
-  gfx_drawstr("This makes the plugin acts as a firewall for the keyboard."); 
+  gfx_drawstr("This makes the plugin acts as a firewall for the keyboard.");
   hh += 55; // 354
-  
+
   // Firewall AT Poly
   drawOnOffButton(DROP_UNROUTED_AT_POLY_MESSAGES,0,hh-4,50);
   gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
   gfx_xy(100, hh);
-  gfx_drawstr("Drop unrouted Polyphonic AfterTouch messages"); 
+  gfx_drawstr("Drop unrouted Polyphonic AfterTouch messages");
   gfx_rgb(TH.DYN_LABEL_NEUTRAL);
   gfx_xy(100, hh+20);
-  gfx_drawstr("If this option is on, all PAT messages that do not match the keyboard input channel are dropped."); 
+  gfx_drawstr("If this option is on, all PAT messages that do not match the keyboard input channel are dropped.");
   gfx_xy(100, hh+34);
-  gfx_drawstr("This makes the plugin acts as a firewall for polyphonic AfterTouch."); 
+  gfx_drawstr("This makes the plugin acts as a firewall for polyphonic AfterTouch.");
   hh += 75; // 354
-  
-  // Theme option 
+
+  // Theme option
   drawSwitchButton(CURRENT_THEME_NUM,0,hh-4,35,"Light","Dark");
   gfx_rgb(TH.DYN_LABEL_HIGHLIGHT);
   gfx_xy(100,hh);
-  gfx_drawstr("Theme"); 
+  gfx_drawstr("Theme");
   gfx_rgb(TH.DYN_LABEL_NEUTRAL);
   gfx_xy(100,hh+20);
   gfx_drawstr( (currentTheme() == DARK_THEME)?(
@@ -4787,18 +4838,18 @@ function drawGlobalSettingsPanel()
     "A new day will come. And when the sun shines it will shine out the clearer.")
   );
   hh += 125;
-  
+
   // Reload function library
   w = 204; l = (gfx_w - w)/2; t = hh; r = l + 204; b = t + 15;
   in_rect = (mouse_x >= l && mouse_x <= r && mouse_y >= t && mouse_y <= b);
-  
+
   gfx_rgb((in_rect)?(TH.MONO_B_H):(TH.MONO_B));
   gfx_rect(l,t,r-l,b-t);
-  
+
   gfx_x = l + 10; gfx_y = t+4;
   gfx_rgb(TH.MONO_B_TEXT);
-  gfx_drawstr("Reload function library");  
-  
+  gfx_drawstr("Reload function library");
+
   (in_rect && mouse_click == 1)?(
     readLibFiles();
   );
@@ -4826,7 +4877,7 @@ function listenToGmemCommands()
   (gmem[GMEM_CMD_STATUS] == 1)?(
     // Take the command
     gmem[GMEM_CMD_STATUS] = 2;
-    
+
     (g_selected_control == NONE)?(
       gmem[GMEM_CMD_ERROR]  = 600;
       gmem[GMEM_CMD_STATUS] = 4;
@@ -4836,11 +4887,11 @@ function listenToGmemCommands()
         gmem[GMEM_CMD_STATUS] = 4;
       ):
       (
-        si        = 0; 
+        si        = 0;
         addr      = selectedControlCurveAddress();
         min_bound = controlCurrentMinBound01(g_selected_control);
         max_bound = controlCurrentMaxBound01(g_selected_control);
-        
+
         while(si < CURVESIZE)
         (
           gmem[GMEM_DUMP_CURVE_BUF + si] = ((addr[si]/127.0) - min_bound)/(max_bound - min_bound);
@@ -4848,7 +4899,7 @@ function listenToGmemCommands()
         );
         gmem[GMEM_CMD_STATUS] = 3;
       );
-    );      
+    );
   );
 );
 
@@ -4861,11 +4912,11 @@ function mouseClickAddOn()
   // Create a mouse_click event
   (mouse_cap != g_last_mouse_cap)?(
     (mouse_cap == 1 || mouse_cap == 2)?(mouse_click = 1):(mouse_click = 0);
-    g_last_mouse_cap = mouse_cap;    
+    g_last_mouse_cap = mouse_cap;
   ):(
     mouse_click = 0;
   );
-  
+
   // Clear the capturator source
   (mouse_cap == 0)?(
      mouse_capturator = "";
@@ -4880,7 +4931,7 @@ function mouseWheelAddon()
   ):(
     mouse_wheeli = 0;
   );
-  
+
   mouse_wheel = 0;
 );
 
@@ -4899,7 +4950,7 @@ function ui_main() (
 ui_main();
 
 // TEST LIB LOADING
- 
+
 /*
 zzz_set_count   = gmem[GMEM_FSET_COUNT];
 zzz_test_ben = isFSetFunctionDefined(0,0,0);
@@ -4931,194 +4982,234 @@ aaa_vtest_fconv_l   = g_hres_l;
 
 // For a given CONTROL on the UI, try to process the CC message
 // The value is not passed. It's already been stored in CC_RECEIVED_VALUES.
-function tryProcessCCWithControl(evt, blk_control) 
-  local (in_val_01, out_val_01, 
+function tryProcessCCWithControl(evt, blk_control)
+  local (in_val_01, out_val_01,
          src_chan, dst_chan,
          out_cc_num, out_status,
-         in_lsb_counterpart,
-         ctrl_is_enabled, src_cc_matches, src_chan_matches, control_is_a_real_cc, src_is_ok ) 
+         src_is_hr, src_cc, src_msb_cc, src_lsb_cc,
+         ctrl_is_enabled, src_cc_matches, src_chan_matches, control_is_for_real_cc, src_is_ok )
 (
+  control_is_for_real_cc      = isControlForRealCC(blk_control);
+  ctrl_is_enabled             = isControlEnabled(blk_control);
   src_chan                    = controlInputChannel(blk_control);
   src_chan_matches            = (src_chan == ANY || src_chan == evt.chan );
-  src_cc_matches              = (CONTROL_SRCS[blk_control] == evt.cc_num);
-  control_is_a_real_cc        = isControlARealCC(blk_control);
-  ctrl_is_enabled             = isControlEnabled(blk_control);
-  
-  // All those params should match
-  (src_chan_matches && (control_is_a_real_cc && src_cc_matches) && ctrl_is_enabled) ? (
-  
-    dst_chan = controlOutputChannel(blk_control);
-    dst_chan = (dst_chan == AS_SRC)?(evt.chan):(dst_chan);
-  
-    // Calculate curve result
-    in_val_01  = 0;
-    
-    controlHasOperationalHighResInput(blk_control) ? (
-      // It's a high res control. 
-      in_lsb_counterpart = ccLsbCounterpart(evt.cc_num); 
-      // Read full value and convert.
-      in_val_01   = midiCCHresI2F01(CC_RECEIVED_VALUES[evt.cc_num], CC_RECEIVED_VALUES[in_lsb_counterpart]);
-    ):(
-      // Low res are normalized with a max of 127.0
-      in_val_01   = CC_RECEIVED_VALUES[evt.cc_num]/127.0;
-    );
-  
-    // Apply the curve
-    out_val_01 = applyCurve(blk_control, in_val_01);
-    
-    // Save some values for UI feedback (small red circle)
-    CONTROL_LAST_IN[blk_control]  = in_val_01 * 127;
-    CONTROL_LAST_OUT[blk_control] = out_val_01 * 127;
-    
-    // Send result
-    out_cc_num          = CONTROL_DSTS[blk_control];
-    out_status          = (MSG_CC<<4)|(dst_chan-1); // Chan : 1-16 ->> 0-15
-     
-    controlHasOperationalHighResOutput(blk_control) ? (
-      // Output high res
-      midiCCHresF012I(out_val_01);    
-      // Send lsb first then msb
-      midiSend(evt.mpos, out_status, ccLsbCounterpart(out_cc_num),  g_hres_l);
-      midiSend(evt.mpos, out_status, out_cc_num,                    g_hres_h);
-    ):(
-      
-      (out_cc_num == CHANNEL_PRESSURE_FAKE_CC_NUM)?(
-        // Channel pressure conversion
-        out_status = (MSG_CHAN_PRESSURE<<4)|(dst_chan-1);
-        midiSend(evt.mpos, out_status, roundi(out_val_01 * 127), 0);
-      )
-      :(
-        // Output low res, normalize by 127 (max is 127).
-        midiSend(evt.mpos, out_status, out_cc_num, roundi(out_val_01 * 127) );
+
+  (control_is_for_real_cc && ctrl_is_enabled && src_chan_matches)?(
+
+    src_is_hr                   = controlHasOperationalHighResInput(blk_control);
+    src_cc                      = CONTROL_SRCS[blk_control];
+    src_msb_cc                  = (src_is_hr)?(msbCCForAggregatedHRCC(src_cc)):(src_cc);
+    src_lsb_cc                  = (src_is_hr)?(lsbCCForAggregatedHRCC(src_cc)):(src_cc);
+    src_cc_matches              = (src_is_hr)?(src_msb_cc == evt.cc_num || src_lsb_cc == evt.cc_num):(src_cc == evt.cc_num);
+
+    (src_cc_matches)?(
+
+      dst_chan = controlOutputChannel(blk_control);
+      dst_chan = (dst_chan == AS_SRC)?(evt.chan):(dst_chan);
+
+      // Calculate curve result
+      in_val_01  = 0;
+
+      src_is_hr ? (
+        (src_msb_cc == evt.cc_num)?(
+
+          // Event is a msb, lookup for next event for a lsb
+          (evtn.present && evtn.cc_num == src_lsb_cc)?(
+
+            // Next event is a matching lsb event
+            in_val_01   = midiCCHresI2F01(evt.cc_val, evtn.cc_val);
+
+            // Mark next event as processed to skip it at next round.
+            evtn.was_processed = 1;
+
+          ):(
+            // Next event does not exist or is not the LSB counterpart, so use zero as lsb.
+            in_val_01   = midiCCHresI2F01(evt.cc_val, 0);
+          );
+
+        ):(
+          // Event is a lsb, use MSB memory for msb and event value for lsb.
+          in_val_01   = midiCCHresI2F01(CC_RECEIVED_VALUES[src_msb_cc], evt.cc_val);
+        );
+
+      ):(
+        // Low res are normalized with a max of 127.0
+        in_val_01   = evt.cc_val/127.0;
       );
+
+      // Apply the curve
+      out_val_01 = applyCurve(blk_control, in_val_01);
+
+      // Save some values for UI feedback (small red circle)
+      CONTROL_LAST_IN[blk_control]  = in_val_01 * 127;
+      CONTROL_LAST_OUT[blk_control] = out_val_01 * 127;
+
+      // Send result
+      out_cc_num          = CONTROL_DSTS[blk_control];
+      out_status          = (MSG_CC<<4)|(dst_chan-1); // Chan : 1-16 ->> 0-15
+
+      controlHasOperationalHighResOutput(blk_control) ? (
+        // Output high res
+        midiCCHresF012I(out_val_01);
+        // Be compliant with reaper : MSB first, LSB last
+        midiSend(evt.mpos, out_status, out_cc_num,                    g_hres_h);
+        midiSend(evt.mpos, out_status, ccLsbCounterpart(out_cc_num),  g_hres_l);
+      ):(
+
+        (out_cc_num == CHANNEL_PRESSURE_FAKE_CC_NUM)?(
+          // Channel pressure conversion
+          out_status = (MSG_CHAN_PRESSURE<<4)|(dst_chan-1);
+          midiSend(evt.mpos, out_status, roundi(out_val_01 * 127), 0);
+        )
+        :(
+          // Output low res, normalize by 127 (max is 127).
+          midiSend(evt.mpos, out_status, out_cc_num, roundi(out_val_01 * 127) );
+        );
+      );
+
+      // Set the pass through flag.
+      controlShouldPassThrough(blk_control)?(
+        evt.should_pass_through = 1;
+
+        (evtn.was_processed)?(
+          // Since we used the next event as LSB, we should also pass it through if asked.
+          evtn.should_pass_through = 1;
+        );
+      );
+
+      evt.was_processed = 1;
+
+    ):(
+
+      // If the control has MSB + HR as input
+      // If the cc of the event is the LSB of that MSB
+      // Treat event as processed (it's aggregated during the treatment of the MSB event and eaten)
+      (controlHasOperationalHighResInput(blk_control) && (evt.cc_num == ccLsbCounterpart(CONTROL_SRCS[blk_control]))) ? (
+
+        // Set the pass through flag if needed for re-emission
+        controlShouldPassThrough(blk_control)?(
+          evt.should_pass_through = 1;
+        );
+
+        evt.was_processed = 1;
+      );
+
     );
-    
-    // Set the pass through flag.
-    controlShouldPassThrough(blk_control)?(
-      evt.should_pass_through = 1;
-    );
-    
-    evt.was_processed = 1;
+
   );
   evt;
 );
 
-function processCCMessage(evt) 
-  local (process_counter, blk_control) 
-( 
+function processCCMessage(evt)
+  local (process_counter, blk_control)
+(
   // Memorize, may be useful
   CC_RECEIVED_VALUES[evt.cc_num] = evt.cc_val;
 
-  (isHighResMidiInputEnabled() && isALsbCC(evt.cc_num))?(
-  
-    // In high res midi, drop all messages coming from lsb channels
-    // They've been just stored for aggregation.
-    // And that's all.
-    
-    // TODO : maybe rewrite this case?
-    // What if someone still builds a control in that conf?
-    
-    evt.was_processed = 1;
-  ):(
-  
+  (
     // Loop on all controls and see if we could find
     // Some of them linked to that cc.
     blk_control = 0; while(blk_control < CONTROL_COUNT)
-    (              
+    (
       tryProcessCCWithControl(evt, blk_control);
       blk_control       += 1;
     );
   );
-  
+
   evt;
 );
 
-function processNoteMessage(evt) 
-  local(new_key, key_range_resolved, 
-    src_chan, dst_chan, src_chan_matches, dst_status, 
-    should_keep_note, 
+function processNoteMessage(evt)
+  local(new_key, key_range_resolved,
+    src_chan, dst_chan, src_chan_matches, dst_status,
+    should_keep_note,
     velocity_control_num,
-    has_velocity, velocity_01, out_velocity_01, 
+    has_velocity, velocity_01, out_velocity_01,
     velocity_tgt, lsb_cc_msg)
 (
   // For safety. I don't know if it's useful.
-  (evt.type == MSG_NOTE_OFF)?(evt.velocity=0);  
-  
+  (evt.type == MSG_NOTE_OFF)?(evt.velocity=0);
+
   // Save the source velocity, this is for UI feedback (small dots on keys)
   KEY_VELOCITIES[evt.key] = evt.velocity;
-  
+
   key_range_resolved    = keyKBRangeResolved(evt.key);
   velocity_control_num  = velocityControlForKBRange(key_range_resolved);
   src_chan              = keyboardInputChannel();
   src_chan_matches      = (src_chan == evt.chan || src_chan == ANY);
-  
+
   (src_chan_matches)?(
-  
-    dst_chan  = kbRangeOutputChannel(key_range_resolved);  
+
+    dst_chan  = kbRangeOutputChannel(key_range_resolved);
     dst_chan  = (dst_chan == AS_SRC)?(evt.chan):(dst_chan);
-  
-    (dst_chan != DROP)?( 
-    
+
+    (dst_chan != DROP)?(
+
       new_key = evt.key;
-      
+
       // Transpose if asked to.
       (shouldTransposeKBRange(key_range_resolved))?(
-        new_key = evt.key + kbRangeTransposition(key_range_resolved);      
+        new_key = evt.key + kbRangeTransposition(key_range_resolved);
       );
-      
+
       // Transposition should not be outside midi range
       (new_key >= 0 && new_key <= 127)?(
-      
+
         // Caution : Note OFF can be either (MSG_NOTE_OFF) or (MSG_NOTE_ON + velocity zero)
         // Thus, the following code should be tolerant :
         // Velocity 0 should not be changed to something else.
-        
-        has_velocity                  = (evt.velocity!=0);  
-        velocity_01                   = 0;         
-         
+
+        has_velocity                  = (evt.velocity!=0);
+        velocity_01                   = 0;
+
         // CALCULATE INPUT VALUE HI/LOW RES
-        (isHighResMidiInputEnabled())?(
+        (isHighResMidiInputEnabledForControl(velocity_control_num))?(
           (has_velocity)?(
-            // Seems to me we should sub 1 to the velocity (MSB)
-            // To be continuous starting from 0 
+            // Seems to me we have to sub 1 to the velocity (MSB)
+            // To be continuous starting from 0
             // (First non-null HR velocity starts at 0x0080, MSB is non null)
-            velocity_01 = midiVelocityHresI2F01(evt.velocity-1, CC_RECEIVED_VALUES[88]); 
-            CC_RECEIVED_VALUES[88] = 0; // Clear the LSB. 
+            velocity_01 = midiVelocityHresI2F01(evt.velocity-1, CC_RECEIVED_VALUES[88]);
+
+            // Do not clear CC#88 anymore, expect the user to know what he/she's doin'.
+            // If something is in CC#88 which is different from 0
+            // Either it's High Res MIDI
+            // Or the user is using CC#88 for a different reason and should not enable HR velocity.
+            // CC_RECEIVED_VALUES[88] = 0; // Clear the LSB.
           );
         ):(
           velocity_01 = evt.velocity/127;
         );
-      
+
         // APPLY THE CURVE
         out_velocity_01 = 0;
-        has_velocity?( 
-        
+        has_velocity?(
+
           // Apply velocity curve if needed
           isControlEnabled(velocity_control_num)?(
             out_velocity_01 = applyCurve(velocity_control_num, velocity_01);
-        
+
             // Save for UI feedback (red circle).
-            // Do it only when there's some velocity, having the circle 
+            // Do it only when there's some velocity, having the circle
             // going back to 0 each time we release a key is annoying
             CONTROL_LAST_IN[velocity_control_num]   = velocity_01*127;
             CONTROL_LAST_OUT[velocity_control_num]  = out_velocity_01*127;
           ):(
             // Just keep the value as is (bypass any calculation)
             out_velocity_01 = velocity_01;
-          )   
+          )
         );
-      
+
         // Create out status, remap chan to to 0-15
         dst_status = (evt.type << 4) | (dst_chan-1);
-                   
+
         // SEND THE FINAL RESULT HI/LOW RES
         (isHighResMidiOutputEnabledForControl(velocity_control_num))?(
-         
+
           lsb_cc_msg = ((MSG_CC << 4) | evt.chan);
           (has_velocity)?(
             // Send modified velocity
             midiVelocityHresF012I(out_velocity_01);
-        
+
             // Note : if pen drawn
             // g_hres_l will always be = 127 due to the drawing resolution
             midisend(evt.mpos, lsb_cc_msg, 88, g_hres_l);
@@ -5129,31 +5220,31 @@ function processNoteMessage(evt)
             midisend(evt.mpos, dst_status, keyToMidiNote(new_key), 0);
           );
         ):
-        (   
+        (
           // This is compatible with zero-velocity
           midisend(evt.mpos, dst_status, keyToMidiNote(new_key), roundi(out_velocity_01 * 127) );
         );
-      
-      ); // <- Transposition is not outside range 
-      
+
+      ); // <- Transposition is not outside range
+
     ); // <- dst chan is not drop
-  
+
     // If pass through is set explicitely, duplicate
     controlShouldPassThrough(velocity_control_num)?(
       evt.should_pass_through = 1;
     );
-  
+
     // As long as the input channel is concerned
     // Consider the event as treated (it's either DROPPED explicitly or handled).
     evt.was_processed = 1;
-    
-  ); // <- src chan matches  
+
+  ); // <- src chan matches
 
   evt;
 );
 
-function processPolyphonicAfterTouchMessage(evt) 
-  local(blk_control, 
+function processPolyphonicAfterTouchMessage(evt)
+  local(blk_control,
         src_chan, src_chan_matches,
         dst_chan, dst_status,
         new_key, key_range_resolved,
@@ -5165,33 +5256,33 @@ function processPolyphonicAfterTouchMessage(evt)
   src_chan_matches        = (src_chan == evt.chan || src_chan == ANY);
 
   (src_chan_matches)?(
-  
+
     // As long as src chan matches, re-route (it's like note messages)
-    dst_chan  = kbRangeOutputChannel(key_range_resolved);  
+    dst_chan  = kbRangeOutputChannel(key_range_resolved);
     dst_chan  = (dst_chan == AS_SRC)?(evt.chan):(dst_chan);
-  
-    (dst_chan != DROP)?( 
-    
+
+    (dst_chan != DROP)?(
+
       new_key = evt.key;
-          
+
       // Transpose if asked to.
       // It should be done even if the AT control is not activated, for coherency.
       (shouldTransposeKBRange(key_range_resolved))?(
-        new_key = evt.key + kbRangeTransposition(key_range_resolved);      
+        new_key = evt.key + kbRangeTransposition(key_range_resolved);
       );
-      
+
       // Transposition should not be outside midi range
       (new_key >= 0 && new_key <= 127)?(
-     
+
         val_01 = evt.after_touch/127.0;
-    
+
         // Calculate output value
         out_val_01 = 0;
-        
+
         // Apply after touch curve if needed
         (isControlEnabled(blk_control))?(
           out_val_01 = applyCurve(blk_control, val_01);
-        
+
           // Save for UI feedback (red circle).
           CONTROL_LAST_IN[blk_control]   = val_01*127;
           CONTROL_LAST_OUT[blk_control]  = out_val_01*127;
@@ -5199,214 +5290,318 @@ function processPolyphonicAfterTouchMessage(evt)
           // Just keep the value as is (bypass any calculation)
           out_val_01 = val_01;
         );
-       
+
         // Create out status, remap chan to to 0-15
         dst_status = (evt.type << 4) | (dst_chan-1);
 
         midisend(evt.mpos, dst_status, keyToMidiNote(new_key), roundi(out_val_01 * 127) );
-  
-      ); // <- Transposition is not outside range 
-      
+
+      ); // <- Transposition is not outside range
+
     ); // <- dst chan is not drop
-    
+
     controlShouldPassThrough(blk_control)?(
       evt.should_pass_through = 1;
     );
-    
+
     // As long as the input channel is concerned
     // Consider the event as treated (it's either DROPPED explicitly or handled).
     evt.was_processed = 1;
-    
-  ); // <- src chan matches  
+
+  ); // <- src chan matches
 
   evt;
 );
 
-function processPitchBendMessage(evt) 
+function processPitchBendMessage(evt)
   local(blk_control,
   src_chan, dst_chan,
-  src_chan_matches, ctrl_is_enabled, 
+  src_chan_matches, ctrl_is_enabled,
   in_val, in_val_01, sigmul,
   out_status, out_val, out_val_01)
 (
   blk_control                 = CONTROL_PITCH_BEND;
   src_chan                    = controlInputChannel(blk_control);
-   
+
   src_chan_matches            = (src_chan == ANY || src_chan == evt.chan );
   ctrl_is_enabled             = isControlEnabled(blk_control);
-  
+
   (src_chan_matches && ctrl_is_enabled)?(
-  
+
     dst_chan  = controlOutputChannel(blk_control);
     dst_chan  = (dst_chan == AS_SRC)?(evt.chan):(dst_chan);
-    
+
     // Pitch bend goes from 0 to 0x3FFF, center value is 0x2000.
-    // This is not symetrical, so merge 0 and 1.
-    in_val = evt.pitch_bend; 
+    // There are thus 0x4000 possible values
+    //
+    // - 0x2000 values are negative, in ReaControlMIDI [-8192..-1]
+    // - 1 is zero
+    // - 0x1FFF values are positive, in ReaControlMIDI [1..8191]
+    //
+    // It is not symmetrical, and we have a problem to apply the curve.
+    // We will assume to not use -8192 and remap it to -8191.
+
+    in_val = evt.pitch_bend;
+
+    // Merge 0 and 1 (0 should not exist)
     (in_val == 0)?(in_val = 1);
-   
+
     // Put this into -1..1
-    in_val_01   = ((in_val - 0x2000) * 1.0)/0x1FFF;
+    in_val_01   = (in_val * 2.0 - 0x4000)/0x3FFE;
     sigmul      = (in_val_01 >=0)?(1.0):(-1.0);
- 
+
     // Apply the curve on the absolute val
     out_val_01 = applyCurve(blk_control, sigmul * in_val_01);
-   
+
     // Save some values for UI feedback (small red circle)
     CONTROL_LAST_IN[blk_control]  = in_val_01 * 127;
     CONTROL_LAST_OUT[blk_control] = out_val_01 * 127;
-   
+
+    // Reverse value if asked
+    (REVERSE_PITCH_BEND[0])?(
+      out_val_01 = - out_val_01;
+    );
+
     // Convert back
-    out_val = roundi( (sigmul * out_val_01) * 0x1FFF ) + 0x2000;
-   
+    out_val = roundi( ((sigmul * out_val_01) * 0x1FFF  + 0x2000) );
+
     // Send result
     out_status = (MSG_PITCH_BEND<<4)|(dst_chan-1); // Chan : 1-16 ->> 0-15
-    
+
     // Output low res, normalize by 127 (max is 127).
     midiSend(evt.mpos, out_status, out_val & 0x7F , (out_val >> 7) & 0x7F  );
-    
+
     controlShouldPassThrough(blk_control)?(
       evt.should_pass_through = 1;
     );
-    
+
     // Consider the event as treated.
     evt.was_processed = 1;
   ); // <- src chan matches and ctrl is enabled
-  
+
   evt;
 );
 
-function mainLoop() 
-  local(mpos,msg1,msg2,msg3,bus_matches)
-(
+// Receive a new event. It is loaded into evtn, and evtn is loaded to evt.
+// This gives a forward lookup of one event to the plugin so that it can handle 14-bit CC events.
+// In the vast majority of cases, evtn is just useless and evt does not need forward lookup.
 
-  while(midirecv(mpos, msg1, msg2, msg3))
-  (
-    evt = 0;
-    evt.bus    = midi_bus + 1; // 1-16, not 0-15
-    evt.mpos   = mpos;
-    evt.msg1   = msg1;
-    evt.msg2   = msg2;
-    evt.msg3   = msg3;
-    evt.status = msg1;
-    evt.type   = (msg1 >> 4)& 0x0F;
-    evt.chan   = (msg1 & 0x0F)+1; // 1-16, not 0-15
-    evt.cc_num = 0;
-    evt.cc_val = 0;
-    evt.should_pass_through = 0;
-    evt.was_processed = 0;
-     
-    bus_matches = (midiBusInput() == ANY || midiBusInput() == evt.bus);
-    
-    bus_matches?(
-      // Set back midi_bus
-      midi_bus = (midiBusOutput() == AS_SRC)?(evt.bus-1):(midiBusOutput()-1);  
-      (evt.type == MSG_CC) ? (
-      
-        // Translate into "cc words" for more comprehensible code
-        evt.cc_num = msg2; 
-        evt.cc_val = msg3;
-        
-        // CC LEARN
-        (isCCLearning() && g_selected_control != NONE && isCCLearnable(evt.cc_num))?(
-          CONTROL_SRCS[g_selected_control] = evt.cc_num;
-          disableCCLearn();
-        );
-      
-        processCCMessage(evt);   
-        (!evt.was_processed && !shouldDropUnroutedCCMessages())?(
-          // Re-send message
-          midisend(mpos, msg1, msg2, msg3);
-        ); 
-        
-        // Explicit user pass through
-        (evt.was_processed && evt.should_pass_through)?(
-          midisend(mpos, msg1, msg2, msg3);
-        );
-        
-      ):(
-      (evt.type == MSG_NOTE_ON || evt.type == MSG_NOTE_OFF)?(
-        
-        // NOTE MESSAGE
-        evt.note      = msg2;
-        evt.key       = midiNoteToKey(evt.note);
-        evt.velocity  = msg3;
-          
-        processNoteMessage(evt);
-        (!evt.was_processed && !shouldDropUnroutedNoteMessages())?(
-           // Re-send message
-           midisend(mpos, msg1, msg2, msg3);
-        );
-        
-        // Explicit user pass through
-        (evt.was_processed && evt.should_pass_through)?(
-          midisend(mpos, msg1, msg2, msg3);
-        );
-      ):(
-      (evt.type == MSG_AT_POLY)?(
-        
-        // POLYPHONIC AFTERTOUCH
-        evt.note        = msg2;
-        evt.key         = midiNoteToKey(evt.note);
-        evt.after_touch = msg3;
-         
-        processPolyphonicAfterTouchMessage(evt);
-        (!evt.was_processed && !shouldDropUnroutedPolyphonicAfterTouchMessages())?(
-          // Re-send message
-          midisend(mpos, msg1, msg2, msg3);
-        );
-        
-        // Explicit user pass through
-        (evt.was_processed && evt.should_pass_through)?(
-          midisend(mpos, msg1, msg2, msg3);
-        );
-      ):(
-      (evt.type == MSG_CHAN_PRESSURE)?(
-        
-        evt.chan_pressure = msg2;
-        evt.cc_num        = CHANNEL_PRESSURE_FAKE_CC_NUM;
-        evt.cc_val        = evt.chan_pressure;
-        
-        // CC LEARN
-        (isCCLearning() && g_selected_control != NONE)?(
-          CONTROL_SRCS[g_selected_control] = evt.cc_num;
-          disableCCLearn();
-        );
-      
-        processCCMessage(evt);
-        (!evt.was_processed && !shouldDropUnroutedCCMessages())?(
-          // Re-send message
-          midisend(mpos, msg1, msg2, msg3);
-        );
-        
-        // Explicit user pass through
-        (evt.was_processed && evt.should_pass_through)?(
-          midisend(mpos, msg1, msg2, msg3);
-        );
-      ):(
-      (evt.type == MSG_PITCH_BEND)?(
-        
-        // PITCH BEND
-        evt.pitch_bend = ((msg3 & 0x7F) << 7) | (msg2 & 0x7F);
-        
-        processPitchBendMessage(evt);
-        (!evt.was_processed && !shouldDropUnroutedPitchBendMessages())?(
-          // Re-send message
-          midisend(mpos, msg1, msg2, msg3);
-        );
-        
-        // Explicit user pass through
-        (evt.was_processed && evt.should_pass_through)?(
-          midisend(mpos, msg1, msg2, msg3);
-        );
-        
-      ):(
-        // Unhandled type of message, pass through
-        midisend(mpos, msg1, msg2, msg3);
-      )))));
+function receive()
+  local(mpos,msg1,msg2,msg3)
+(
+  // Copy evtn to current evt if present
+  (evtn.present)?(
+
+    evt.bus         = evtn.bus;
+    evt.mpos        = evtn.mpos;
+    evt.msg1        = evtn.msg1;
+    evt.msg2        = evtn.msg2;
+    evt.msg3        = evtn.msg3;
+    evt.status      = evtn.status;
+    evt.type        = evtn.type;
+    evt.chan        = evtn.chan;
+    evt.cc_num      = evtn.cc_num;
+    evt.cc_val      = evtn.cc_val;
+
+    evt.should_pass_through = evtn.should_pass_through;
+    evt.was_processed       = evtn.was_processed;
+  );
+
+  evt.present = evtn.present;
+
+  (midirecv(mpos, msg1, msg2, msg3))?(
+    evtn.bus          = midi_bus + 1; // 1-16, not 0-15
+    evtn.mpos         = mpos;
+    evtn.msg1         = msg1;
+    evtn.msg2         = msg2;
+    evtn.msg3         = msg3;
+    evtn.status       = msg1;
+    evtn.type         = (msg1 >> 4) & 0x0F;
+    evtn.chan         = (msg1 & 0x0F) + 1; // 1-16, not 0-15
+
+    // Since we will use forward lookup for 14-bit CC
+    // Pre-translate cc_num / cc_val, we will need them on evtn
+    // We could also do that for other types of event
+    // But do not want to make the code heavier here.
+    (evtn.type == MSG_CC)?(
+      evtn.cc_num = msg2;
+      evtn.cc_val = msg3;
     ):(
-      // Bus not matching leave untouched 
-      midisend(mpos, msg1, msg2, msg3);
+      evtn.cc_num = 0;
+      evtn.cc_val = 0;
+    );
+
+    evtn.should_pass_through  = 0;
+    evtn.was_processed        = 0;
+
+    evtn.present = 1;
+  ):(
+    evtn.present = 0;
+  );
+);
+
+function forwardCurrentEvent() (
+  midisend(evt.mpos, evt.msg1, evt.msg2, evt.msg3)
+);
+
+function treatCurrentEvent()
+(
+  // If bus matches
+  (midiBusInput() == ANY || midiBusInput() == evt.bus)?(
+
+    // Set output midi_bus
+    midi_bus = (midiBusOutput() == AS_SRC)?(evt.bus-1):(midiBusOutput()-1);
+
+    // Start to  treat
+    (evt.type == MSG_CC) ? (
+
+      // CC LEARN (prior to message handling)
+      (isCCLearning() && g_selected_control != NONE && isCCLearnableForControl(g_selected_control, evt.cc_num))?(
+
+        // When learning, if HR is enabled, then learn the control on the MSB (be it LSB or MSB),
+        // to avoid jittering between MSB and LSB. Probably more natural like this.
+        (isHighResMidiInputEnabledForControl(g_selected_control) && isALsbCC(evt.cc_num) )?(
+          CONTROL_SRCS[g_selected_control] = ccMsbCounterpart(evt.cc_num);
+        ):(
+          CONTROL_SRCS[g_selected_control] = evt.cc_num;
+        );
+        disableCCLearn();
+      );
+
+      processCCMessage(evt);
+
+      (!evt.was_processed && !shouldDropUnroutedCCMessages())?(
+        // Event not treated and not firewalled. Pass message.
+        forwardCurrentEvent();
+      );
+
+      // Explicit user pass through
+      (evt.was_processed && evt.should_pass_through)?(
+        forwardCurrentEvent();
+      );
+
+    ):(
+    (evt.type == MSG_NOTE_ON || evt.type == MSG_NOTE_OFF)?(
+
+      // NOTE MESSAGE
+      evt.note      = evt.msg2;
+      evt.key       = midiNoteToKey(evt.note);
+      evt.velocity  = evt.msg3;
+
+      processNoteMessage(evt);
+
+      (!evt.was_processed && !shouldDropUnroutedNoteMessages())?(
+        forwardCurrentEvent();
+      );
+
+      // Explicit user pass through
+      (evt.was_processed && evt.should_pass_through)?(
+        forwardCurrentEvent();
+      );
+
+    ):(
+    (evt.type == MSG_AT_POLY)?(
+
+      // POLYPHONIC AFTERTOUCH
+      evt.note        = evt.msg2;
+      evt.key         = midiNoteToKey(evt.note);
+      evt.after_touch = evt.msg3;
+
+      processPolyphonicAfterTouchMessage(evt);
+      (!evt.was_processed && !shouldDropUnroutedPolyphonicAfterTouchMessages())?(
+        forwardCurrentEvent();
+      );
+
+      // Explicit user pass through
+      (evt.was_processed && evt.should_pass_through)?(
+        forwardCurrentEvent();
+      );
+
+    ):(
+    (evt.type == MSG_CHAN_PRESSURE)?(
+
+      evt.chan_pressure = evt.msg2;
+      evt.cc_num        = CHANNEL_PRESSURE_FAKE_CC_NUM;
+      evt.cc_val        = evt.chan_pressure;
+
+      // CC LEARN
+      (isCCLearning() && g_selected_control != NONE)?(
+        CONTROL_SRCS[g_selected_control] = evt.cc_num;
+        disableCCLearn();
+      );
+
+      processCCMessage(evt);
+      (!evt.was_processed && !shouldDropUnroutedCCMessages())?(
+        forwardCurrentEvent();
+      );
+
+      // Explicit user pass through
+      (evt.was_processed && evt.should_pass_through)?(
+        forwardCurrentEvent();
+      );
+
+    ):(
+    (evt.type == MSG_PITCH_BEND)?(
+
+      // PITCH BEND
+      evt.pitch_bend = ((evt.msg3 & 0x7F) << 7) | (evt.msg2 & 0x7F);
+
+      processPitchBendMessage(evt);
+      (!evt.was_processed && !shouldDropUnroutedPitchBendMessages())?(
+        forwardCurrentEvent();
+      );
+
+      // Explicit user pass through
+      (evt.was_processed && evt.should_pass_through)?(
+        forwardCurrentEvent();
+      );
+
+    ):(
+      // Unhandled type of message, pass through
+      forwardCurrentEvent();
+    )))));
+  ):(
+    // Bus not matching leave untouched
+    forwardCurrentEvent();
+  );
+);
+
+function mainLoop()
+(
+  // Cur and next events
+  evt           = 0;
+  evtn          = 1;
+
+  // Has cur / has next
+  evt.present   = 0;
+  evtn.present  = 0;
+
+  // Pre load next event
+  receive();
+
+  (evtn.present)?(
+
+    // Put next into cur, load next
+    receive();
+
+    while(evt.present)
+    (
+      (!evt.was_processed)?(
+        treatCurrentEvent();
+      ):(
+        // If the evt is already marked as processed, it means that it was eaten
+        // During the time it was used as evtn (high-res cc forward lookup).
+        // So it is already eaten.
+
+        (evt.should_pass_through)?(
+          // But if it was marked as "pass through", we should at least forward it.
+          forwardCurrentEvent();
+        );
+
+        // Else, we will simply ignore the event.
+      );
+
+      receive();
     );
   );
 );
