@@ -1,11 +1,8 @@
 desc: MIDI CC Mapper X
 author: Talagan
-version: 4.3
+version: 4.3.1
 changelog:
-  - Moved HighRes MIDI input option from global settings to per-control setting
-  - Reworked HighRes MIDI CC input with one-event-forward lookup for LSB, and output with MSB/LSB order 
-  - Reworked pitch bend MSB/LSB calculations to fix corner cases
-  - Added pitch bend reverse button
+  - Added info notice in AfterTouch widgets to warn about Channel Pressure virtual CC#128
 screenshot:
   Dark Theme https://stash.reaper.fm/39718/MIDICCMapperX-4-1-Dark.png
   Light Theme https://stash.reaper.fm/39719/MIDICCMapperX-4-1-Light.png
@@ -4216,6 +4213,12 @@ function drawAssignZone()
     );
   );
 
+  (isControlAfterTouch(g_selected_control))?(
+    gfx_rgb(TH.DEFAULT_FONT);
+    gfx_x = 510; gfx_y = GUI_CONTROL_PARAMS_TOP+28;
+    gfx_drawStr("Info : This control is for per-key (poly) aftertouch.\n\n       For global aftertouch, aka Channel Pressure,\n\n       use a standard control with virtual CC#128.");
+  );
+
   // Standard CC Routing / Renaming
   (isControlForRealCC(g_selected_control))?(
     // CC or CP
@@ -4736,7 +4739,7 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("Midi CC Mapper X (4.3) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai");
+  gfx_drawstr("Midi CC Mapper X (4.3.1) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai");
 
   drawSwitchButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin");
 );
