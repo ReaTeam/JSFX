@@ -1,11 +1,39 @@
 desc: VU Meter (ZenoMOD)
 author: ZenoMOD
-version: 1.7.1
+version: 1.7.2
 changelog:
-  fix: typo in help texts corrected (Volume: Hold Ctrl, instead of Shift for fine adjustments)
-  fix: minor adjustments when certain primitives are drawn and when not (again: Pastel)
-  Add new UI Style: Ultimate
-  Add new UI Style: Mooncake
+  fix: meter output slider scaling adjusted (ATTENTION: not backwards compatible with parameter modulation in old projects!)
+  fix: increase display probability of preferences button in case meter options page is open and bottom bar is not visible (edge case).
+  fix: bottom bar tooltips are now displayed at any possible UI scaling.
+
+  Channel labels now reflect selected channel mode (dagamusik).
+  Reduced visibility of channel labels in case tooltip text position is equal to that of channel labels (to improve readability of tooltips).
+
+  Add slider_automate() function for meter output sliders to enable meter output automations.
+  Add hidden slider for tooltip button to permanently disable tooltips by saving a plugin preset.
+  Add right-click popup menu for UI style button.
+  Add right-click popup menu for channel mode button.
+  Add Hold Time multiplication parameter for Peak LED to Meter Options Page.
+link: Forum Thread https://forum.cockos.com/showthread.php?t=262611
+donation: Donate via PayPal https://www.paypal.me/ZenoBock
+
+desc: VU Meter (ZenoMOD)
+author: ZenoMOD
+version: 1.7.2
+changelog:
+  fix: meter output slider scaling adjusted (ATTENTION: not backwards compatible with parameter modulation in old projects!)
+  fix: increase display probability of preferences button in case meter options page is open and bottom bar is not visible (edge case).
+  fix: bottom bar tooltips are now displayed at any possible UI scaling.
+
+  Channel labels now reflect selected channel mode (dagamusik).
+  Reduced visibility of channel labels in case tooltip text position is equal to that of channel labels (to improve readability of tooltips).
+
+  Add slider_automate() function for meter output sliders to enable meter output automations.
+  Add hidden slider for tooltip button to permanently disable tooltips by saving a plugin preset.
+  Add right-click popup menu for UI style button.
+  Add right-click popup menu for channel mode button.
+  Add Hold Time multiplication parameter for Peak LED to Meter Options Page.
+
 link: Forum Thread https://forum.cockos.com/showthread.php?t=262611
 donation: Donate via PayPal https://www.paypal.me/ZenoBock
 
@@ -46,20 +74,21 @@ slider6: 0.0053<0,.01,0.0001>                                                   
 
 slider7: 0<-18,18,0.1>                                                                    -Volume (dB)
 
-slider11: 30<10,100,1>                                                                    -LED Hold
+slider11: 3<1,10,.01>                                                                     -LED Hold
 
 
 // Parameter Modulation sliders...
 
-slider50: -20<-20,0,3>                                                                    -VU Left/Mid
-slider51: -20<-20,0,3>                                                                    -VU Right/Side
-slider52: 0<0,1,1>                                                                        -Peak LED L
-slider53: 0<0,1,1>                                                                        -Peak LED R
+slider50: -20<-20,3,.1>                                                                   -VU Left/Mid
+slider51: -20<-20,3,.1>                                                                   -VU Right/Side
+slider52: 0<0,1,1{-,PEAK}>                                                                -Peak LED L
+slider53: 0<0,1,1{-,PEAK}>                                                                -Peak LED R
 
 
 // Bottom Bar settings...
 
 slider60: 0.50<0,1,0.01>                                                                  -Transparency
+slider61: 1<0,1,1>                                                                        -Help
 
 
 
@@ -89,7 +118,7 @@ out_pin: right output
 @init
 
 //===================================== VERSION NUMBER ==============================================/
-  version = ("v1.7.1");
+  version = ("v1.7.2");
 
 
 
@@ -174,7 +203,7 @@ out_pin: right output
 
 
 //======================================== VU METER =================================================/
-  fact_up = 10 ^ (( -slider3 - 10)/20) * 0.3785 ;
+  fact_up = 10 ^ ((-slider3 - 10)/20) * 0.3785 ;
   wl   = slider4;
   mode = slider2;
   lim = 10 ^ (wl / 20);
@@ -185,6 +214,7 @@ out_pin: right output
 //======================================== SETTINGS =================================================/
 
   bb_t = slider60;
+  show_help = slider61;
 
 
 
@@ -275,8 +305,8 @@ out_pin: right output
 
       nd_posR = min(max(nd_posR,0),1);
 
-      overL -= slider11;
-      overR -= slider11;
+      overL -= 100 / slider11;
+      overR -= 100 / slider11;
 
       scnt = 0;
   ); //scnt
@@ -288,24 +318,7 @@ out_pin: right output
   smpR > lim ? overR = srate;
 
 
-  slider50 = dbL;
-  slider51 = dbR;
-  slider52 = overL_g;
-  slider53 = overR_g;
-
-
-
-
-
-
-
-
-
-
-
-
-@gfx 480 235
-
+//*****************************************************************************************************
 
   tot_nbr_spl_g  = tot_nbr_spl;
 
@@ -322,6 +335,25 @@ out_pin: right output
   );
 
 
+//*****************************************************************************************************
+
+  slider50 = dbL; slider_automate(slider50);
+  slider51 = dbR; slider_automate(slider51);
+  slider52 = sign(overL); slider_automate(slider52);
+  slider53 = sign(overR); slider_automate(slider53);
+
+
+
+
+
+
+
+
+
+
+
+
+@gfx 480 235
 
 
 //========================================= GFX INIT ================================================/
@@ -423,6 +455,7 @@ out_pin: right output
                   cap_mode == 4 ? ( slider4 = -6; slider_automate(slider4) );
                   cap_mode == 5 ? ( slider5 = 50; slider_automate(slider5) );
                   cap_mode == 6 ? ( slider6 = 0.0053; slider_automate(slider6) );
+                  cap_mode == 11 ? ( slider11 = 3; slider_automate(slider11) );
               );
 
               (cap_mode == 7) && !cap_drag && cap_timer < 12 ? (
@@ -444,6 +477,8 @@ out_pin: right output
                   response_button.hit_button(mouse_x,mouse_y,5);
                   damping_button.hit_button(mouse_x,mouse_y,6);
                   volume_button.hit_button(mouse_x,mouse_y,7);
+                  peakhold_button.hit_button(mouse_x,mouse_y,11);
+                  help_button.hit_button(mouse_x,mouse_y,61);
                 );
           );
 
@@ -458,17 +493,63 @@ out_pin: right output
               slider6=drag_slider(slider6,0,0.01,0.0001); slider_automate(slider6) );
           cap_mode == 7 && cap_last_y != mouse_y ? (
               slider7=drag_slider_precise(slider7,-18,18,0.1); slider_automate(slider7) );
+          cap_mode == 11 && cap_last_y != mouse_y ? (
+              slider11=drag_slider_precise(slider11,1,10,.1); slider_automate(slider11) );
           ) : (
           // cycle click
             cap_mode == 1 && !cap_drag ? (
-                slider1=cycle_slider(slider1,0,9,1); slider_automate(slider1); cap_mode=0 ) : (
+                slider1=cycle_slider(slider1,0,9,1); slider_automate(slider1); cap_mode=0 );
             cap_mode == 2 && !cap_drag ? (
-                slider2=cycle_slider(slider2,0,2,1); slider_automate(slider2); cap_mode=0 );
+                slider2=cycle_slider(slider2,0,2,1); slider_automate(slider2); cap_mode=0 ) : (
+            cap_mode == 61 && !cap_drag ? (
+                slider61=cycle_slider(slider61,0,1,1); slider_automate(slider61); cap_mode=0 );
           );
   );
 
-  cap_mode && cap_timer < 12 ? cap_timer += 1;
+  cap_mode && cap_timer < 10 ? cap_timer += 1;
   last_mouse_cap = mouse_cap;
+
+
+
+
+  //************************************* Right Click Button Menus ************************************
+
+  Bottom_bar_visible ? (
+
+      // UI Style Menu
+      cap_mode && cap_timer < 10 ? cap_timer += 1;
+      ui_color_slider && (mouse_cap==0 && last_mouse_cap==2) ? (
+          gfx_x = 25;
+          gfx_y = ylo - gfx_texth*17.1;
+          sprintf(
+              #menustr,"Classic|Knight|Purple|Mint|Pastel|Warm|Ivory|Trooper|Ultimate|Mooncake|",#menustr,
+              slider1==0?"!":"", slider1==1?"!":"", slider1==2?"!":"", slider1==3?"!":"", slider1==4?"!":"",
+              slider1==5?"!":"", slider1==6?"!":"", slider1==7?"!":"", slider1==8?"!":"", slider1==9?"!":""
+          );
+          ret = gfx_showmenu(#menustr);
+          ret > 0 ? (
+              (ret-=1) < 10 ? (slider1 = ret; slider_automate(slider1); );
+          );
+      );
+
+      // Mode Menu
+      cap_mode && cap_timer < 3 ? cap_timer += 1;
+      mode_slider && (mouse_cap==0 && last_mouse_cap==2) ? (
+          gfx_x = 101;
+          gfx_y = ylo - gfx_texth*6.1;
+          sprintf(
+              #menustr,"Stereo|Summed|Mid / Side|",#menustr,
+              slider2==0?"!":"", slider2==1?"!":"", slider2==2?"!":""
+          );
+          ret = gfx_showmenu(#menustr);
+          ret > 0 ? (
+              (ret-=1) < 3 ? (slider2 = ret; slider_automate(slider2); );
+          );
+      );
+
+  );
+
+
 
 
 
@@ -959,14 +1040,26 @@ out_pin: right output
     //******************************************* channel labels *****************************************
 
     // channel labeling
+
       !PREFERENCE_MASK ? (
-          gfx_set(1,1,1,1); gfx_x = xd; gfx_y = yd+yw+4; ):( gfx_set(0,0,0,0)
+
+          (gfx_h <= yw+69 && gfx_w >= 275) && show_help
+            && (abs(mouse_x) >= 50 && abs(mouse_x) < 306 && abs(mouse_y-ylo) < gfx_texth/2) ? (
+            //(ui_color_slider || mode_slider || volume_slider || help_text_button) ? (
+            gfx_set(1,1,1,.05) ):( gfx_set(1,1,1,1);
+          );
+
+          gfx_x = xd; gfx_y = yd+yw+4; ):( gfx_set(0,0,0,0)
       );
           gfx_h <= yw+32 ? gfx_set(0,0,0,0);
 
+          mode == 0 ? (chan_name = "LEFT" ; chan_name1 = "RIGHT");
+          mode == 1 ? (chan_name = "SUMMED");
+          mode == 2 ? (chan_name = "MID" ; chan_name1 = "SIDE");
+
 
       chan == 0 ?
-          gfx_drawstr("LEFT / MID") : gfx_drawstr("RIGHT / SIDE") ;
+          gfx_drawstr(chan_name) : gfx_drawstr(chan_name1);
 
       chan += 1; mode === 1 ? chan += 1;
 
@@ -987,12 +1080,13 @@ out_pin: right output
       mode == 1 ? (xd = xd*2) : (xd = xd);
 
       // mask background
-      gfx_set(.1,.1,.1,.95); gfx_rect(3,3,gfx_w-6,gfx_h-28);
+      gfx_set(.1,.1,.1,.95); Bottom_bar_visible ? ( gfx_rect(3,3,gfx_w-6,gfx_h-28) ) : (gfx_rect(3,3,gfx_w-6,gfx_h-6));
 
       // slider() bg
       gfx_set(.5,.5,.5,.15);
       gfx_rect(xd+27,80,54,15);  reflevel_button.draw_buttonsize(xd+27,80,54,15);
       gfx_rect(xd+27,100,54,15); warnlevel_button.draw_buttonsize(xd+27,100,54,15);
+      gfx_rect(xd+85,100,36,15); peakhold_button.draw_buttonsize(xd+85,100,36,15);
       gfx_rect(xd+27,130,54,15); response_button.draw_buttonsize(xd+27,130,54,15);
       gfx_rect(xd+27,150,54,15); damping_button.draw_buttonsize(xd+27,150,54,15);
 
@@ -1012,6 +1106,11 @@ out_pin: right output
       slider4 > -10 ? gfx_drawstr(sprintf(#,"%.f dB",slider4),gfx_x=xd+40,gfx_y=100);
       slider4 <= -10 ? gfx_drawstr(sprintf(#,"%.f dB",slider4),gfx_x=xd+35,gfx_y=100);
 
+      // peak hold time
+      gfx_setfont(4); gfx_r=gfx_g=gfx_b=1; gfx_a=1;
+      slider11 >= 10 ? gfx_drawstr(sprintf(#,"%.f",slider11),gfx_x=xd+94,gfx_y=100) : (
+                        gfx_drawstr(sprintf(#,"%.1f",slider11),gfx_x=xd+93,gfx_y=100) );
+
       // meter response
       gfx_setfont(4); gfx_r=gfx_g=gfx_b=1; gfx_a=1; gfx_drawstr("Meter Response :",gfx_x=xd-86,gfx_y=130 );
       slider5 == 100 ? gfx_drawstr(sprintf(#,"%.f %%",slider5),gfx_x=xd+36,gfx_y=130);
@@ -1028,6 +1127,7 @@ out_pin: right output
       // button & slider positions
       ref_level_slider = abs(mouse_x) >= xd+27 && abs(mouse_x) <= xd+81 && abs(mouse_y) > 80 && abs(mouse_y) < 95;
       warn_level_slider = abs(mouse_x) >= xd+27 && abs(mouse_x) <= xd+81 && abs(mouse_y) > 100 && abs(mouse_y) < 115;
+      peak_hold_slider = abs(mouse_x) >= xd+85 && abs(mouse_x) <= xd+121 && abs(mouse_y) > 100 && abs(mouse_y) < 115;
       meter_resp_slider = abs(mouse_x) >= xd+27 && abs(mouse_x) <= xd+81 && abs(mouse_y) > 130 && abs(mouse_y) < 145;
       meter_damp_slider = abs(mouse_x) >= xd+27 && abs(mouse_x) <= xd+81 && abs(mouse_y) > 150 && abs(mouse_y) < 165;
 
@@ -1041,6 +1141,15 @@ out_pin: right output
 
           warn_level_slider ? ( gfx_x = xd-106; gfx_y = ylo-38;
           gfx_drawstr ("Sets the dBFS warn level for the Peak LED.") );
+
+          peak_hold_slider ? (
+            gfx_w >= 275 ? (
+              gfx_x = xd-136; gfx_y = ylo-38;
+              gfx_drawstr ("Sets the hold time for the Peak LED.  ( 100 ms to 1 sec )")
+              ) : (
+              gfx_x = xd-88; gfx_y = ylo-38;
+              gfx_drawstr ("Sets the hold time for the Peak LED.") );
+          );
 
           meter_resp_slider ? (
             gfx_w >= 408 ? (
@@ -1070,6 +1179,8 @@ out_pin: right output
 
 //********************************************* bottom bar *******************************************
 
+  Bottom_bar_visible = (gfx_h >= yw+55 && gfx_w >= 275);
+
   xw2 = max(1,floor((gfx_w) / 2));
   yw2 = floor(xw / 1.025);
   gfx_setfont(2); // large
@@ -1082,7 +1193,7 @@ out_pin: right output
 
 
   gfx_ext_flags == 0 ? (
-      gfx_h >= yw+55 && gfx_w >= 275 ? (
+      Bottom_bar_visible ? (
 
           // bottom bar bg
           gfx_set(0,0,0,bb_t); gfx_rect(gfx_x=x,gfx_y=ylo-gfx_texth/1.7,xw2*2.01,gfx_texth+10,yw2);
@@ -1155,6 +1266,7 @@ out_pin: right output
               style == 6 ? gfx_set(0.80000,.78039,.70588,.1);   style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
               style == 8 ? gfx_set(0.55294,.55294,.55294,.1);   style == 9 ? gfx_set(.11765,.12157,.13725,.6);
               gfx_rect(gfx_x=282,gfx_y=ylo-gfx_texth/2,gfx_texth+10,gfx_texth+1,1);
+              help_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+10,gfx_texth+1);
 
               gfx_setfont(1); // small
               style == 0 ? gfx_set(1.00000,1.00000,0.70000,.8); style == 1 ? gfx_set(0.44706,0.85882,1.00000,.9);
@@ -1172,26 +1284,41 @@ out_pin: right output
           );
 
 
-          gfx_h >= 204 && show_help == 1 ? (
+          show_help == 1 ? (
               gfx_setfont(1); style == 4 ? gfx_set(1,1,1,1);
               style == 6 ? gfx_set(.32941,.31765,.28235); style == 7 ? gfx_set(1,1,1,1);
 
-              ui_color_slider ? ( gfx_x = 10; gfx_y = ylo-28;
-                gfx_drawstr ("Click left mouse button to cycle through UI Styles.") );
+              ui_color_slider ? ( gfx_w >= 399 ? ( gfx_x = 10; gfx_y = ylo-28;
+                gfx_drawstr ("Click left mouse button to cycle through UI Styles.  Right-click to show popup menu.") );
+                gfx_x = 10; gfx_y = ylo-28;
+                gfx_drawstr ("Click left mouse button to cycle through UI Styles.");
+              );
 
-              mode_slider ? ( gfx_x = 10; gfx_y = ylo-28;
-                gfx_drawstr ("Click left mouse button to cycle through channel modes.") );
+              mode_slider ? ( gfx_w >= 444 ? ( gfx_x = 10; gfx_y = ylo-28;
+                gfx_drawstr ("Click left mouse button to cycle through channel modes.  Right-click to show popup menu.") );
+                gfx_x = 10; gfx_y = ylo-28;
+                gfx_drawstr ("Click left mouse button to cycle through channel modes.");
+              );
 
-              volume_slider ? ( gfx_x = 10; gfx_y = ylo-28;
-                gfx_drawstr ("Click & drag to adjust volume... hold Ctrl for fine tuning.") );
-                gfx_w >= 380 ? ( volume_slider ? ( gfx_x = 277; gfx_y = ylo-28;
-                gfx_drawstr ("Double-click to reset.") ) );
+              volume_slider ? ( gfx_w >= 380 ? ( gfx_x = 10; gfx_y = ylo-28;
+                gfx_drawstr ("Click & drag to adjust volume... hold Ctrl for fine tuning.  Double-click to reset.") );
+                gfx_x = 10; gfx_y = ylo-28;
+                gfx_drawstr ("Click & drag to adjust volume... hold Ctrl for fine tuning.");
+              );
+
+              help_text_button ? ( gfx_w >= 358 ? ( gfx_x = 10; gfx_y = ylo-28;
+                gfx_drawstr ("Show or hide tooltips  - or hide permanently by creating a plugin preset.") );
+                gfx_w <= 357 && gfx_w >=336 ? ( gfx_x = 10; gfx_y = ylo-28;
+                gfx_drawstr ("Show or hide tooltips.") );
+              );
 
           );
 
       );
 
   ); // close !gfx_ext_flags
+
+
 
 
 
@@ -1210,7 +1337,7 @@ out_pin: right output
   ui_slider_button = abs(mouse_x-tx) < gfx_texth/2 && abs(mouse_y-ylo) < gfx_texth/2;
 
   gfx_ext_flags == 0 ? (
-      gfx_w > 300 && gfx_h >= yw+55 ? (
+      gfx_w > 300 && ( Bottom_bar_visible ? (gfx_h >= yw+55 ):( PREFERENCE_MASK ? (gfx_h >= yw+39)) ) ? (
           !(gfx_ext_flags&1) ? (
               mode = slider2;
               set_color(TEXT_COLOR);
