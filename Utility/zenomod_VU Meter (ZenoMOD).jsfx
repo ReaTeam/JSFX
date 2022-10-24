@@ -475,8 +475,9 @@ out_pin: right output
           );
   );
 
-  cap_mode && cap_timer < 10 ? cap_timer += 1;
-  last_mouse_cap = mouse_cap;
+
+
+
 
 
 
@@ -517,6 +518,9 @@ out_pin: right output
       );
 
   );
+
+  cap_mode && cap_timer < 10 ? cap_timer += 1;
+  last_mouse_cap = mouse_cap;
 
 
 
