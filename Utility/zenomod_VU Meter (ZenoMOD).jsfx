@@ -14,11 +14,16 @@ changelog:
   Add right-click popup menu for UI style button.
   Add right-click popup menu for channel mode button.
   Add Hold Time multiplication parameter for Peak LED to Meter Options Page.
+
+  Update v1.7.2 b ->
+  fix: slider_automate() function for meter output sliders is only called if record button in Reapers transport section is pressed (fixes high cpu consumption when no meter automations are recorded).
+  fix: Channel mode labels are no longer grayed out when mouse cursor is in trigger zone for tooltips but bottom bar is not visible.
 link: Forum Thread https://forum.cockos.com/showthread.php?t=262611
 donation: Donate via PayPal https://www.paypal.me/ZenoBock
 about:
   Simple VU Meter - a fine freeware by chris-s, modified and functionally extended by Zeno.
   Some hidden sliders can be used for parameter modulation !! ;)
+
 
 tags: analysis analyzer vu meter loudness
 
@@ -87,7 +92,7 @@ out_pin: right output
 @init
 
 //===================================== VERSION NUMBER ==============================================/
-  version = ("v1.7.2");
+  version = ("v1.7.2 b");
 
 
 
@@ -306,10 +311,15 @@ out_pin: right output
 
 //*****************************************************************************************************
 
-  slider50 = dbL; slider_automate(slider50);
-  slider51 = dbR; slider_automate(slider51);
-  slider52 = sign(overL); slider_automate(slider52);
-  slider53 = sign(overR); slider_automate(slider53);
+  slider50 = dbL;
+  slider51 = dbR;
+  slider52 = sign(overL);
+  slider53 = sign(overR);
+
+  play_state == 5 ? (
+    slider_automate(slider50|slider51|slider52|slider53);
+  );
+
 
 
 
@@ -1016,7 +1026,7 @@ out_pin: right output
 
       !PREFERENCE_MASK ? (
 
-          (gfx_h <= yw+69 && gfx_w >= 275) && show_help
+          Bottom_bar_visible && (gfx_h <= yw+69 && gfx_w >= 275) && show_help
             && (abs(mouse_x) >= 50 && abs(mouse_x) < 306 && abs(mouse_y-ylo) < gfx_texth/2) ? (
             //(ui_color_slider || mode_slider || volume_slider || help_text_button) ? (
             gfx_set(1,1,1,.05) ):( gfx_set(1,1,1,1);
