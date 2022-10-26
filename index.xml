@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="d24d0719837b80bfa2deac36c744547f00527901">
+<index version="1" name="ReaTeam JSFX" commit="9462cc8d8e211dd2bdbb6ef08682d4f7ec083ac5">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -3609,6 +3609,25 @@ Add right-click popup menu for UI style button.
 Add right-click popup menu for channel mode button.
 Add Hold Time multiplication parameter for Peak LED to Meter Options Page.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/d24d0719837b80bfa2deac36c744547f00527901/Utility/zenomod_VU%20Meter%20(ZenoMOD).jsfx</source>
+      </version>
+      <version name="1.7.2.1" author="ZenoMOD" time="2022-10-26T19:39:25Z">
+        <changelog><![CDATA[fix: meter output slider scaling adjusted (ATTENTION: not backwards compatible with parameter modulation in old projects!)
+fix: increase display probability of preferences button in case meter options page is open and bottom bar is not visible (edge case).
+fix: bottom bar tooltips are now displayed at any possible UI scaling.
+
+Channel labels now reflect selected channel mode (dagamusik).
+Reduced visibility of channel labels in case tooltip text position is equal to that of channel labels (to improve readability of tooltips).
+
+Add slider_automate() function for meter output sliders to enable meter output automations.
+Add hidden slider for tooltip button to permanently disable tooltips by saving a plugin preset.
+Add right-click popup menu for UI style button.
+Add right-click popup menu for channel mode button.
+Add Hold Time multiplication parameter for Peak LED to Meter Options Page.
+
+Update v1.7.2 b ->
+fix: slider_automate() function for meter output sliders is only called if record button in Reapers transport section is pressed (fixes high cpu consumption when no meter automations are recorded).
+fix: Channel mode labels are no longer grayed out when mouse cursor is in trigger zone for tooltips but bottom bar is not visible.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/9462cc8d8e211dd2bdbb6ef08682d4f7ec083ac5/Utility/zenomod_VU%20Meter%20(ZenoMOD).jsfx</source>
       </version>
     </reapack>
   </category>
