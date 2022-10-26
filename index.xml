@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="9462cc8d8e211dd2bdbb6ef08682d4f7ec083ac5">
+<index version="1" name="ReaTeam JSFX" commit="e81d51ca83e33117961fe66f964e314458027fc8">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -759,6 +759,10 @@ bugfix]]></changelog>
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2022-10-08T14:55:23Z">
         <changelog><![CDATA[Bugfix]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/080e6025bf2eb3ded10251c9ca0d2bb37b0ae588/MIDI/mschnell_MIDI%20Transfer.jsfx</source>
+      </version>
+      <version name="1.2" author="mschnell" time="2022-10-26T20:13:39Z">
+        <changelog><![CDATA[just deleting duplicate code]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/e81d51ca83e33117961fe66f964e314458027fc8/MIDI/mschnell_MIDI%20Transfer.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Note On under X velocity to Note Off and send All Notes Off.jsfx" type="effect" desc="Note On under X velocity to Note Off and send All Notes Off">
