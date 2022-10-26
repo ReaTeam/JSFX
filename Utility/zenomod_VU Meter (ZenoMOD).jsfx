@@ -1,6 +1,6 @@
 desc: VU Meter (ZenoMOD)
 author: ZenoMOD
-version: 1.7.2
+version: 1.7.2.1
 changelog:
   fix: meter output slider scaling adjusted (ATTENTION: not backwards compatible with parameter modulation in old projects!)
   fix: increase display probability of preferences button in case meter options page is open and bottom bar is not visible (edge case).
