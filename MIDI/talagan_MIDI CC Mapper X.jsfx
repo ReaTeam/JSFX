@@ -1,11 +1,14 @@
 desc: MIDI CC Mapper X
-author: Talagan
-version: 4.3.1
+author: Ben 'Talagan' Babut
+version: 5.0
 changelog:
-  - Added info notice in AfterTouch widgets to warn about Channel Pressure virtual CC#128
+  - Added curve morphing with automation for each control
+  - Added auto-emit MIDI events for automated morphed curves
+  - Relaxed transposition constraints on octavas (allow +/- 8 instead of +/- 2)
+  - Added call to freembuf to reduce memory footprint
 screenshot:
-  Dark Theme https://stash.reaper.fm/39718/MIDICCMapperX-4-1-Dark.png
-  Light Theme https://stash.reaper.fm/39719/MIDICCMapperX-4-1-Light.png
+  Dark Theme https://stash.reaper.fm/45504/MIDICCMapperX-5-0-Dark.png
+  Light Theme https://stash.reaper.fm/45505/MIDICCMapperX-5-0-Light.png
 provides:
   [script main] talagan_MIDI CC Mapper X/MIDI CC Mapper X - Dump Current Function.lua
   [data] talagan_MIDI CC Mapper X/README.md
@@ -82,6 +85,12 @@ about:
 
   Additionally, for Pitch Bend and CC controls, channel routing may be achieved.
 
+  ## Morphing curves
+
+  For each control, an additional response curve may be defined. The control will now used a morphed curve calculated from the start curve and this new end curve, using a morph parameter, which can be automated.
+
+  An auto-emit option is available for standard controls (cc + pitch bend). This option will ensure that, if there was some activity on the control, and the morph parameter is moved (by automation, e.g.) some midi events will be forged and emitted to ensure the continuity of the MIDI flow.
+
   ## Customizing the function library
 
   The function library is customizable. You can rearrange things, remove sets and functions, and add your own functions after having generated them or having exported them from REAPER. Please refer to the library manual, which is located in <REAPER_RESOURCE_PATH>/Data/talagan_MIDI CC Mapper X/README.md .
@@ -90,17 +99,76 @@ about:
 
   https://forum.cockos.com/showthread.php?t=172630
 
+  ## Detailed PDF Documentation
+
+  https://stash.reaper.fm/45503/MIDI%20CC%20Mapper%20X.pdf
+
   ## Notes
 
   Older versions (v1 and v2) can be found on the forum thread.
+donation:
+  https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
 license:
   MIT (Do whatever you like with this code).
 docs:
+  Midi official site : https://www.midi.org/specifications
   Midi HR CC #88 for Velocity : https://forum.cockos.com/showthread.php?t=83782
 
 options:want_all_kb
 options:gmem=MIDICCMapperX
 
+slider1:0.5<0,1,0.001>-Morph Pitch Bend
+slider2:0.5<0,1,0.001>-Morph Mod Wheel
+
+slider3:0.5<0,1,0.001>-Morph Pedal 1
+slider4:0.5<0,1,0.001>-Morph Pedal 2
+slider5:0.5<0,1,0.001>-Morph Pedal 3
+slider6:0.5<0,1,0.001>-Morph Pedal 4
+
+slider7:0.5<0,1,0.001>-Morph Fader 1
+slider8:0.5<0,1,0.001>-Morph Fader 2
+slider9:0.5<0,1,0.001>-Morph Fader 3
+slider10:0.5<0,1,0.001>-Morph Fader 4
+slider11:0.5<0,1,0.001>-Morph Fader 5
+slider12:0.5<0,1,0.001>-Morph Fader 6
+slider13:0.5<0,1,0.001>-Morph Fader 7
+slider14:0.5<0,1,0.001>-Morph Fader 8
+slider15:0.5<0,1,0.001>-Morph Fader 9
+slider16:0.5<0,1,0.001>-Morph Fader 10
+
+slider17:0.5<0,1,0.001>-Morph Knob 1
+slider18:0.5<0,1,0.001>-Morph Knob 2
+slider19:0.5<0,1,0.001>-Morph Knob 3
+slider20:0.5<0,1,0.001>-Morph Knob 4
+slider21:0.5<0,1,0.001>-Morph Knob 5
+slider22:0.5<0,1,0.001>-Morph Knob 6
+slider23:0.5<0,1,0.001>-Morph Knob 7
+slider24:0.5<0,1,0.001>-Morph Knob 8
+slider25:0.5<0,1,0.001>-Morph Knob 9
+slider26:0.5<0,1,0.001>-Morph Knob 10
+
+slider27:0.5<0,1,0.001>-Morph Pad 1
+slider28:0.5<0,1,0.001>-Morph Pad 2
+slider29:0.5<0,1,0.001>-Morph Pad 3
+slider30:0.5<0,1,0.001>-Morph Pad 4
+slider31:0.5<0,1,0.001>-Morph Pad 5
+slider32:0.5<0,1,0.001>-Morph Pad 6
+slider33:0.5<0,1,0.001>-Morph Pad 7
+slider34:0.5<0,1,0.001>-Morph Pad 8
+slider35:0.5<0,1,0.001>-Morph Pad 9
+slider36:0.5<0,1,0.001>-Morph Pad 10
+
+slider37:0.5<0,1,0.001>-Morph Velocity Green
+slider38:0.5<0,1,0.001>-Morph Velocity Red
+slider39:0.5<0,1,0.001>-Morph Velocity Blue
+slider40:0.5<0,1,0.001>-Morph Velocity Orange
+slider41:0.5<0,1,0.001>-Morph Velocity Violet
+
+slider42:0.5<0,1,0.001>-Morph Poly Aftertouch Green
+slider43:0.5<0,1,0.001>-Morph Poly Aftertouch Red
+slider44:0.5<0,1,0.001>-Morph Poly Aftertouch Blue
+slider45:0.5<0,1,0.001>-Morph Poly Aftertouch Orange
+slider46:0.5<0,1,0.001>-Morph Poly Aftertouch Violet
 
 //===========================================//
 //=============      INIT      ==============//
@@ -125,6 +193,11 @@ function malloc(msize)
   ret = MEM_PTR;
   MEM_PTR += msize;
   ret;
+);
+
+function freeUnusedMem()
+(
+  freembuf(MEM_PTR);
 );
 
 // Same thing for gmem.
@@ -360,6 +433,27 @@ function instanceMemoryMapInit()
   // Added 4.3
   CONTROL_HIGHRES_INPUT_ENABLED = malloc(CONTROL_COUNT);
   REVERSE_PITCH_BEND = malloc(1);
+
+  // Added 5.0
+  CONTROL_MORPH_ENABLED        = malloc(CONTROL_COUNT);
+  CONTROL_MORPH_SELECTED       = malloc(CONTROL_COUNT);
+
+  CONTROL_MORPH_MAXS_MSB       = malloc(CONTROL_COUNT);  // Controls curve max limit (MSB)
+  CONTROL_MORPH_MAXS_LSB       = malloc(CONTROL_COUNT);  // Controls curve min limit (LSB)
+  CONTROL_MORPH_MINS_MSB       = malloc(CONTROL_COUNT);  // Controls curve max limit (MSB)
+  CONTROL_MORPH_MINS_LSB       = malloc(CONTROL_COUNT);  // Controls curve min limit (LSB)
+
+  CONTROL_MORPH_CURVES             = malloc(CONTROL_COUNT*CURVESIZE);
+  CONTROL_MORPH_AUTO_EMIT_ENABLED  = malloc(CONTROL_COUNT);
+
+  // Track values for all morph sliders to detect changes.
+  // Track slider activity since last handling.
+  // Track output channels for each control.
+  MORPH_SLIDER_TRACKING             = malloc(CONTROL_COUNT);
+  MORPH_SLIDER_ACTIVITY             = malloc(CONTROL_COUNT);
+  CONTROL_OUT_ACTIVITY_PER_CHANNEL  = malloc(CONTROL_COUNT * 16);
+
+  freeUnusedMem();
 );
 
 function initMidiCCNames()
@@ -612,7 +706,9 @@ function switchToDarkTheme() (
   TH.MONO_B              = 0x202020;
   TH.MONO_B_H            = 0x505050;
   TH.MONO_B_TEXT         = 0xAAAAFF;
-  TH.MONO_B_CURVE        = 0xFF5050;
+
+  TH.CURVE_B             = 0x202020;
+  TH.CURVE_B_H           = 0x505050;
 
   TH.CC_LEARN_ON         = 0x666600;
   TH.CC_LEARN_ON_H       = 0x888800;
@@ -626,11 +722,18 @@ function switchToDarkTheme() (
 
   // Curve
   TH.CURVE               = 0x6060FF;
+  TH.CURVE_MORPH_UNS     = 0x709070;
+  TH.CURVE_MORPH_SEL     = 0x00FF00;
+  TH.CURVE_BASE_UNS      = 0x886060;
+  TH.CURVE_BASE_SEL      = 0xFF6060;
+
   TH.CURVE_BG            = 0x191919;
   TH.CURVE_BG_EXCL       = 0x090909;
   TH.CURVE_GRID          = 0x353535;
   TH.CURVE_BORDER        = 0x474747;
   TH.CURVE_CURRENT_VALUE = 0xFF4040;
+
+  TH.CURVE_MORPH         = 0x4080FF;
 
   // Controls
   TH.CONTROL_HIGHLIGHT              = 0x7070F0;
@@ -732,7 +835,9 @@ function switchToLightTheme() (
   TH.MONO_B              = 0xA0A0A0;
   TH.MONO_B_H            = 0xD0D0D0;
   TH.MONO_B_TEXT         = 0xFFFFFF;
-  TH.MONO_B_CURVE        = 0xFF2020;
+
+  TH.CURVE_B             = 0xC0C0C0;
+  TH.CURVE_B_H           = 0xE0E0E0;
 
   TH.CC_LEARN_ON         = 0x666600;
   TH.CC_LEARN_ON_H       = 0x888800;
@@ -746,11 +851,18 @@ function switchToLightTheme() (
 
   // Curve
   TH.CURVE               = 0x6060FF;
+  TH.CURVE_MORPH_UNS     = 0x709070;
+  TH.CURVE_MORPH_SEL     = 0x00A000;
+  TH.CURVE_BASE_UNS      = 0x886060;
+  TH.CURVE_BASE_SEL      = 0xFF6060;
+
   TH.CURVE_BG            = 0x393939;
   TH.CURVE_BG_EXCL       = 0x292929;
   TH.CURVE_GRID          = 0x555555;
   TH.CURVE_BORDER        = 0x676767;
   TH.CURVE_CURRENT_VALUE = 0xFF4040;
+
+  TH.CURVE_MORPH         = 0x4080FF;
 
   // Controls
   TH.CONTROL_HIGHLIGHT              = 0xC7C7FF;
@@ -1975,37 +2087,18 @@ function shouldDropUnroutedPolyphonicAfterTouchMessages() (
 // CONTROLS //
 //////////////
 
-function curveAddress(cnum)
+function baseCurveAddress(cnum)
 (
   (cnum <0 || cnum >= CONTROL_COUNT)?(NONE):(
     CURVES + (cnum * CURVESIZE)
   );
 );
 
-// Applies a curve, returns a value from 0 to 1.
-function applyCurve(blk_control, x01)
-  local(attached_curve, x01, sample_num_f, sample_num_il, sample_num_ir, sample_l, sample_r, curve_interp, alpha)
+function morphCurveAddress(cnum)
 (
-  attached_curve = curveAddress(blk_control);
-
-  // Do some clamping cleanup first
-  x01 = min(max(x01,0),1);
-
-  // Normalize reference space > Curve space
-  sample_num_f  = 127 * x01;
-  sample_num_il = floor(sample_num_f);
-  sample_num_ir = ceil(sample_num_f);
-
-  // Get left sample, right sample, and linear interpolation factor
-  sample_l      = attached_curve[sample_num_il];
-  sample_r      = attached_curve[sample_num_ir];
-  alpha         = sample_num_f - sample_num_il;
-
-  // Lerp : this will return a value between 0 and 127
-  curve_interp  = (1-alpha) * sample_l + alpha * sample_r;
-
-  // Return a value between 0 and 1.
-  (curve_interp/127.0);
+  (cnum <0 || cnum >= CONTROL_COUNT)?(NONE):(
+    CONTROL_MORPH_CURVES + (cnum * CURVESIZE)
+  );
 );
 
 function controlInputChannel(control) (
@@ -2038,6 +2131,12 @@ function isControlHighResCapableForOutput(control) (
   (isControlVelocity(control) || (isControlForRealCC(control) && isAHighResComponentCC(CONTROL_DSTS[control])));
 );
 
+function isMorphingEnabledForControl(cnum) (
+  CONTROL_MORPH_ENABLED[cnum];
+);
+function isMorphCurveSelectedForControl(cnum) (
+  CONTROL_MORPH_SELECTED[cnum];
+);
 
 function controlKBRange(control) (
   (isControlVelocity(control))?(control - CONTROL_VELOCITY_START):(
@@ -2080,12 +2179,24 @@ function controlHasOperationalHighResInput(control)
 
 
 function controlCurrentBound01(control,is_min)
-  local(lsb,msb)
+  local(lsb,msb,mins_lsb_address,maxs_lsb_address,mins_msb_address,maxs_msb_address)
 (
-  msb = (is_min)?(CONTROL_MINS_MSB[control]):(CONTROL_MAXS_MSB[control]);
+  (isMorphingEnabledForControl(control) && isMorphCurveSelectedForControl(control))?(
+    mins_lsb_address = CONTROL_MORPH_MINS_LSB;
+    maxs_lsb_address = CONTROL_MORPH_MAXS_LSB;
+    mins_msb_address = CONTROL_MORPH_MINS_MSB;
+    maxs_msb_address = CONTROL_MORPH_MAXS_MSB;
+  ):(
+    mins_lsb_address = CONTROL_MINS_LSB;
+    maxs_lsb_address = CONTROL_MAXS_LSB;
+    mins_msb_address = CONTROL_MINS_MSB;
+    maxs_msb_address = CONTROL_MAXS_MSB;
+  );
+
+  msb = (is_min)?(mins_msb_address[control]):(maxs_msb_address[control]);
 
   (controlHasOperationalHighResOutput(control))?(
-    lsb = (is_min)?(CONTROL_MINS_LSB[control]):(CONTROL_MAXS_LSB[control]);
+    lsb = (is_min)?(mins_lsb_address[control]):(maxs_lsb_address[control]);
 
     (isControlVelocity(control))?(
       midiVelocityHresI2F01(msb,lsb);
@@ -2122,10 +2233,93 @@ function controlLabelWithFallback(cnum) local(str) (
   (strlen(str)==0)?(str="?");
   str;
 );
-function selectedControlCurveAddress() (
-  curveAddress(g_selected_control);
+
+function selectedControlBaseCurveAddress() (
+  baseCurveAddress(g_selected_control);
 );
 
+function selectedControlMorphCurveAddress() (
+  morphCurveAddress(g_selected_control);
+);
+
+function selectedControlEditedCurveAddress() (
+  (isMorphingEnabledForControl(g_selected_control) && isMorphCurveSelectedForControl(g_selected_control))?
+  (selectedControlMorphCurveAddress()):
+  (selectedControlBaseCurveAddress());
+);
+function morphSliderNumForControl(cnum) (
+
+  // Slider num starts at 1, but cnum starts at 0.
+  // 1,2 ... etc.
+
+  (cnum == CONTROL_PITCH_BEND)?(1):(
+  (cnum == CONTROL_MOD_WHEEL)?(2):(
+    cnum + 2;
+  ));
+);
+function morphValueForControl(cnum) (
+  slider(morphSliderNumForControl(cnum));
+);
+function morphValueForCurrentControl() (
+  morphValueForControl(g_selected_control);
+);
+
+function isMorphAutoEmitAvailableForControl(cnum) (
+  (isControlForRealCC(cnum) || isControlPitchBend(cnum));
+);
+
+function isMorphAutoEmitEnabledForControl(cnum) (
+  CONTROL_MORPH_AUTO_EMIT_ENABLED[cnum];
+);
+
+function resultCurveValueAt(cnum, i)
+  local(base_curve, morph_curve, alpha)
+(
+  base_curve  = baseCurveAddress(cnum);
+
+  (isMorphingEnabledForControl(cnum))?(
+    alpha       = morphValueForControl(cnum);
+    morph_curve = morphCurveAddress(cnum);
+
+    base_curve[i] * (1 - alpha) + alpha * morph_curve[i];
+  ):(
+    base_curve[i];
+  );
+);
+
+function outputActivityForControlStartAddress(cnum) (
+  CONTROL_OUT_ACTIVITY_PER_CHANNEL + (cnum * 16);
+);
+function outputActivityForControlOnChannel(cnum, chan) (
+  outputActivityForControlStartAddress(cnum)[chan];
+);
+function setOutputActivityForControlOnChannel(cnum, chan, val) (
+  outputActivityForControlStartAddress(cnum)[chan] = val;
+);
+
+// Applies a curve, returns a value from 0 to 1.
+function applyCurve(blk_control, x01)
+  local(x01, sample_num_f, sample_num_il, sample_num_ir, sample_l, sample_r, curve_interp, alpha)
+(
+  // Do some clamping cleanup first
+  x01 = min(max(x01,0),1);
+
+  // Normalize reference space > Curve space
+  sample_num_f  = 127 * x01;
+  sample_num_il = floor(sample_num_f);
+  sample_num_ir = ceil(sample_num_f);
+
+  // Get left sample, right sample, and linear interpolation factor
+  sample_l      = resultCurveValueAt(blk_control, sample_num_il);
+  sample_r      = resultCurveValueAt(blk_control, sample_num_ir);
+  alpha         = sample_num_f - sample_num_il;
+
+  // Lerp : this will return a value between 0 and 127
+  curve_interp  = (1-alpha) * sample_l + alpha * sample_r;
+
+  // Return a value between 0 and 1.
+  (curve_interp/127.0);
+);
 
 
 /////////////////////
@@ -2153,11 +2347,9 @@ function kbRangeTransposeSemiTones(cr) (
 function kbRangeTransposition(cr) (
   kbRangeTranspose8VA(cr)*12 + kbRangeTransposeSemiTones(cr)
 );
-
 function kbRangeOutputChannel(cr) (
   KB_RANGE_OUTPUT_CHANNEL[cr];
 );
-
 
 /////////////////////
 //     CC LEARN    //
@@ -2231,7 +2423,7 @@ function definitionInit()
 );
 
 function firstInit()
-  local(c, curve, i)
+  local(c, curve, morph_curve, i)
 (
   // Draw actor id
   g_actor_id = rand();
@@ -2259,13 +2451,15 @@ function firstInit()
   c = 0;
   while(c<CONTROL_COUNT) (
 
-    // Init to identity.
+    // Init curves to identity
     CONTROL_ENABLED[c] = 1;
 
-    curve = curveAddress(c);
+    curve       = baseCurveAddress(c);
+    morph_curve = morphCurveAddress(c);
     i = 0;
     while(i<CURVESIZE) (
       curve[i] = i;
+      morph_curve[i] = i;
       i+=1;
     );
 
@@ -2285,10 +2479,18 @@ function firstInit()
     CONTROL_CHAN_SRCS[c]                = ANY;
     CONTROL_CHAN_DSTS[c]                = AS_SRC;
     CONTROL_HIGHRES_OUTPUT_ENABLED[c]   = 0;
+
     CONTROL_MINS_LSB[c]                 = 0;
     CONTROL_MINS_MSB[c]                 = 0;
     CONTROL_MAXS_LSB[c]                 = 127;
     CONTROL_MAXS_MSB[c]                 = 127;
+
+    CONTROL_MORPH_SELECTED[c]           = 0;
+    CONTROL_MORPH_MINS_LSB[c]           = 0;
+    CONTROL_MORPH_MINS_MSB[c]           = 0;
+    CONTROL_MORPH_MAXS_LSB[c]           = 127;
+    CONTROL_MORPH_MAXS_MSB[c]           = 127;
+
     CONTROL_PASS_THROUGH[c]             = DROP;
     c+=1
   );
@@ -2334,32 +2536,99 @@ function fontInit() (
   gfx_setfont(0);
 );
 
+// Resets all sliders activity
+// To be called on every initialisation (load/play/stop etc)
+function reinitSliderActivity()
+  local(cnum, sindex) (
 
-// Do not reload plugin on each play/stop
-ext_noinit=1;
+  cnum = 0;
+  g_slider_activity_this_block = 0;
+  while(cnum < CONTROL_COUNT) (
+    sindex                      = morphSliderNumForControl(cnum);
+    MORPH_SLIDER_ACTIVITY[cnum] = 0;
+    MORPH_SLIDER_TRACKING[cnum] = slider(sindex);
+    cnum += 1;
+  );
+);
+
+// Resets activity tracking for every output channel per control
+// To be called on every initialisation (load/play/stop etc)
+function reinitControlOutActivity()
+  local(i, stop) (
+
+  i    = 0;
+  stop = 16 * CONTROL_COUNT; // 16 channels per control (46 controls)
+  while(i < stop) (
+    CONTROL_OUT_ACTIVITY_PER_CHANNEL[i] = -1;
+    i += 1;
+  );
+);
+
 // Enabled midi bus support
 ext_midi_bus=1;
 
+// Normally, the plugin gets resetted
+// on effect load / sample playrate change / play / stop
+// We need to detect a play/stop event for the auto-emit feature.
+// So we have no other choice than putting ext_noinit to zero.
+ext_noinit=0;
+
 // Reload memory map each time.
-// This may allow hot plug of new fx versions.
+// This may allow hot plug of new fx versions when developing.
+// This will realloc and redefine quite a large number of vars, but will not clear their values because
+// The initialization of those VALUES are done in firstInit ONLY and they are left untouched afterwards.
+// It should be noted that the zeroing of the whole memory that could happen in @init by REAPER
+// is prevented by the presence of a serialize block (that's what the doc says)
 definitionInit();
 
-!g_firstInitDone ? (
-  // Memory default values.
-  // Only do this once or reaper will destroy user data.
+// Reset slider morph activity on every init
+// This is really important for play/stop to avoid cluttering the plugin
+// With unuseful memorized states
+reinitSliderActivity();
+reinitControlOutActivity();
+
+(LOADED_VERSION[0] == 0) ? (
+
+  //
+  // Only do this once or reaper will destroy user data
+  // On each init
   firstInit();
   fontInit();
-  last_modified = -1;
-  g_selected_control = NONE;
+
+  g_last_pen_modified_x = -1;
+  g_selected_control    = NONE;
+  LOADED_VERSION[0]     = 5.0;
 );
-g_firstInitDone=1;
 
 //===========================================//
 //==============    SLIDER     ==============//
 //===========================================//
 @slider
 
-// No parameter exposition yet.
+// Track morph sliders for changes.
+function trackSliders()
+  local(cnum, sindex, newval, oldval) (
+
+  cnum = 0;
+  while(cnum < CONTROL_COUNT) (
+    sindex                      = morphSliderNumForControl(cnum);
+    newval                      = slider(sindex);
+    oldval                      = MORPH_SLIDER_TRACKING[cnum];
+
+    // Slider activity detected ?
+    // Mark morph slider for control as dirty
+    // And also mark global slider activity as dirty
+    (oldval != newval)?(
+      MORPH_SLIDER_ACTIVITY[cnum]  = 1;
+      g_slider_activity_this_block = 1;
+    );
+
+    MORPH_SLIDER_TRACKING[cnum] = newval;
+    cnum += 1;
+  );
+);
+
+trackSliders();
 
 //===========================================//
 //==============   SERIALIZE   ==============//
@@ -2525,8 +2794,8 @@ function memwr(is_saving, ver)
         CONTROL_MAXS_MSB[red_vel_ctrl] = CONTROL_MAXS_MSB[green_vel_ctrl];
 
         // Curve was shared, so copy G to R.
-        green_curve = curveAddress(green_vel_ctrl);
-        red_curve   = curveAddress(red_vel_ctrl);
+        green_curve = baseCurveAddress(green_vel_ctrl);
+        red_curve   = baseCurveAddress(red_vel_ctrl);
         s = 0; while(s < CURVESIZE) (
           red_curve[s] = green_curve[s];
           s += 1;
@@ -2576,6 +2845,24 @@ function memwr(is_saving, ver)
     file_mem(0, REVERSE_PITCH_BEND, 1);
   );
 
+
+  // Introduced in V5.0
+  avail = file_avail(0);
+  (is_saving || avail > 0)?(
+    file_mem(0,CONTROL_MORPH_ENABLED,  ccount);
+
+    file_mem(0,CONTROL_MORPH_MINS_MSB, ccount);
+    file_mem(0,CONTROL_MORPH_MINS_LSB, ccount);
+    file_mem(0,CONTROL_MORPH_MAXS_MSB, ccount);
+    file_mem(0,CONTROL_MORPH_MAXS_LSB, ccount);
+
+    file_mem(0,CONTROL_MORPH_CURVES,   ccount * CURVESIZE);
+    file_mem(0,CONTROL_MORPH_AUTO_EMIT_ENABLED, ccount);
+
+    // It is not necessary to save morph parameter values.
+    // Since they are linked to the sliders, reaper will save their values
+    // As parameters of the JSFX instance.
+  );
 
 );
 
@@ -2689,6 +2976,16 @@ function txtColorForComboBox(combo_id)
   (combo_id == "chan_out_range_2_spinbox" || combo_id == "kr_2_8va" || combo_id == "kr_2_st")?(ret = TH.KEY_COLOR_RANGE_TEXT);
   (combo_id == "chan_out_range_3_spinbox" || combo_id == "kr_3_8va" || combo_id == "kr_3_st")?(ret = TH.KEY_COLOR_RANGE_TEXT);
   (combo_id == "chan_out_range_4_spinbox" || combo_id == "kr_4_8va" || combo_id == "kr_4_st")?(ret = TH.KEY_COLOR_RANGE_TEXT);
+
+  (combo_id == "min_spinbox_msb" || combo_id == "min_spinbox_lsb" || combo_id == "max_spinbox_msb" || combo_id == "max_spinbox_lsb")?(
+    (isMorphingEnabledForControl(g_selected_control))?(
+      (isMorphCurveSelectedForControl(g_selected_control))?(
+        ret = TH.CURVE_MORPH_SEL;
+      ):(
+        ret = TH.CURVE_BASE_SEL;
+      )
+    );
+  );
 
   ret;
 );
@@ -2842,7 +3139,7 @@ function drawOnOffButton(flag_address,flag_local_address,t,l) (
 
 // - or + button for a spinbox
 function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_sub,minval,maxval,should_wrap)
-   local(bl,bt,br,bb,in_rect,val_shift,got_event,new_srcdstbtn_time,last_srcdstbtn_time)
+   local(bl ,bt, br, bb, in_rect, val_shift, got_event, new_srcdstbtn_time ,last_srcdstbtn_time)
 (
   got_event = 0;
 
@@ -3013,7 +3310,7 @@ function drawInputLine(input_id, bl, bt, br, bb, str)
 function mousePenCallback(gzone)
    local(curve,in_rect,px,py,x1,x2,y1,y2,alpha,i,min_bound,max_bound)
 (
-  curve = selectedControlCurveAddress();
+  curve = selectedControlEditedCurveAddress();
 
   in_rect = (mouse_x >= gzone.l && mouse_x < gzone.r && mouse_y >= gzone.t && mouse_y < gzone.b);
 
@@ -3041,34 +3338,44 @@ function mousePenCallback(gzone)
       px = roundi(px);
       py = roundi(py);
 
-      last_modified == -1 || last_modified == px ? (
+      (g_last_pen_modified_x == -1 || g_last_pen_modified_x == px) ? (
         curve[px]     = py;
-        last_modified = px;
+        g_last_pen_modified_x = px;
       ):
       (
         // Perform some interpolation since mouse positions are not continuous
         x1=x2=y1=y2=0;
-        px <= last_modified ?
-        ( x1 = px; x2 = last_modified; y1 = py; y2 = curve[last_modified]; ):
-        ( x1 = last_modified; x2 = px; y1 = curve[last_modified]; y2 = py; );
+
+        (px <= g_last_pen_modified_x)?(
+          x1 = px;
+          x2 = g_last_pen_modified_x;
+          y1 = py;
+          y2 = curve[g_last_pen_modified_x];
+        ):(
+          x1 = g_last_pen_modified_x;
+          x2 = px;
+          y1 = curve[g_last_pen_modified_x];
+          y2 = py;
+        );
+
         i = x1;
         while(i <= x2) (
           alpha  = (i-x1)/(x2-x1);
           curve[i] = y1 + alpha * (y2-y1);
           i += 1;
         );
-        last_modified = px;
+        g_last_pen_modified_x = px;
       )
     )
   ):(
-    last_modified = -1
+    g_last_pen_modified_x = -1
   );
 );
 
 function smoothButtonCallback()
   local(curve, i, new_smooth_time, last_smooth_time)
 (
-  curve = selectedControlCurveAddress();
+  curve = selectedControlEditedCurveAddress();
 
   // Limit this to 20 calls / seconds
   new_smooth_time = time_precise();
@@ -3183,7 +3490,7 @@ function drawCopyCurveButton(gzone)
   gfx_xy(bl+10,bt+7);
   gfx_drawstr("Cpy");
 
-  cad = curveAddress(g_selected_control);
+  cad = selectedControlEditedCurveAddress();
   (in_rect && mouse_click == 1) ? (
     i=0;while(i<CURVESIZE) (
       gmem[GMEM_DUMP_CURVE_BUF+i] = cad[i];
@@ -3224,7 +3531,7 @@ function drawPasteCurveButton(gzone)
     in_validation = 0;
   );
 
-  cad = curveAddress(g_selected_control);
+  cad = selectedControlEditedCurveAddress();
 
   (in_rect && mouse_click == 1) ? (
     (in_validation == 1)?(
@@ -3245,7 +3552,7 @@ function drawPasteCurveButton(gzone)
 function fsetCurveButtonCallback(set_num, row_num, col_num)
   local(i,curve,curve_addr,min_bound,max_bound)
 (
-  curve       = selectedControlCurveAddress();
+  curve       = selectedControlEditedCurveAddress();
   curve_addr  = getFsetFunctionCurveAddress(set_num, row_num, col_num);
 
   min_bound   = controlCurrentMinBound01(g_selected_control);
@@ -3270,14 +3577,14 @@ function drawFsetCurveButton(bzone, voffset, set_num, row_num, col_num)
 
   mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt ?
   (
-   gfx_rgb(TH.MONO_B_H);
+   gfx_rgb(TH.CURVE_B_H);
    // Handle the callback in the draw function... erm
    (mouse_click==1) ? (
       fsetCurveButtonCallback(set_num, row_num, col_num);
    );
   ):
   (
-    gfx_rgb(TH.MONO_B);
+    gfx_rgb(TH.CURVE_B);
   );
 
   // Draw the button rect
@@ -3286,7 +3593,17 @@ function drawFsetCurveButton(bzone, voffset, set_num, row_num, col_num)
   gfx_rect(bl,bt,br-bl,bb-bt);
 
   // Draw the button points
-  gfx_rgb(TH.MONO_B_CURVE);
+
+  (isMorphingEnabledForControl(g_selected_control))?(
+    (isMorphCurveSelectedForControl(g_selected_control))?(
+      gfx_rgb(TH.CURVE_MORPH_SEL);
+    ):(
+      gfx_rgb(TH.CURVE_BASE_SEL);
+    )
+  ):(
+    gfx_rgb(TH.CURVE);
+  );
+
   gfx_x = bl; gfx_y = bb -31*gmem[preview_address+0] - 0.5;
 
   i = 1;
@@ -3391,6 +3708,7 @@ function drawCurveButtons(bzone)
 
     (isFSetParametric(cur_set_num))?(
 
+      // Parametric slider
       pid         = getFSetParametricID(cur_set_num);
 
       param_label = getParametricFSetParameterName(pid);
@@ -3415,7 +3733,6 @@ function drawCurveButtons(bzone)
       gfx_rect(slider_l, slider_t, slider_w, 3);
 
       gfx_rgb(TH.DEFAULT_FONT);
-      gfx_xy(slider_l + slider_w + 10, bwy);
 
       pval = getFSetParameter(cur_set_num);
 
@@ -3447,10 +3764,10 @@ function drawCurveButtons(bzone)
         precalcParametricSet(cur_set_num);
       );
 
+      gfx_xy(slider_l + slider_w + 10, bwy);
       str = #;
       sprintf(str, "%.2f", pval+0.0001);
       gfx_drawstr(str);
-
     ):
     (
       gfx_rgb(TH.DEFAULT_FONT);
@@ -3461,8 +3778,22 @@ function drawCurveButtons(bzone)
 );
 
 function drawBoundariesPanel()
-  local(got_event,i,min_bound,max_bound,with_lsb,curve,left, top)
+  local(got_event,i,min_bound,max_bound,with_lsb,curve,left, top,
+    mins_lsb_address,maxs_lsb_address,mins_msb_address,maxs_msb_address
+  )
 (
+  (isMorphingEnabledForControl(g_selected_control) && isMorphCurveSelectedForControl(g_selected_control))?(
+    mins_lsb_address = CONTROL_MORPH_MINS_LSB;
+    maxs_lsb_address = CONTROL_MORPH_MAXS_LSB;
+    mins_msb_address = CONTROL_MORPH_MINS_MSB;
+    maxs_msb_address = CONTROL_MORPH_MAXS_MSB;
+  ):(
+    mins_lsb_address = CONTROL_MINS_LSB;
+    maxs_lsb_address = CONTROL_MAXS_LSB;
+    mins_msb_address = CONTROL_MINS_MSB;
+    maxs_msb_address = CONTROL_MAXS_MSB;
+  );
+
   gfx_rgb(TH.DEFAULT_FONT);
 
   with_lsb = controlHasOperationalHighResOutput(g_selected_control);
@@ -3489,12 +3820,12 @@ function drawBoundariesPanel()
 
   got_event = 0;
 
-  got_event |= drawAddOrSubWidget("min_spinbox_msb",CONTROL_MINS_MSB,g_selected_control,(with_lsb)?(left+50):(left+90),GUI_CONTROL_PARAMS_TOP+top+70,0,127,40,0);
-  got_event |= drawAddOrSubWidget("max_spinbox_msb",CONTROL_MAXS_MSB,g_selected_control,(with_lsb)?(left+50):(left+90),GUI_CONTROL_PARAMS_TOP+top+100,0,127,40,0);
+  got_event |= drawAddOrSubWidget("min_spinbox_msb",mins_msb_address,g_selected_control,(with_lsb)?(left+50):(left+90),GUI_CONTROL_PARAMS_TOP+top+70,0,127,40,0);
+  got_event |= drawAddOrSubWidget("max_spinbox_msb",maxs_msb_address,g_selected_control,(with_lsb)?(left+50):(left+90),GUI_CONTROL_PARAMS_TOP+top+100,0,127,40,0);
 
   (with_lsb)?(
-    got_event |= drawAddOrSubWidget("min_spinbox_lsb",CONTROL_MINS_LSB,g_selected_control,left+130,GUI_CONTROL_PARAMS_TOP+top+70,0,127,40,0);
-    got_event |= drawAddOrSubWidget("max_spinbox_lsb",CONTROL_MAXS_LSB,g_selected_control,left+130,GUI_CONTROL_PARAMS_TOP+top+100,0,127,40,0);
+    got_event |= drawAddOrSubWidget("min_spinbox_lsb",mins_lsb_address,g_selected_control,left+130,GUI_CONTROL_PARAMS_TOP+top+70,0,127,40,0);
+    got_event |= drawAddOrSubWidget("max_spinbox_lsb",maxs_lsb_address,g_selected_control,left+130,GUI_CONTROL_PARAMS_TOP+top+100,0,127,40,0);
   );
 
   got_event?(
@@ -3502,7 +3833,7 @@ function drawBoundariesPanel()
     min_bound = controlCurrentMinBound01(g_selected_control)*127;
     max_bound = controlCurrentMaxBound01(g_selected_control)*127;
 
-    curve = curveAddress(g_selected_control);
+    curve = selectedControlEditedCurveAddress();
 
     // Reclamp the curve.
     i = 0;
@@ -3517,11 +3848,10 @@ function drawBoundariesPanel()
 );
 
 function drawCurvezone()
-  local(curve, curve_panel_top, left, top, right, bottom, gridstep, gzone, bzone, i, t1,t2,t3,t4)
+  local(curve, morph_curve, curve_panel_top, left, top, right, bottom, gridstep, gzone, bzone, i, t1,t2,t3,t4, alpha, inter)
 (
    // Curve zone
-    curve_panel_top = GUI_CONTROL_PARAMS_TOP+90;
-    curve = selectedControlCurveAddress();
+    curve_panel_top = GUI_CONTROL_PARAMS_TOP+100;
 
     gzone = 0;
     gzone.margin = 20;
@@ -3581,13 +3911,48 @@ function drawCurvezone()
     gfx_lineto(left,top);
 
     // Draw curve
-    gfx_rgb(TH.CURVE);
+    curve = selectedControlBaseCurveAddress();
+
+    (isMorphingEnabledForControl(g_selected_control))?(
+      gfx_rgb(TH.CURVE_BASE_UNS)
+    ):(
+      gfx_rgb(TH.CURVE);
+    );
+
     gfx_x = left;
     gfx_y = bottom-roundi(RESOLUTION*curve[0]);
 
     i = 1; while(i<CURVESIZE)(
       gfx_lineto(left+i*RESOLUTION, bottom - roundi(RESOLUTION*curve[i]));
       i+=1;
+    );
+
+    (isMorphingEnabledForControl(g_selected_control))?(
+      morph_curve = selectedControlMorphCurveAddress();
+
+      gfx_rgb(TH.CURVE_MORPH_UNS);
+
+      gfx_x = left;
+      gfx_y = bottom-roundi(RESOLUTION*morph_curve[0]);
+
+      i = 1; while(i<CURVESIZE)(
+        gfx_lineto(left+i*RESOLUTION, bottom - roundi(RESOLUTION*morph_curve[i]));
+        i+=1;
+      );
+
+      gfx_rgb(TH.CURVE);
+
+      inter = curve[0] * (1 - alpha) + alpha * morph_curve[0];
+      gfx_x = left;
+      gfx_y = bottom-roundi(RESOLUTION*inter);
+
+      alpha = morphValueForCurrentControl();
+
+      i = 1; while(i<CURVESIZE)(
+        inter = curve[i] * (1 - alpha) + alpha * morph_curve[i];
+        gfx_lineto(left+i*RESOLUTION, bottom - roundi(RESOLUTION * inter));
+        i+=1;
+      );
     );
 
     gfx_rgb(TH.CURVE_CURRENT_VALUE);
@@ -3600,6 +3965,11 @@ function drawCurvezone()
     drawCurveButtons(bzone);
     drawMousePenButton(bzone);
     drawSmoothButton(bzone);
+
+    (isMorphingEnabledForControl(g_selected_control))?(
+      drawbistateButton(CONTROL_MORPH_SELECTED,g_selected_control,gzone.b+3,162,"E","S",TH.CURVE_MORPH_SEL,TH.CURVE_BASE_SEL,TH.CURVE_MORPH_UNS,TH.CURVE_BASE_UNS,0,0);
+    );
+
     drawCopyCurveButton(bzone);
     drawPasteCurveButton(bzone);
 
@@ -4116,7 +4486,10 @@ function passThroughMayClashForControl(control)
 function drawAssignZone()
    local(src_cc, src_name, src_is_lsb, src_is_msb,
          dst_cc, dst_name, dst_is_lsb, dst_is_msb,
-         kbr, str, w, h)
+         kbr, str, w, h,
+         in_rect, new_pos, new_val, pos, pval,
+         slider_l, slider_w, slider_t,
+         sli_b, sli_l, sli_r, sli_t, slider_num, vmax, vmin)
 (
   gfx_rgb(TH.DEFAULT_FONT);
 
@@ -4215,7 +4588,7 @@ function drawAssignZone()
 
   (isControlAfterTouch(g_selected_control))?(
     gfx_rgb(TH.DEFAULT_FONT);
-    gfx_x = 510; gfx_y = GUI_CONTROL_PARAMS_TOP+28;
+    gfx_x = 510; gfx_y = GUI_CONTROL_PARAMS_TOP+8;
     gfx_drawStr("Info : This control is for per-key (poly) aftertouch.\n\n       For global aftertouch, aka Channel Pressure,\n\n       use a standard control with virtual CC#128.");
   );
 
@@ -4314,6 +4687,78 @@ function drawAssignZone()
     gfx_drawStr("Warning! New and original events are likely to interfere.");
   );
 
+  gfx_xy(30,GUI_CONTROL_PARAMS_TOP+88);
+  gfx_rgb(TH.DEFAULT_FONT);
+  gfx_drawStr("Morphing");
+  drawEnableDisableButton(CONTROL_MORPH_ENABLED,g_selected_control,GUI_CONTROL_PARAMS_TOP + 84, 110);
+
+  (isMorphingEnabledForControl(g_selected_control))?(
+
+    gfx_xy(206,GUI_CONTROL_PARAMS_TOP + 88);
+    gfx_rgb(TH.CURVE_BASE_SEL);
+    gfx_drawStr("Start");
+
+    gfx_xy(506,GUI_CONTROL_PARAMS_TOP + 88);
+    gfx_rgb(TH.CURVE_MORPH_SEL);
+    gfx_drawStr("End");
+
+    slider_num = morphSliderNumForControl(g_selected_control);
+
+    // slider line
+    slider_w = 230;
+    slider_l = 260;
+    slider_t = GUI_CONTROL_PARAMS_TOP + 90;
+
+    gfx_rgb(TH.MONO_B);
+    gfx_rect(slider_l, slider_t, slider_w, 3);
+
+    vmin = 0;
+    vmax = 1.0;
+
+    sli_l = slider_l;
+    sli_r = slider_l + slider_w;
+    sli_t = slider_t - 4;
+    sli_b = slider_t + 7;
+
+    in_rect = (mouse_x >= sli_l-5 && mouse_x <= sli_r+5 && mouse_y >= sli_t-5 && mouse_y <= sli_b+5);
+
+    (in_rect)?(
+      (mouse_click == 1)?(
+        mouse_capturator = "morph_param_slider";
+      );
+    );
+
+    (mouse_cap == 1 && mouse_capturator == "morph_param_slider")?(
+      new_pos = (mouse_x - sli_l)/(sli_r - sli_l);
+      new_val = vmin + new_pos * (vmax - vmin);
+      (new_val < vmin)?(new_val = vmin);
+      (new_val > vmax)?(new_val = vmax);
+
+      slider(slider_num) = new_val;
+
+      // Inform the change upstream, so that if the user plays with the slider
+      // During automation recording, the event is forwarded correctly.
+      slider_automate(2 ^ (slider_num-1));
+
+      g_slider_activity_this_block = 1;
+      MORPH_SLIDER_ACTIVITY[g_selected_control] = 1;
+    );
+
+    // Slider button
+    gfx_rgb(TH.CURVE);
+
+    pval = slider(slider_num);
+    pos  = (pval - vmin)/(vmax - vmin);
+    gfx_rect(slider_l + (pos * slider_w) - 4, slider_t - 4, 7, 11);
+
+    (isMorphAutoEmitAvailableForControl(g_selected_control))?(
+      gfx_xy(560,GUI_CONTROL_PARAMS_TOP+88);
+      gfx_rgb(TH.DEFAULT_FONT);
+      gfx_drawStr("Auto-Emit");
+
+      drawYesNobutton(CONTROL_MORPH_AUTO_EMIT_ENABLED, g_selected_control,GUI_CONTROL_PARAMS_TOP+84,648);
+    );
+  );
 );
 
 function drawControlPanel()
@@ -4451,7 +4896,7 @@ function drawKBRangeTransposeRow(cr,col,off,name8Va,nameSt)
   gfx_drawstr("8vi");
 
   hoff += 27;
-  drawAddOrSubWidget(name8Va, KB_RANGE_TRANSPOSE_8VA+cr, 0,hoff,KEYBOARD_FILTERING_TOP+off,  -2,2,   27,0);
+  drawAddOrSubWidget(name8Va, KB_RANGE_TRANSPOSE_8VA+cr, 0,hoff,KEYBOARD_FILTERING_TOP+off,  -8,8,   27,0);
   (g_add_or_sub_hover)?(g_kbr_to_highlight = cr);
 
   hoff += 63;
@@ -4739,7 +5184,7 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("Midi CC Mapper X (4.3.1) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai");
+  gfx_drawstr("Midi CC Mapper X (5.0) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai");
 
   drawSwitchButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin");
 );
@@ -4891,7 +5336,8 @@ function listenToGmemCommands()
       ):
       (
         si        = 0;
-        addr      = selectedControlCurveAddress();
+        addr      = selectedControlEditedCurveAddress();
+
         min_bound = controlCurrentMinBound01(g_selected_control);
         max_bound = controlCurrentMaxBound01(g_selected_control);
 
@@ -4983,14 +5429,75 @@ aaa_vtest_fconv_l   = g_hres_l;
 //===========================================//
 @block
 
+function produceAndEmitCCOutputForControl(blk_control, in_val_01, dst_chan, mpos)
+  local(out_val_01, out_cc_num, out_status)
+(
+  // Apply the curve
+  out_val_01 = applyCurve(blk_control, in_val_01);
+
+  // Save some values for UI feedback (small red circle)
+  CONTROL_LAST_IN[blk_control]  = in_val_01 * 127;
+  CONTROL_LAST_OUT[blk_control] = out_val_01 * 127;
+
+  // Save activity for this control+channel
+  // This will be used by the auto-emit feature
+  setOutputActivityForControlOnChannel(blk_control, dst_chan, in_val_01);
+
+  out_cc_num          = CONTROL_DSTS[blk_control];
+  out_status          = (MSG_CC<<4)|(dst_chan-1); // Chan : 1-16 ->> 0-15
+
+  controlHasOperationalHighResOutput(blk_control) ? (
+    // Output high res
+    midiCCHresF012I(out_val_01);
+    // Be compliant with reaper : MSB first, LSB last
+    midiSend(mpos, out_status, out_cc_num,                    g_hres_h);
+    midiSend(mpos, out_status, ccLsbCounterpart(out_cc_num),  g_hres_l);
+  ):(
+    (out_cc_num == CHANNEL_PRESSURE_FAKE_CC_NUM)?(
+      // Channel pressure conversion
+      out_status = (MSG_CHAN_PRESSURE<<4)|(dst_chan-1);
+      midiSend(mpos, out_status, roundi(out_val_01 * 127), 0);
+    ):(
+      // Output low res, normalize by 127 (max is 127).
+      midiSend(mpos, out_status, out_cc_num, roundi(out_val_01 * 127) );
+    );
+  );
+);
+
+function produceAndEmitPitchBendOutputForControl(blk_control, in_val_01, dst_chan, mpos)
+  local(sigmul, out_val_01, out_val, out_status)
+(
+  sigmul      = (in_val_01 >=0)?(1.0):(-1.0);
+
+  // Apply the curve on the absolute val
+  out_val_01 = applyCurve(blk_control, sigmul * in_val_01);
+
+  // Save some values for UI feedback (small red circle)
+  CONTROL_LAST_IN[blk_control]  = in_val_01 * 127;
+  CONTROL_LAST_OUT[blk_control] = out_val_01 * 127;
+
+  // Reverse value if asked
+  (REVERSE_PITCH_BEND[0])?(
+    out_val_01 = - out_val_01;
+  );
+
+  // Convert back
+  out_val = roundi( ((sigmul * out_val_01) * 0x1FFF  + 0x2000) );
+
+  // Send result
+  out_status = (MSG_PITCH_BEND<<4)|(dst_chan-1); // Chan : 1-16 ->> 0-15
+
+  // Output low res, normalize by 127 (max is 127).
+  midiSend(mpos, out_status, out_val & 0x7F , (out_val >> 7) & 0x7F);
+);
+
 // For a given CONTROL on the UI, try to process the CC message
 // The value is not passed. It's already been stored in CC_RECEIVED_VALUES.
 function tryProcessCCWithControl(evt, blk_control)
-  local (in_val_01, out_val_01,
-         src_chan, dst_chan,
-         out_cc_num, out_status,
+  local (in_val_01, src_chan, dst_chan,
          src_is_hr, src_cc, src_msb_cc, src_lsb_cc,
-         ctrl_is_enabled, src_cc_matches, src_chan_matches, control_is_for_real_cc, src_is_ok )
+         ctrl_is_enabled, src_cc_matches, src_chan_matches,
+         control_is_for_real_cc, src_is_ok )
 (
   control_is_for_real_cc      = isControlForRealCC(blk_control);
   ctrl_is_enabled             = isControlEnabled(blk_control);
@@ -5040,35 +5547,7 @@ function tryProcessCCWithControl(evt, blk_control)
         in_val_01   = evt.cc_val/127.0;
       );
 
-      // Apply the curve
-      out_val_01 = applyCurve(blk_control, in_val_01);
-
-      // Save some values for UI feedback (small red circle)
-      CONTROL_LAST_IN[blk_control]  = in_val_01 * 127;
-      CONTROL_LAST_OUT[blk_control] = out_val_01 * 127;
-
-      // Send result
-      out_cc_num          = CONTROL_DSTS[blk_control];
-      out_status          = (MSG_CC<<4)|(dst_chan-1); // Chan : 1-16 ->> 0-15
-
-      controlHasOperationalHighResOutput(blk_control) ? (
-        // Output high res
-        midiCCHresF012I(out_val_01);
-        // Be compliant with reaper : MSB first, LSB last
-        midiSend(evt.mpos, out_status, out_cc_num,                    g_hres_h);
-        midiSend(evt.mpos, out_status, ccLsbCounterpart(out_cc_num),  g_hres_l);
-      ):(
-
-        (out_cc_num == CHANNEL_PRESSURE_FAKE_CC_NUM)?(
-          // Channel pressure conversion
-          out_status = (MSG_CHAN_PRESSURE<<4)|(dst_chan-1);
-          midiSend(evt.mpos, out_status, roundi(out_val_01 * 127), 0);
-        )
-        :(
-          // Output low res, normalize by 127 (max is 127).
-          midiSend(evt.mpos, out_status, out_cc_num, roundi(out_val_01 * 127) );
-        );
-      );
+      produceAndEmitCCOutputForControl(blk_control, in_val_01, dst_chan, evt.mpos);
 
       // Set the pass through flag.
       controlShouldPassThrough(blk_control)?(
@@ -5320,8 +5799,7 @@ function processPitchBendMessage(evt)
   local(blk_control,
   src_chan, dst_chan,
   src_chan_matches, ctrl_is_enabled,
-  in_val, in_val_01, sigmul,
-  out_status, out_val, out_val_01)
+  in_val, in_val_01)
 (
   blk_control                 = CONTROL_PITCH_BEND;
   src_chan                    = controlInputChannel(blk_control);
@@ -5351,28 +5829,8 @@ function processPitchBendMessage(evt)
 
     // Put this into -1..1
     in_val_01   = (in_val * 2.0 - 0x4000)/0x3FFE;
-    sigmul      = (in_val_01 >=0)?(1.0):(-1.0);
 
-    // Apply the curve on the absolute val
-    out_val_01 = applyCurve(blk_control, sigmul * in_val_01);
-
-    // Save some values for UI feedback (small red circle)
-    CONTROL_LAST_IN[blk_control]  = in_val_01 * 127;
-    CONTROL_LAST_OUT[blk_control] = out_val_01 * 127;
-
-    // Reverse value if asked
-    (REVERSE_PITCH_BEND[0])?(
-      out_val_01 = - out_val_01;
-    );
-
-    // Convert back
-    out_val = roundi( ((sigmul * out_val_01) * 0x1FFF  + 0x2000) );
-
-    // Send result
-    out_status = (MSG_PITCH_BEND<<4)|(dst_chan-1); // Chan : 1-16 ->> 0-15
-
-    // Output low res, normalize by 127 (max is 127).
-    midiSend(evt.mpos, out_status, out_val & 0x7F , (out_val >> 7) & 0x7F  );
+    produceAndEmitPitchBendOutputForControl(blk_control, in_val_01, dst_chan, evt.mpos);
 
     controlShouldPassThrough(blk_control)?(
       evt.should_pass_through = 1;
@@ -5569,7 +6027,7 @@ function treatCurrentEvent()
   );
 );
 
-function mainLoop()
+function handleMidiEvents()
 (
   // Cur and next events
   evt           = 0;
@@ -5607,6 +6065,57 @@ function mainLoop()
       receive();
     );
   );
+);
+
+function handleSliderEvents()
+  local(cnum, chani, last_activity) (
+
+  (g_slider_activity_this_block)?(
+
+    // There's activity on some sliders
+    cnum = 0;
+    while(cnum < CONTROL_COUNT) (
+     (MORPH_SLIDER_ACTIVITY[cnum] != 0)?(
+
+        // Handle Slider activity for control.
+        (isMorphingEnabledForControl(cnum) && isMorphAutoEmitEnabledForControl(cnum))?(
+
+          // Loop on all channels, and simulate activity for known active channels
+          chani = 0;
+          while(chani < 16) (
+            last_activity = outputActivityForControlOnChannel(cnum,chani);
+
+            (last_activity >= 0)?(
+
+              // Auto-Emit MIDI events to respond to morph slider changes
+              // Use the last sample index of the block for this.
+
+              (isControlPitchBend(cnum))?(
+                produceAndEmitPitchBendOutputForControl(cnum, last_activity, chani, samplesblock - 1);
+              );
+
+              (isControlForRealCC(cnum))?(
+                produceAndEmitCCOutputForControl(cnum, last_activity, chani, samplesblock - 1);
+              );
+            );
+
+            chani += 1;
+          );
+        );
+
+        // Clear Sliver Activity
+        MORPH_SLIDER_ACTIVITY[cnum] = 0;
+      );
+      cnum += 1;
+    );
+
+    g_slider_activity_this_block = 0;
+  );
+);
+
+function mainLoop() (
+  handleMidiEvents();
+  handleSliderEvents();
 );
 
 mainLoop();
