@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="5964447fe75e485740e6a599d76589fa2b0dd9ef">
+<index version="1" name="ReaTeam JSFX" commit="a81a54773a9c24066eea10d6b8b1af2dc7a8871a">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -143,6 +143,27 @@ Performance optimization.]]></changelog>
     </reapack>
   </category>
   <category name="Filter">
+    <reapack name="bellesondes_eq1979.jsfx" type="effect" desc="EQ1979">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 #EQ1979\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Frequency accurate modeling of a Neve 1073 filter stage combined with an input gain-compensated saturation.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Designed by cascading ~30 peq/butterworth filters to reproduce frequency response, bumps and drops of the original console strip. Input saturation based on "arctan" modeling, which is gain-compensated. Includes additional independant gain trimming.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Controls :\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Left mouse button to change knob value, right mouse button resets control.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Frequency bands for Mid and Low and gain trimming is done using mouse wheel.\sa180\par}
+}
+]]></description>
+        <link rel="screenshot" href="https://github.com/D4p0up/eq1979/raw/main/eq1979.png">GUI</link>
+      </metadata>
+      <version name="0.9" author="Belles Ondes" time="2022-11-05T11:21:03Z">
+        <changelog><![CDATA[Inital release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/a81a54773a9c24066eea10d6b8b1af2dc7a8871a/Filter/bellesondes_eq1979.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="TiaR_Lattice Filter.jsfx" type="effect" desc="Lattice Filter">
       <version name="1.0" author="T.Rochebois" time="2016-08-08T20:46:50Z">
         <changelog><![CDATA[Initial release]]></changelog>
