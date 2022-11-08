@@ -1,11 +1,11 @@
 desc: MIDI CC Mapper X
 author: Ben 'Talagan' Babut
-version: 5.0
+version: 5.1
 changelog:
-  - Added curve morphing with automation for each control
-  - Added auto-emit MIDI events for automated morphed curves
-  - Relaxed transposition constraints on octavas (allow +/- 8 instead of +/- 2)
-  - Added call to freembuf to reduce memory footprint
+  - Feature : Added conditional channel dropping/routing for CCs, CP, Pitch Bend and Poly AT.
+  - Hot fix : Pitch Bend : Display limits between 0..8191 instead of 0..127
+  - Bug fix : Poly AT widget disabled but with passthrough on would produce unnecessary events
+  - Hot fix : the drawing of the result curve when morphing would glitch on the first point (one frame late)
 screenshot:
   Dark Theme https://stash.reaper.fm/45504/MIDICCMapperX-5-0-Dark.png
   Light Theme https://stash.reaper.fm/45505/MIDICCMapperX-5-0-Light.png
@@ -25,18 +25,23 @@ about:
 
   This JSFX  is an extended version of the original plugin called "MIDI CC Mapper" with many more features. It allows to modify the behavior and the real-time feel of a MIDI controller, by acting as a pre-filter on the MIDI input. It can :
 
-  - Tweak CC response curves :
-    - By using predefined curves, some of them being parametric
-    - By pen-drawing/prototyping custom curves
-    - By smoothing the current curve
-    - By restricting the range of values of your curve
-    - By extending the predefined curves with your own sets of functions (through lib files)
-    - The current curve can be exported and reused in your own sets
-  - Filter in/out keyboard keys, channel split and drop/re-route keyboard keys
+  - Tweak CC (or Channel Pressure) / Pitch Bend / Keyboard Velocity / Poly After Touch response curves :
+      - By using predefined curves, some of them being parametric
+      - By pen-drawing/prototyping custom curves
+      - By smoothing the current curve
+      - By restricting the range of values of your curve
+      - By extending the predefined curves with your own sets of functions (through lib files)
+      - The current curve can be exported and reused in your own sets
+  - Morph the response curves between a starting curve and an ending curve, with a morphing parameter
+      - The morphing parameter can be automated
+      - An auto-emit option is available to continuously fill the gaps with MIDI events when the morphing parameter changes
+  - Split/drop/channel re-route keyboard keys
   - Transpose keyboard keys
-  - Re-route CCs
+  - Re-route CCs / CP
   - Re-route CC channels
-  - Tweak the keyboard velocity response curve
+  - Channel re-route/drop CCs / CP / Pitch Bend / Poly After Touch conditionally based on input/output values
+  - Pass through initial unmodified events (and act as a splitter)
+  - Handle High-Res input and Output for the CCs (CC/CC+32) and Keyboard velocity (CC#88 format).
 
   The UI shows a virtual controller, on which CCs can be attributed to controls, allowing a user to visually map her/his real controller.
 
@@ -453,6 +458,27 @@ function instanceMemoryMapInit()
   MORPH_SLIDER_ACTIVITY             = malloc(CONTROL_COUNT);
   CONTROL_OUT_ACTIVITY_PER_CHANNEL  = malloc(CONTROL_COUNT * 16);
 
+  // Added 5.1
+  // Value conditional filtering
+  CONTROL_VFILT_IN_INF_LSB      = malloc(CONTROL_COUNT);
+  CONTROL_VFILT_IN_INF_MSB      = malloc(CONTROL_COUNT);
+  CONTROL_VFILT_IN_INF_ENABLED  = malloc(CONTROL_COUNT);
+
+  CONTROL_VFILT_IN_SUP_LSB      = malloc(CONTROL_COUNT);
+  CONTROL_VFILT_IN_SUP_MSB      = malloc(CONTROL_COUNT);
+  CONTROL_VFILT_IN_SUP_ENABLED  = malloc(CONTROL_COUNT);
+
+  CONTROL_VFILT_OUT_INF_LSB     = malloc(CONTROL_COUNT);
+  CONTROL_VFILT_OUT_INF_MSB     = malloc(CONTROL_COUNT);
+  CONTROL_VFILT_OUT_INF_ENABLED = malloc(CONTROL_COUNT);
+
+  CONTROL_VFILT_OUT_SUP_LSB     = malloc(CONTROL_COUNT);
+  CONTROL_VFILT_OUT_SUP_MSB     = malloc(CONTROL_COUNT);
+  CONTROL_VFILT_OUT_SUP_ENABLED = malloc(CONTROL_COUNT);
+
+  CONTROL_VFILT_ENABLED         = malloc(CONTROL_COUNT);
+  CONTROL_VFILT_DST_CHAN        = malloc(CONTROL_COUNT);
+
   freeUnusedMem();
 );
 
@@ -727,11 +753,13 @@ function switchToDarkTheme() (
   TH.CURVE_BASE_UNS      = 0x886060;
   TH.CURVE_BASE_SEL      = 0xFF6060;
 
-  TH.CURVE_BG            = 0x191919;
+  TH.CURVE_BG            = 0xFFFFFF;
   TH.CURVE_BG_EXCL       = 0x090909;
   TH.CURVE_GRID          = 0x353535;
   TH.CURVE_BORDER        = 0x474747;
   TH.CURVE_CURRENT_VALUE = 0xFF4040;
+
+  TH.CURVE_BG_FILTER_OUT = 0x201045;
 
   TH.CURVE_MORPH         = 0x4080FF;
 
@@ -856,11 +884,13 @@ function switchToLightTheme() (
   TH.CURVE_BASE_UNS      = 0x886060;
   TH.CURVE_BASE_SEL      = 0xFF6060;
 
-  TH.CURVE_BG            = 0x393939;
+  TH.CURVE_BG            = 0xFFFFFF;
   TH.CURVE_BG_EXCL       = 0x292929;
   TH.CURVE_GRID          = 0x555555;
   TH.CURVE_BORDER        = 0x676767;
   TH.CURVE_CURRENT_VALUE = 0xFF4040;
+
+  TH.CURVE_BG_FILTER_OUT = 0x201045;
 
   TH.CURVE_MORPH         = 0x4080FF;
 
@@ -1554,8 +1584,16 @@ function linFamilyVal(row_num, col_num, x01, cut, point_count)
         // Force rounding to last non-1 slot
         cut = 1-granu;
       ):(
-        // Round to closest slot
-        cut = granu * roundi(cut*(point_count-1));
+        ( (row_num == 1 && (col_num == 2 || col_num == 3)) ||
+          (row_num == 2 && (col_num == 2 || col_num == 3)) ||
+          (row_num == 3 && (col_num == 0 || col_num == 1 || col_num == 2 || col_num == 3)) ||
+          (row_num == 4 && (col_num == 0 || col_num == 1 || col_num == 2 || col_num == 3))
+        )?(
+          // There are situations (peeks) where we want to be sure that the max is always reached
+          // And that the cut matches a slot.
+
+          cut = granu * (roundi(cut*(point_count-1)));
+        );
       );
     );
   );
@@ -1573,22 +1611,22 @@ function linFamilyVal(row_num, col_num, x01, cut, point_count)
 
   (row_num == 1)?(
     (col_num == 0)?(
-      ret = (cut == 0)?(1):( (x01<=cut)?(x01/cut):(1));
+      ret = (cut == 0)?(1):( (x01<cut || x01==cut)?(x01/cut):(1));
     );
     (col_num == 1)?(
-      ret = (cut == 1)?(1):( (x01<=cut)?(1):(1 - (x01-cut)/(1-cut)));
+      ret = (cut == 1)?(1):( (x01<cut || x01==cut)?(1):(1 - (x01-cut)/(1-cut)));
     );
     (col_num == 2)?(
       (cut > 0.5)?(cut = 1 - cut);
-      ret = (x01 < cut)?( x01/cut ):( (x01 > 1 - cut)?( (1 - x01)/cut ):( 1 ) );
+      ret = (x01<cut)?( x01/cut ):( (x01 > 1 - cut)?( (1 - x01)/cut ):( 1 ) );
     );
     (col_num == 3)?(
       (cut > 0.5)?(cut = 1 - cut);
-      ret = ( (x01 < cut || x01 > (1-cut) )?(0):(1));
+      ret = ( (x01<cut || x01>(1-cut) )?(0):(1));
     );
     (col_num == 4)?(
       (cut > 0.5)?(cut = 1 - cut);
-      ret = (x01 < cut)?(0):( (x01 > 1 - cut)?(1):( (x01-cut)/(1-2*cut)));
+      ret = (x01<cut)?(0):( (x01>(1-cut))?(1):( (x01-cut)/(1-2*cut)));
     );
     (col_num == 5)?(
       ret = (cut == 1)?(0):( (x01<cut)?(0):(1));
@@ -1597,68 +1635,68 @@ function linFamilyVal(row_num, col_num, x01, cut, point_count)
 
   (row_num == 2)?(
     (col_num == 1)?(
-      ret = (x01>=cut)?((x01-cut)/(1-cut)):(0);
+      ret = (x01>cut || x01 == cut)?((x01-cut)/(1-cut)):(0);
     );
     (col_num == 0)?(
-      ret = (cut == 0)?(0):( (x01<=cut)?(1-(x01/cut)):(0) );
+      ret = (cut == 0)?(0):((x01<cut || x01==cut)?(1-(x01/cut)):(0) );
     );
     (col_num == 2)?(
       (cut > 0.5)?(cut = 1 - cut);
-      ret = 1 -((x01 < cut)?( x01/cut ):( (x01 > 1 - cut)?( (1 - x01)/cut ):( 1 )));
+      ret = 1 -((x01<cut)?( x01/cut ):( (x01 > 1 - cut)?( (1 - x01)/cut ):( 1 )));
     );
     (col_num == 3)?(
       (cut > 0.5)?(cut = 1 - cut);
-      ret = ( (x01 < cut || x01 > (1-cut) )?(1):(0));
+      ret = ((x01<cut || x01>(1-cut))?(1):(0));
     );
     (col_num == 4)?(
       (cut > 0.5)?(cut = 1 - cut);
-      ret = 1 - ((x01 < cut)?(0):( (x01 > 1 - cut)?(1):( (x01-cut)/(1-2*cut))));
+      ret = 1 - ((x01<cut)?(0):((x01>(1-cut))?(1):( (x01-cut)/(1-2*cut))));
     );
     (col_num == 5)?(
-      ret = (cut == 1)?(1):( (x01>=cut)?(0):(1));
+      ret = (cut == 1)?(1):((x01>cut || x01 == cut)?(0):(1));
     );
   );
 
   (row_num == 3)?(
 
     (col_num == 0)?(
-      ret = (cut == 0)?(0):( (x01<=cut)?(x01/cut):(0));
+      ret = (cut == 0)?(0):((x01<cut || x01==cut)?(x01/cut):(0));
     );
     (col_num == 1)?(
-      ret = (cut == 1)?(0):( (x01>=cut)?(1 - (x01-cut)/(1-cut)):(0));
+      ret = (cut == 1)?(0):((x01>cut || x01==cut)?(1 - (x01-cut)/(1-cut)):(0));
     );
     (col_num == 2)?(
-      ret = (cut == 0)?(0):( (x01<=cut)?(x01):(0));
+      ret = (cut == 0)?(0):((x01<cut || x01==cut)?(x01):(0));
     );
     (col_num == 3)?(
-      ret = (cut == 1)?(0):( (x01>=cut)?(1-x01):(0));
+      ret = (cut == 1)?(0):((x01>cut || x01==cut)?(1-x01):(0));
     );
     (col_num == 4)?(
-      ret = (cut == 1)?(0):( (x01>=cut)?(x01):(0));
+      ret = (cut == 1)?(0):((x01>cut || x01==cut)?(x01):(0));
     );
     (col_num == 5)?(
-      ret = (cut == 0)?(0):( (x01<=cut)?(1-x01):(0));
+      ret = (cut == 0)?(0):((x01<cut || x01==cut)?(1-x01):(0));
     );
   );
 
   (row_num == 4)?(
     (col_num == 0)?(
-      ret = 1 - ((cut == 0)?(0):( (x01<=cut)?(x01/cut):(0)));
+      ret = 1 - ((cut == 0)?(0):((x01<cut || x01==cut)?(x01/cut):(0)));
     );
     (col_num == 1)?(
-      ret = 1 - ((cut == 1)?(0):( (x01>=cut)?(1 - (x01-cut)/(1-cut)):(0)));
+      ret = 1 - ((cut == 1)?(0):((x01>cut || x01==cut)?(1 - (x01-cut)/(1-cut)):(0)));
     );
     (col_num == 2)?(
-      ret = 1 - ((cut == 0)?(0):( (x01<=cut)?(x01):(0)));
+      ret = 1 - ((cut == 0)?(0):((x01<cut || x01==cut)?(x01):(0)));
     );
     (col_num == 3)?(
-      ret = 1 - ((cut == 1)?(0):( (x01>=cut)?(1-x01):(0)));
+      ret = 1 - ((cut == 1)?(0):((x01>cut || x01==cut)?(1-x01):(0)));
     );
     (col_num == 4)?(
-      ret = 1 - ((cut == 1)?(0):( (x01>=cut)?(x01):(0)));
+      ret = 1 - ((cut == 1)?(0):((x01>cut || x01==cut)?(x01):(0)));
     );
     (col_num == 5)?(
-      ret = 1 - ((cut == 0)?(0):( (x01<=cut)?(1-x01):(0)));
+      ret = 1 - ((cut == 0)?(0):((x01<cut || x01==cut)?(1-x01):(0)));
     );
   );
 
@@ -2177,9 +2215,21 @@ function controlHasOperationalHighResInput(control)
   (hr_is_legit_for_control && hr_is_enabled);
 );
 
+function value01ForControl(control, msb, lsb, input_not_output)
+(
+  ((input_not_output)?(controlHasOperationalHighResInput(control)):(controlHasOperationalHighResOutput(control)))?(
+    (isControlVelocity(control))?(
+      midiVelocityHresI2F01(msb,lsb);
+    ):(
+      midiCCHresI2F01(msb,lsb);
+    );
+  ):(
+    (control == CONTROL_PITCH_BEND)?(msb/8191.0):(msb/127.0);
+  );
+);
 
-function controlCurrentBound01(control,is_min)
-  local(lsb,msb,mins_lsb_address,maxs_lsb_address,mins_msb_address,maxs_msb_address)
+function controlCurrentDrawingBound01(control,is_min)
+  local(lsb, msb, mins_lsb_address, maxs_lsb_address, mins_msb_address, maxs_msb_address)
 (
   (isMorphingEnabledForControl(control) && isMorphCurveSelectedForControl(control))?(
     mins_lsb_address = CONTROL_MORPH_MINS_LSB;
@@ -2194,25 +2244,30 @@ function controlCurrentBound01(control,is_min)
   );
 
   msb = (is_min)?(mins_msb_address[control]):(maxs_msb_address[control]);
+  lsb = (is_min)?(mins_lsb_address[control]):(maxs_lsb_address[control]);
 
-  (controlHasOperationalHighResOutput(control))?(
-    lsb = (is_min)?(mins_lsb_address[control]):(maxs_lsb_address[control]);
-
-    (isControlVelocity(control))?(
-      midiVelocityHresI2F01(msb,lsb);
-    ):(
-      midiCCHresI2F01(msb,lsb);
-    );
-  ):(
-    msb/127.0;
-  );
+  // Drawing limits are applied to output
+  value01ForControl(control, msb, lsb, 0);
 );
 
-function controlCurrentMinBound01(control) (
-  controlCurrentBound01(control,1);
+function controlCurrentMinDrawingBound01(control) (
+  controlCurrentDrawingBound01(control,1);
 );
-function controlCurrentMaxBound01(control) (
-  controlCurrentBound01(control,0);
+function controlCurrentMaxDrawingBound01(control) (
+  controlCurrentDrawingBound01(control,0);
+);
+
+function controlConditionalFilteringInInf01(control) (
+  value01ForControl(control, CONTROL_VFILT_IN_INF_MSB[control], CONTROL_VFILT_IN_INF_LSB[control],1);
+);
+function controlConditionalFilteringInSup01(control) (
+  value01ForControl(control, CONTROL_VFILT_IN_SUP_MSB[control], CONTROL_VFILT_IN_SUP_LSB[control],1);
+);
+function controlConditionalFilteringOutInf01(control) (
+  value01ForControl(control, CONTROL_VFILT_OUT_INF_MSB[control], CONTROL_VFILT_OUT_INF_LSB[control],0);
+);
+function controlConditionalFilteringOutSup01(control) (
+  value01ForControl(control, CONTROL_VFILT_OUT_SUP_MSB[control], CONTROL_VFILT_OUT_SUP_LSB[control],0);
 );
 
 function controlShouldPassThrough(control) (
@@ -2351,6 +2406,37 @@ function kbRangeOutputChannel(cr) (
   KB_RANGE_OUTPUT_CHANNEL[cr];
 );
 
+///////////////////////////
+// CONDITIONAL FILTERING //
+///////////////////////////
+
+function isConditionalFilteringAvailableForControl(cnum) (
+  (isControlForRealCC(cnum) || isControlPitchBend(cnum) || isControlAfterTouch(cnum));
+);
+function isConditionalFilteringEnabledForControl(cnum) (
+  CONTROL_VFILT_ENABLED[cnum];
+);
+function isConditionalFilteringOperationalForControl(cnum) (
+  isConditionalFilteringAvailableForControl(cnum) && isConditionalFilteringEnabledForControl(cnum);
+);
+
+function isConditionalFilteringInInfEnabledForControl(cnum) (
+  CONTROL_VFILT_IN_INF_ENABLED[cnum];
+);
+function isConditionalFilteringOutInfEnabledForControl(cnum) (
+  CONTROL_VFILT_OUT_INF_ENABLED[cnum];
+);
+function isConditionalFilteringInSupEnabledForControl(cnum) (
+  CONTROL_VFILT_IN_SUP_ENABLED[cnum];
+);
+function isConditionalFilteringOutSupEnabledForControl(cnum) (
+  CONTROL_VFILT_OUT_SUP_ENABLED[cnum];
+);
+
+function conditionalFilteringDstChanForControl(cnum) (
+  CONTROL_VFILT_DST_CHAN[cnum];
+);
+
 /////////////////////
 //     CC LEARN    //
 /////////////////////
@@ -2485,13 +2571,47 @@ function firstInit()
     CONTROL_MAXS_LSB[c]                 = 127;
     CONTROL_MAXS_MSB[c]                 = 127;
 
-    CONTROL_MORPH_SELECTED[c]           = 0;
     CONTROL_MORPH_MINS_LSB[c]           = 0;
     CONTROL_MORPH_MINS_MSB[c]           = 0;
     CONTROL_MORPH_MAXS_LSB[c]           = 127;
     CONTROL_MORPH_MAXS_MSB[c]           = 127;
 
+    (c == CONTROL_PITCH_BEND)?(
+      // For pitch bend use msb+lsb with max val = 8191
+      CONTROL_MAXS_MSB[c]               = 8191;
+      CONTROL_MORPH_MAXS_MSB[c]         = 8191;
+    );
+
+    CONTROL_MORPH_SELECTED[c]           = 0;
+
     CONTROL_PASS_THROUGH[c]             = DROP;
+
+    CONTROL_VFILT_IN_INF_LSB[c]         = 127;
+    CONTROL_VFILT_IN_INF_MSB[c]         = 127;
+
+    CONTROL_VFILT_IN_SUP_LSB[c]         = 0;
+    CONTROL_VFILT_IN_SUP_MSB[c]         = 0;
+
+    CONTROL_VFILT_OUT_INF_LSB[c]        = 127;
+    CONTROL_VFILT_OUT_INF_MSB[c]        = 127;
+
+    CONTROL_VFILT_OUT_SUP_LSB[c]        = 0;
+    CONTROL_VFILT_OUT_SUP_MSB[c]        = 0;
+
+    (c == CONTROL_PITCH_BEND)?(
+      // For pitch bend use msb+lsb with max val = 8191
+      CONTROL_VFILT_IN_INF_MSB[c]       = 8191;
+      CONTROL_VFILT_OUT_INF_MSB[c]      = 8191;
+    );
+
+    CONTROL_VFILT_IN_INF_ENABLED[c]     = 0;
+    CONTROL_VFILT_IN_SUP_ENABLED[c]     = 0;
+    CONTROL_VFILT_OUT_INF_ENABLED[c]    = 0;
+    CONTROL_VFILT_OUT_SUP_ENABLED[c]    = 0;
+
+    CONTROL_VFILT_ENABLED[c]            = 0;
+    CONTROL_VFILT_DST_CHAN[c]           = DROP;
+
     c+=1
   );
 
@@ -2589,7 +2709,6 @@ reinitControlOutActivity();
 
 (LOADED_VERSION[0] == 0) ? (
 
-  //
   // Only do this once or reaper will destroy user data
   // On each init
   firstInit();
@@ -2597,7 +2716,7 @@ reinitControlOutActivity();
 
   g_last_pen_modified_x = -1;
   g_selected_control    = NONE;
-  LOADED_VERSION[0]     = 5.0;
+  LOADED_VERSION[0]     = 5.01;
 );
 
 //===========================================//
@@ -2637,13 +2756,21 @@ trackSliders();
 
 // CURRENT FILE FORMAT
 FILE_FORMAT_1_0             = (1<<8)+0; // 1.0 (==256)
-CURRENT_FILE_FORMAT_VERSION = FILE_FORMAT_1_0;
+FILE_FORMAT_5_1             = (5<<8)+1; // 5.1
 
+CURRENT_FILE_FORMAT_VERSION = FILE_FORMAT_5_1;
+
+// ver : version used for loading/saving
 function memwr(is_saving, ver)
-  local(ccount,s,avail,obsolval,
-    green_vel_ctrl,red_vel_ctrl,green_curve,red_curve
+  local(ccount,s,avail,obsolval, is_loading,
+    green_vel_ctrl,red_vel_ctrl,green_curve,red_curve,
+    maxs_lsb_were_present
   )
 (
+  is_loading = !is_saving;
+
+  // Retro compatibility flag
+  maxs_lsb_were_present = 0;
 
   ccount = (is_saving)?(CONTROL_COUNT):(0);
 
@@ -2656,7 +2783,7 @@ function memwr(is_saving, ver)
     // And the first curve
     file_mem(0,CURVES+0,CURVESIZE);
   ):(
-    !is_saving?(
+    is_loading?(
       // In that version there were 35 controls
       ccount = 35;
     );
@@ -2708,6 +2835,7 @@ function memwr(is_saving, ver)
     file_mem(0,DROP_UNROUTED_CC_MESSAGES,1);
 
     (!is_saving)?(
+      // RETRO COMPATIBILITY
       // Copy old global params to green range.
       // If newer params are available in the file data
       // They will be loaded right after and they will squash this.
@@ -2727,7 +2855,6 @@ function memwr(is_saving, ver)
           s+=1;
         );
       );
-
     );
   );
 
@@ -2740,7 +2867,6 @@ function memwr(is_saving, ver)
   // Introduced in V3.3 (channel routing + min/max)
   avail = file_avail(0);
   (is_saving || avail>0)?( // Avoid squashing default values if reading old format
-
     file_mem(0,CONTROL_CHAN_SRCS, ccount);
     file_mem(0,CONTROL_CHAN_DSTS, ccount);
     file_mem(0,KB_INPUT_CHANNEL,1);
@@ -2802,7 +2928,13 @@ function memwr(is_saving, ver)
         );
       );
     );
+
+    (is_loading && ver < FILE_FORMAT_5_1)?(
+      // In 5.1, the max msb for pitch bend was converted to 8191 instead of 127.
+      CONTROL_MAXS_MSB[CONTROL_PITCH_BEND] *= 8191/127.0;
+    );
   );
+
 
   // Introduced in V3.5 (full keyboard filtering)
   avail = file_avail(0);
@@ -2845,7 +2977,6 @@ function memwr(is_saving, ver)
     file_mem(0, REVERSE_PITCH_BEND, 1);
   );
 
-
   // Introduced in V5.0
   avail = file_avail(0);
   (is_saving || avail > 0)?(
@@ -2862,27 +2993,56 @@ function memwr(is_saving, ver)
     // It is not necessary to save morph parameter values.
     // Since they are linked to the sliders, reaper will save their values
     // As parameters of the JSFX instance.
+
+    (is_loading && ver < FILE_FORMAT_5_1)?(
+      // In 5.1, the max msb for pitch bend was converted to 8191 instead of 127.
+      CONTROL_MORPH_MAXS_MSB[CONTROL_PITCH_BEND] *= 8191/127.0;
+    );
   );
 
+  // Introduced in V5.1
+  avail = file_avail(0);
+  (is_saving || avail > 0)?(
+
+    file_mem(0,CONTROL_VFILT_IN_INF_LSB,  ccount);
+    file_mem(0,CONTROL_VFILT_IN_INF_MSB,  ccount);
+    file_mem(0,CONTROL_VFILT_IN_SUP_LSB,  ccount);
+    file_mem(0,CONTROL_VFILT_IN_SUP_MSB,  ccount);
+
+    file_mem(0,CONTROL_VFILT_OUT_INF_LSB, ccount);
+    file_mem(0,CONTROL_VFILT_OUT_INF_MSB, ccount);
+    file_mem(0,CONTROL_VFILT_OUT_SUP_LSB, ccount);
+    file_mem(0,CONTROL_VFILT_OUT_SUP_MSB, ccount);
+
+    file_mem(0,CONTROL_VFILT_IN_INF_ENABLED,  ccount);
+    file_mem(0,CONTROL_VFILT_IN_SUP_ENABLED,  ccount);
+    file_mem(0,CONTROL_VFILT_OUT_INF_ENABLED, ccount);
+    file_mem(0,CONTROL_VFILT_OUT_SUP_ENABLED, ccount);
+
+    file_mem(0,CONTROL_VFILT_ENABLED,   ccount);
+    file_mem(0,CONTROL_VFILT_DST_CHAN,  ccount);
+  );
 );
 
 function backupOrRestore() local(is_saving, check_ver, old_format) (
 
-  is_saving = (file_avail(0)<0);
+  is_saving  = (file_avail(0)<0);
 
   (is_saving)?(
-
+    // SAVING ...
+    // Always save to new format.
     file_var(0, CURRENT_FILE_FORMAT_VERSION);
-    memwr(is_saving, CURRENT_FILE_FORMAT_VERSION);
+    memwr(1, CURRENT_FILE_FORMAT_VERSION);
   ):
   (
+    // LOADING ...
     // Reading the file
-    // Have to manage the old format ...
+    // Have to manage the very old format ...
     check_ver = 0;
     file_var(0,check_ver);
 
     // Now, we put a version number >= 256.
-    // The old format had a curve point on the first slot, so < 256.
+    // The old format had a curve point on the first slot, so < 256 (between 0 and 127).
     old_format = (check_ver < 256);
 
     (old_format)?(
@@ -2890,10 +3050,10 @@ function backupOrRestore() local(is_saving, check_ver, old_format) (
       // The "ver" would not exist and is in fact the first sample of the first curve
       CURVES[0] = check_ver; // Yuuuk!!
       // Force the file format to 0.0
-      memwr(is_saving, 0);
+      memwr(0, 0);
     ):(
-      // 1.0 format, 36 controls
-      memwr(is_saving, FILE_FORMAT_1_0);
+      // Format is > 1.0. Use standard loading.
+      memwr(0, check_ver);
     );
   )
 );
@@ -3039,7 +3199,8 @@ function isOutputChannelSpinbox(combo_id)
     combo_id == "chan_out_range_1_spinbox" ||
     combo_id == "chan_out_range_2_spinbox" ||
     combo_id == "chan_out_range_3_spinbox" ||
-    combo_id == "chan_out_range_4_spinbox"
+    combo_id == "chan_out_range_4_spinbox" ||
+    combo_id == "chan_out_vfilt"
   );
 );
 
@@ -3067,16 +3228,32 @@ function textForComboBox(combo_id, val)
 // The only way I had found in EEL to use "pointers" was an array trick.
 // I've just discovered pseudo objects, it could be a solution too.
 function drawBistateButton(flag_address,flag_local_address,t,l,ontext,offtext,color_on,color_off,color_on_hover,color_off_hover,text_color_on,text_color_off)
-  local(tmp, ontextw, offtextw,
+  local(tmp, ontextw, offtextw, minitick,
         bb, br, bw, bh, bl, bt,
         in_rect, enabled)
 (
-  tmp = 0; ontextw = 0; offtextw = 0;
-  gfx_measurestr(ontext, ontextw, tmp);
-  gfx_measurestr(offtext, offtextw, tmp);
+  minitick = 0;
 
-  bw = max(ontextw,offtextw) + 10;
-  bh = 15;
+  tmp = 0; ontextw = 0; offtextw = 0;
+  (ontext == "")?(
+    minitick = 1;
+  ):(
+    gfx_measurestr(ontext, ontextw, tmp);
+  );
+
+  (offtext == "")?(
+    minitick = 1;
+  ):(
+    gfx_measurestr(offtext, offtextw, tmp);
+  );
+
+  (minitick)?(
+    bh = 10;
+    bw = 10;
+  ):(
+    bh = 15;
+    bw = max(ontextw,offtextw) + 10;
+  );
 
   bl = l;
   bt = t;
@@ -3139,7 +3316,7 @@ function drawOnOffButton(flag_address,flag_local_address,t,l) (
 
 // - or + button for a spinbox
 function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_sub,minval,maxval,should_wrap)
-   local(bl ,bt, br, bb, in_rect, val_shift, got_event, new_srcdstbtn_time ,last_srcdstbtn_time)
+   local(bl ,bt, br, bb, in_rect, val_shift, val_shift_abs, got_event, new_srcdstbtn_time, last_srcdstbtn_time, long_time_spent_on_button)
 (
   got_event = 0;
 
@@ -3153,6 +3330,7 @@ function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_s
 
   (mouse_click == 1 && in_rect)?(
     mouse_capturator = button_id;
+    g_start_add_or_sub_time = time_precise();
   );
 
   in_rect  ?
@@ -3164,8 +3342,19 @@ function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_s
       // Limit this to 20 calls / seconds
       new_srcdstbtn_time = time_precise();
       (new_srcdstbtn_time - last_srcdstbtn_time > 0.03 || mouse_click) ? (
-        val_shift = (add_or_sub)?(1):(-1);
+
+        val_shift_abs               = 1;
+        long_time_spent_on_button   = new_srcdstbtn_time - g_start_add_or_sub_time - 1;
+
+        (long_time_spent_on_button > 0)?(
+          // This starts at 1.
+          val_shift_abs = exp(long_time_spent_on_button);
+        );
+
+        val_shift = (add_or_sub)?(val_shift_abs):(-val_shift_abs);
         last_srcdstbtn_time = new_srcdstbtn_time;
+
+        // Force immediate first pressure
         mouse_click == 1 ? (last_srcdstbtn_time += 0.3);
       );
     );
@@ -3177,6 +3366,8 @@ function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_s
     */
     val_shift != 0 ? (
       val_address[val_local_address] += val_shift;
+      // Be sure to have a valid int after.
+      val_address[val_local_address] = roundi(val_address[val_local_address]);
 
       (should_wrap)?(
         (val_address[val_local_address]>maxval)?(val_address[val_local_address]=minval);
@@ -3184,6 +3375,13 @@ function drawAddOrSubButton(button_id,val_address,val_local_address,l,t,add_or_s
       ):(
         val_address[val_local_address] = min(max(val_address[val_local_address],minval),maxval);
       );
+
+      // Dirty hack to skip value 0 (= In) for chan_out_vfilt,
+      // as this value is not used for conditional filtering.
+      //(button_id == "chan_out_vfilt" && val_address[val_local_address] == 0)?(
+      //  val_address[val_local_address] = (val_shift > 0)?(1):(-1);
+      //);
+
       got_event = val_shift;
     );
 
@@ -3235,7 +3433,7 @@ function drawAddOrSubWidget(widget_id, val_address, val_local_address, l, t, min
 
     w = 0; h = 0; gfx_measurestr(tmp,w,h);
     loff = (labelwidth - w) / 2;
-    gfx_xy(l+15+loff, t+4);
+    gfx_xy(l+16+loff, t+4);
     gfx_drawStr(tmp);
   );
 
@@ -3327,8 +3525,8 @@ function mousePenCallback(gzone)
       px = (mouse_x-gzone.il)/(RESOLUTION);
       py = (gzone.ib-mouse_y+2)/(RESOLUTION);
 
-      min_bound = controlCurrentMinBound01(g_selected_control);
-      max_bound = controlCurrentMaxBound01(g_selected_control);
+      min_bound = controlCurrentMinDrawingBound01(g_selected_control);
+      max_bound = controlCurrentMaxDrawingBound01(g_selected_control);
 
       // If inside the margin around the draw zone, clamp
       px < 0 ? px = 0;
@@ -3555,8 +3753,8 @@ function fsetCurveButtonCallback(set_num, row_num, col_num)
   curve       = selectedControlEditedCurveAddress();
   curve_addr  = getFsetFunctionCurveAddress(set_num, row_num, col_num);
 
-  min_bound   = controlCurrentMinBound01(g_selected_control);
-  max_bound   = controlCurrentMaxBound01(g_selected_control);
+  min_bound   = controlCurrentMinDrawingBound01(g_selected_control);
+  max_bound   = controlCurrentMaxDrawingBound01(g_selected_control);
 
   i = 0;
   while(i<CURVESIZE) (
@@ -3650,6 +3848,7 @@ function drawCurveButtons(bzone)
     gfx_drawstr("<RSRC>/Data/talagan_MIDI CC Mapper X");
   );
 
+  // Function sets tabs
   si    = 0;
   offy  = 0;
   while(si < sc)
@@ -3691,6 +3890,8 @@ function drawCurveButtons(bzone)
   );
 
   voff = offy+20;
+  bzone.voff = voff;
+
   (sc > 0)?(
 
     // Curve buttons
@@ -3778,8 +3979,12 @@ function drawCurveButtons(bzone)
 );
 
 function drawBoundariesPanel()
-  local(got_event,i,min_bound,max_bound,with_lsb,curve,left, top,
-    mins_lsb_address,maxs_lsb_address,mins_msb_address,maxs_msb_address
+  local(got_event,i,min_bound,max_bound,
+    with_lsb,with_lsb_in,with_lsb_out,
+    curve,left, top,
+    mins_lsb_address,maxs_lsb_address,mins_msb_address,maxs_msb_address,
+    msb_lab_left, msb_spin_left, lsb_spin_left, filter_top,
+    max_reachable_msb
   )
 (
   (isMorphingEnabledForControl(g_selected_control) && isMorphCurveSelectedForControl(g_selected_control))?(
@@ -3798,40 +4003,47 @@ function drawBoundariesPanel()
 
   with_lsb = controlHasOperationalHighResOutput(g_selected_control);
 
-  left = 670;
-  top  = 170;
+  left = 735;
+  top  = (isConditionalFilteringAvailableForControl(g_selected_control))?(82 + bzone.voff):(152 + bzone.voff);
 
-  gfx_xy(left+74, GUI_CONTROL_PARAMS_TOP + top + 2);
-  gfx_drawStr("Curve limits");
+  gfx_xy(left-100, GUI_CONTROL_PARAMS_TOP + top + 80);
+  gfx_drawStr("Drawing\n\n  limits");
 
-  gfx_xy((with_lsb)?(left+73):(left+112), GUI_CONTROL_PARAMS_TOP + top + 42);
-  gfx_drawStr("MSB");
+  gfx_xy(left+93, GUI_CONTROL_PARAMS_TOP + top + 50);
+  gfx_drawStr((with_lsb)?("MSB"):("Val"));
 
   (with_lsb)?(
-    gfx_xy(left+152, GUI_CONTROL_PARAMS_TOP + top + 42);
+    gfx_xy(left+172, GUI_CONTROL_PARAMS_TOP + top + 50);
     gfx_drawStr("LSB");
   );
 
-  gfx_xy((with_lsb)?(left):(left+40), GUI_CONTROL_PARAMS_TOP + top + 72);
+  msb_lab_left  = left+20;
+  msb_spin_left = left+70;
+  lsb_spin_left = left+150;
+
+  gfx_xy(msb_lab_left, GUI_CONTROL_PARAMS_TOP + top + 72);
   gfx_drawStr("Min");
 
-  gfx_xy((with_lsb)?(left):(left+40), GUI_CONTROL_PARAMS_TOP + top + 102);
+  gfx_xy(msb_lab_left, GUI_CONTROL_PARAMS_TOP + top + 102);
   gfx_drawStr("Max");
 
   got_event = 0;
 
-  got_event |= drawAddOrSubWidget("min_spinbox_msb",mins_msb_address,g_selected_control,(with_lsb)?(left+50):(left+90),GUI_CONTROL_PARAMS_TOP+top+70,0,127,40,0);
-  got_event |= drawAddOrSubWidget("max_spinbox_msb",maxs_msb_address,g_selected_control,(with_lsb)?(left+50):(left+90),GUI_CONTROL_PARAMS_TOP+top+100,0,127,40,0);
+  max_reachable_msb = (g_selected_control == CONTROL_PITCH_BEND)?(8191):(127);
+
+  got_event |= drawAddOrSubWidget("min_spinbox_msb",mins_msb_address,g_selected_control,msb_spin_left,GUI_CONTROL_PARAMS_TOP+top+70, 0,max_reachable_msb,40,0);
+  got_event |= drawAddOrSubWidget("max_spinbox_msb",maxs_msb_address,g_selected_control,msb_spin_left,GUI_CONTROL_PARAMS_TOP+top+100,0,max_reachable_msb,40,0);
 
   (with_lsb)?(
-    got_event |= drawAddOrSubWidget("min_spinbox_lsb",mins_lsb_address,g_selected_control,left+130,GUI_CONTROL_PARAMS_TOP+top+70,0,127,40,0);
-    got_event |= drawAddOrSubWidget("max_spinbox_lsb",maxs_lsb_address,g_selected_control,left+130,GUI_CONTROL_PARAMS_TOP+top+100,0,127,40,0);
+    got_event |= drawAddOrSubWidget("min_spinbox_lsb",mins_lsb_address,g_selected_control,lsb_spin_left,GUI_CONTROL_PARAMS_TOP+top+70,0,127,40,0);
+    got_event |= drawAddOrSubWidget("max_spinbox_lsb",maxs_lsb_address,g_selected_control,lsb_spin_left,GUI_CONTROL_PARAMS_TOP+top+100,0,127,40,0);
   );
 
   got_event?(
+    // Clamp the curves if we got an event on those buttons
 
-    min_bound = controlCurrentMinBound01(g_selected_control)*127;
-    max_bound = controlCurrentMaxBound01(g_selected_control)*127;
+    min_bound = controlCurrentMinDrawingBound01(g_selected_control)*127;
+    max_bound = controlCurrentMaxDrawingBound01(g_selected_control)*127;
 
     curve = selectedControlEditedCurveAddress();
 
@@ -3845,10 +4057,114 @@ function drawBoundariesPanel()
       i+=1;
     );
   );
+
+  filter_top   = GUI_CONTROL_PARAMS_TOP + top + 150;
+
+  (isConditionalFilteringAvailableForControl(g_selected_control))?(
+  (isConditionalFilteringEnabledForControl(g_selected_control))?(
+
+    with_lsb_in  = controlHasOperationalHighResInput(g_selected_control);
+    with_lsb_out = controlHasOperationalHighResOutput(g_selected_control);
+    with_lsb     = (with_lsb_in || with_lsb_out);
+
+    gfx_rgb(TH.DEFAULT_FONT);
+    gfx_xy(left+94, filter_top - 18);
+    gfx_drawStr((with_lsb)?("MSB"):("Val"));
+
+    (with_lsb)?(
+      gfx_xy(left+172, filter_top - 18);
+      gfx_drawStr("LSB");
+    );
+
+    drawStandardBistateButton(CONTROL_VFILT_ENABLED,g_selected_control,filter_top,left-100,"Route","Off");
+
+    gfx_rgb(TH.DEFAULT_FONT);
+    gfx_xy(left-40, filter_top+4);
+    gfx_drawStr("if");
+    gfx_xy(left-65, filter_top + 32);
+    gfx_drawStr("|");
+    gfx_xy(left-91, filter_top + 46);
+    gfx_drawStr("to chan");
+    gfx_xy(left-65, filter_top + 62);
+    gfx_drawStr("|");
+    gfx_xy(left-69, filter_top + 68);
+    gfx_drawStr("\\/");
+
+    drawAddOrSubWidget("chan_out_vfilt",CONTROL_VFILT_DST_CHAN,g_selected_control,left-100,filter_top+90,-1,16,46,0);
+
+    drawStandardBistateButton(CONTROL_VFILT_IN_SUP_ENABLED ,g_selected_control,filter_top+ 3,msb_lab_left-31,"","");
+    drawStandardBistateButton(CONTROL_VFILT_IN_INF_ENABLED, g_selected_control,filter_top+33,msb_lab_left-31,"","");
+    drawStandardBistateButton(CONTROL_VFILT_OUT_SUP_ENABLED,g_selected_control,filter_top+63,msb_lab_left-31,"","");
+    drawStandardBistateButton(CONTROL_VFILT_OUT_INF_ENABLED,g_selected_control,filter_top+93,msb_lab_left-31,"","");
+
+    gfx_xy(msb_lab_left-11, filter_top + 4);
+    gfx_rgb( (isConditionalFilteringInSupEnabledForControl(g_selected_control))?(TH.DEFAULT_FONT):(TH.SW_B_OFF));
+    gfx_drawStr("In  >=");
+
+    gfx_xy(msb_lab_left-11, filter_top + 34);
+    gfx_rgb( (isConditionalFilteringInInfEnabledForControl(g_selected_control))?(TH.DEFAULT_FONT):(TH.SW_B_OFF));
+    gfx_drawStr("In  <=");
+
+    (isConditionalFilteringInSupEnabledForControl(g_selected_control) && isConditionalFilteringInInfEnabledForControl(g_selected_control))?(
+      gfx_xy(msb_lab_left+5, filter_top + 19);
+      gfx_rgb(TH.DYN_LABEL);
+      (controlConditionalFilteringInSup01(g_selected_control) < controlConditionalFilteringInInf01(g_selected_control))?(
+        gfx_drawStr("and");
+      ):(
+        gfx_drawStr("or");
+      );
+    );
+
+    gfx_xy(msb_lab_left-11, filter_top + 64);
+    gfx_rgb( (isConditionalFilteringOutSupEnabledForControl(g_selected_control))?(TH.DEFAULT_FONT):(TH.SW_B_OFF));
+    gfx_drawStr("Out >=");
+
+    gfx_xy(msb_lab_left-11, filter_top + 94);
+    gfx_rgb( (isConditionalFilteringOutInfEnabledForControl(g_selected_control))?(TH.DEFAULT_FONT):(TH.SW_B_OFF));
+    gfx_drawStr("Out <=");
+
+    (isConditionalFilteringOutSupEnabledForControl(g_selected_control) && isConditionalFilteringOutInfEnabledForControl(g_selected_control))?(
+      gfx_xy(msb_lab_left+5, filter_top + 79);
+      gfx_rgb(TH.DYN_LABEL);
+      (controlConditionalFilteringOutSup01(g_selected_control) < controlConditionalFilteringOutInf01(g_selected_control))?(
+        gfx_drawStr("and");
+      ):(
+        gfx_drawStr("or");
+      );
+    );
+
+    drawAddOrSubWidget("vfilt_in_sup_msb", CONTROL_VFILT_IN_SUP_MSB,  g_selected_control,msb_spin_left,filter_top+0,0,max_reachable_msb,40,0);
+    drawAddOrSubWidget("vfilt_in_inf_msb", CONTROL_VFILT_IN_INF_MSB,  g_selected_control,msb_spin_left,filter_top+30,0,max_reachable_msb,40,0);
+    drawAddOrSubWidget("vfilt_out_sup_msb",CONTROL_VFILT_OUT_SUP_MSB, g_selected_control,msb_spin_left,filter_top+60,0,max_reachable_msb,40,0);
+    drawAddOrSubWidget("vfilt_out_inf_msb",CONTROL_VFILT_OUT_INF_MSB, g_selected_control,msb_spin_left,filter_top+90,0,max_reachable_msb,40,0);
+
+    (with_lsb_in)?(
+      drawAddOrSubWidget("vfilt_in_sup_lsb", CONTROL_VFILT_IN_SUP_LSB, g_selected_control,lsb_spin_left,filter_top+0,0,127,40,0);
+      drawAddOrSubWidget("vfilt_in_inf_lsb", CONTROL_VFILT_IN_INF_LSB, g_selected_control,lsb_spin_left,filter_top+30,0,127,40,0);
+    );
+    (with_lsb_out)?(
+      drawAddOrSubWidget("vfilt_out_sup_lsb",CONTROL_VFILT_OUT_SUP_LSB,g_selected_control,lsb_spin_left,filter_top+60,0,127,40,0);
+      drawAddOrSubWidget("vfilt_out_inf_lsb",CONTROL_VFILT_OUT_INF_LSB,g_selected_control,lsb_spin_left,filter_top+90,0,127,40,0);
+    );
+
+  ):(
+    gfx_rgb(TH.DEFAULT_FONT);
+    gfx_xy(left-50, filter_top+3);
+    gfx_drawStr("Conditional routing/filtering");
+
+    drawStandardBistateButton(CONTROL_VFILT_ENABLED,g_selected_control,filter_top,left-100,"if","Off");
+  );
+  );
 );
 
+
 function drawCurvezone()
-  local(curve, morph_curve, curve_panel_top, left, top, right, bottom, gridstep, gzone, bzone, i, t1,t2,t3,t4, alpha, inter)
+  local(curve, morph_curve, curve_panel_top,
+  left, top, right, bottom,
+  gridstep, gzone, bzone,
+  i, t1,t2,t3,t4,
+  en_inf,en_sup,inf,sup,inf01,sup01,
+  alpha, inter)
 (
    // Curve zone
     curve_panel_top = GUI_CONTROL_PARAMS_TOP+100;
@@ -3878,18 +4194,66 @@ function drawCurvezone()
     bzone.t       = gzone.t;
 
     t1        = top;
-    t2        = bottom - gzone.ih * controlCurrentMaxBound01(g_selected_control);
-    t3        = bottom - gzone.ih * controlCurrentMinBound01(g_selected_control);
+    t2        = bottom - gzone.ih * controlCurrentMaxDrawingBound01(g_selected_control);
+    t3        = bottom - gzone.ih * controlCurrentMinDrawingBound01(g_selected_control);
     t4        = bottom;
 
     // Draw background
-    gfx_rgb(TH.CURVE_BG);
+    gfx_rgb(TH.CURVE_BG_EXCL);
     gfx_rect(gzone.l+10,gzone.t+10,gzone.r-gzone.l-20,gzone.b-gzone.t-20);
 
-    gfx_rgb(TH.CURVE_BG_EXCL);
-    gfx_rect(left,t1,right-left,t2-t1);
-    gfx_rect(left,t3,right-left,t4-t3);
+    (isConditionalFilteringEnabledForControl(g_selected_control))?(
+      // Draw drop conditions
+     // gfx_rgb(0x300000);
+      gfx_rgb(TH.CURVE_BG_FILTER_OUT);
 
+      en_sup = isConditionalFilteringInSupEnabledForControl(g_selected_control);
+      en_inf = isConditionalFilteringInInfEnabledForControl(g_selected_control);
+      sup01  = controlConditionalFilteringInSup01(g_selected_control);
+      inf01  = controlConditionalFilteringInInf01(g_selected_control);
+      sup    = roundi(sup01 * gzone.iw);
+      inf    = roundi(inf01 * gzone.iw);
+
+      (en_sup && en_inf && (sup01 <= inf01) )?(
+        // Intersection
+        gfx_rect(left + sup, top, max(2, inf - sup +2), bottom-top + 1);
+      ):(
+        (en_sup)?(
+          gfx_rect(left + sup, top, gzone.iw - sup + 2, bottom-top + 1);
+        );
+
+        (en_inf)?(
+          gfx_rect(left, top, inf + 2, bottom-top + 1);
+        );
+      );
+
+      en_sup = isConditionalFilteringOutSupEnabledForControl(g_selected_control);
+      en_inf = isConditionalFilteringOutInfEnabledForControl(g_selected_control);
+      sup01  = controlConditionalFilteringOutSup01(g_selected_control);
+      inf01  = controlConditionalFilteringOutInf01(g_selected_control);
+      sup    = roundi(sup01 * gzone.ih);
+      inf    = roundi(inf01 * gzone.ih);
+
+      (en_sup && en_inf && (sup01 <= inf01) )?(
+        // Intersection
+        gfx_rect(left, bottom - inf, right - left + 1, max(2, inf -sup+2));
+      ):(
+        (en_sup)?(
+          gfx_rect(left, top, right - left + 1, gzone.ih - sup + 2);
+        );
+
+        (en_inf)?(
+          gfx_rect(left, bottom - inf, right - left + 1, inf + 2);
+
+        );
+      );
+    );
+
+    // Draw inclusion zone
+    gfx_a = 0.07;
+    gfx_rgb(TH.CURVE_BG);
+    gfx_rect(left,t2,right-left+1,t3-t2+1);
+    gfx_a = 1.0;
 
     // Draw grid
     gfx_rgb(TH.CURVE_GRID);
@@ -3905,10 +4269,10 @@ function drawCurvezone()
     gfx_rgb(TH.CURVE_BORDER);
     gfx_x = left;
     gfx_y = top;
-    gfx_lineto(right,top);
-    gfx_lineto(right,bottom);
-    gfx_lineto(left,bottom);
-    gfx_lineto(left,top);
+    gfx_lineto(right+1, top);
+    gfx_lineto(right+1, bottom+1);
+    gfx_lineto(left,    bottom+1);
+    gfx_lineto(left,    top);
 
     // Draw curve
     curve = selectedControlBaseCurveAddress();
@@ -3942,11 +4306,11 @@ function drawCurvezone()
 
       gfx_rgb(TH.CURVE);
 
+      alpha = morphValueForCurrentControl();
+
       inter = curve[0] * (1 - alpha) + alpha * morph_curve[0];
       gfx_x = left;
       gfx_y = bottom-roundi(RESOLUTION*inter);
-
-      alpha = morphValueForCurrentControl();
 
       i = 1; while(i<CURVESIZE)(
         inter = curve[i] * (1 - alpha) + alpha * morph_curve[i];
@@ -5184,7 +5548,7 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("Midi CC Mapper X (5.0) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai");
+  gfx_drawstr("Midi CC Mapper X (5.1) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai");
 
   drawSwitchButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin");
 );
@@ -5338,8 +5702,8 @@ function listenToGmemCommands()
         si        = 0;
         addr      = selectedControlEditedCurveAddress();
 
-        min_bound = controlCurrentMinBound01(g_selected_control);
-        max_bound = controlCurrentMaxBound01(g_selected_control);
+        min_bound = controlCurrentMinDrawingBound01(g_selected_control);
+        max_bound = controlCurrentMaxDrawingBound01(g_selected_control);
 
         while(si < CURVESIZE)
         (
@@ -5429,66 +5793,128 @@ aaa_vtest_fconv_l   = g_hres_l;
 //===========================================//
 @block
 
-function produceAndEmitCCOutputForControl(blk_control, in_val_01, dst_chan, mpos)
+// Detects if conditional filter applies to a value (input or output) and returns the resulting channel
+function applyConditionalFiltering(blk_control, is_input, val_01, src_chan, dst_chan)
+  local(en_inf, en_sup, inf01, sup01, sup_verified, inf_verified, chan_if_match)
+(
+  // Apply conditional filtering on input
+  (isConditionalFilteringOperationalForControl(blk_control))?(
+
+    en_inf = (is_input)?(isConditionalFilteringInInfEnabledForControl(blk_control)):(isConditionalFilteringOutInfEnabledForControl(blk_control));
+    en_sup = (is_input)?(isConditionalFilteringInSupEnabledForControl(blk_control)):(isConditionalFilteringOutSupEnabledForControl(blk_control));
+    inf01  = (is_input)?(controlConditionalFilteringInInf01(blk_control)):(controlConditionalFilteringOutInf01(blk_control));
+    sup01  = (is_input)?(controlConditionalFilteringInSup01(blk_control)):(controlConditionalFilteringOutSup01(blk_control));
+
+    chan_if_match = conditionalFilteringDstChanForControl(blk_control);
+
+    // Conditions need to include >= and == for casting problems
+    // >= may return false while == returns true :(
+    sup_verified = (val_01 >= sup01 || val_01 == sup01);
+    inf_verified = (val_01 <= inf01 || val_01 == inf01);
+
+    (en_inf && en_sup && (sup01 <= inf01))?(
+      // Intersection band (AND)
+      (sup_verified && inf_verified)?(
+        dst_chan = chan_if_match;
+      );
+    ):(
+      // Non intersection band (OR)
+      (en_inf)?(
+        (inf_verified)?(
+          dst_chan = chan_if_match;
+        );
+      );
+      (en_sup)?(
+        (sup_verified)?(
+          dst_chan = chan_if_match;
+        );
+      );
+    );
+
+    dst_chan = (dst_chan == AS_SRC)?(src_chan):(dst_chan);
+  );
+
+  dst_chan;
+);
+// Alias for inputs
+function applyConditionalInputFiltering(blk_control, in_val_01, src_chan, dst_chan) (
+  applyConditionalFiltering(blk_control, 1, in_val_01, src_chan, dst_chan);
+);
+// Alias for outputs
+function applyConditionalOutputFiltering(blk_control, out_val_01, src_chan, dst_chan) (
+  applyConditionalFiltering(blk_control, 0, out_val_01, src_chan, dst_chan);
+);
+
+
+function produceAndEmitCCOutputForControl(blk_control, in_val_01, src_chan, dst_chan, mpos)
   local(out_val_01, out_cc_num, out_status)
 (
   // Apply the curve
   out_val_01 = applyCurve(blk_control, in_val_01);
 
-  // Save some values for UI feedback (small red circle)
-  CONTROL_LAST_IN[blk_control]  = in_val_01 * 127;
-  CONTROL_LAST_OUT[blk_control] = out_val_01 * 127;
+  dst_chan = applyConditionalOutputFiltering(blk_control, out_val_01, src_chan, dst_chan);
 
-  // Save activity for this control+channel
-  // This will be used by the auto-emit feature
-  setOutputActivityForControlOnChannel(blk_control, dst_chan, in_val_01);
+  (dst_chan != DROP)?(
 
-  out_cc_num          = CONTROL_DSTS[blk_control];
-  out_status          = (MSG_CC<<4)|(dst_chan-1); // Chan : 1-16 ->> 0-15
+    // Save some values for UI feedback (small red circle)
+    CONTROL_LAST_IN[blk_control]  = in_val_01 * 127;
+    CONTROL_LAST_OUT[blk_control] = out_val_01 * 127;
 
-  controlHasOperationalHighResOutput(blk_control) ? (
-    // Output high res
-    midiCCHresF012I(out_val_01);
-    // Be compliant with reaper : MSB first, LSB last
-    midiSend(mpos, out_status, out_cc_num,                    g_hres_h);
-    midiSend(mpos, out_status, ccLsbCounterpart(out_cc_num),  g_hres_l);
-  ):(
-    (out_cc_num == CHANNEL_PRESSURE_FAKE_CC_NUM)?(
-      // Channel pressure conversion
-      out_status = (MSG_CHAN_PRESSURE<<4)|(dst_chan-1);
-      midiSend(mpos, out_status, roundi(out_val_01 * 127), 0);
+    // Save activity for this control+channel
+    // This will be used by the auto-emit feature
+    setOutputActivityForControlOnChannel(blk_control, dst_chan, in_val_01);
+
+    out_cc_num          = CONTROL_DSTS[blk_control];
+    out_status          = (MSG_CC<<4)|(dst_chan-1); // Chan : 1-16 ->> 0-15
+
+    controlHasOperationalHighResOutput(blk_control) ? (
+      // Output high res
+      midiCCHresF012I(out_val_01);
+      // Be compliant with reaper : MSB first, LSB last
+      midiSend(mpos, out_status, out_cc_num,                    g_hres_h);
+      midiSend(mpos, out_status, ccLsbCounterpart(out_cc_num),  g_hres_l);
     ):(
-      // Output low res, normalize by 127 (max is 127).
-      midiSend(mpos, out_status, out_cc_num, roundi(out_val_01 * 127) );
+      (out_cc_num == CHANNEL_PRESSURE_FAKE_CC_NUM)?(
+        // Channel pressure conversion
+        out_status = (MSG_CHAN_PRESSURE<<4)|(dst_chan-1);
+        midiSend(mpos, out_status, roundi(out_val_01 * 127), 0);
+      ):(
+        // Output low res, normalize by 127 (max is 127).
+        midiSend(mpos, out_status, out_cc_num, roundi(out_val_01 * 127) );
+      );
     );
   );
 );
 
-function produceAndEmitPitchBendOutputForControl(blk_control, in_val_01, dst_chan, mpos)
+function produceAndEmitPitchBendOutputForControl(blk_control, in_val_01, src_chan, dst_chan, mpos)
   local(sigmul, out_val_01, out_val, out_status)
 (
-  sigmul      = (in_val_01 >=0)?(1.0):(-1.0);
+  sigmul     = (in_val_01 >=0)?(1.0):(-1.0);
 
   // Apply the curve on the absolute val
   out_val_01 = applyCurve(blk_control, sigmul * in_val_01);
 
-  // Save some values for UI feedback (small red circle)
-  CONTROL_LAST_IN[blk_control]  = in_val_01 * 127;
-  CONTROL_LAST_OUT[blk_control] = out_val_01 * 127;
+  dst_chan   = applyConditionalOutputFiltering(blk_control, out_val_01, src_chan, dst_chan);
 
-  // Reverse value if asked
-  (REVERSE_PITCH_BEND[0])?(
-    out_val_01 = - out_val_01;
+  (dst_chan != DROP)?(
+    // Save some values for UI feedback (small red circle)
+    CONTROL_LAST_IN[blk_control]  = in_val_01 * 127;
+    CONTROL_LAST_OUT[blk_control] = out_val_01 * 127;
+
+    // Reverse value if asked
+    (REVERSE_PITCH_BEND[0])?(
+      out_val_01 = - out_val_01;
+    );
+
+    // Convert back
+    out_val = roundi( ((sigmul * out_val_01) * 0x1FFF  + 0x2000) );
+
+    // Send result
+    out_status = (MSG_PITCH_BEND<<4)|(dst_chan-1); // Chan : 1-16 ->> 0-15
+
+    // Output low res, normalize by 127 (max is 127).
+    midiSend(mpos, out_status, out_val & 0x7F , (out_val >> 7) & 0x7F);
   );
-
-  // Convert back
-  out_val = roundi( ((sigmul * out_val_01) * 0x1FFF  + 0x2000) );
-
-  // Send result
-  out_status = (MSG_PITCH_BEND<<4)|(dst_chan-1); // Chan : 1-16 ->> 0-15
-
-  // Output low res, normalize by 127 (max is 127).
-  midiSend(mpos, out_status, out_val & 0x7F , (out_val >> 7) & 0x7F);
 );
 
 // For a given CONTROL on the UI, try to process the CC message
@@ -5547,7 +5973,12 @@ function tryProcessCCWithControl(evt, blk_control)
         in_val_01   = evt.cc_val/127.0;
       );
 
-      produceAndEmitCCOutputForControl(blk_control, in_val_01, dst_chan, evt.mpos);
+      // Apply conditional filtering on input. This may re-route the message (and set the dst_chan to DROP).
+      dst_chan = applyConditionalInputFiltering(blk_control, in_val_01, evt.chan, dst_chan);
+
+      (dst_chan != DROP)?(
+        produceAndEmitCCOutputForControl(blk_control, in_val_01, evt.chan, dst_chan, evt.mpos);
+      );
 
       // Set the pass through flag.
       controlShouldPassThrough(blk_control)?(
@@ -5560,7 +5991,6 @@ function tryProcessCCWithControl(evt, blk_control)
       );
 
       evt.was_processed = 1;
-
     ):(
 
       // If the control has MSB + HR as input
@@ -5575,9 +6005,7 @@ function tryProcessCCWithControl(evt, blk_control)
 
         evt.was_processed = 1;
       );
-
     );
-
   );
   evt;
 );
@@ -5730,7 +6158,7 @@ function processPolyphonicAfterTouchMessage(evt)
         src_chan, src_chan_matches,
         dst_chan, dst_status,
         new_key, key_range_resolved,
-        val_01, out_val_01)
+        in_val_01, out_val_01)
 (
   key_range_resolved      = keyKBRangeResolved(evt.key);
   blk_control             = afterTouchControlForKBRange(key_range_resolved);
@@ -5756,34 +6184,48 @@ function processPolyphonicAfterTouchMessage(evt)
       // Transposition should not be outside midi range
       (new_key >= 0 && new_key <= 127)?(
 
-        val_01 = evt.after_touch/127.0;
+        in_val_01 = evt.after_touch/127.0;
 
         // Calculate output value
         out_val_01 = 0;
 
         // Apply after touch curve if needed
         (isControlEnabled(blk_control))?(
-          out_val_01 = applyCurve(blk_control, val_01);
 
-          // Save for UI feedback (red circle).
-          CONTROL_LAST_IN[blk_control]   = val_01*127;
-          CONTROL_LAST_OUT[blk_control]  = out_val_01*127;
+          // Apply conditional filtering on input. This may re-route the message (and set the dst_chan to DROP).
+          dst_chan    = applyConditionalInputFiltering(blk_control, in_val_01, evt.chan, dst_chan);
+
+          (dst_chan != DROP)?(
+
+            out_val_01 = applyCurve(blk_control, in_val_01);
+
+            dst_chan   = applyConditionalOutputFiltering(blk_control, out_val_01, evt.chan, dst_chan);
+
+            (dst_chan != DROP)?(
+              // Save for UI feedback (red circle).
+              CONTROL_LAST_IN[blk_control]   = in_val_01 *127;
+              CONTROL_LAST_OUT[blk_control]  = out_val_01*127;
+            );
+          );
+
         ):(
           // Just keep the value as is (bypass any calculation)
-          out_val_01 = val_01;
+          out_val_01 = in_val_01;
         );
 
-        // Create out status, remap chan to to 0-15
-        dst_status = (evt.type << 4) | (dst_chan-1);
+        (dst_chan != DROP)?(
+          // Create out status, remap chan to to 0-15
+          dst_status = (evt.type << 4) | (dst_chan-1);
 
-        midisend(evt.mpos, dst_status, keyToMidiNote(new_key), roundi(out_val_01 * 127) );
-
+          midisend(evt.mpos, dst_status, keyToMidiNote(new_key), roundi(out_val_01 * 127) );
+        );
       ); // <- Transposition is not outside range
-
     ); // <- dst chan is not drop
 
-    controlShouldPassThrough(blk_control)?(
-      evt.should_pass_through = 1;
+    (isControlEnabled(blk_control))?(
+      (controlShouldPassThrough(blk_control))?(
+        evt.should_pass_through = 1;
+      );
     );
 
     // As long as the input channel is concerned
@@ -5830,7 +6272,11 @@ function processPitchBendMessage(evt)
     // Put this into -1..1
     in_val_01   = (in_val * 2.0 - 0x4000)/0x3FFE;
 
-    produceAndEmitPitchBendOutputForControl(blk_control, in_val_01, dst_chan, evt.mpos);
+    dst_chan = applyConditionalInputFiltering(blk_control, abs(in_val_01), evt.chan, dst_chan);
+
+    (dst_chan != DROP)?(
+      produceAndEmitPitchBendOutputForControl(blk_control, in_val_01, evt.chan, dst_chan, evt.mpos);
+    );
 
     controlShouldPassThrough(blk_control)?(
       evt.should_pass_through = 1;
@@ -6091,11 +6537,12 @@ function handleSliderEvents()
               // Use the last sample index of the block for this.
 
               (isControlPitchBend(cnum))?(
-                produceAndEmitPitchBendOutputForControl(cnum, last_activity, chani, samplesblock - 1);
+                produceAndEmitPitchBendOutputForControl(cnum, last_activity, chani, chani, samplesblock - 1);
               );
 
               (isControlForRealCC(cnum))?(
-                produceAndEmitCCOutputForControl(cnum, last_activity, chani, samplesblock - 1);
+                // Use the activity chan as both src and dst chan
+                produceAndEmitCCOutputForControl(cnum, last_activity, chani, chani, samplesblock - 1);
               );
             );
 
