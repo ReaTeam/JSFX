@@ -1,8 +1,9 @@
 desc: EQ1979
 author: Belles Ondes
-version: 0.9
+version: 0.92
 changelog: Inital release
-screenshot: GUI https://github.com/D4p0up/eq1979/raw/main/eq1979.png
+provides: bellesondes_eq1979/New file 1.jsfx
+screenshot: UI https://forum.cockos.com/attachment.php?attachmentid=50525&stc=1&d=1668108933
 about:
   #EQ1979
 
@@ -17,9 +18,9 @@ about:
 
 desc:1979EQ - Vintage Neve 1073 gain and filter stage emulation
 
-// =================
-// Version Beta 0.9
-// =================
+// ==================
+// Version Beta 0.92
+// ==================
 // Frequency accurate modeling of a Neve 1073 filter stage combined with an input gain-compensated saturation.
 // Designed by cascading ~30 peq/butterworth filters to reproduce frequency response, bumps and drops of 
 // the original console strip.
@@ -32,13 +33,15 @@ desc:1979EQ - Vintage Neve 1073 gain and filter stage emulation
 // Copyright (c) - 2014 - Olivier Belanger
 //
 slider1:gain_db=0<-24,24,0.5>-Trim Gain (dB)
-slider2:hpf_gain=0<-18,18,1>-High frequency shelf Gain (dB)
+slider2:hpf_gain=0<-16,16,1>-High frequency shelf Gain (dB)
 slider3:mpf_gain=0<-18,18,1>-Mid frequency shelf gain (dB)
 slider4:mpf_cut=0<0,6,1{Off,0.36kHz,0.7kHz,1.6kHz,3.2kHz,4.8kHz,7.2kHz}>-Mid frequency (Hz)
-slider5:lpf_gain=0<-18,18,1>-Low frequency gain (dB)
+slider5:lpf_gain=0<-16,16,1>-Low frequency gain (dB)
 slider6:lpf_cut=0<0,4,1{Off,35Hz,60Hz,110Hz,220Hz}>-Low frequency shelf (Hz)
 slider7:hpf_cut=0<0,4,1{Off,50Hz,80Hz,160Hz,300Hz}>-Input Highpass frequency (Hz)
 slider8:sat_amount=1<0,100,0.1>-Saturation Amount (%)
+slider9:eq_enable=1<0,1,1>-Eq enable (On/Off)
+slider10:phase_enable=0<0,1,1>-Inver phase (On/Off)
  
 in_pin:left input
 in_pin:right input
@@ -54,6 +57,7 @@ last_gain = 10^(gain_db/20);
 pi=3.141592;
 e=2.71828;
 bgcolor=104+127*256+150*65536; //That cute vintage blue
+protec=0; //0 - Available, 1 - Sat
 
 // =============================================
 // HIP - Copyright (c) - 2014 - Olivier Belanger
@@ -449,6 +453,12 @@ d_gain = (next_gain - last_gain)/samplesblock;
 spl0 *= last_gain;
 spl1 *= last_gain;
 last_gain += d_gain;
+
+// Phase
+phase_enable ? (
+spl0 *= -1;
+spl1 *= -1;
+);
  
 // Saturation
 sat_amount ? (
@@ -459,7 +469,8 @@ spl1 = sat_trim*atan(spl1*sat_S)/atan_S;
 // Input HPF Hardware Emulation Filter
 spl0 = f_in_1.hip_do(spl0);
 spl1 = f_in_2.hip_do(spl1);
- 
+
+eq_enable ? ( 
 // Input Sharp LF Filter
 hpf_cut ? (
 spl0 = f_SLF_1.buthp_do(spl0);
@@ -501,7 +512,8 @@ spl1 = f_LF_drop_2.eq_do(spl1);
 spl0 = f_LF_1.eq_do(spl0);
 spl1 = f_LF_2.eq_do(spl1);
 );
- 
+
+ );
 //Output LPF 
 spl0 = f_HLF_1.butlp_do(spl0);
 spl0 = f_HLF_3.butlp_do(spl0);
@@ -515,14 +527,15 @@ gfx_clear=bgcolor;
 //===========================================================================
 input_m=mouse_cap;
 // Reset mouse handling
-input_m==0 ? (last_y=mouse_y;delta_y=0);
+input_m==0 ? (last_y=mouse_y;delta_y=0;protec=0;);
 // Bouton 1
 input_m==1 ? (
- mouse_x<175 ? (
+ ((mouse_x<175)&&(protec==0))||(protec==1) ? (
+ protec=1;
  delta_y+=last_y-mouse_y;
  last_y=mouse_y;
  delta_y!=0 ? (
- sat_amount+=delta_y/8;
+ sat_amount+=delta_y/6;
  delta_y=0;
  sat_amount>100 ? sat_amount=100;
  sat_amount<0 ? sat_amount=0;
@@ -530,7 +543,8 @@ input_m==1 ? (
  sat_update();
  );
  );
- (mouse_x>175)&&(mouse_x<325) ? (
+ ((mouse_x>175)&&(mouse_x<325)&&(protec==0))||(protec==2) ? (
+ protec=2;
  delta_y+=last_y-mouse_y;
  last_y=mouse_y;
  delta_y!=0 ? (
@@ -542,7 +556,8 @@ input_m==1 ? (
  HF_update();
  );
  ); 
- (mouse_x>325)&&(mouse_x<475) ? (
+ ((mouse_x>325)&&(mouse_x<475)&&(protec==0))||(protec==3) ? (
+ protec=3;
  delta_y+=last_y-mouse_y;
  last_y=mouse_y;
  delta_y!=0 ? (
@@ -554,7 +569,8 @@ input_m==1 ? (
  MF_update();
  );
  ); 
- (mouse_x>475)&&(mouse_x<625) ? (
+ ((mouse_x>475)&&(mouse_x<625)&&(protec==0))||(protec==4) ? (
+ protec=4;
  delta_y+=last_y-mouse_y;
  last_y=mouse_y;
  delta_y!=0 ? (
@@ -566,7 +582,8 @@ input_m==1 ? (
  LF_update();
  );
  );     
- (mouse_x>625)&&(mouse_x<775) ? (
+ ((mouse_x>625)&&(mouse_x<775)&&(protec==0))||(protec==5) ? (
+ protec=5;
  delta_y+=last_y-mouse_y;
  last_y=mouse_y;
  abs(delta_y)>20 ? (
@@ -578,7 +595,17 @@ input_m==1 ? (
  // HPF Stage update
  hpf_update();
  );
- );     
+ );
+ (mouse_x>775)&&(mouse_y>70)&&(mouse_y<90)&&(protec==0) ? (
+ protec=6;
+ eq_enable ? eq_enable=0:eq_enable=1;
+ sliderchange(slider9);
+ );
+ (mouse_x>775)&&(mouse_y>100)&&(mouse_y<120)&&(protec==0) ? (
+ protec=6;
+ phase_enable ? phase_enable=0:phase_enable=1;
+ sliderchange(slider10);
+ );
  );
  
 // Molette
@@ -621,7 +648,7 @@ input_m==1 ? (
 // Bouton 2
 input_m==2? (
  (mouse_x>gfx_w-10)&&(mouse_y>gfx_h-10)&&(delta_y==0) ? (
- slider_show(255,-1);
+ slider_show(1023,-1);
  );
  
  mouse_x<175 ? (
@@ -666,6 +693,25 @@ input_m==2? (
  hpf_update();
  );
  );
+ 
+//===========================================================================
+// Buttons
+//===========================================================================
+gfx_setfont(1, "Arial", 19); 
+// eq
+eq_enable ? (gfx_r=0.9;gfx_g=0.9;gfx_b=0.9;):(gfx_r=0.4;gfx_g=0.4;gfx_b=0.4;);
+gfx_measurestr("EQ",w,h);
+gfx_rect(770,70,40,h);
+gfx_r=0.2;gfx_g=0.2;gfx_b=0.2;
+gfx_x=790-w/2;gfx_y=70;
+gfx_drawstr("EQ",5);
+// phi
+phase_enable ? (gfx_r=0.9;gfx_g=0.9;gfx_b=0.9;):(gfx_r=0.4;gfx_g=0.4;gfx_b=0.4;);
+gfx_measurestr("Φ",w,h);
+gfx_rect(770,100,40,h);
+gfx_r=0.2;gfx_g=0.2;gfx_b=0.2;
+gfx_x=790-w/2;gfx_y=100;
+gfx_drawstr("Φ",5);
  
 //===========================================================================
 // Red Gain Knob
@@ -734,10 +780,10 @@ gfx_setfont(1, "Arial", 20);
 gfx_measurestr("High",w,h);
 gfx_x=pos_x-w/2;gfx_y=pos_y-diam*0.85;gfx_drawstr("High");
 gfx_setfont(1, "Arial", 14);
-gfx_measurestr("+18",w,h);
-gfx_x=pos_x+cos(0.3*pi)*1.2*diam/2-w/2+h;gfx_y=pos_y+sin(0.3*pi)*1.2*diam/2+h/2;gfx_drawstr("+18");
-gfx_measurestr("-18",w,h);
-gfx_x=pos_x+cos(0.7*pi)*1.2*diam/2-w/2-h;gfx_y=pos_y+sin(0.7*pi)*1.2*diam/2+h/2;gfx_drawstr("-18");
+gfx_measurestr("+16",w,h);
+gfx_x=pos_x+cos(0.3*pi)*1.2*diam/2-w/2+h;gfx_y=pos_y+sin(0.3*pi)*1.2*diam/2+h/2;gfx_drawstr("+16");
+gfx_measurestr("-16",w,h);
+gfx_x=pos_x+cos(0.7*pi)*1.2*diam/2-w/2-h;gfx_y=pos_y+sin(0.7*pi)*1.2*diam/2+h/2;gfx_drawstr("-16");
  
 //===========================================================================
 // Grey Mid Freq Knob
@@ -812,14 +858,14 @@ gfx_measurestr("Low",w,h);
 gfx_x=pos_x-w/2;gfx_y=pos_y-diam*0.85;gfx_drawstr("Low");
 gfx_setfont(1, "Arial", 14);
 lpf_cut==0 ? (gfx_measurestr("Off",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("Off"););
-lpf_cut==1 ? (gfx_measurestr("50",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("50"););
-lpf_cut==2 ? (gfx_measurestr("80",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("80"););
-lpf_cut==3 ? (gfx_measurestr("160",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("160"););
-lpf_cut==4 ? (gfx_measurestr("300",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("300"););
+lpf_cut==1 ? (gfx_measurestr("35",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("35"););
+lpf_cut==2 ? (gfx_measurestr("60",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("60"););
+lpf_cut==3 ? (gfx_measurestr("110",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("110"););
+lpf_cut==4 ? (gfx_measurestr("220",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("220"););
 gfx_measurestr("+18",w,h);
-gfx_x=pos_x+cos(0.3*pi)*1.2*diam/2-w/2+h;gfx_y=pos_y+sin(0.3*pi)*1.2*diam/2+h/2;gfx_drawstr("+18");
+gfx_x=pos_x+cos(0.3*pi)*1.2*diam/2-w/2+h;gfx_y=pos_y+sin(0.3*pi)*1.2*diam/2+h/2;gfx_drawstr("+16");
 gfx_measurestr("-18",w,h);
-gfx_x=pos_x+cos(0.7*pi)*1.2*diam/2-w/2-h;gfx_y=pos_y+sin(0.7*pi)*1.2*diam/2+h/2;gfx_drawstr("-18");
+gfx_x=pos_x+cos(0.7*pi)*1.2*diam/2-w/2-h;gfx_y=pos_y+sin(0.7*pi)*1.2*diam/2+h/2;gfx_drawstr("-16");
  
 //===========================================================================
 // Blue Bump Filter Knob
@@ -868,5 +914,5 @@ gfx_x=pos_x+cos(0.8333*pi)*1.2*diam/2-w/2;gfx_y=pos_y+sin(0.833*pi)*1.2*diam/2+h
 gfx_r=0.9;gfx_g=0.9;gfx_b=0.9;
 gfx_setfont(1, "Arial", 22);
 gfx_measurestr("EQ1979",w,h);
-gfx_x=gfx_w-w-10;gfx_y=10;
-gfx_drawstr("EQ1979",5);
+gfx_x=820-w-10;gfx_y=10;
+gfx_drawstr("EQ1979",5);// 
