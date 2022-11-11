@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="e364c9c77542372e9981b0911638c16f3be7ec96">
+<index version="1" name="ReaTeam JSFX" commit="f1105ff08e915260ac414e5ab33e4346c87f75d7">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -162,6 +162,16 @@ Performance optimization.]]></changelog>
       <version name="0.9" author="Belles Ondes" time="2022-11-05T11:21:03Z">
         <changelog><![CDATA[Inital release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/a81a54773a9c24066eea10d6b8b1af2dc7a8871a/Filter/bellesondes_eq1979.jsfx</source>
+      </version>
+      <version name="0.92" author="Belles Ondes" time="2022-11-11T01:09:40Z">
+        <changelog><![CDATA[- Beta 0.92 :
+  - GUI : Added mousex lock on control change, no more control swapping when adjusting parameter
+  - Lowered low and high shelf EQ max gain down to 16dB as per original 1073 design
+  - Added EQ On/Off and Phase buttons as per original 1073 design
+  - minor tweaks
+- Beta 0.91 :
+  - Low Shelf GUI Fix and Sat mouse speed increase by 25%]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/f1105ff08e915260ac414e5ab33e4346c87f75d7/Filter/bellesondes_eq1979.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_Lattice Filter.jsfx" type="effect" desc="Lattice Filter">
