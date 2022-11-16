@@ -2,9 +2,8 @@ desc: EQ1979
 author: Belles Ondes
 version: 0.95
 changelog:
-  - Beta 0.95
-    - Improved modeling of HPF and Low Shelf filter responses
-    - 10Hz parameter smoothing on Low, Mid and High frequency gain parameters for automation-safe operation
+  - Improved modeling of HPF and Low Shelf filter responses
+  - 10Hz parameter smoothing on Low, Mid and High frequency gain parameters for automation-safe operation
 screenshot: GUI https://github.com/D4p0up/eq1979/raw/main/eq1979.png
 about:
   #EQ1979
