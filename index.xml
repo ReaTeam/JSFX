@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f1105ff08e915260ac414e5ab33e4346c87f75d7">
+<index version="1" name="ReaTeam JSFX" commit="a4f947bacae231a01ff6229fb1df3411fdfeef5f">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -172,6 +172,11 @@ Performance optimization.]]></changelog>
 - Beta 0.91 :
   - Low Shelf GUI Fix and Sat mouse speed increase by 25%]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/f1105ff08e915260ac414e5ab33e4346c87f75d7/Filter/bellesondes_eq1979.jsfx</source>
+      </version>
+      <version name="0.95" author="Belles Ondes" time="2022-11-16T14:16:23Z">
+        <changelog><![CDATA[- Improved modeling of HPF and Low Shelf filter responses
+- 10Hz parameter smoothing on Low, Mid and High frequency gain parameters for automation-safe operation]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/a4f947bacae231a01ff6229fb1df3411fdfeef5f/Filter/bellesondes_eq1979.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_Lattice Filter.jsfx" type="effect" desc="Lattice Filter">
