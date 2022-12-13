@@ -1,11 +1,9 @@
 desc: MIDI CC Mapper X
 author: Ben 'Talagan' Babut
-version: 5.1
+version: 5.2
 changelog:
-  - Feature : Added conditional channel dropping/routing for CCs, CP, Pitch Bend and Poly AT.
-  - Hot fix : Pitch Bend : Display limits between 0..8191 instead of 0..127
-  - Bug fix : Poly AT widget disabled but with passthrough on would produce unnecessary events
-  - Hot fix : the drawing of the result curve when morphing would glitch on the first point (one frame late)
+  - Feature : Added conditional filtering/routing for velocity.
+  - Feature : Added "follow Note ON" option for Poly AT conditional filtering/routing.
 screenshot:
   Dark Theme https://stash.reaper.fm/45504/MIDICCMapperX-5-0-Dark.png
   Light Theme https://stash.reaper.fm/45505/MIDICCMapperX-5-0-Light.png
@@ -39,7 +37,7 @@ about:
   - Transpose keyboard keys
   - Re-route CCs / CP
   - Re-route CC channels
-  - Channel re-route/drop CCs / CP / Pitch Bend / Poly After Touch conditionally based on input/output values
+  - Conditionally channel re-route/drop CCs / CP / Pitch Bend / Velocity / Poly After Touch based on input/output values
   - Pass through initial unmodified events (and act as a splitter)
   - Handle High-Res input and Output for the CCs (CC/CC+32) and Keyboard velocity (CC#88 format).
 
@@ -106,7 +104,7 @@ about:
 
   ## Detailed PDF Documentation
 
-  https://stash.reaper.fm/45503/MIDI%20CC%20Mapper%20X.pdf
+  https://stash.reaper.fm/45839/MIDI%20CC%20Mapper%20X.pdf
 
   ## Notes
 
@@ -248,6 +246,7 @@ function instanceGlobalVarInit()
 
   // Various UI dimensions
   KEYBOARD_FILTERING_TOP    = 0;
+  KEYBOARD_PANEL_TOP        = 0;
   CONTROL_PANEL_TOP         = 130;
   GUI_CONTROL_PARAMS_TOP    = 260;
   KEYBOARD_PANEL_WIDTH      = 710;
@@ -478,6 +477,14 @@ function instanceMemoryMapInit()
 
   CONTROL_VFILT_ENABLED         = malloc(CONTROL_COUNT);
   CONTROL_VFILT_DST_CHAN        = malloc(CONTROL_COUNT);
+
+  // Added 5.2
+  // Track output channels for velocity activity
+  // To handle note off/after touch events destinations
+  // When conditional filtering is on
+  // This gives f(in_chan,note) --> out_chan
+  VELOCITY_ACTIVITY_PER_CHANNEL = malloc(128 * 16);
+  KB_RANGE_AT_FOLLOWS_VELOCITY  = malloc(KB_RANGE_COUNT);
 
   freeUnusedMem();
 );
@@ -1763,7 +1770,7 @@ function precalcParametricSet(set_num)
 function createLinearParametricFSet()
   local(set_num)
 (
-  set_num = createFSet("|lin|",   "Linear",   "Parametric linear fset");
+  set_num = createFSet("|lin|",   "Linear",   "A set of linear curves with adjustable cut.");
   setFSetIsParametric(set_num,1);
   setFSetParametricID(set_num, FSET_PARAMETRIC_LINEAR_ID);
   setFSetParameter(set_num, 0.5);
@@ -1773,7 +1780,7 @@ function createLinearParametricFSet()
 function createExpNXParametricFSet()
   local(set_num)
 (
-  set_num = createFSet("|expnx|", "exp(n.x)", "Parametric exp(n^x) fset");
+  set_num = createFSet("|expnx|", "exp(n.x)", "A set of functions based on the exp(n^x) family.");
   setFSetIsParametric(set_num,1);
   setFSetParametricID(set_num, FSET_PARAMETRIC_EXPNX_ID);
   setFSetParameter(set_num, 2);
@@ -1783,7 +1790,7 @@ function createExpNXParametricFSet()
 function createXNParametricFset()
   local(set_num)
 (
-  set_num = createFSet("|xn|",    "x^n",      "Parametric x^n fset");
+  set_num = createFSet("|xn|",    "x^n",      "A set of functions based on the x^n family.");
   setFSetIsParametric(set_num,1);
   setFSetParametricID(set_num, FSET_PARAMETRIC_XN_ID);
   setFSetParameter(set_num, 2);
@@ -1899,9 +1906,9 @@ function readLibFiles()
   );
 );
 
-//////////////////////////////////
-//  MIDI Convertsion functions  //
-//////////////////////////////////
+/////////////////////////////////
+//  MIDI Conversion functions  //
+/////////////////////////////////
 
 g_hres_h = 0;
 g_hres_l = 0;
@@ -2102,6 +2109,7 @@ function midiBusOutput() (
 function isKeyboardFilteringEnabled() (
   (KEYBOARD_FILTERING_ENABLED[0] == 1);
 );
+
 function isKeyboardTranspositionEnabled() (
   (KEYBOARD_TRANSPOSE_ENABLED[0] == 1);
 );
@@ -2405,13 +2413,23 @@ function kbRangeTransposition(cr) (
 function kbRangeOutputChannel(cr) (
   KB_RANGE_OUTPUT_CHANNEL[cr];
 );
+function setVelocityActivityDstChan(src_chan, key, dst_chan) (
+  VELOCITY_ACTIVITY_PER_CHANNEL[src_chan * 128 + key] = dst_chan;
+);
+function getVelocityActivityDstChan(src_chan, key) (
+  VELOCITY_ACTIVITY_PER_CHANNEL[src_chan * 128 + key];
+);
+function doesKbRangeAfterTouchFollowVelocity(k) (
+  KB_RANGE_AT_FOLLOWS_VELOCITY[k];
+);
 
 ///////////////////////////
 // CONDITIONAL FILTERING //
 ///////////////////////////
 
 function isConditionalFilteringAvailableForControl(cnum) (
-  (isControlForRealCC(cnum) || isControlPitchBend(cnum) || isControlAfterTouch(cnum));
+  //(isControlForRealCC(cnum) || isControlPitchBend(cnum) || isControlAfterTouch(cnum));
+  1;
 );
 function isConditionalFilteringEnabledForControl(cnum) (
   CONTROL_VFILT_ENABLED[cnum];
@@ -2598,6 +2616,11 @@ function firstInit()
     CONTROL_VFILT_OUT_SUP_LSB[c]        = 0;
     CONTROL_VFILT_OUT_SUP_MSB[c]        = 0;
 
+    (isControlVelocity(c))?(
+      CONTROL_VFILT_IN_SUP_MSB[c] = 1;
+      CONTROL_VFILT_OUT_SUP_MSB[c] = 1;
+    );
+
     (c == CONTROL_PITCH_BEND)?(
       // For pitch bend use msb+lsb with max val = 8191
       CONTROL_VFILT_IN_INF_MSB[c]       = 8191;
@@ -2757,8 +2780,9 @@ trackSliders();
 // CURRENT FILE FORMAT
 FILE_FORMAT_1_0             = (1<<8)+0; // 1.0 (==256)
 FILE_FORMAT_5_1             = (5<<8)+1; // 5.1
+FILE_FORMAT_5_2             = (5<<8)+2; // 5.2
 
-CURRENT_FILE_FORMAT_VERSION = FILE_FORMAT_5_1;
+CURRENT_FILE_FORMAT_VERSION = FILE_FORMAT_5_2;
 
 // ver : version used for loading/saving
 function memwr(is_saving, ver)
@@ -3021,6 +3045,25 @@ function memwr(is_saving, ver)
 
     file_mem(0,CONTROL_VFILT_ENABLED,   ccount);
     file_mem(0,CONTROL_VFILT_DST_CHAN,  ccount);
+
+    (is_loading && ver < FILE_FORMAT_5_2)?(
+      // Retro compatibility, before 5.2 the memory for these params were allocated but not used for velocity.
+      // Initialize to the default value (1)
+      s=0;while(s<ccount)
+      (
+        (isControlVelocity(s) )?(
+          CONTROL_VFILT_IN_SUP_MSB[s]  = 1;
+          CONTROL_VFILT_OUT_SUP_MSB[s] = 1;
+        );
+        s+=1;
+      );
+    );
+  );
+
+  // Introduced in V5.2
+  avail = file_avail(0);
+  (is_saving || avail > 0)?(
+    file_mem(0,KB_RANGE_AT_FOLLOWS_VELOCITY, KB_RANGE_COUNT);
   );
 );
 
@@ -3969,22 +4012,22 @@ function drawCurveButtons(bzone)
       str = #;
       sprintf(str, "%.2f", pval+0.0001);
       gfx_drawstr(str);
-    ):
-    (
-      gfx_rgb(TH.DEFAULT_FONT);
-      gfx_x   = bzone.l+10; gfx_y = bzone.t + voff + 5*50;
-      gfx_drawstr(getFSetDescription(cur_set_num));
     );
+
+    gfx_rgb(TH.DEFAULT_FONT);
+    gfx_x   = bzone.l+10; gfx_y = bzone.t + voff + 5*50 + 31;
+    gfx_drawstr(getFSetDescription(cur_set_num));
   );
 );
 
 function drawBoundariesPanel()
   local(got_event,i,min_bound,max_bound,
+    kbr, matching_velocity_control,
     with_lsb,with_lsb_in,with_lsb_out,
     curve,left, top,
     mins_lsb_address,maxs_lsb_address,mins_msb_address,maxs_msb_address,
     msb_lab_left, msb_spin_left, lsb_spin_left, filter_top,
-    max_reachable_msb
+    min_reachable_msb,max_reachable_msb
   )
 (
   (isMorphingEnabledForControl(g_selected_control) && isMorphCurveSelectedForControl(g_selected_control))?(
@@ -4133,18 +4176,34 @@ function drawBoundariesPanel()
       );
     );
 
-    drawAddOrSubWidget("vfilt_in_sup_msb", CONTROL_VFILT_IN_SUP_MSB,  g_selected_control,msb_spin_left,filter_top+0,0,max_reachable_msb,40,0);
-    drawAddOrSubWidget("vfilt_in_inf_msb", CONTROL_VFILT_IN_INF_MSB,  g_selected_control,msb_spin_left,filter_top+30,0,max_reachable_msb,40,0);
-    drawAddOrSubWidget("vfilt_out_sup_msb",CONTROL_VFILT_OUT_SUP_MSB, g_selected_control,msb_spin_left,filter_top+60,0,max_reachable_msb,40,0);
-    drawAddOrSubWidget("vfilt_out_inf_msb",CONTROL_VFILT_OUT_INF_MSB, g_selected_control,msb_spin_left,filter_top+90,0,max_reachable_msb,40,0);
+    min_reachable_msb = (isControlVelocity(g_selected_control))?(1):(0);
+
+    drawAddOrSubWidget("vfilt_in_sup_msb", CONTROL_VFILT_IN_SUP_MSB,  g_selected_control,msb_spin_left,filter_top+0, min_reachable_msb,max_reachable_msb,40,0);
+    drawAddOrSubWidget("vfilt_in_inf_msb", CONTROL_VFILT_IN_INF_MSB,  g_selected_control,msb_spin_left,filter_top+30,min_reachable_msb,max_reachable_msb,40,0);
+    drawAddOrSubWidget("vfilt_out_sup_msb",CONTROL_VFILT_OUT_SUP_MSB, g_selected_control,msb_spin_left,filter_top+60,min_reachable_msb,max_reachable_msb,40,0);
+    drawAddOrSubWidget("vfilt_out_inf_msb",CONTROL_VFILT_OUT_INF_MSB, g_selected_control,msb_spin_left,filter_top+90,min_reachable_msb,max_reachable_msb,40,0);
 
     (with_lsb_in)?(
-      drawAddOrSubWidget("vfilt_in_sup_lsb", CONTROL_VFILT_IN_SUP_LSB, g_selected_control,lsb_spin_left,filter_top+0,0,127,40,0);
+      drawAddOrSubWidget("vfilt_in_sup_lsb", CONTROL_VFILT_IN_SUP_LSB, g_selected_control,lsb_spin_left,filter_top+0, 0,127,40,0);
       drawAddOrSubWidget("vfilt_in_inf_lsb", CONTROL_VFILT_IN_INF_LSB, g_selected_control,lsb_spin_left,filter_top+30,0,127,40,0);
     );
     (with_lsb_out)?(
       drawAddOrSubWidget("vfilt_out_sup_lsb",CONTROL_VFILT_OUT_SUP_LSB,g_selected_control,lsb_spin_left,filter_top+60,0,127,40,0);
       drawAddOrSubWidget("vfilt_out_inf_lsb",CONTROL_VFILT_OUT_INF_LSB,g_selected_control,lsb_spin_left,filter_top+90,0,127,40,0);
+    );
+
+    (isControlAfterTouch(g_selected_control))?(
+
+      kbr = controlKBRange(g_selected_control);
+      matching_velocity_control = velocityControlForKBRange(kbr);
+
+      (isControlEnabled(matching_velocity_control) && isConditionalFilteringOperationalForControl(matching_velocity_control))?(
+        drawStandardBistateButton(KB_RANGE_AT_FOLLOWS_VELOCITY, kbr, filter_top+123,msb_lab_left-31,"","");
+
+        gfx_xy(msb_lab_left-11, filter_top + 124);
+        gfx_rgb( (doesKbRangeAfterTouchFollowVelocity(kbr))?(TH.DEFAULT_FONT):(TH.SW_B_OFF) );
+        gfx_drawStr("else, follow Note ON");
+      );
     );
 
   ):(
@@ -5136,7 +5195,7 @@ function drawControlPanel()
 
     // Header text
     gfx_rgb(TH.HEADER_TEXT);
-    gfx_x = 88; gfx_y = CONTROL_PANEL_TOP+7;
+    gfx_x = 90; gfx_y = CONTROL_PANEL_TOP+7;
     str = #;
     sprintf(str,"%s / %s", controlName(g_selected_control), controlDescription(g_selected_control));
     gfx_drawstr(str);
@@ -5385,7 +5444,7 @@ function drawKeyboardPanel()
 
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
-  gfx_x = 87; gfx_y = KEYBOARD_FILTERING_TOP+7;
+  gfx_x = 90; gfx_y = KEYBOARD_FILTERING_TOP+7;
 
   gfx_drawstr((kf_enabled)?("Keyboard splitting"):("Keyboard splitting (All keys are green)"));
 
@@ -5548,7 +5607,7 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("Midi CC Mapper X (5.1) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai");
+  gfx_drawstr("Midi CC Mapper X (5.2) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai");
 
   drawSwitchButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin");
 );
@@ -5672,7 +5731,6 @@ function drawGui()
   updateTheme();
   gfx_clear = (TH.BACKGROUND & 0xFF) << 16 + (TH.BACKGROUND & 0x00FF00) + (TH.BACKGROUND >> 16) ;
   (GUI_MODE[0] == 1)?(
-  //  drawChannelPanel();
     drawKeyboardPanel();
     drawControlPanel();
   ):(
@@ -5797,6 +5855,8 @@ aaa_vtest_fconv_l   = g_hres_l;
 function applyConditionalFiltering(blk_control, is_input, val_01, src_chan, dst_chan)
   local(en_inf, en_sup, inf01, sup01, sup_verified, inf_verified, chan_if_match)
 (
+  g_last_cf_matched = 0;
+
   // Apply conditional filtering on input
   (isConditionalFilteringOperationalForControl(blk_control))?(
 
@@ -5816,17 +5876,20 @@ function applyConditionalFiltering(blk_control, is_input, val_01, src_chan, dst_
       // Intersection band (AND)
       (sup_verified && inf_verified)?(
         dst_chan = chan_if_match;
+        g_last_cf_matched = 1;
       );
     ):(
       // Non intersection band (OR)
       (en_inf)?(
         (inf_verified)?(
           dst_chan = chan_if_match;
+          g_last_cf_matched = 1;
         );
       );
       (en_sup)?(
         (sup_verified)?(
           dst_chan = chan_if_match;
+          g_last_cf_matched = 1;
         );
       );
     );
@@ -5837,12 +5900,20 @@ function applyConditionalFiltering(blk_control, is_input, val_01, src_chan, dst_
   dst_chan;
 );
 // Alias for inputs
-function applyConditionalInputFiltering(blk_control, in_val_01, src_chan, dst_chan) (
-  applyConditionalFiltering(blk_control, 1, in_val_01, src_chan, dst_chan);
+function applyConditionalInputFiltering(blk_control, in_val_01, src_chan, dst_chan)
+  local(res)
+(
+  res = applyConditionalFiltering(blk_control, 1, in_val_01, src_chan, dst_chan);
+  g_last_cfi_matched = g_last_cf_matched;
+  res;
 );
 // Alias for outputs
-function applyConditionalOutputFiltering(blk_control, out_val_01, src_chan, dst_chan) (
-  applyConditionalFiltering(blk_control, 0, out_val_01, src_chan, dst_chan);
+function applyConditionalOutputFiltering(blk_control, out_val_01, src_chan, dst_chan)
+  local(res)
+(
+  res = applyConditionalFiltering(blk_control, 0, out_val_01, src_chan, dst_chan);
+  g_last_cfo_matched = g_last_cf_matched;
+  res;
 );
 
 
@@ -6034,7 +6105,7 @@ function processNoteMessage(evt)
     src_chan, dst_chan, src_chan_matches, dst_status,
     should_keep_note,
     velocity_control_num,
-    has_velocity, velocity_01, out_velocity_01,
+    has_velocity, in_velocity_01, out_velocity_01,
     velocity_tgt, lsb_cc_msg)
 (
   // For safety. I don't know if it's useful.
@@ -6048,29 +6119,36 @@ function processNoteMessage(evt)
   src_chan              = keyboardInputChannel();
   src_chan_matches      = (src_chan == evt.chan || src_chan == ANY);
 
+  // Beware the logic below is a bit different than the one for CCs,
+  // Because transposition may be applied even if the control is off,
+  // And also because the routing may be applied even if the control is off.
+
   (src_chan_matches)?(
 
     dst_chan  = kbRangeOutputChannel(key_range_resolved);
     dst_chan  = (dst_chan == AS_SRC)?(evt.chan):(dst_chan);
 
-    (dst_chan != DROP)?(
+    new_key = evt.key;
 
-      new_key = evt.key;
+    // Transpose if asked to
+    (shouldTransposeKBRange(key_range_resolved))?(
+      new_key = evt.key + kbRangeTransposition(key_range_resolved);
+    );
 
-      // Transpose if asked to.
-      (shouldTransposeKBRange(key_range_resolved))?(
-        new_key = evt.key + kbRangeTransposition(key_range_resolved);
-      );
+    // Transposition should not be outside midi range
+    (new_key >= 0 && new_key <= 127)?(
 
-      // Transposition should not be outside midi range
-      (new_key >= 0 && new_key <= 127)?(
+      // Caution : Note OFF can be either (MSG_NOTE_OFF) or (MSG_NOTE_ON + velocity zero)
+      // Thus, the following code should be tolerant :
+      // Velocity 0 should not be changed to something else.
 
-        // Caution : Note OFF can be either (MSG_NOTE_OFF) or (MSG_NOTE_ON + velocity zero)
-        // Thus, the following code should be tolerant :
-        // Velocity 0 should not be changed to something else.
+      // has_velocity   : tells if it's a note off/on
+      // in_velocity_01 : gives the velocity for note on events
+      has_velocity    = (evt.velocity != 0);
+      in_velocity_01  = evt.velocity/127.0;
+      out_velocity_01 = 0;
 
-        has_velocity                  = (evt.velocity!=0);
-        velocity_01                   = 0;
+      (isControlEnabled(velocity_control_num))?(
 
         // CALCULATE INPUT VALUE HI/LOW RES
         (isHighResMidiInputEnabledForControl(velocity_control_num))?(
@@ -6078,44 +6156,61 @@ function processNoteMessage(evt)
             // Seems to me we have to sub 1 to the velocity (MSB)
             // To be continuous starting from 0
             // (First non-null HR velocity starts at 0x0080, MSB is non null)
-            velocity_01 = midiVelocityHresI2F01(evt.velocity-1, CC_RECEIVED_VALUES[88]);
+            in_velocity_01 = midiVelocityHresI2F01(evt.velocity-1, CC_RECEIVED_VALUES[88]);
 
             // Do not clear CC#88 anymore, expect the user to know what he/she's doin'.
             // If something is in CC#88 which is different from 0
             // Either it's High Res MIDI
             // Or the user is using CC#88 for a different reason and should not enable HR velocity.
-            // CC_RECEIVED_VALUES[88] = 0; // Clear the LSB.
+            // CC_RECEIVED_VALUES[88] = 0;
           );
+        );
+
+        (has_velocity)?(
+          // NOTE ON
+          // Apply velocity curve and conditionally reroute/filter if needed
+
+          // Apply conditional filtering on input. This may re-route the message (and set the dst_chan to DROP).
+          dst_chan = applyConditionalInputFiltering(velocity_control_num, in_velocity_01, evt.chan, dst_chan);
+
+          (dst_chan != DROP)?(
+            out_velocity_01 = applyCurve(velocity_control_num, in_velocity_01);
+
+            // Apply conditional filtering on the output. This may re-route the message (and set the dst_chan to DROP).
+            dst_chan = applyConditionalOutputFiltering(velocity_control_num, out_velocity_01, evt.chan, dst_chan);
+
+            (dst_chan != DROP)?(
+              // Save for UI feedback (red circle).
+              // Do it only when there's some velocity, having the circle
+              // going back to 0 each time we release a key is annoying
+              CONTROL_LAST_IN[velocity_control_num]   = in_velocity_01*127;
+              CONTROL_LAST_OUT[velocity_control_num]  = out_velocity_01*127;
+            ); // <-- Not dropped on ouput
+          ); // <-- Not dropped on input
+
+          // Remember the routing we've just decided for this NOTE ON event.
+          setVelocityActivityDstChan(evt.chan, new_key, dst_chan);
         ):(
-          velocity_01 = evt.velocity/127;
-        );
+          // NOTE OFF
+          (isConditionalFilteringOperationalForControl(velocity_control_num))?(
+            // The event should follow the last choice made for the corresponding NOTE ON event
+            dst_chan = getVelocityActivityDstChan(evt.chan, new_key);
+          );
+        )
+      ):(
+        out_velocity_01 = in_velocity_01;
+      ); // <-- isControlEnabled
 
-        // APPLY THE CURVE
-        out_velocity_01 = 0;
-        has_velocity?(
 
-          // Apply velocity curve if needed
-          isControlEnabled(velocity_control_num)?(
-            out_velocity_01 = applyCurve(velocity_control_num, velocity_01);
-
-            // Save for UI feedback (red circle).
-            // Do it only when there's some velocity, having the circle
-            // going back to 0 each time we release a key is annoying
-            CONTROL_LAST_IN[velocity_control_num]   = velocity_01*127;
-            CONTROL_LAST_OUT[velocity_control_num]  = out_velocity_01*127;
-          ):(
-            // Just keep the value as is (bypass any calculation)
-            out_velocity_01 = velocity_01;
-          )
-        );
-
+      // Now output final result
+      (dst_chan != DROP)?(
         // Create out status, remap chan to to 0-15
         dst_status = (evt.type << 4) | (dst_chan-1);
 
         // SEND THE FINAL RESULT HI/LOW RES
-        (isHighResMidiOutputEnabledForControl(velocity_control_num))?(
-
+        (isControlEnabled(velocity_control_num) && isHighResMidiOutputEnabledForControl(velocity_control_num))?(
           lsb_cc_msg = ((MSG_CC << 4) | evt.chan);
+
           (has_velocity)?(
             // Send modified velocity
             midiVelocityHresF012I(out_velocity_01);
@@ -6129,19 +6224,18 @@ function processNoteMessage(evt)
             midisend(evt.mpos, lsb_cc_msg, 88, 0);
             midisend(evt.mpos, dst_status, keyToMidiNote(new_key), 0);
           );
-        ):
-        (
-          // This is compatible with zero-velocity
+        ):(
+          // This is compatible with zero-velocity (has_velocity true or false both work)
           midisend(evt.mpos, dst_status, keyToMidiNote(new_key), roundi(out_velocity_01 * 127) );
         );
-
-      ); // <- Transposition is not outside range
-
-    ); // <- dst chan is not drop
+      ); // <- dst chan is not drop
+    ); // <- Transposition is not outside range
 
     // If pass through is set explicitely, duplicate
-    controlShouldPassThrough(velocity_control_num)?(
-      evt.should_pass_through = 1;
+    (isControlEnabled(velocity_control_num))?(
+      controlShouldPassThrough(velocity_control_num)?(
+        evt.should_pass_through = 1;
+      );
     );
 
     // As long as the input channel is concerned
@@ -6154,7 +6248,7 @@ function processNoteMessage(evt)
 );
 
 function processPolyphonicAfterTouchMessage(evt)
-  local(blk_control,
+  local(blk_control, velocity_control,
         src_chan, src_chan_matches,
         dst_chan, dst_status,
         new_key, key_range_resolved,
@@ -6162,6 +6256,7 @@ function processPolyphonicAfterTouchMessage(evt)
 (
   key_range_resolved      = keyKBRangeResolved(evt.key);
   blk_control             = afterTouchControlForKBRange(key_range_resolved);
+  velocity_control        = velocityControlForKBRange(key_range_resolved);
   src_chan                = keyboardInputChannel();
   src_chan_matches        = (src_chan == evt.chan || src_chan == ANY);
 
@@ -6171,56 +6266,64 @@ function processPolyphonicAfterTouchMessage(evt)
     dst_chan  = kbRangeOutputChannel(key_range_resolved);
     dst_chan  = (dst_chan == AS_SRC)?(evt.chan):(dst_chan);
 
-    (dst_chan != DROP)?(
+    new_key = evt.key;
 
-      new_key = evt.key;
+    // Transpose if asked to.
+    // It should be done even if the AT control is not activated, for coherency.
+    (shouldTransposeKBRange(key_range_resolved))?(
+      new_key = evt.key + kbRangeTransposition(key_range_resolved);
+    );
 
-      // Transpose if asked to.
-      // It should be done even if the AT control is not activated, for coherency.
-      (shouldTransposeKBRange(key_range_resolved))?(
-        new_key = evt.key + kbRangeTransposition(key_range_resolved);
-      );
+    // Transposition should not be outside midi range
+    (new_key >= 0 && new_key <= 127)?(
 
-      // Transposition should not be outside midi range
-      (new_key >= 0 && new_key <= 127)?(
+      in_val_01   = evt.after_touch/127.0;
+      out_val_01  = 0;
 
-        in_val_01 = evt.after_touch/127.0;
-
-        // Calculate output value
-        out_val_01 = 0;
-
-        // Apply after touch curve if needed
-        (isControlEnabled(blk_control))?(
-
-          // Apply conditional filtering on input. This may re-route the message (and set the dst_chan to DROP).
-          dst_chan    = applyConditionalInputFiltering(blk_control, in_val_01, evt.chan, dst_chan);
-
-          (dst_chan != DROP)?(
-
-            out_val_01 = applyCurve(blk_control, in_val_01);
-
-            dst_chan   = applyConditionalOutputFiltering(blk_control, out_val_01, evt.chan, dst_chan);
-
-            (dst_chan != DROP)?(
-              // Save for UI feedback (red circle).
-              CONTROL_LAST_IN[blk_control]   = in_val_01 *127;
-              CONTROL_LAST_OUT[blk_control]  = out_val_01*127;
-            );
-          );
-
-        ):(
-          // Just keep the value as is (bypass any calculation)
-          out_val_01 = in_val_01;
-        );
+      // Apply control if needed
+      (isControlEnabled(blk_control))?(
+        // Apply conditional filtering on input. This may re-route the message (and set the dst_chan to DROP).
+        dst_chan    = applyConditionalInputFiltering(blk_control, in_val_01, evt.chan, dst_chan);
 
         (dst_chan != DROP)?(
-          // Create out status, remap chan to to 0-15
-          dst_status = (evt.type << 4) | (dst_chan-1);
 
-          midisend(evt.mpos, dst_status, keyToMidiNote(new_key), roundi(out_val_01 * 127) );
+          out_val_01        = applyCurve(blk_control, in_val_01);
+          dst_chan          = applyConditionalOutputFiltering(blk_control, out_val_01, evt.chan, dst_chan);
+
+          // - If we have the "follow option"
+          // - If no rerouting conditions matched
+          // - But the associated velocity widget is enabled
+          // - And it has conditional filtering on
+          // Then reroute as last note ON
+          (isConditionalFilteringOperationalForControl(blk_control) &&
+            doesKbRangeAfterTouchFollowVelocity(key_range_resolved) &&
+            isControlEnabled(velocity_control) &&
+            isConditionalFilteringOperationalForControl(velocity_control) &&
+            !g_last_cfi_matched &&
+            !g_last_cfo_matched)?
+          (
+            dst_chan = getVelocityActivityDstChan(evt.chan, new_key);
+          );
+
+          (dst_chan != DROP)?(
+            // Save for UI feedback (red circle).
+            CONTROL_LAST_IN[blk_control]   = in_val_01 *127;
+            CONTROL_LAST_OUT[blk_control]  = out_val_01*127;
+          );
         );
-      ); // <- Transposition is not outside range
-    ); // <- dst chan is not drop
+      ):(
+        // Just keep the value as is (bypass any calculation)
+        out_val_01 = in_val_01;
+      );
+
+      (dst_chan != DROP)?(
+        // Create out status, remap chan to to 0-15
+        dst_status = (evt.type << 4) | (dst_chan-1);
+
+        midisend(evt.mpos, dst_status, keyToMidiNote(new_key), roundi(out_val_01 * 127) );
+      );
+    ); // <- Transposition is not outside range
+
 
     (isControlEnabled(blk_control))?(
       (controlShouldPassThrough(blk_control))?(
@@ -6415,6 +6518,7 @@ function treatCurrentEvent()
       evt.after_touch = evt.msg3;
 
       processPolyphonicAfterTouchMessage(evt);
+
       (!evt.was_processed && !shouldDropUnroutedPolyphonicAfterTouchMessages())?(
         forwardCurrentEvent();
       );
@@ -6427,6 +6531,7 @@ function treatCurrentEvent()
     ):(
     (evt.type == MSG_CHAN_PRESSURE)?(
 
+      // CHANNEL PRESSURE (Treat as any CC)
       evt.chan_pressure = evt.msg2;
       evt.cc_num        = CHANNEL_PRESSURE_FAKE_CC_NUM;
       evt.cc_val        = evt.chan_pressure;
@@ -6438,6 +6543,7 @@ function treatCurrentEvent()
       );
 
       processCCMessage(evt);
+
       (!evt.was_processed && !shouldDropUnroutedCCMessages())?(
         forwardCurrentEvent();
       );
@@ -6454,6 +6560,7 @@ function treatCurrentEvent()
       evt.pitch_bend = ((evt.msg3 & 0x7F) << 7) | (evt.msg2 & 0x7F);
 
       processPitchBendMessage(evt);
+
       (!evt.was_processed && !shouldDropUnroutedPitchBendMessages())?(
         forwardCurrentEvent();
       );
@@ -6537,6 +6644,7 @@ function handleSliderEvents()
               // Use the last sample index of the block for this.
 
               (isControlPitchBend(cnum))?(
+                // Use the activity chan as both src and dst chan
                 produceAndEmitPitchBendOutputForControl(cnum, last_activity, chani, chani, samplesblock - 1);
               );
 
@@ -6544,6 +6652,8 @@ function handleSliderEvents()
                 // Use the activity chan as both src and dst chan
                 produceAndEmitCCOutputForControl(cnum, last_activity, chani, chani, samplesblock - 1);
               );
+
+              // No support for velocity or PAT (makes no sense).
             );
 
             chani += 1;
