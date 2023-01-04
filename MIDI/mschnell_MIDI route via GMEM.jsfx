@@ -1,13 +1,13 @@
 desc: MIDI route via GMEM
 author: mschnell
-version: 1.3
-changelog: renamed to MIDI route via GMEM
+version: 1.4
+changelog: improve documentation
 about:
   ## Description 
 
-    The MIDI route via GMEM JSFX is mostly used to route MIDI events between project tabs, as Reaper naively can't do that.
+    The MIDI route via GMEM JSFX is mostly used to route MIDI events to the Monitor FX chain or  between project tabs, as Reaper naively can't do that.
 
-    The JSFX in "Sender" mode sends MIDI events to MIDI Transfer instances in "Receiver" mode.
+    The JSFX in "Sender" mode sends MIDI events to  MIDI route via GMEM  instances in "Receiver" mode.
 
     Multiple instances in Sender mode are allowed. The MIDI messages are combined to be received.
 
@@ -22,7 +22,8 @@ about:
 
     All MIDI Messages are passed through unchanged by a the plugin.
 
-    Beware: 
+  ### Beware: 
+
     As the FX chains of different tracks at the same computing time can be handling audio/MIDI blocks associated with different positions in the virtual audio time, the MIDI Transfer JSFXes can induce decent timing issues when used for (virtual) "real time" messages. They should only be used for not time critical control information. 
     A change of a slider in any instance will asynchronously clean all transfer bus queues. So be very careful with automating this plugin.
 
