@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="a2e7dcd6474d37271c6929edf38abeae05288e76">
+<index version="1" name="ReaTeam JSFX" commit="6b5716ae94dd4df052767b5faaab386e4c7d680d">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -743,21 +743,26 @@ The "Factor" slider can be moved in steps of one between 1 and 16, but of course
 \widowctrl\hyphauto
 
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 The MIDI route via GMEM JSFX is mostly used to route MIDI events between project tabs, as Reaper naively can't do that.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 The JSFX in "Sender" mode sends MIDI events to MIDI Transfer instances in "Receiver" mode.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The MIDI route via GMEM JSFX is mostly used to route MIDI events to the Monitor FX chain or between project tabs, as Reaper naively can't do that.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The JSFX in "Sender" mode sends MIDI events to MIDI route via GMEM instances in "Receiver" mode.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Multiple instances in Sender mode are allowed. The MIDI messages are combined to be received.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Multiple instances in Receiver mode are allowed, as long as they don't share the same transfer bus. If two Receivers work on the same Transfer Bus, the behavior is undefined.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "Mode" sets the Sender or Receiver mode.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "MIDI Bus" determines which MIDI bus is use to take the messages from or to send midi messages to. MIDI Buses can be used to allow for up to 16 independent MIDI streams in an FX chain.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The slider "Transfer Bus" selects one of 16 transfer buses. A receiver will get only the messages from a sender set to the same Transfer Bus.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 All MIDI Messages are passed through unchanged by a the plugin.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Beware: As the FX chains of different tracks at the same computing time can be handling audio/MIDI blocks associated with different positions in the virtual audio time, the MIDI Transfer JSFXes can induce decent timing issues when used for (virtual) "real time" messages. They should only be used for not time critical control information. A change of a slider in any instance will asynchronously clean all transfer bus queues. So be very careful with automating this plugin.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 Beware:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 As the FX chains of different tracks at the same computing time can be handling audio/MIDI blocks associated with different positions in the virtual audio time, the MIDI Transfer JSFXes can induce decent timing issues when used for (virtual) "real time" messages. They should only be used for not time critical control information. A change of a slider in any instance will asynchronously clean all transfer bus queues. So be very careful with automating this plugin.\par}
 }
 ]]></description>
       </metadata>
       <version name="1.3" author="mschnell" time="2022-12-30T08:34:30Z">
         <changelog><![CDATA[renamed to MIDI route via GMEM]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/a2e7dcd6474d37271c6929edf38abeae05288e76/MIDI/mschnell_MIDI%20route%20via%20GMEM.jsfx</source>
+      </version>
+      <version name="1.4" author="mschnell" time="2023-01-04T13:13:17Z">
+        <changelog><![CDATA[improve documentation]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/420b50bd897bb66957604932f9ff49dcdb6fd669/MIDI/mschnell_MIDI%20route%20via%20GMEM.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI Slider and MIDI CC.jsfx" type="effect" desc="Slider and MIDI CC">
@@ -3734,6 +3739,26 @@ add "Time Asymmetry" slider, bugfixes.]]></changelog>
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2018-08-23T06:07:00Z">
         <changelog><![CDATA[workaround for freezing when Reaper looses the GUI focus, deterministic volume normalizing]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/aeaa9a26abe4e5729e7def0a39532eba088db296/Utility/mschnell_Multi_Sin_Generator.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_Mute monitor when recording.jsfx" type="effect" desc="Mute monitor when recording">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 #Mute Monitor when Recording You need to use an audio interface with at least four output channels. (Mine - NI Audio 6 - has the main Minitor outputs fixed to channels 1+2, and the internal headphone amp can be selected to use channels 1+2 or 3+4 - and the direct mic signal can be mixed in. Here 3+4 is to be used.)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 In the (ASIO) driver menu you need to set the interface output count to at least 4.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 You simply load the plugin in the Monitor FX chain.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Set the pin routing to have output to channels 1,2,3,4.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Now with it's GUI you can select which channels are Monitor rather than headphone, and you can adapt Minitor and Headphone volume separately.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The Monitor channels will be muted when recording.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="mschnell" time="2023-01-04T13:14:31Z">
+        <changelog><![CDATA[initial commit]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/6b5716ae94dd4df052767b5faaab386e4c7d680d/Utility/mschnell_Mute%20monitor%20when%20recording.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Slider to Midi PS.jsfx" type="effect" desc="Slider to Midi PS">
