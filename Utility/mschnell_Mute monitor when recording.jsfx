@@ -1,10 +1,11 @@
 desc: Mute monitor when recording
 author: mschnell
-version: 1.0
-changelog: initial commit
+version: 1.1
+changelog: improved documentation
 about:
-  #Mute Monitor when Recording
-  You need to use an audio interface with at least four output channels. (Mine - NI Audio 6 - has the main Minitor outputs fixed to channels 1+2, and the internal headphone amp can be selected to use channels 1+2 or 3+4 - and the direct mic signal can be mixed in. Here 3+4 is to be used.)
+  ## Mute Monitor when Recording
+
+  You need to use an audio interface with at least four output channels. (Mine - NI Audio 6 - has the main Monitor outputs fixed to channels 1+2, and the internal headphone amp can be selected to use channels 1+2 or 3+4,  and the direct mic signal can be mixed in. Here 3+4 is to be used.)
 
   In the (ASIO) driver menu you need to set the interface output count to at least 4.
 
