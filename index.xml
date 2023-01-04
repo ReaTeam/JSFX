@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="6b5716ae94dd4df052767b5faaab386e4c7d680d">
+<index version="1" name="ReaTeam JSFX" commit="14645c70e2070ee75184cdfa4f8c0f20ed9ac8e2">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -3747,7 +3747,8 @@ add "Time Asymmetry" slider, bugfixes.]]></changelog>
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 #Mute Monitor when Recording You need to use an audio interface with at least four output channels. (Mine - NI Audio 6 - has the main Minitor outputs fixed to channels 1+2, and the internal headphone amp can be selected to use channels 1+2 or 3+4 - and the direct mic signal can be mixed in. Here 3+4 is to be used.)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Mute Monitor when Recording\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 You need to use an audio interface with at least four output channels. (Mine - NI Audio 6 - has the main Monitor outputs fixed to channels 1+2, and the internal headphone amp can be selected to use channels 1+2 or 3+4, and the direct mic signal can be mixed in. Here 3+4 is to be used.)\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 In the (ASIO) driver menu you need to set the interface output count to at least 4.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 You simply load the plugin in the Monitor FX chain.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Set the pin routing to have output to channels 1,2,3,4.\par}
@@ -3758,7 +3759,7 @@ add "Time Asymmetry" slider, bugfixes.]]></changelog>
       </metadata>
       <version name="1.0" author="mschnell" time="2023-01-04T13:14:31Z">
         <changelog><![CDATA[initial commit]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/6b5716ae94dd4df052767b5faaab386e4c7d680d/Utility/mschnell_Mute%20monitor%20when%20recording.jsfx</source>
+        <source>https://github.com/ReaTeam/JSFX/raw/14645c70e2070ee75184cdfa4f8c0f20ed9ac8e2/Utility/mschnell_Mute%20monitor%20when%20recording.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Slider to Midi PS.jsfx" type="effect" desc="Slider to Midi PS">
