@@ -1,4 +1,4 @@
-desc: Mute Monitor when Recording
+desc: Mute monitor when recording
 author: mschnell
 version: 1.0
 changelog: initial commit
@@ -15,8 +15,6 @@ about:
   Now with it's GUI you can select which channels are Monitor rather than headphone, and you can adapt Minitor and Headphone volume separately.
 
   The Monitor channels will be muted when recording.
-
-
 
 slider1:0<0,1,1{1/2,3/4}>Monitor Channels 
 slider2:mgain_db=0<-24,24,1>Monitor Gain (dB)
