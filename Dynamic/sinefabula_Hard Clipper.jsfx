@@ -5,37 +5,6 @@ screenshot: https://imgur.com/a/USF7jDy
 about:
   # Hard Clipper
 
-  A simple hard clipper which clips the incoming signal at 0 dB. It is useful for reducing the dynamic range of the signal without audibly affecting its timbre, as opposed to soft saturators which colour the audio. Used for the CTZ (Clip to Zero) mixing method as taught by Baphometrix (https://www.youtube.com/@baphometrix). Inspired by Kazrog KClip3.
-
-
-
-  # Features
-
-  - Simple one-knob control.
-  - Automatic gain compensation so that the signal doesn't get louder with more gain.
-  - Extra makeup for those cases when you push the clipper too hard and it gets quieter.
-  - Waveform display with gain reduction visualised as a folded-back wave.
-  - Maximum clipped dB display.
-  - Two modes of waveform visualisation: either Scan (draws the entire screen then starts over, like an oscilloscope scanline) or Scroll (continuously scrolls the waveform, like an ECG printout).
-  - Linear or logarithmic level display.
-
-
-  # Usage
-
-  Simply increase the Gain slider until:
-
-  - You get some gain reduction.
-  - You still don't hear any clipping artifacts.
-
-  This way, you'll have your dynamic range reduced while preserving the timbre. This way, your tracks get louder without any audible saturation. This is especially useful on high dynamic range sounds like drums, bells etc.
-
-desc: Hard Clipper
-author: sinefabula
-version: 0.1
-screenshot: https://imgur.com/a/USF7jDy
-about:
-  # Hard Clipper
-
   A simple hard clipper which clips the incoming signal at 0 dB. It is useful
   for reducing the dynamic range of the signal without audibly affecting its
   timbre, as opposed to soft saturators which colour the audio. Used for the CTZ
