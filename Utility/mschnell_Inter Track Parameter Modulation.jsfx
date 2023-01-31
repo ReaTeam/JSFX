@@ -1,0 +1,90 @@
+desc: Inter Track Parameter Modulation
+author: mschnell
+version: 1.0
+changelog: Initial Release
+about:
+  ## Description 
+
+      Like "Macro Controller" you can install "Inter Track Parameter Modulation" anywhere in a track and use Reaper's "Parameter Modulation" functionality in the [Param] button menu to control any parameter of any other plugin in that track via a linear function with settable offset and gradient from one of the ten "Macro" sliders. Of course one slider can control as many parameters, as you like.
+	
+  	Additionally, when instances of "Inter Track Parameter Modulation" are installed in multiple tracks, those who feature the same "Transfer Bus" setting, are automatically synced, With that it's rather easy to link Parameters of plugins in multiple tracks.
+	
+  	As the sliders of course also can be controlled by parameters of other plugins in the same way, a rather direct link between plugins in multiple tracks can be done. 
+
+    ### Thanks: 
+
+      Based on "Macro Controller" by Reaper Blog
+
+options:gmem=Inter_Track_Parameter_Modulation
+
+slider1:m=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Transfer Bus
+slider3:m1=50<0, 100, 1>Macro 1
+slider5:m2=50<0, 100, 1>Macro 2
+slider7:m3=50<0, 100, 1>Macro 3
+slider9:m4=50<0, 100, 1>Macro 4
+slider11:m5=50<0, 100, 1>Macro 5
+slider13:m6=50<0, 100, 1>Macro 6
+slider15:m7=50<0, 100, 1>Macro 7
+slider17:m8=50<0, 100, 1>Macro 8
+slider19:m9=50<0, 100, 1>Macro 9
+slider21:m10=50<0, 100, 1>Macro 10
+
+@init
+  count = 10;
+
+@slider
+  n = m*count;
+  gmem[n+1] = m1;
+  gmem[n+2] = m2;
+  gmem[n+3] = m3;
+  gmem[n+4] = m4;
+  gmem[n+5] = m5;
+  gmem[n+6] = m6;
+  gmem[n+7] = m7;
+  gmem[n+8] = m8;
+  gmem[n+9] = m9;
+  gmem[n+10] = m10;
+
+
+@block
+  gmem[n+1] != m1 ? (
+    m1 = gmem[n+1];
+    slider_automate(slider1);
+  );
+  gmem[n+2] != m2 ? (
+    m2 = gmem[n+2];
+    slider_automate(slider2);
+  );
+  gmem[n+3] != m3 ? (
+    m3 = gmem[n+3];
+    slider_automate(slider3);
+  );
+  gmem[n+4] != m4 ? (
+    m4 = gmem[n+4];
+    slider_automate(slider4);
+  );
+  gmem[n+5] != m5 ? (
+    m5 = gmem[n+5];
+    slider_automate(slider5);
+  );
+  gmem[n+6] != m6 ? (
+    m6 = gmem[n+6];
+    slider_automate(slider6);
+  );
+  gmem[n+7] != m7 ? (
+    m7 = gmem[n+7];
+    slider_automate(slider7);
+  );
+  gmem[n+8] != m8 ? (
+    m8 = gmem[n+8];
+    slider_automate(slider8);
+  );
+  gmem[n+9] != m9 ? (
+    m9 = gmem[n+9];
+    slider_automate(slider9);
+  );
+  gmem[n+10] != m10 ? (
+    m10 = gmem[n+10]; 
+    slider_automate(slider10);
+  );
+
