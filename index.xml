@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="4fc0cd87b046cbee6c7a5d916fb8207b276cb01f">
+<index version="1" name="ReaTeam JSFX" commit="64569a74fcd2806342a8d8eaaa6c26569f00ce89">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -236,6 +236,11 @@ Performance optimization.]]></changelog>
       </metadata>
       <version name="1.0" author="Bert Bouwhuis" time="2019-03-18T16:31:00Z">
         <source>https://github.com/ReaTeam/JSFX/raw/dfa967305ea712ecef76ef4030937eb46971d802/MIDI/bertbouwhuis_MIDI%20controller%20for%20S8%20looper%20with%20fade%20in%20and%20out.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="bor-T_MIDI_XY_Pad_Controller.jsfx" type="effect" desc="MIDI XY Pad Controller (bor-T)">
+      <version name="0.1" author="bor-T" time="2023-01-31T12:00:50Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/64569a74fcd2806342a8d8eaaa6c26569f00ce89/MIDI/bor-T_MIDI_XY_Pad_Controller.jsfx</source>
       </version>
     </reapack>
     <reapack name="boreg_MIDI routing matrix.jsfx" type="effect" desc="MIDI routing matrix">
