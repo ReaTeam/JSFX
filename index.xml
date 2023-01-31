@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="64569a74fcd2806342a8d8eaaa6c26569f00ce89">
+<index version="1" name="ReaTeam JSFX" commit="111582793cf46fd39ca08f46a4b9973db76b56ce">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -3442,6 +3442,28 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       <version name="2.1" author="Michael Schnell (mschnell@bschnell.de)" time="2022-03-20T13:45:18Z">
         <changelog><![CDATA[Fix: Loading the plugin with Dual mode resulted in equal delay for both channels due to some weird way Reaper calls @slider multiple times]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/a966971f4f6a8b56fe0d357acdfc604ff9d6f567/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_Inter Track Parameter Modulation.jsfx" type="effect" desc="Inter Track Parameter Modulation">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \f1 Like "Macro Controller" you can install "Inter Track Parameter Modulation" anywhere in a track and use Reaper's "Parameter Modulation" functionality in the [Param] button menu to control any parameter of any other plugin in that track via a linear function with settable offset and gradient from one of the ten "Macro" sliders. Of course one slider can control as many parameters, as you like.\line
+\line
+Additionally, when instances of "Inter Track Parameter Modulation" are installed in multiple tracks, those who feature the same "Transfer Bus" setting, are automatically synced, With that it's rather easy to link Parameters of plugins in multiple tracks.\line
+\line
+As the sliders of course also can be controlled by parameters of other plugins in the same way, a rather direct link between plugins in multiple tracks can be done. \par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 Thanks:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \f1 Based on "Macro Controller" by Reaper Blog\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="mschnell" time="2023-01-31T19:19:04Z">
+        <changelog><![CDATA[Initial Release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/111582793cf46fd39ca08f46a4b9973db76b56ce/Utility/mschnell_Inter%20Track%20Parameter%20Modulation.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Midi Auto Engage.jsfx" type="effect" desc="Midi Auto Engage">
