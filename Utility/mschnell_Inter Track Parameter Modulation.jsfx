@@ -1,7 +1,7 @@
 desc: Inter Track Parameter Modulation
 author: mschnell
-version: 2.1
-changelog: improved markdown doc
+version: 2.0
+changelog: Convert to using the JSFX Preprocessor
 about:
   ## Description 
 
