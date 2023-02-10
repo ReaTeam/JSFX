@@ -1,7 +1,7 @@
 desc: Inter Track Parameter Modulation
 author: mschnell
-version: 2.0
-changelog: Convert to using the JSFX Preprocessor
+version: 2.1
+changelog: improved markdown doc
 about:
   ## Description 
 
@@ -11,7 +11,7 @@ about:
 
   	As the sliders of course also can be controlled by parameters of other plugins in the same way, a rather direct link between plugins in multiple tracks can be done. 
 
-  As the JSFX Preprocessor is used, it is easy to change the count of Macro sliders: just modify the line "<? Macro_Sliders = 10 ?>" according to your needs.
+  As the JSFX Preprocessor is used, it is easy to change the count of Macro sliders: just modify the number in  " Macro_Sliders = 10 "  according to your needs.
 
     ### Thanks: 
 
