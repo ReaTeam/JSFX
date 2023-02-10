@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="a07ef60dd4ef556a44577148de16b99965a38ab8">
+<index version="1" name="ReaTeam JSFX" commit="9b2820a423fe83332ae91b04639f8faf4f329ea0">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -3456,7 +3456,7 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
 Additionally, when instances of "Inter Track Parameter Modulation" are installed in multiple tracks, those who feature the same "Transfer Bus" setting, are automatically synced, With that it's rather easy to link Parameters of plugins in multiple tracks.\line
 \line
 As the sliders of course also can be controlled by parameters of other plugins in the same way, a rather direct link between plugins in multiple tracks can be done. \par}
-{\pard \ql \f0 \sa180 \li0 \fi0 As the JSFX Preprocessor is used, it is easy to change the count of Macro sliders: just modify the line "" according to your needs.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 As the JSFX Preprocessor is used, it is easy to change the count of Macro sliders: just modify the number in " Macro_Sliders = 10 " according to your needs.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 Thanks:\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \f1 Based on "Macro Controller" by Reaper Blog\par}
 }
@@ -3468,7 +3468,7 @@ As the sliders of course also can be controlled by parameters of other plugins i
       </version>
       <version name="2.0" author="mschnell" time="2023-02-09T23:04:40Z">
         <changelog><![CDATA[Convert to using the JSFX Preprocessor]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/a07ef60dd4ef556a44577148de16b99965a38ab8/Utility/mschnell_Inter%20Track%20Parameter%20Modulation.jsfx</source>
+        <source>https://github.com/ReaTeam/JSFX/raw/9b2820a423fe83332ae91b04639f8faf4f329ea0/Utility/mschnell_Inter%20Track%20Parameter%20Modulation.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Midi Auto Engage.jsfx" type="effect" desc="Midi Auto Engage">
