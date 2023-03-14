@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="9b2820a423fe83332ae91b04639f8faf4f329ea0">
+<index version="1" name="ReaTeam JSFX" commit="f2b75f841d580fbe5e4e5b88aa73e588f6d3b1ae">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -3361,6 +3361,53 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       </metadata>
       <version name="1.0" author="Dylan Madigan" time="2020-12-02T16:57:13Z">
         <source>https://github.com/ReaTeam/JSFX/raw/caf74fef8fd11678b8d5cf22644827278f714790/Utility/dylanmadigan_Automatic%20Gain%20Stager.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="jcgurango_MIDI Arranged Looper.jsfx" type="effect" desc="Pre-Arranged MIDI Looper">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Pre-Arranged MIDI Looper\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Loops MIDI based on a pre-arranged record and loop position. For example, you can have it automatically start recording at beat 4, and finish record at beat 8, and have that automatically loop throughout beats 8 - 20.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Options\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Record Start (Beats) - The position at which you'd like to start recording.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Record End (Beats) -The position at which you'd like to end recording.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Recording - Indicator slider for when the plugin is recording. 0 = not recording, 1 = recording.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Playing - Indicator slider for when the plugin is looping. 0 = not looping, 1 = looping.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Playback Start - The position (in beats) at which you'd like to begin loop playback.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Playback End - The position (in beats) at which you'd like to end loop playback.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Prebuffer Size - The amount of beats before the start of recording that the plugin will still accept MIDI messages. These message positions will be moved to the start of each clip loop. Useful when you can't time it exactly to the start and for things like piano sustain pedals which you might step on before you actually start playing.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Has MIDI - Indicator for whether or not the plugin has MIDI data saved.1 = has MIDI data.\sa180\par}
+}
+]]></description>
+      </metadata>
+      <version name="0.1" author="JC Gurango" time="2023-03-14T20:34:34Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/81ced97f1ff0c3b584ee4c28cba5b93e28dfc74a/Utility/jcgurango_MIDI%20Arranged%20Looper.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="jcgurango_Pre-Arranged Looper.jsfx" type="effect" desc="Pre-Arranged Looper">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Pre-Arranged Looper\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Loops audio based on a pre-arranged record and loop position. For example, you can have it automatically start recording at beat 4, and finish record at beat 8, and have that automatically loop throughout beats 8 - 20. To get multiple loop regions on one record region, just add multiple instances of the plugin on the same record region.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Options\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Record Start (Beats) - The position at which you'd like to start recording.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Record End (Beats) -The position at which you'd like to end recording.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Recording - Indicator slider for when the plugin is recording. 0 = not recording, 1 = recording.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Playing - Indicator slider for when the plugin is looping. 0 = not looping, 1 = looping.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Playback Start - The position (in beats) at which you'd like to begin loop playback.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Playback End - The position (in beats) at which you'd like to end loop playback.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Has Audio - Indicator for whether or not the plugin has audio data saved. 1 = has audio data.\sa180\par}
+}
+]]></description>
+      </metadata>
+      <version name="0.1" author="JC Gurango" time="2023-03-14T20:34:44Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/f2b75f841d580fbe5e4e5b88aa73e588f6d3b1ae/Utility/jcgurango_Pre-Arranged%20Looper.jsfx</source>
       </version>
     </reapack>
     <reapack name="jsh_Inline Input Viewer (MCP embedded).jsfx" type="effect" desc="Inline Input Viewer (MCP embedded)">
