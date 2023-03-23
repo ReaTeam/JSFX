@@ -13,7 +13,7 @@
 {\pard \ql \f0 \sa180 \li0 \fi0 Many thanks to:\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Edoardo "TheEdoRan" Ranghieri\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "tviler" from GearSpace\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "BethHarmon" from Cockos Forums\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "chmaha" from Cockos Forums\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "RCJacH" from Cockos Forums\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "sai'ke" from Cockos Forums\par}
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "Zeno" from Cockos Forums\sa180\par}
@@ -56,7 +56,7 @@ Minor optimizations]]></changelog>
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 This edition improves the behavior further by omitting the odd quirks found in the original Sonnox plug-in. Inspired by Sonnox Oxford Inflator and RCInflator (Oxford Edition) by RCJacH with additions by sai'ke and BethHarmon.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This edition improves the behavior further by omitting the odd quirks found in the original Sonnox plug-in. Inspired by Sonnox Oxford Inflator and RCInflator (Oxford Edition) by RCJacH with additions by sai'ke and chmaha.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 For discussion see https://forum.cockos.com/showthread.php?t=256286.\par}
 }
 ]]></description>
@@ -71,7 +71,7 @@ Minor optimizations]]></changelog>
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 This edition clones the behavior of the Sonnox Oxford Inflator in every aspect including "bandsplit" mode. It improves upon the original RCInflator (Oxford Edition) by RCJacH with additions by sai'ke and BethHarmon.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This edition clones the behavior of the Sonnox Oxford Inflator in every aspect including "bandsplit" mode. It improves upon the original RCInflator (Oxford Edition) by RCJacH with additions by sai'ke and chmaha.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 For discussion see https://forum.cockos.com/showthread.php?t=256286.\par}
 }
 ]]></description>
@@ -86,7 +86,7 @@ Minor optimizations]]></changelog>
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 With additions by users sai'ke and BethHarmon.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 With additions by users sai'ke and chmaha.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 This edition clones the behavior of the Sonnox Oxford Inflator in every aspect except "bandsplit" mode. For discussion see https://forum.cockos.com/showthread.php?t=256286.\par}
 }
 ]]></description>
