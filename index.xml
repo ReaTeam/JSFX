@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f2b75f841d580fbe5e4e5b88aa73e588f6d3b1ae">
+<index version="1" name="ReaTeam JSFX" commit="2ab83011ebb4e10130c5614e864b46235e0680d3">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -43,11 +43,11 @@ Minor code cleanup]]></changelog>
       <version name="1.2" author="Samuele Pizzi" time="2021-10-09T00:13:19Z">
         <changelog><![CDATA[Changed waveshaping function with the updated version from the folks at Cockos Forums, super accurate
 Minor optimizations]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/de0218438b74e8bef52384b0fa2a363ec02f622b/Distortion/Loudener.jsfx</source>
-        <source file="Loudener_gfx/bg.png">https://github.com/ReaTeam/JSFX/raw/de0218438b74e8bef52384b0fa2a363ec02f622b/Distortion/Loudener_gfx/bg.png</source>
-        <source file="Loudener_gfx/handle.png">https://github.com/ReaTeam/JSFX/raw/de0218438b74e8bef52384b0fa2a363ec02f622b/Distortion/Loudener_gfx/handle.png</source>
-        <source file="Loudener_gfx/button_off.png">https://github.com/ReaTeam/JSFX/raw/de0218438b74e8bef52384b0fa2a363ec02f622b/Distortion/Loudener_gfx/button_off.png</source>
-        <source file="Loudener_gfx/button_on.png">https://github.com/ReaTeam/JSFX/raw/de0218438b74e8bef52384b0fa2a363ec02f622b/Distortion/Loudener_gfx/button_on.png</source>
+        <source>https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/Loudener.jsfx</source>
+        <source file="Loudener_gfx/bg.png">https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/Loudener_gfx/bg.png</source>
+        <source file="Loudener_gfx/handle.png">https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/Loudener_gfx/handle.png</source>
+        <source file="Loudener_gfx/button_off.png">https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/Loudener_gfx/button_off.png</source>
+        <source file="Loudener_gfx/button_on.png">https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/Loudener_gfx/button_on.png</source>
       </version>
     </reapack>
     <reapack name="RCInflator2_Ideal.jsfx" type="effect" desc="RCInflator 2 (Ideal Edition)">
@@ -62,7 +62,7 @@ Minor optimizations]]></changelog>
 ]]></description>
       </metadata>
       <version name="1.0" author="lewloiwc" time="2022-09-07T08:49:28Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/db38bbce18becbbf9b19843537446e07d8f37265/Distortion/RCInflator2_Ideal.jsfx</source>
+        <source>https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/RCInflator2_Ideal.jsfx</source>
       </version>
     </reapack>
     <reapack name="RCInflator2_Oxford.jsfx" type="effect" desc="RCInflator 2 (Oxford Edition)">
@@ -77,7 +77,7 @@ Minor optimizations]]></changelog>
 ]]></description>
       </metadata>
       <version name="1.0" author="lewloiwc" time="2022-09-07T08:49:28Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/db38bbce18becbbf9b19843537446e07d8f37265/Distortion/RCInflator2_Oxford.jsfx</source>
+        <source>https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/RCInflator2_Oxford.jsfx</source>
       </version>
     </reapack>
     <reapack name="rcjach_RCInflator.jsfx" type="effect" desc="RCInflator (Oxford Edition)">
@@ -92,7 +92,7 @@ Minor optimizations]]></changelog>
 ]]></description>
       </metadata>
       <version name="1.0" author="RCJacH" time="2021-09-21T19:54:58Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/81cbcdb02b1732c5756ffa196a3207fd90dec026/Distortion/rcjach_RCInflator.jsfx</source>
+        <source>https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/rcjach_RCInflator.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
