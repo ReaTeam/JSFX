@@ -101,8 +101,8 @@ options: no_meter
 options: gfx_hz=60
 
 import zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc
-import zenomod_VU Meter (ZenoMOD)/User Theme 01.jsfx-inc
-import zenomod_VU Meter (ZenoMOD)/User Theme 02.jsfx-inc
+import zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 01.jsfx-inc
+import zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 02.jsfx-inc
 
 
 
