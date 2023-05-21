@@ -2,31 +2,31 @@ desc: VU Meter (ZenoMOD)
 author: ZenoMOD
 version: 1.7.3
 changelog:
-  - Fix UI scaling issues in embedded mode at high screen resolutions [URL="https://forum.cockos.com/showpost.php?p=2609460"][p=2609460][/URL]
+  - Fix UI scaling issues in embedded mode at high screen resolutions [p=2609460]
   - Fix flickering at the top of the UI during initialization
   - Prevent display of tooltips when mouse is not inside the plugin UI window
-  - Implement new VU outputs utilizing polynomial regression on dbL/dbR to accurately reflect the VU scale (output respects meter options) [URL="https://forum.cockos.com/showpost.php?p=2606114"][p=2606114][/URL]
-  - Implement current VU display [URL="https://forum.cockos.com/showpost.php?p=2525714"][p=2525714][/URL]
-  - Implement current/max Peak display [URL="https://forum.cockos.com/showpost.php?p=2525714"][p=2525714][/URL]
-  - Implement current hold VU needle [URL="https://forum.cockos.com/showpost.php?p=2525714"][p=2525714][/URL]
-  - Implement current hold VU arc [URL="https://forum.cockos.com/showpost.php?p=2525714"][p=2525714][/URL]
-  - Implement Peak LED scaling [URL="https://forum.cockos.com/showpost.php?p=2541667"][p=2541667][/URL]
-  - Implement font size scaling following user interface width [URL="https://forum.cockos.com/showpost.php?p=2542022"][p=2542022][/URL]
-  - Make VU Meter value prints visible if master track panel layout is 100% and bigger [URL="https://forum.cockos.com/showpost.php?p=2534444"][p=2534444][/URL]
-  - Make VU Meter value prints visible if track panel layout is 150% and bigger [URL="https://forum.cockos.com/showpost.php?p=2534444"][p=2534444][/URL]
-  - Change display ratio in TCP/MCP embedded mode [URL="https://forum.cockos.com/showpost.php?p=2608762"][p=2608762][/URL]
+  - Implement new VU outputs utilizing polynomial regression on dbL/dbR to accurately reflect the VU scale (output respects meter options) [p=2606114]
+  - Implement current VU display [p=2525714]
+  - Implement current/max Peak display [p=2525714]
+  - Implement current hold VU needle [p=2525714]
+  - Implement current hold VU arc [p=2525714]
+  - Implement Peak LED scaling [p=2541667]
+  - Implement font size scaling following user interface width [p=2542022]
+  - Make VU Meter value prints visible if master track panel layout is 100% and bigger [p=2534444]
+  - Make VU Meter value prints visible if track panel layout is 150% and bigger [p=2534444]
+  - Change display ratio in TCP/MCP embedded mode [p=2608762]
   - Rename Summed Mode channel label from "SUMMED" to "SUMMED (L+R)"
   - Redesign Tooltips and add transparent background
   - Revision of most UI styles
   - Discard intelligent hiding of UI elements
   - Discard UI Style: Mint
-  - Discard UI Style: Pastel [URL="https://forum.cockos.com/showpost.php?p=2608760"][p=2608760][/URL]
-  - Add new UI Style: Moo [URL="https://forum.cockos.com/showpost.php?p=2592855"][p=2592855][/URL]
-  - Add new UI Style: Black [URL="https://forum.cockos.com/showpost.php?p=2592855"][p=2592855][/URL]
+  - Discard UI Style: Pastel [p=2608760]
+  - Add new UI Style: Moo [p=2592855]
+  - Add new UI Style: Black [p=2592855]
   - Add new UI Style: Moss
-  - Add User Theme support (two slots) [URL="https://forum.cockos.com/showpost.php?p=2609238"][p=2609238][/URL]
-  - Add font size adjustment slider to adapt to font size variations on different operating systems [URL="https://forum.cockos.com/showpost.php?p=2609635"][p=2609635][/URL] (Be conservative though, there is only one ‘correct’ setting)
-  - Add support to modify meter options in real-time [URL="https://forum.cockos.com/showpost.php?p=2615035"][p=2615035][/URL]
+  - Add User Theme support (two slots) [p=2609238]
+  - Add font size adjustment slider to adapt to font size variations on different operating systems [p=2609635] (Be conservative though, there is only one ‘correct’ setting)
+  - Add support to modify meter options in real-time [p=2615035]
   - Add functionality to reset current/max display by clicking on peak display
   - Add option to set peak display to current or max hold
   - Add option to configure the peak display / needle hold time
@@ -35,12 +35,10 @@ changelog:
   - Add switch for LBX stripper support (sends constant VU meter output when turned on). Set to 'off' by default
   - Add slider to configure background blur on preference mask
   - Add Rec button to the bottom bar to allow recording VU automation output  (track needs to be in write mode)
-  - Add alternative Summed Mode setting: “SUMMED (L || R)” (uses a logical OR-gate to show only the highest needle deflection of the left or right channel) [URL="https://forum.cockos.com/showpost.php?p=2660450"][p=2660450][/URL]
+  - Add alternative Summed Mode setting: “SUMMED (L || R)” (uses a logical OR-gate to show only the highest needle deflection of the left or right channel) [p=2660450]
   - Add REAPER’s automatic output silence detection feature to change plugin state to Idle during silence when plugin window is not open
   - Add internal code switch to make sure only currently used code is processed (turns off most processing when input level is lower than -140dBFS)
   - Known bugs: LEDs light up when playback starts (I'm looking for it, armed with a big fly swatter, ready to pounce)
-  --
-  --
 provides: zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc
 link: Forum Thread https://forum.cockos.com/showthread.php?t=262611
 donation: Donate via PayPal https://www.paypal.me/ZenoBock
