@@ -1,29 +1,48 @@
 desc: VU Meter (ZenoMOD)
 author: ZenoMOD
-version: 1.7.2.1
+version: 1.7.3
 changelog:
-  fix: meter output slider scaling adjusted (ATTENTION: not backwards compatible with parameter modulation in old projects!)
-  fix: increase display probability of preferences button in case meter options page is open and bottom bar is not visible (edge case).
-  fix: bottom bar tooltips are now displayed at any possible UI scaling.
-
-  Channel labels now reflect selected channel mode (dagamusik).
-  Reduced visibility of channel labels in case tooltip text position is equal to that of channel labels (to improve readability of tooltips).
-
-  Add slider_automate() function for meter output sliders to enable meter output automations.
-  Add hidden slider for tooltip button to permanently disable tooltips by saving a plugin preset.
-  Add right-click popup menu for UI style button.
-  Add right-click popup menu for channel mode button.
-  Add Hold Time multiplication parameter for Peak LED to Meter Options Page.
-
-  Update v1.7.2 b ->
-  fix: slider_automate() function for meter output sliders is only called if record button in Reapers transport section is pressed (fixes high cpu consumption when no meter automations are recorded).
-  fix: Channel mode labels are no longer grayed out when mouse cursor is in trigger zone for tooltips but bottom bar is not visible.
+  - Fix UI scaling issues in embedded mode at high screen resolutions [p=2609460]
+  - Fix flickering at the top of the UI during initialization
+  - Prevent display of tooltips when mouse is not inside the plugin UI window
+  - Implement new VU outputs utilizing polynomial regression on dbL/dbR to accurately reflect the VU scale (output respects meter options) [p=2606114]
+  - Implement current VU display [p=2525714]
+  - Implement current/max Peak display [p=2525714]
+  - Implement current hold VU needle [p=2525714]
+  - Implement current hold VU arc [p=2525714]
+  - Implement Peak LED scaling [p=2541667]
+  - Implement font size scaling following user interface width [p=2542022]
+  - Make VU Meter value prints visible if master track panel layout is 100% and bigger [p=2534444]
+  - Make VU Meter value prints visible if track panel layout is 150% and bigger [p=2534444]
+  - Change display ratio in TCP/MCP embedded mode [p=2608762]
+  - Rename Summed Mode channel label from "SUMMED" to "SUMMED (L+R)"
+  - Redesign Tooltips and add transparent background
+  - Revision of most UI styles
+  - Discard intelligent hiding of UI elements
+  - Discard UI Style: Mint
+  - Discard UI Style: Pastel [p=2608760]
+  - Add new UI Style: Moo [p=2592855]
+  - Add new UI Style: Black [p=2592855]
+  - Add new UI Style: Moss
+  - Add User Theme support (two slots) [p=2609238]
+  - Add font size adjustment slider to adapt to font size variations on different operating systems [p=2609635] (Be conservative though, there is only one ‘correct’ setting)
+  - Add support to modify meter options in real-time [p=2615035]
+  - Add functionality to reset current/max display by clicking on peak display
+  - Add option to set peak display to current or max hold
+  - Add option to configure the peak display / needle hold time
+  - Add option to configure the VU display / needle hold time
+  - Add option to configure the VU hold needle / VU hold arc (off, on, only arc, only needle)
+  - Add switch for LBX stripper support (sends constant VU meter output when turned on). Set to 'off' by default
+  - Add slider to configure background blur on preference mask
+  - Add Rec button to the bottom bar to allow recording VU automation output  (track needs to be in write mode)
+  - Add alternative Summed Mode setting: “SUMMED (L || R)” (uses a logical OR-gate to show only the highest needle deflection of the left or right channel) [p=2660450]
+  - Add REAPER’s automatic output silence detection feature to change plugin state to Idle during silence when plugin window is not open
+  - Add internal code switch to make sure only currently used code is processed (turns off most processing when input level is lower than -140dBFS)
+  - Known bugs: LEDs light up when playback starts (I'm looking for it, armed with a big fly swatter, ready to pounce)
+provides: zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc
 link: Forum Thread https://forum.cockos.com/showthread.php?t=262611
 donation: Donate via PayPal https://www.paypal.me/ZenoBock
-about:
-  Simple VU Meter - a fine freeware by chris-s, modified and functionally extended by Zeno.
-  Some hidden sliders can be used for parameter modulation !! ;)
-
+about: Simple VU Meter - a fine freeware by chris-s, modified and functionally extended by Zeno.
 
 tags: analysis analyzer vu meter loudness
 
@@ -32,45 +51,45 @@ Disclaimer: Use of this software is on your own risk!
 //*************************************** END INFO **************************************************/
 
 
+slider1: 1<0,12,1{Classic,Knight,Purple,Moss,Moo,Warm,Ivory,Trooper,Ultimate,Mooncake,Black,User 01,User 02}>-UI Style
+slider2: 0<0,2,1{Stereo,Summed,Mid / Side}>                                                                 -Mode
+slider3: -18<-36,0,1>                                                                                       -Ref Level
+slider4: -6<-20,0,1>                                                                                        -Warn Level
+slider5: 50<0,100>                                                                                          -Response
+slider6: 0.0053<0,.01,0.0001>                                                                               -Damping
+slider7: 0<-18,18,0.1>                                                                                      -Volume (dB)
 
+slider8: 1<0,3,1{Off,On,Arc,Needle}>                                                                        -Needle Hold on/off
+slider9: 0<0,1,1{Off,On}>                                                                                   -Display VU
+slider10: 0<0,1,1{Off,On}>                                                                                  -Display PK
 
-/***************************************** DESC *****************************************************/
-
-
-// Sliders                                                                                // Name
-
-slider1: 1<0,9,1{Classic,Knight,Purple,Mint,Pastel,Warm,Ivory,Trooper,Ultimate,Mooncake}> -UI Style
-slider2: 0<0,2,1{Stereo,Summed,Mid / Side}>                                               -Mode
-slider3: -18<-36,0,1>                                                                     -Ref Level
-slider4: -6<-20,0,1>                                                                      -Warn Level
-slider5: 50<0,100>                                                                        -Response
-slider6: 0.0053<0,.01,0.0001>                                                             -Damping
-
-slider7: 0<-18,18,0.1>                                                                    -Volume (dB)
-
-slider11: 3<1,10,.01>                                                                     -LED Hold
-
+slider11: 1<0,1,1{Current,Max}>                                                                             -PK Current/Max
+slider12: 0<0,1,1>                                                                                          -PK Reset
+slider13: 0<0,1,1{Off,On}>                                                                                  -VU Rec?
 
 // Parameter Modulation sliders...
+slider20: <-20,3,.1:log=-2.5>                                                                               -VU - Left/Mid 
+slider21: <-20,3,.1:log=-2.5>                                                                               -VU - Right/Side
+slider22: <0,1,1{-,PEAK}>                                                                                   -Peak LED L
+slider23: <0,1,1{-,PEAK}>                                                                                   -Peak LED R
 
-slider50: -20<-20,3,.1>                                                                   -VU Left/Mid
-slider51: -20<-20,3,.1>                                                                   -VU Right/Side
-slider52: 0<0,1,1{-,PEAK}>                                                                -Peak LED L
-slider53: 0<0,1,1{-,PEAK}>                                                                -Peak LED R
+slider24: <-20,3,.1:log=-2.5>                                                                               -VU Current - Left/Mid
+slider25: <-20,3,.1:log=-2.5>                                                                               -VU Current - Right/Side
+slider26: <-60,0,.01>                                                                                       -PK Current - Left/Mid
+slider27: <-60,0,.01>                                                                                       -PK Current - Right/Side
 
+// Settings...
+slider40: 3<1,10,.01>                                                                                       -LED Hold (ds)
+slider41: 5<1,10,1>                                                                                         -VU Hold (s)
+slider42: 3<1,10,1>                                                                                         -PK Hold (s)
 
-// Bottom Bar settings...
+slider43: 0<0,1,1{L + R,L || R}>                                                                            -Summed Mode
+slider44: 1<0,1,1{Off,On}>                                                                                  -Display Tooltips
+slider45: 0<-3,2,.5>                                                                                        -Text Size
+slider46: 0<0,1,1{Off,On}>                                                                                  -LBX Support
+slider47: 12<0,20,1>                                                                                        -Preference Page Blur
 
-slider60: 0.50<0,1,0.01>                                                                  -Transparency
-slider61: 1<0,1,1>                                                                        -Help
-
-
-
-
-// Hide side meters / Set refresh rate
-
-options: no_meter
-options: gfx_hz=60
+slider64: 1<1,2,1>                                                                                          -Preference Page
 
 
 in_pin: left input
@@ -78,86 +97,1375 @@ in_pin: right input
 out_pin: left output
 out_pin: right output
 
+options: no_meter
+options: gfx_hz=60
 
-
-
-
-
-
-
+import zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc
+import zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 01.jsfx-inc
+import zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 02.jsfx-inc
 
 
 
 
 @init
 
-//===================================== VERSION NUMBER ==============================================/
-  version = ("v1.7.2 b");
+// version
+version = (" v1.7.3");
 
 
 
 
-//========================================= VOLUME ==================================================/
-  AMP_dB_i = 1/8.68588963806504;
-  db = slider7; // initialize here but not in @slider for playback start
+/////////////////////////////////////////////////////////////////
+/////////////////// INITIALIZE VARIABLES ////////////////////////
+/////////////////////////////////////////////////////////////////
+
+// volume
+AMP_dB_i = 1/8.68588963806504;
+db = slider7; // init here but not in @slider for playback start
+
+// vu meter
+errcnt = 0;
+tot_nbr_spl = 0;
+scnt = 0;
+fact_up = 0;
+offset = 0.0074;
+nd_posL = nd_posR = 0;
+nd_speedL = nd_speedR = 0;
+dt = 10 / srate;
+mom = 0.00042;
+damp = 1 - 0.0053 * (48000 / srate);
+dbL = dbR = -20;
+peakL = peakR = -20;
+overL = overR = 0;
+holdcounter1 = 0;
+holdcounter2 = 0;
+
+// peak meter
+peak_timeout = 0;
+value = 0;
+peak = 1;
+left = 0;
+right = 4;
+clip = 3;
+slider26 = -316.5;
+slider27 = -316.5;
+
+// preferences
+yu = 12.25;
+ylo = gfx_h-yu;
+slider64 = 1;
+
+
+
+/////////////////////////////////////////////////////////////////
+////////////////////// METER FUNCTIONS //////////////////////////
+/////////////////////////////////////////////////////////////////
+
+// Polynomial Regression on 'dbL' and 'dbR' to fit VU
+function vu(x)(
+  (x > -10.739772 && x < 3.1) ? (
+    0.0000000018574144851277023*pow(x,7)
+    -0.000000007181675534274909*pow(x,6)
+    +0.00000026010069461917307*pow(x,5)
+    -0.000010602895408755132*pow(x,4)
+    +0.0002816973632214551*pow(x,3)
+    -0.009181854972743169*pow(x,2)
+    +0.39887854736070294*x
+    +1.9117333817772166
+  ) : (
+  x > -15.549665 && x <= -10.739772) ? (
+    0.000045203665592780654*pow(x,5)
+    +0.0025379041863024046*pow(x,4)
+    +0.05990413162348811*pow(x,3)
+    +0.6988138346039348*pow(x,2)
+    +4.640331857325891*x
+    +12.134166801893349
+  ) : (
+  x > -17.826267 && x <= -15.549665) ? (
+    -0.0038388028713626453*pow(x,4)
+    -0.23246545149124698*pow(x,3)
+    -5.395512159008137*pow(x,2)
+    -55.499232285589244*x
+    -216.99316401521162
+  ) : (
+  x > -20 && x <= -17.826237) ? (
+    0.0000028446420086192774*pow(x,7)
+    +0.000047054132856009275*pow(x,6)
+    -0.007734424207833404*pow(x,5)
+    -0.3519383256717419*pow(x,4)
+    -5.193316606317936*pow(x,3)
+    -8.882367411579192*pow(x,2)
+    +436.30657196835705*x
+    +2902.0746462408774
+  ) :
+    -20;
+);
+
+
+// Round Numbers to first decimal place
+function round_dec (x, places)
+  local (mult, div) (
+  mult = 10 ^ places;
+   div = 1/mult;
+   x = div * sign (x) * floor(abs (mult * x) + 0.5);
+);
+
+
+// Update and hold values for Peak level
+function _sample(ch, _spl) local(s) (
+  s = abs(_spl);
+  ch[value] = max(ch[value], s);
+  ch[peak_timeout] -= 1;
+  ch[peak_timeout] <= 0 || s > ch[peak] ? (
+    ch[peak] = s;
+    ch[peak_timeout] = holdtime2;
+  );
+  ch[clip] = max(ch[clip], s);
+);
+
+
+// Convert linear Amplitude value to Decibel
+function dbfs(x) (
+  2*10*log10(x);
+);
 
 
 
 
+/////////////////////////////////////////////////////////////////
+////////////////////// MOUSE FUNCTIONS //////////////////////////
+/////////////////////////////////////////////////////////////////
 
-//========================================= VU METER ================================================/
+function drag_slider(x, y, z, dx)
+  globals(mouse_y, cap_last_y, cap_drag)
+(
+  x = min(max(x + dx * ((cap_last_y - mouse_y) / 4), y), z);
+  cap_last_y = mouse_y;
+  cap_drag = 1;
+  x;
+);
 
-  // bg col
-  gfx_clear = 30 + 60 * 256 + 110 * 65536;
+function drag_slider_precise(x, y, z, dx)
+  globals(mouse_cap)
+(
+  (mouse_cap & 4) ? dx *= 0.1;
+  drag_slider(x, y, z, dx);
+);
+
+function cycle_slider(x, y, z, dx)
+  globals(last_mouse_cap)
+(
+  (last_mouse_cap & 16) ? x -= dx : x += dx;
+  y > z ? ( dx=y; y=z; z=dx; );
+  x > z ? y : x < y ? z : x;
+);
+
+function wheel_slider(x, y, z, dx)
+  globals(mouse_wheel)
+(
+  x = min(max(x + dx * sign(mouse_wheel) , y), z);
+  x;
+);
+
+function draw_buttonsize(xp, yp, wp, hp)
+  instance(w,h,x,y)
+  globals(g_button_right_extent,gfx_r,gfx_g,gfx_b,gfx_x,gfx_y,gfx_w)
+(
+  w=wp; h=hp; x=xp; y=yp;
+);
+
+function hit_button(xp,yp,cm)
+  instance(w,h,x,y)
+  globals(cap_mode, cap_last_x, cap_last_y)
+(
+  xp>=x&&yp>=y&&xp<x+w&&yp<y+h  ? (
+    cap_last_x = xp;
+    cap_last_y = yp;
+    cap_mode = cm;
+  );
+);
 
 
-  errcnt = 0;
-  tot_nbr_spl = 0;
-  scnt = 0;
-  fact_up = 0;
-  offset = 0.0074;
-  nd_posL = nd_posR = 0;
-  nd_speedL = nd_speedR = 0;
-  dt = 10 / srate;
-  mom = 0.00042;
-  damp = 1 - 0.0053 * (48000 / srate);
-  dbL = dbR = 0;
-  overL = overR = 0;
+function do_mouse () (
+  has_click = (mouse_cap&1) && !(last_cap&1) ? 1 : 0;
+  last_cap = mouse_cap;
+
+  (mouse_cap & 1) ? (
+    !(last_mouse_cap & 1) ? (
+      !cap_drag && cap_timer < 12 ? (
+        cap_mode == 3 ? ( slider3 = -18; );
+        cap_mode == 4 ? ( slider4 = -6; );
+        cap_mode == 5 ? ( slider5 = 50; );
+        cap_mode == 6 ? ( slider6 = 0.0053; );
+        cap_mode == 40 ? ( slider40 = 3; );
+        cap_mode == 41 ? ( slider41 = 5; );
+        cap_mode == 42 ? ( slider42 = 3; );
+        cap_mode == 45 ? ( slider45 = 0; );
+        cap_mode == 47 ? ( slider47 = 12; );
+      );
+
+      (cap_mode == 7) && !cap_drag && cap_timer < 12 ? (
+        cap_mode == 7 ? ( slider7 = 0; slider_automate(slider7) );
+        cap_mode=0;
+      ) : (
+        cap_mode = cap_drag = cap_timer = 0;
+
+        gfx_ext_flags == 1 ? (
+            cap_last_x = mouse_x;
+            cap_last_y = mouse_y;
+            cap_mode=7;
+        );
+
+        uistyle_button.hit_button(mouse_x,mouse_y,1);
+        mode_button.hit_button(mouse_x,mouse_y,2);
+        reflevel_button.hit_button(mouse_x,mouse_y,3);
+        warnlevel_button.hit_button(mouse_x,mouse_y,4);
+        response_button.hit_button(mouse_x,mouse_y,5);
+        damping_button.hit_button(mouse_x,mouse_y,6);
+        volume_button.hit_button(mouse_x,mouse_y,7);
+        vuneedlehold_button.hit_button(mouse_x,mouse_y,8);
+        vudisplay_button.hit_button(mouse_x,mouse_y,9);
+        pkdisplay_button.hit_button(mouse_x,mouse_y,10);
+        pkcurrentmax_button.hit_button(mouse_x,mouse_y,11);
+        pkReset_button.hit_button(mouse_x,mouse_y,12);
+        rec_button.hit_button(mouse_x,mouse_y,13);
+        peakhold_button.hit_button(mouse_x,mouse_y,40);
+        vuholdtime_button.hit_button(mouse_x,mouse_y,41);
+        pkholdtime_button.hit_button(mouse_x,mouse_y,42);
+        summedmode_button.hit_button(mouse_x,mouse_y,43);
+        Pref_Page != 1 ? (
+          displayTooltips_button.hit_button(mouse_x,mouse_y,44);
+          fontsize_button.hit_button(mouse_x,mouse_y,45);
+          lbxSupport_button.hit_button(mouse_x,mouse_y,46);
+          pageblur_button.hit_button(mouse_x,mouse_y,47);
+        );
+        prefpage_button.hit_button(mouse_x,mouse_y,64);
+      );
+    );
+
+    // drag
+    cap_mode == 3 && cap_last_y != mouse_y ? (
+        slider3=drag_slider(slider3,-36,0,1); );
+    cap_mode == 4 && cap_last_y != mouse_y ? (
+        slider4=drag_slider(slider4,-20,0,1); );
+    cap_mode == 5 && cap_last_y != mouse_y ? (
+        slider5=drag_slider(slider5,0,100,1); );
+    cap_mode == 6 && cap_last_y != mouse_y ? (
+        slider6=drag_slider(slider6,0,0.01,0.0001); );
+    cap_mode == 7 && cap_last_y != mouse_y ? (
+        slider7=drag_slider_precise(slider7,-18,18,0.1); slider_automate(slider7) );
+    cap_mode == 40 && cap_last_y != mouse_y ? (
+        slider40=drag_slider_precise(slider40,1,10,.1); );
+    cap_mode == 41 && cap_last_y != mouse_y ? (
+        slider41=drag_slider(slider41,1,10,1); );
+    cap_mode == 42 && cap_last_y != mouse_y ? (
+        slider42=drag_slider(slider42,1,10,1); );
+    cap_mode == 45 && cap_last_y != mouse_y ? (
+        slider45=drag_slider(slider45,-3,2,.1); );
+    cap_mode == 47 && cap_last_y != mouse_y ? (
+        slider47=drag_slider(slider47,0,20,1); );
+  ) : (
+  // cycle click
+    cap_mode == 1 && !cap_drag ? (
+        slider1=cycle_slider(slider1,0,12,1); cap_mode=0 );
+    cap_mode == 2 && !cap_drag ? (
+        slider2=cycle_slider(slider2,0,2,1); cap_mode=0 );
+    cap_mode == 8 && !cap_drag ? (
+        slider8=cycle_slider(slider8,0,3,1); cap_mode=0 );
+    cap_mode == 9 && !cap_drag ? (
+        slider9=cycle_slider(slider9,0,1,1); cap_mode=0 );
+    cap_mode == 10 && !cap_drag ? (
+        slider10=cycle_slider(slider10,0,1,1); cap_mode=0 );
+    cap_mode == 11 && !cap_drag ? (
+        slider11=cycle_slider(slider11,0,1,1); cap_mode=0 );
+    cap_mode == 12 && !cap_drag ? (
+        slider12=cycle_slider(slider12,0,1,1); cap_mode=0 );
+    cap_mode == 13 && !cap_drag ? (
+        slider13=cycle_slider(slider13,0,1,1); cap_mode=0 );
+    cap_mode == 43 && !cap_drag ? (
+        slider43=cycle_slider(slider43,0,1,1); cap_mode=0 );
+    cap_mode == 44 && !cap_drag ? (
+        slider44=cycle_slider(slider44,0,1,1); cap_mode=0 );
+    cap_mode == 46 && !cap_drag ? (
+        slider46=cycle_slider(slider46,0,1,1); cap_mode=0
+  ) : (
+    cap_mode == 64 && !cap_drag ? (
+        slider64=cycle_slider(slider64,1,2,1); cap_mode=0 );
+  );
 
 
-  print = 10;
-  print[0] = -20;
-  print[1] = -10;
-  print[2] = -7;
-  print[3] = -5;
-  print[4] = -3;
-  print[5] = -2;
-  print[6] = -1;
-  print[7] = 0;
-  print[8] = 1;
-  print[9] = 2;
-  print[10] = 3;
+    // wheel
+    ref_level_slider ? (
+        slider3=wheel_slider(slider3,-36,0,1); mouse_wheel=0 ):
+    warn_level_slider ? (
+        slider4=wheel_slider(slider4,-20,0,1); mouse_wheel=0 ):
+    meter_resp_slider ? (
+        slider5=wheel_slider(slider5,0,100,1); mouse_wheel=0 ):
+    meter_damp_slider ? (
+        slider6=wheel_slider(slider6,0,0.01,.0001); mouse_wheel=0 ):
+    volume_slider ? (
+        slider7=wheel_slider(slider7,-18,18,.5); slider_automate(slider7); mouse_wheel=0 ):
+    peak_hold_slider ? (
+        slider40=wheel_slider(slider40,1,10,1); mouse_wheel=0 ):
+    ui_color_slider ? (
+        slider1=wheel_slider(slider1,0,12,1); mouse_wheel=0 ):
+    mode_slider ? (
+        slider2=wheel_slider(slider2,0,2,1); mouse_wheel=0 ):
+    vu_needlehold_slider? (
+        slider8=wheel_slider(slider8,0,3,1); mouse_wheel=0 ):
+    vu_holdtime_slider ? (
+        slider41=wheel_slider(slider41,1,10,1); mouse_wheel=0 ):
+    pk_currentmax_slider ? (
+        slider11=wheel_slider(slider11,0,1,1); mouse_wheel=0 ):
+    pk_holdtime_slider ? (
+        slider42=wheel_slider(slider42,1,10,1); mouse_wheel=0 ):
+    summed_mode_slider ? (
+        slider43=wheel_slider(slider43,0,1,1); mouse_wheel=0 ):
+    displayTooltips_slider ? (
+        slider44=wheel_slider(slider44,0,1,1); mouse_wheel=0 ):
+    fontsize_slider ? (
+        slider45=wheel_slider(slider45,-3,2,.1); mouse_wheel=0 ):
+    lbxSupport_slider ? (
+        slider46=wheel_slider(slider46,0,1,1); mouse_wheel=0 ):
+    pageblur_slider ? (
+        slider47=wheel_slider(slider47,0,20,1); mouse_wheel=0 ):
+    ( mouse_wheel = 0 );
+  );
 
 
-  pos = 30;
-  pos[0] = 0;
-  pos[1] = .1650;
-  pos[2] = .2641;
-  pos[3] = .3519;
-  pos[4] = .4626;
-  pos[5] = .5284;
-  pos[6] = .6022;
-  pos[7] = .6849;
-  pos[8] = .7779;
-  pos[9] = .8822;
-  pos[10] = 1;
+//************************************* Right Click Button Menus ************************************
+
+  // UI Style Menu
+  cap_mode && cap_timer < 13 ? cap_timer += 1;
+  ui_color_slider && (mouse_cap==0 && last_mouse_cap==2) ? (
+    gfx_setfont(1);
+    gfx_x = 50*scaling;
+    gfx_y = ylo-(gfx_texth+6) - 290;
+    sprintf(
+      #menustr,"Classic|Knight|Purple|Moss|Moo|Warm|Ivory|Trooper|Ultimate|Mooncake|Black||User 01|User 02",
+      #menustr, slider1==0?"!":"", slider1==1?"!":"", slider1==2?"!":"", slider1==3?"!":"", slider1==4?"!":"",
+                slider1==5?"!":"", slider1==6?"!":"", slider1==7?"!":"", slider1==8?"!":"", slider1==9?"!":"",
+                slider1==10?"!":"", slider1==11?"!":"", slider1==12?"!":""
+    );
+    ret = gfx_showmenu(#menustr);
+    ret > 0 ? (
+      (ret-=1) < 13 ? (slider1 = ret );
+    );
+  );
+
+  // Mode Menu
+  cap_mode && cap_timer < 3 ? cap_timer += 1;
+  mode_slider && (mouse_cap==0 && last_mouse_cap==2) ? (
+    gfx_setfont(1);
+    gfx_x = 120*scaling;
+    gfx_y = ylo-(gfx_texth+6) - 60;
+    sprintf(
+      #menustr,"Stereo|Summed|Mid / Side",#menustr,
+      slider2==0?"!":"", slider2==1?"!":"", slider2==2?"!":""
+    );
+    ret = gfx_showmenu(#menustr);
+    ret > 0 ? (
+      (ret-=1) < 3 ? (slider2 = ret);
+    );
+  );
+
+  cap_mode && cap_timer < 8 ? cap_timer += 1;
+  last_mouse_cap = mouse_cap;
+);
 
 
 
 
-//======================================= SLIDER MASK ===============================================/
-  TEXT_COLOR = $xffffff; //white
-  PREFERENCE_MASK = 0;
+/////////////////////////////////////////////////////////////////
+/////////////////////// DRAW FUNCTIONS //////////////////////////
+/////////////////////////////////////////////////////////////////
+//*************************************************************//
+//*********************** CASE MODEL **************************//
+
+function draw_meter_bg() (
+  set_color(MeterBG[color]);
+  !gfx_ext_flags ? (
+    gfx_rect(xd,yd,xw,yw);
+  ):(
+    gfx_rect(xd*.001,yd*.99,xw*1.387,yw);
+  );
+);
+
+
+function draw_arcs() (
+  set_color(MtrArc1[color]);
+  gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
+  set_color(MtrArc2[color]);
+  gsc >= 0.36 ? (
+    i = 1;
+    while (i <= 4) (
+      gfx_arc(xa, ya, r1 + i, w1, w2, 1);
+      i += 1;
+    );
+  ) : (
+    i = 1;
+    while (i <= 3) (
+      gfx_arc(xa, ya, r1 + i, w1, w2, 1);
+      i += 1;
+    );
+  );
+);
+
+
+function draw_scale() (
+  gfx_setfont(1);
+  set_color(SclDig1[color]);
+  jj = 0;
+  while ( jj <= 10 ) (
+    ii = print[jj];
+    ph =  pos[jj];
+    ph = (45 + ph*90) * $pi / 180;
+    cosp = cos(ph) * r1;
+    sinp = sin(ph) * r1;
+    x1 = xa - cosp ;
+    y1 = ya - sinp ;
+    x2 = xa - cosp * 1.1;
+    y2 = ya - sinp * 1.1;
+    gsc >.237 ? (
+      !gfx_ext_flags ? (
+        x3 = xa - cosp * 1.13;
+        y3 = ya - sinp * 1.11;
+      ) : (
+        x3 = xa - cosp * 1.18;
+        y3 = ya - sinp * 1.12;
+      );
+    );
+    gfx_x = x1;
+    gfx_y = y1 ;
+    gfx_lineto(x2, y2);
+
+    !gfx_ext_flags ? (
+      gfx_x = x3*.998 - (gfx_w/500*6);
+    ) : (
+      gfx_x = x3*.975 - (gfx_w/500*6);
+    );
+    gfx_y = y3 - gfx_texth;
+    gsc >.237 ? (gfx_printf("%3d", ii));
+
+    gsc >.237 ? (jj += 1):(jj += 1.8);
+    jj == 8 ? (set_color(SclDig2[color]));
+  );
+);
+
+
+function draw_peak_str() (
+  gfx_setfont(1);
+  gfx_x = 0;  gfx_y = 0;
+  set_color(Font_Pk[color]);
+  !gfx_ext_flags ? (
+    !PK_enabled ? (
+      gfx_drawstr(sprintf(#,"PEAK"),6,
+      (xd + xw * .9)-2, (yd + yw * 1.8)+ 3)
+    )
+  ) : (
+    !PK_enabled ? (
+      gsc >= .33 ?
+      gfx_drawstr(sprintf(#,"PEAK"),6,
+      (xd + xw * .9)-5, (yd + yw * 1.8)- 5)
+    );
+  );
+);
+
+
+function draw_vu_str() (
+  !embedded_gain_sldr ?
+  (
+    gfx_setfont(5);
+    gfx_x = 0;  gfx_y = 0;
+    set_color(Font_Vu[color]);
+    !gfx_ext_flags ? (
+      gfx_x=xa-50*scaling; gfx_y=yd;
+      gfx_drawstr(sprintf(#,"VU"),261,
+      xa+50*scaling,yw+62*scaling);
+      ) : (
+      gfx_x=xa-50*scaling; gfx_y=yd;
+      !summedMode ? (
+        gfx_drawstr(sprintf(#,"L + R"),261,
+        xa+50*scaling,yw+70*scaling);
+        ) : (
+        gfx_drawstr(sprintf(#,"L || R"),261,
+        xa+50*scaling,yw+70*scaling);
+      );
+    );
+  );
+);
+
+
+function draw_embedded_gain() (
+  embedded_gain_sldr =
+  (
+    gfx_ext_flags ? (
+      gfx_setfont(6);
+      set_color(FontVol[color]);
+      slider7 != 0 ? (
+        gfx_x=xa-50*scaling; gfx_y=yd;
+        gfx_drawstr(sprintf(#,"%.2f",slider7),261,
+        xa+50*scaling,yw+70*scaling);
+      );
+    );
+  );
+);
+
+
+function LED_xy_pos () (
+  !gfx_ext_flags ? (
+    led_x = xd+xw*0.9+(8*scaling);
+  ) : (
+    !PK_enabled ? (
+      led_x = xd+xw*0.9+(8*scaling);
+    ) : (
+      gsc >= .238 ? led_x = xd+xw*1+(8*scaling) : led_x = xd+xw*0.9+(8*scaling);
+    );
+  );
+
+  !PK_enabled ?
+  (
+    led_y = yd+yw*0.9-4
+    ) : (
+    !gfx_ext_flags ? (
+      led_y = yd+yw*0.17-4
+    ) : (
+      gsc >= .238 ? led_y = yd+yw*0.19-4 : led_y = yd+yw*0.9-4)
+  );
+  !gfx_ext_flags ?
+  (
+    led_scl = scaling*4) : (gsc <= .5 ?
+    (led_scl = scaling*10) : (led_scl = scaling*8)
+  );
+);
+
+
+function draw_coil_cover () (
+  set_color(FG_Covr[color]);
+  !gfx_ext_flags ? (
+    Coil_sz[color] == 1 ? gfx_circle(xa,ya,r1*0.16,1,1);
+    Coil_sz[color] == 2 ? gfx_circle(xa,ya,r1*0.2,1,1);
+    Coil_sz[color] == 3 ? gfx_circle(xa,ya*1.32,r1*.65,1,1);
+  ) : (
+    Coil_sz[color] == 1 ? gfx_circle(xa*.99,ya*.97,r1*0.16,1,1);
+    Coil_sz[color] == 2 ? gfx_circle(xa*.99,ya,r1*0.2,1,1);
+    Coil_sz[color] == 3 ? gfx_circle(xa*.99,ya*1.33,r1*.65,1,1);
+  );
+  !gfx_ext_flags ? (
+    Coil_sz[color] == 0 ? (
+      gfx_rect(xd,ya*0.89,xw,gfx_h);
+    ) : (
+      gfx_rect(xd,ya*0.91,xw,gfx_h);
+    );
+  ) : (
+    gfx_rect(xd*.04,ya*0.895,xw*1.385,gfx_h);
+  );
+);
+
+
+function draw_3D () (
+  EFX_3Di[color] ? (
+    !gfx_ext_flags ? (
+        i = 0;
+        loop(3,
+            set_color(Shdw_3D[color]);
+            gfx_a = 0.1 + i * 0.025;
+            gfx_rect(xd, yd, xw, yw / yd * (1.6 - i * 0.1));
+            i += 1;
+        );
+        i = 0;
+        loop(4,
+            set_color(Lght_3D[color]);
+            gfx_a = 0.125 + i * 0.025;
+            gfx_circle(xa, ya * (1.20 + i * 0.05), r1 * 0.87, 1, 1);
+            i += 1;
+        );
+    ) : (
+        i = 0;
+        loop(3,
+            set_color(Shdw_3D[color]);
+            gfx_a = 0.1 + i * 0.025;
+            gfx_rect(xd * .001, yd*.99, xw * 1.385, yw / yd * (0.3 - i * 0.03)/2);
+            i += 1;
+        );
+        i = 0;
+        loop(4,
+            set_color(Lght_3D[color]);
+            gfx_a = 0.1 + i * 0.025;
+            gfx_circle(xa, ya * (1.15 + i * 0.05), r1 * 0.87, 1, 1);
+            i += 1;
+        );
+    );
+    gfx_a=1;
+  );
+);
+
+
+function draw_channel_labels () (
+  gfx_setfont(5);
+
+    (mouse_x >= 50 && mouse_x < 306) && (mouse_y-ylo < gfx_texth/2) ?
+    (
+      set_color(Font_Ch[color]); gfx_a = .5;
+      ):(
+      set_color(Font_Ch[color]); gfx_a = 1;
+    );
+
+    !gfx_ext_flags ?
+    (
+      gfx_x = xd+(6*scaling);
+      ):(
+      gfx_x = xd-(55*scaling);
+    );
+
+    gfx_y = yd+yw+(2*scaling);
+    set_color(Font_Ch[color]);
+
+  gfx_ext_flags || gfx_h <= yd+yw+gfx_texth ?
+  (
+    gfx_a = 0;
+  );
+  mode == 0 ? (chan_name = "LEFT" ; chan_name1 = "RIGHT");
+  mode == 1 ? (!summedMode ? (chan_name = "SUMMED (L+R)"):(chan_name = "SUMMED (L||R)"));
+  mode == 2 ? (chan_name = "MID" ; chan_name1 = "SIDE");
+  chan == 0 ? gfx_drawstr(chan_name) : gfx_drawstr(chan_name1);
+  chan += 1; mode === 1 ? chan += 1;
+);
+
+
+
+
+/////////////////////////////////////////////////////////////////
+/////////////////////// DRAW FUNCTIONS //////////////////////////
+/////////////////////////////////////////////////////////////////
+//*************************************************************//
+//******************* NEEDLE & LED MODEL **********************//
+
+function draw_peak_LED() (
+  LED_xy_pos ();
+  set_color(PkLED_0[color]);
+  gfx_circle(led_x, led_y, led_scl, 1,1);
+
+  set_color(PkLED_1[color]);
+  (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ?
+  gfx_circle(led_x, led_y, led_scl, 1, 1);
+);
+
+
+function draw_vu_needle () (
+  set_color(NdlLine[color]);
+  gfx_line(x1,y1,x2,y2,1);
+
+  // draw thick needle lines and shadows if scaling allows
+  gsc >.5 ? (
+    gfx_line(x1+1,y1,x2+1,y2,1);
+
+    set_color(NdlShdw[color]);
+    gfx_line(x1+4,y1,x2+4,y2,1);
+  );
+);
+
+
+function draw_hold_needle () (
+  Hold_enabled && !Hold_Ndl_off && !idle && !gfx_ext_flags? (
+    set_color(NdlHold[color]);
+    gfx_line(x1,y1,x2,y2,1);
+
+    // draw thick needle lines
+    gsc >.5 ? (
+      gfx_line(x1+1,y1,x2+1,y2,1);
+
+      set_color(NdlShdw[color]);
+      gfx_line(x1+4,y1,x2+4,y2,1);
+    );
+  );
+);
+
+
+function draw_hold_arc (hold_needle, peakL, peakR) (
+  Hold_enabled && !idle ? (
+    (gfx_ext_flags) || (!Hold_Arc_off && !gfx_ext_flags) ? (
+      chan == 0 ? hold_needle = peakL : hold_needle = peakR;
+
+      set_color(ArcHold[color]);
+
+      start = -45 * ($pi / 180);
+      end = start + (hold_needle + 20) / 23 * (w2 - start);
+
+      gfx_arc(xa, ya, r1 - 3, start, end, 1);
+      gfx_arc(xa, ya, r1 - 4, start, end, 1);
+      gfx_arc(xa, ya, r1 - 5, start, end, 1);
+
+      gsc >= 0.34 ? (
+        gfx_arc(xa, ya, r1 - 6, start, end, 1);
+      );
+    );
+  );
+);
+
+
+function compute_draw_needle (needle, input1, input2, type) (
+  chan == 0 ? needle = input1 : needle = input2;
+  ph = 45 + (needle+20)/23*90;
+  ph = ph * ($pi / 180);
+
+  cosp = cos(ph);
+  sinp = sin(ph);
+
+  x1 = xa - cosp * r1 * 0.15;
+  y1 = ya - sinp * r1 * 0.15;
+  x2 = xa - cosp * r1 * 1.1;
+  y2 = ya - sinp * r1 * 1.1;
+
+  type == 1 ? (draw_vu_needle());
+  type == 2 ? (draw_hold_needle());
+);
+
+
+function draw_level_display (var1, var2, mode) (
+  !gfx_ext_flags ? (
+    mode == peak ? (
+      pos_x = xd+(185*scaling);
+      pos_y = 140*scaling;
+      pos_w = (xd+xw)-(3*scaling);
+      pos_h = (yd+yw)-(4*scaling);
+    );
+    mode == vu ? (
+      pos_x2 = xd+(3*scaling);
+      pos_y2 = 140*scaling;
+      pos_w2 = (xd+xw)-(183*scaling);
+      pos_h2 = (yd+yw)-(4*scaling);
+    );
+    mode == peak ? (
+      pkReset_button.draw_buttonsize(pos_x,pos_y,48*scaling,22*scaling);
+    );
+  ) : (
+    mode == peak ? (
+      pos_x = xd+(330*scaling);
+      pos_y = 210*scaling;
+      pos_w = (xd+xw)+(45*scaling);
+      pos_h = (yd+yw)-(10*scaling);
+    );
+    mode == vu ? (
+      pos_x2 = xd-(50*scaling);
+      pos_y2 = 210*scaling;
+      pos_w2 = (xd+xw)-(335*scaling);
+      pos_h2 = (yd+yw)-(10*scaling);
+    );
+  );
+
+    gfx_set(.01,.01,.01,.30);
+    mode == peak ? (
+      gfx_x=pos_x;
+      gfx_y=pos_y;
+      gfx_rectto(pos_w,pos_h);
+      loop(25,
+        gfx_x=pos_x-1;
+        gfx_y=pos_y-1;
+        gfx_blurto(pos_w+2,pos_h+2);
+      );
+    );
+    mode == vu ? (
+      gfx_x=pos_x2;
+      gfx_y=pos_y2;
+      gfx_rectto(pos_w2,pos_h2);
+      loop(25,
+        gfx_x=pos_x2-1;
+        gfx_y=pos_y2-1;
+        gfx_blurto(pos_w2+2,pos_h2+2);
+      );
+    );
+
+    gfx_ext_flags ? (
+      gfx_setfont(5);
+    ) : (
+      gfx_setfont(7);
+    );
+
+    set_color(Font_Ch[color]);
+    mode == peak ? (
+      chan == 0 ? (
+        str1 = sprintf(str1,"%.1f",var1);
+        gfx_x = pos_x;
+        gfx_y = pos_y;
+        var1 <= -316 ? (
+          gfx_drawstr("--", 261,pos_w,pos_h);
+        ) : (
+          gfx_drawstr(str1, 261,pos_w,pos_h);
+        )
+      ) : (
+        str2 = sprintf(str2,"%.1f",var2);
+        gfx_x = pos_x;
+        gfx_y = pos_y;
+        var2 <= -316 ? (
+          gfx_drawstr("--", 261,pos_w,pos_h);
+        ) : (
+          gfx_drawstr(str2, 261,pos_w,pos_h);
+        )
+      );
+    );
+    mode == vu ? (
+      chan == 0 ? (
+        str1 = sprintf(str1,"%.1f",var1);
+        gfx_x = pos_x2;
+        gfx_y = pos_y2;
+        var1 <= -20 ? (
+          gfx_drawstr("--", 261,pos_w2,pos_h2);
+        ) : (
+          gfx_drawstr(str1, 261,pos_w2,pos_h2);
+        )
+      ) : (
+        str2 = sprintf(str2,"%.1f",var2);
+        gfx_x = pos_x2;
+        gfx_y = pos_y2;
+        var2 <= -20 ? (
+          gfx_drawstr("--", 261,pos_w2,pos_h2);
+        ) : (
+          gfx_drawstr(str2, 261,pos_w2,pos_h2);
+        )
+      );
+    );
+);
+
+function draw_vu_pk_buttons () (
+  !gfx_ext_flags ? (
+    set_color(DsplBtn[color]);
+
+    // button vu
+    pos_x3 = xd-(4*scaling);
+    pos_y3 = 140*scaling;
+    pos_w3 = 10*scaling;//(xd+(5*scaling));
+    pos_h3 = 22*scaling;
+    vudisplay_button.draw_buttonsize(pos_x3,pos_y3,pos_w3,pos_h3);
+
+    VU_enabled ? ( gfx_setfont(7) ):( gfx_setfont(5) );
+    gfx_x = (xd+xd)-(6*scaling);
+    gfx_y = pos_y3;
+    gfx_drawstr(">", 261,pos_w3,163*scaling;);
+
+    // button pk
+    pos_x4 = (xd+xw)-(6*scaling);
+    pos_y4 = 140*scaling;
+    pos_w4 = 20*scaling;//(xd+xw)+(1*scaling);
+    pos_h4 = 22*scaling;
+    pkdisplay_button.draw_buttonsize(pos_x4,pos_y4,pos_w4,pos_h4);
+
+    PK_enabled ? ( gfx_setfont(7) ):( gfx_setfont(5) );
+    gfx_x = pos_x4;
+    gfx_y = pos_y4;
+    gfx_drawstr("<", 260,pos_w4,163*scaling;);
+  );
+);
+
+
+function draw_preference_mask () (
+  //Prefence Mask
+  PREFERENCE_MASK && !gfx_ext_flags ? (
+
+      mode == 1 ? (xd = xd*2) : (xd = xd);
+
+      // mask background
+      gfx_setfont(1);
+      gfx_set(.1,.1,.1,Pref_ac[color]/100);
+      gfx_rect(0,0,gfx_w,gfx_h+1);
+
+      loop(Pref_blur,
+        gfx_x=0; gfx_y=0;
+        gfx_blurto(gfx_w,gfx_h+1);
+      );
+
+
+      // preferences: mask header
+      gfx_setfont(5); gfx_set(1,1,1,.5);
+      gfx_x=1*scaling; gfx_y=1*scaling;
+      gfx_drawstr("***** Preferences *****",261, gfx_w-(1*scaling), ref_Y-gfx_texth/3);
+
+
+      // slider() bg
+      prev_X = 445*scaling;     prev_Y = 8*scaling;   prev_W = 20*scaling; prev_H = 20*scaling;
+      next_X = 472*scaling;     next_Y = 8*scaling;   next_W = 20*scaling; next_H = 20*scaling;
+
+      ref_X  = xd+(15*scaling); ref_Y  = 40*scaling;  ref_W  = 54*scaling; ref_H  = 15*scaling;
+      warn_X = xd+(15*scaling); warn_Y = 60*scaling;  warn_W = 54*scaling; warn_H = 15*scaling;
+      peak_X = xd+(75*scaling); peak_Y = 60*scaling;  peak_W = 45*scaling; peak_H = 15*scaling;
+      resp_X = xd+(15*scaling); resp_Y = 80*scaling;  resp_W = 54*scaling; resp_H = 15*scaling;
+      damp_X = xd+(15*scaling); damp_Y = 100*scaling; damp_W = 54*scaling; damp_H = 15*scaling;
+      NdHl_X = xd+(15*scaling); NdHl_Y = 130*scaling; NdHl_W = 54*scaling; NdHl_H = 15*scaling;
+      vuHl_X = xd+(75*scaling); vuHl_Y = 130*scaling; vuHl_W = 54*scaling; vuHl_H = 15*scaling;
+      CuMx_X = xd+(15*scaling); CuMx_Y = 150*scaling; CuMx_W = 54*scaling; CuMx_H = 15*scaling;
+      pkHl_X = xd+(75*scaling); pkHl_Y = 150*scaling; pkHl_W = 54*scaling; pkHl_H = 15*scaling;
+      Smmd_X = xd+(15*scaling); Smmd_Y = 170*scaling; Smmd_W = 54*scaling; Smmd_H = 15*scaling;
+
+      lbx_X  = xd+(15*scaling); lbx_Y  = 40*scaling;  lbx_W  = 54*scaling; lbx_H  = 15*scaling;
+      Tips_X = xd+(15*scaling); Tips_Y = 60*scaling;  Tips_W = 54*scaling; Tips_H = 15*scaling;
+      FtSz_X = xd+(15*scaling); FtSz_Y = 80*scaling;  FtSz_W = 54*scaling; FtSz_H = 15*scaling;
+      blur_X = xd+(15*scaling); blur_Y = 100*scaling; blur_W = 54*scaling; blur_H = 15*scaling;
+
+
+      //Prefence Page Buttons
+      gfx_set(0,0,0,.5);
+
+      gfx_rect(prev_X,prev_Y,prev_W,prev_H);
+      gfx_rect(next_X,next_Y,next_W,next_H);
+      pref_page == 1 ? (
+        prefpage_button.draw_buttonsize(next_X,next_Y,next_W,next_H);
+      ) : (
+        prefpage_button.draw_buttonsize(prev_X,prev_Y,prev_W,prev_H);
+      );
+
+      // preferences: page buttons
+      gfx_setfont(1); gfx_set(.5,.5,.5,1);
+
+      // page label
+      gfx_x=prev_X; gfx_y=prev_Y+(3*scaling);
+      gfx_drawstr("PAGE :",258,prev_X-(8*scaling), prev_Y+prev_H);
+
+      // prev page
+      gfx_setfont(4);
+      Pref_Page == 1 ? ( gfx_set(.25,.25,.25) ):( gfx_set(1,1,1,1) );
+      gfx_x=prev_X; gfx_y=prev_Y;
+      gfx_drawstr("<",261,prev_X+prev_W, prev_Y+prev_H);
+
+      // next page
+      gfx_setfont(4);
+      Pref_Page == 2 ? ( gfx_set(.25,.25,.25) ):( gfx_set(1,1,1,1) );
+      gfx_x=next_X; gfx_y=next_Y;
+      gfx_drawstr(">",261,next_X+next_W, next_Y+next_H);
+
+
+      // Preference Page 1
+      Pref_Page == 1 ? (
+        gfx_set(0,0,0,.5);
+        gfx_rect(ref_X,ref_Y,ref_W,ref_H);     reflevel_button.draw_buttonsize(ref_X,ref_Y,ref_W,ref_H);
+        gfx_rect(warn_X,warn_Y,warn_W,warn_H); warnlevel_button.draw_buttonsize(warn_X,warn_y,warn_W,warn_H);
+        gfx_rect(peak_X,peak_Y,peak_W,peak_H); peakhold_button.draw_buttonsize(peak_X,peak_Y,peak_W,peak_H);
+        gfx_rect(resp_X,resp_Y,resp_W,resp_H); response_button.draw_buttonsize(resp_X,resp_Y,resp_W,resp_H);
+        gfx_rect(damp_X,damp_Y,damp_W,damp_H); damping_button.draw_buttonsize(damp_X,damp_Y,damp_W,damp_H);
+        gfx_rect(NdHl_X,NdHl_Y,NdHl_W,NdHl_H); vuneedlehold_button.draw_buttonsize(NdHl_X,NdHl_Y,NdHl_W,NdHl_H);
+        gfx_rect(vuHl_X,vuHl_Y,vuHl_W,vuHl_H); vuholdtime_button.draw_buttonsize(vuHl_X,vuHl_Y,vuHl_W,vuHl_H);
+        gfx_rect(CuMx_X,CuMx_Y,CuMx_W,CuMx_H); pkcurrentmax_button.draw_buttonsize(CuMx_X,CuMx_Y,CuMx_W,CuMx_H);
+        gfx_rect(pkHl_X,pkHl_Y,pkHl_W,pkHl_H); pkholdtime_button.draw_buttonsize(pkHl_X,pkHl_Y,pkHl_W,pkHl_H);
+        gfx_rect(Smmd_X,Smmd_Y,Smmd_W,Smmd_H); summedmode_button.draw_buttonsize(Smmd_X,Smmd_Y,Smmd_W,Smmd_H);
+
+        // button & slider positions
+        ref_level_slider = mouse_x >= ref_X && mouse_x <= ref_X+ref_W && mouse_y > ref_Y && mouse_y < ref_Y+ref_H;
+        warn_level_slider = mouse_x >= warn_X && mouse_x <= warn_X+warn_W && mouse_y > warn_Y && mouse_y < warn_Y+warn_H;
+        peak_hold_slider = mouse_x >= peak_X && mouse_x <= peak_X+peak_W && mouse_y > peak_Y && mouse_y < peak_Y+peak_H;
+        meter_resp_slider = mouse_x >= resp_X && mouse_x <= resp_X+resp_W && mouse_y > resp_Y && mouse_y < resp_Y+resp_H;
+        meter_damp_slider = mouse_x >= damp_X && mouse_x <= damp_X+damp_W && mouse_y > damp_Y && mouse_y < damp_Y+damp_H;
+        vu_needlehold_slider = mouse_x >= NdHl_X && mouse_x <= NdHl_X+NdHl_W && mouse_y > NdHl_Y && mouse_y < NdHl_Y+NdHl_H;
+        vu_holdtime_slider = mouse_x >= vuHl_X && mouse_x <= vuHl_X+vuHl_W && mouse_y > vuHl_Y && mouse_y < vuHl_Y+vuHl_H;
+        pk_currentmax_slider = mouse_x >= CuMx_X && mouse_x <= CuMx_X+CuMx_W && mouse_y > CuMx_Y && mouse_y < CuMx_Y+CuMx_H;
+        pk_holdtime_slider = mouse_x >= pkHl_X && mouse_x <= pkHl_X+pkHl_W && mouse_y > pkHl_Y && mouse_y < pkHl_Y+pkHl_H;
+        summed_mode_slider = mouse_x >= Smmd_X && mouse_x <= Smmd_X+Smmd_W && mouse_y > Smmd_Y && mouse_y < Smmd_Y+Smmd_H;
+
+        // preferences: meter options
+        gfx_setfont(1); gfx_set(1,1,1,1);
+
+        // reference level
+        gfx_x=ref_X; gfx_y=ref_Y;
+        gfx_drawstr("Reference Level :",258,xd-(15*scaling), ref_Y+ref_H);
+        gfx_x=ref_X; gfx_y=ref_Y;
+        gfx_drawstr(sprintf(#,"%.f dB",slider3),261,ref_X+ref_W, ref_Y+ref_H);
+
+        // peak warn level
+        gfx_x=warn_X; gfx_y=warn_Y;
+        gfx_drawstr("Peak Warn Level :",258,xd-(15*scaling), peak_Y+peak_H);
+        gfx_x=warn_X; gfx_y=warn_Y;
+        gfx_drawstr(sprintf(#,"%.f dB",slider4),261,warn_X+warn_W, warn_Y+warn_H);
+
+        // peak warn hold time
+        gfx_x=peak_X; gfx_y=peak_Y;
+        gfx_drawstr(sprintf(#,"%.f ds",slider40),261,peak_X+peak_W, peak_Y+peak_H);
+
+        // meter response
+        gfx_x=resp_X; gfx_y=resp_Y;
+        gfx_drawstr("Meter Response :",258,xd-(15*scaling), resp_Y+resp_H);
+        gfx_x=resp_X; gfx_y=resp_Y;
+        gfx_drawstr(sprintf(#,"%.f %%",slider5),261,resp_X+resp_W, resp_Y+resp_H);
+
+        // meter damping
+        gfx_x=damp_X; gfx_y=damp_Y;
+        gfx_drawstr("Meter Damping :",258,xd-(15*scaling), damp_Y+damp_H);
+        gfx_x=damp_X; gfx_y=damp_Y;
+        gfx_drawstr(sprintf(#,"%.f %%",slider6*10000),261,damp_X+damp_W, damp_Y+damp_H);
+
+        // summed mode
+        gfx_x=Smmd_X; gfx_y=Smmd_Y;
+        gfx_drawstr("Summed Mode :",258,xd-(15*scaling), Smmd_Y+Smmd_H);
+        gfx_x=Smmd_X; gfx_y=Smmd_Y;
+        gfx_drawstr(strcpy_fromslider(summedMode,slider43),261,Smmd_X+Smmd_W, Smmd_Y+Smmd_H);
+
+        // vu hold needle
+        gfx_x=NdHl_X; gfx_y=NdHl_Y;
+        gfx_drawstr(strcpy_fromslider(Needle_Hold_Sldr,slider8),261,NdHl_X+NdHl_W, NdHl_Y+NdHl_H);
+
+        // vu display hold time
+        gfx_x=vuHl_X; gfx_y=vuHl_Y;
+        gfx_drawstr("VU Display / Needle Hold :",258,xd-(15*scaling), vuHl_Y+vuHl_H);
+        gfx_x=vuHl_X; gfx_y=vuHl_Y;
+        gfx_drawstr(sprintf(#,"%.f sec",slider41),261,vuHl_X+vuHl_W, vuHl_Y+vuHl_H);
+
+        // peak current max
+        gfx_x=CuMx_X; gfx_y=CuMx_Y;
+        gfx_drawstr(strcpy_fromslider(PK_current_max,slider11),261,CuMx_X+CuMx_W, CuMx_Y+CuMx_H);
+
+        // peak display hold time
+        gfx_x=pkHl_X; gfx_y=pkHl_Y;
+        gfx_drawstr("Peak Display Hold :",258,xd-(15*scaling), pkHl_Y+pkHl_H);
+        PK_current_max ? ( gfx_set(.25,.25,.25) );
+        gfx_x=pkHl_X; gfx_y=pkHl_Y;
+        gfx_drawstr(sprintf(#,"%.f sec",slider42),261,pkHl_X+pkHl_W, pkHl_Y+pkHl_H);
+      );
+
+
+      // Preference Page 2
+      Pref_Page == 2 ? (
+        gfx_set(0,0,0,.5);
+        gfx_rect(lbx_X,lbx_Y,lbx_W,lbx_H);     lbxSupport_button.draw_buttonsize(lbx_X,lbx_Y,lbx_W,lbx_H);
+        gfx_rect(Tips_X,Tips_Y,Tips_W,Tips_H); displayTooltips_button.draw_buttonsize(Tips_X,Tips_Y,Tips_W,Tips_H);
+        gfx_rect(FtSz_X,FtSz_Y,FtSz_W,FtSz_H); fontsize_button.draw_buttonsize(FtSz_X,FtSz_Y,FtSz_W,FtSz_H);
+        gfx_rect(blur_X,blur_Y,blur_W,blur_H); pageblur_button.draw_buttonsize(blur_X,blur_Y,blur_W,blur_H);
+
+        // button & slider positions
+        lbxSupport_slider = mouse_x >= lbx_X && mouse_x <= lbx_X+lbx_W && mouse_y > lbx_Y && mouse_y < lbx_Y+lbx_H;
+        displayTooltips_slider = mouse_x >= Tips_X && mouse_x <= Tips_X+Tips_W && mouse_y > Tips_Y && mouse_y < Tips_Y+Tips_H;
+        fontsize_slider = mouse_x >= FtSz_X && mouse_x <= FtSz_X+FtSz_W && mouse_y > FtSz_Y && mouse_y < FtSz_Y+FtSz_H;
+        pageblur_slider = mouse_x >= blur_X && mouse_x <= blur_X+blur_W && mouse_y > blur_Y && mouse_y < blur_Y+blur_H;
+
+        // preferences: meter options
+        gfx_setfont(1); gfx_set(1,1,1,1);
+
+        // lbx support
+        gfx_x=lbx_X; gfx_y=lbx_Y;
+        gfx_drawstr("LBX Support :",258,xd-(15*scaling), lbx_Y+lbx_H);
+        gfx_x=lbx_X; gfx_y=lbx_Y;
+        gfx_drawstr(strcpy_fromslider(lbx_support,slider46),261,lbx_X+lbx_W, lbx_Y+lbx_H);
+
+        // peak warn level
+        gfx_x=Tips_X; gfx_y=Tips_Y;
+        gfx_drawstr("Display Tooltips :",258,xd-(15*scaling), Tips_Y+Tips_H);
+        gfx_x=Tips_X; gfx_y=Tips_Y;
+        gfx_drawstr(strcpy_fromslider(show_help,slider44),261,Tips_X+Tips_W, Tips_Y+Tips_H);
+
+        // meter response
+        gfx_x=FtSz_X; gfx_y=FtSz_Y;
+        gfx_drawstr("Font Size Multiplicator :",258,xd-(15*scaling), FtSz_Y+FtSz_H);
+        gfx_x=FtSz_X; gfx_y=FtSz_Y;
+        gfx_drawstr(sprintf(#,"%.1f x",slider45),261,FtSz_X+FtSz_W, FtSz_Y+FtSz_H);
+
+        // meter response
+        gfx_x=blur_X; gfx_y=blur_Y;
+        gfx_drawstr("Background Blur :",258,xd-(15*scaling), blur_Y+blur_H);
+        gfx_x=blur_X; gfx_y=blur_Y;
+        gfx_drawstr(sprintf(#,"%.f x",slider47),261,blur_X+blur_W, blur_Y+blur_H);
+      );
+  ); // close PREFERENCE_MASK
+);
+
+
+function compute_meter () (
+  fact_up = 10 ^ ((-slider3 - 10)/20) * 0.3785 ;
+  wl   = slider4;
+  mode = slider2;
+  lim = 10 ^ (wl / 20);
+  mom = 0.00010 + 0.00032 *  slider5^3 / 125000;
+  damp = 1 - slider6 * (48000 / srate);
+
+  color = slider1;
+  gain_sldr = slider7;
+  Needle_Hold_Sldr = slider8;
+  Hold_enabled = (slider8 >= 1);
+  Hold_Arc_off = (slider8 == 3);
+  Hold_Ndl_off = (slider8 == 2);
+  VU_enabled = (slider9 == 1);
+  PK_enabled = (slider10 == 1);
+  PK_current_max = slider11;
+  PK_Reset = slider12;
+  slider12 == 1 ? (
+    left[peak] = -316.5;
+    right[peak] = -316.5;
+    left[clip] = -316.5;
+    right[clip] = -316.5;
+    slider12 = 0;
+  );
+  rec_needle = slider13;
+  led_hold = slider40;
+  holdtime1 = slider41*srate;
+  holdtime2 = slider42*srate;
+  summedMode = slider43;
+  show_help = slider44;
+  cfg_textsize = slider45;
+  lbx_support = slider46;
+  Pref_blur = slider47;
+  Pref_Page = slider64;
+
+
+  ext_tail_size =
+  (
+    Hold_enabled >= 1 ? (
+      holdtime1 ) : ( -1;
+    )
+  );
+);
+
+
+
+/////////////////////////////////////////////////////////////////
+/////////////////////// DRAW FUNCTIONS //////////////////////////
+/////////////////////////////////////////////////////////////////
+//*************************************************************//
+//*********************** BOTTOM BAR **************************//
+
+function draw_bottombar () (
+  // button & slider positions
+  ui_color_slider = mouse_x >= 50*scaling && mouse_x < 111*scaling && abs(mouse_y-ylo) < gfx_texth*0.4;
+  mode_slider = mouse_x >= 120*scaling && mouse_x < 181*scaling && abs(mouse_y-ylo) < gfx_texth*0.4;
+  volume_slider = mouse_x >= 190*scaling && mouse_x < 261*scaling && abs(mouse_y-ylo) < gfx_texth*0.4;
+  record_slider = mouse_x >= 270*scaling && mouse_x < 321*scaling && abs(mouse_y-ylo) < gfx_texth*0.4;
+
+  xw2 = max(1,floor((gfx_w) / 2));
+  yw2 = floor(xw / 1.025);
+  gfx_setfont(2);
+
+  !gfx_ext_flags ?
+  (
+    // bottom bar bg
+    gfx_set(0,0,0,.5); gfx_rect(gfx_x=x, gfx_y=ylo-gfx_texth/1.7, xw2*2.01, gfx_h+1);
+
+    // blur bb bg
+    loop(20,
+      gfx_x=x; gfx_y=ylo-gfx_texth/1.7;
+      gfx_blurto(xw2*2.01,gfx_h+1);
+    );
+
+    // separator line
+    gfx_set(.15,.15,.15,.3); gfx_line(gfx_x=x,gfx_y=ylo-gfx_texth/1.6,xw2*2.01,ylo-gfx_texth/1.6);
+
+    // version txt
+    gfx_setfont(1); gfx_set(1,1,1,1);
+    gfx_drawstr(version, 261, (45*scaling), gfx_y+gfx_texth*(1.5));
+
+
+    // gui color selector
+    set_color(BotBBtn[color]); gfx_a=.25;
+    gfx_rect(gfx_x=50*scaling, gfx_y=ylo-gfx_texth/2.5, gfx_texth+(50*scaling), gfx_texth+1, 1);
+    set_color(Font_BB[color]); gfx_a=.05;
+    gfx_rect(gfx_x=50*scaling, gfx_y=ylo-gfx_texth/2.5, gfx_texth+(50*scaling), gfx_texth+1, 0);
+    uistyle_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+(50*scaling),gfx_texth+1);
+
+    gfx_setfont(1); // small
+    set_color(Font_BB[color]);
+    gfx_drawstr(strcpy_fromslider(UI,slider1),261,gfx_x+gfx_texth+(50*scaling), gfx_y+gfx_texth);
+
+    // mode selector
+    set_color(BotBBtn[color]); gfx_a=.25;
+    gfx_rect(gfx_x=120*scaling, gfx_y=ylo-gfx_texth/2.5, gfx_texth+(50*scaling), gfx_texth+1, 1);
+    set_color(Font_BB[color]); gfx_a=.05;
+    gfx_rect(gfx_x=120*scaling, gfx_y=ylo-gfx_texth/2.5, gfx_texth+(50*scaling), gfx_texth+1, 0);
+    mode_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+(50*scaling),gfx_texth+1);
+
+    gfx_setfont(1); // small
+    set_color(Font_BB[color]);
+    gfx_drawstr(strcpy_fromslider(Mode,slider2),261,gfx_x+gfx_texth+(50*scaling),gfx_y+gfx_texth);
+
+
+    // volume level
+    set_color(BotBBtn[color]); gfx_a=.25;
+    gfx_rect(gfx_x=190*scaling,gfx_y=ylo-gfx_texth/2.5,gfx_texth+(60*scaling),gfx_texth+1,1);
+    set_color(Font_BB[color]); gfx_a=.05;
+    gfx_rect(gfx_x=190*scaling,gfx_y=ylo-gfx_texth/2.5,gfx_texth+(60*scaling),gfx_texth+1,0);
+    volume_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+(60*scaling),gfx_texth+1);
+
+    gfx_setfont(1); // small
+    set_color(Font_BB[color]);
+    gfx_drawstr(sprintf(#,"VOL :  %.2f",slider7),261,gfx_x+gfx_texth+(60*scaling),gfx_y+gfx_texth);
+
+
+    // VU REC ?
+    set_color(BotBBtn[color]); gfx_a=.25;
+    gfx_rect(gfx_x=270*scaling,gfx_y=ylo-gfx_texth/2.5,gfx_texth+(40*scaling),gfx_texth+1,1);
+    set_color(Font_BB[color]); gfx_a=.05;
+    gfx_rect(gfx_x=270*scaling,gfx_y=ylo-gfx_texth/2.5,gfx_texth+(40*scaling),gfx_texth+1,0);
+    rec_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+(60*scaling),gfx_texth+1);
+
+    gfx_setfont(1); // small
+    set_color(Font_BB[color]);
+    // draw "⚫" in color
+      gfx_setfont(1);
+      rec_needle ? set_color($xF71414) : (set_color(Font_BB[color]); gfx_a=0.1);
+      gfx_x=270*scaling; gfx_y=ylo-gfx_texth/2.5;
+      gfx_drawstr("⚫",261,gfx_x+gfx_texth+(14*scaling),gfx_y+gfx_texth-1);
+
+    // draw "REC"
+      set_color(Font_BB[color]);
+      gfx_x=290*scaling; gfx_y=ylo-gfx_texth/2.5;
+      gfx_drawstr("Rec",261,gfx_x+gfx_texth+(18*scaling),gfx_y+gfx_texth);
+  );
+
+
+  // preference button
+  gfx_setfont(1);
+  yu = gfx_texth*7/8;
+  ylo = gfx_h-yu;
+
+  // button & slider positions
+  ui_slider_button = abs(mouse_x-tx) < gfx_texth/2 && abs(mouse_y-ylo) < gfx_texth/2;
+
+  gfx_ext_flags == 0 ?
+  (
+    !(gfx_ext_flags&1) ?
+  (
+      mode = slider2;
+      //set_color(TEXT_COLOR);
+      gfx_set(1,1,1);
+      tx = gfx_w-(gfx_texth+0.5)*1.1;
+      gfx_rect(gfx_x=tx-gfx_texth/4, gfx_y=ylo-gfx_texth/2.5, gfx_texth+1, gfx_texth+1, 0);
+      gfx_drawstr("☰",261, gfx_x+gfx_texth+1, gfx_y+gfx_texth+1);
+
+      has_click && ui_slider_button ? ( PREFERENCE_MASK == 0 ?
+        ( PREFERENCE_MASK = 1; has_click = 0; ) :
+        ( PREFERENCE_MASK = 0; has_click = 0; ) ;
+      );
+    );
+  );
+);
+
+
+
+
+function draw_tooltips () (
+  !gfx_ext_flags ?
+  (
+    // draw tooltips
+    show_help ?
+    (
+      ui_color_slider || mode_slider || volume_slider || (
+        PREFERENCE_MASK && (
+          ref_level_slider || warn_level_slider || peak_hold_slider ||
+          meter_resp_slider || meter_damp_slider || vu_holdtime_slider ||
+          pk_holdtime_slider || vu_needlehold_slider || pk_currentmax_slider ||
+          summed_mode_slider || lbxSupport_slider || displayTooltips_slider ||
+          fontsize_slider || pageblur_slider || record_slider
+        )
+      ) ?
+      (
+        gfx_setfont(8);
+        gfx_set(0,0,0,.2);
+        gfx_rect(gfx_x=-1, gfx_y=ylo-gfx_texth-(18*scaling), gfx_w+1, gfx_texth+(7*scaling));
+
+        loop(50,
+          gfx_x=0; gfx_y=ylo-gfx_texth-(18*scaling);
+          gfx_blurto(gfx_w,gfx_y+gfx_texth+(10*scaling));
+        );
+      );
+
+      set_color(FontTip[color]);
+
+      ui_color_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+        gfx_drawstr ("'Left-click' or 'mouse wheel' to cycle through UI Styles.  'Right-click' to show popup menu.",
+        261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+      );
+
+      mode_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+        gfx_drawstr ("'Left-click' to cycle through channel modes.  'Right-click' to show popup menu.",
+        261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+      );
+
+      volume_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+        gfx_drawstr ("'Left-click & drag' or 'mouse wheel' to adjust volume... hold 'Ctrl' for fine tuning.  'Double-click' to reset.",
+        261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+      );
+
+      record_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+        gfx_drawstr ("Records VU Meter output as automation. Track must be in 'write mode'.",
+        261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+      );
+
+      PREFERENCE_MASK ?
+      (
+          ref_level_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the dBFS reference level for 0dB VU.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          warn_level_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the dBFS warn level for the Peak LED.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          peak_hold_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the hold time for the Peak LED. ( 100 ms to 1 sec )",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          meter_resp_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the meter response time.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          meter_damp_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the momentum for the needle.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          vu_needlehold_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Enable or disable Hold Needle, Arc, or both (does not affect embedded UI).",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          vu_holdtime_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the holdtime for the VU Display and VU Needle.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          pk_currentmax_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the Peak Display to Current Hold or Max Hold.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          pk_holdtime_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            PK_current_max ? (
+              gfx_drawstr ("Sets the holdtime for the Peak Display  (disable 'Max').",
+              261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+            ) : (
+              gfx_drawstr ("Sets the holdtime for the Peak Display.",
+              261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+            );
+          );
+
+          summed_mode_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the Summed Mode: Choose between ''Mono'' or ''Logical OR''.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          lbxSupport_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Turns on constant VU parameter output (necessary for LBX Stripper).",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          displayTooltips_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Toggles tooltips on / off.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          fontsize_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Adjusts the font size.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+          pageblur_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Adjusts the amount of background blur on the preference page.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+      ); // close PREFERENCE_MASK
+    );
+  );
+);
+
+
+
+
 
 
 
@@ -171,28 +1479,9 @@ out_pin: right output
 
 
 @slider
-
-//======================================== VOLUME ===================================================/
-  ddb=0.0;
-
-
-//======================================== VU METER =================================================/
-  fact_up = 10 ^ ((-slider3 - 10)/20) * 0.3785 ;
-  wl   = slider4;
-  mode = slider2;
-  lim = 10 ^ (wl / 20);
-  mom = 0.00010 + 0.00032 *  slider5^3 / 125000;
-  damp = 1 - slider6 * (48000 / srate);
-
-
-//======================================== SETTINGS =================================================/
-
-  bb_t = slider60;
-  show_help = slider61;
-
-
-
-
+//********************************************************************************************************
+//********************************************************************************************************
+compute_meter();
 
 
 
@@ -200,13 +1489,15 @@ out_pin: right output
 
 
 @block
+idle = (ph <= 0.78539816339745 && !smpL && !smpR && peakL == -20 && peakR == -20 && spl0 = spl1 <= 0.00000005298331 && !PK_Reset);
 
 //========================================= VOLUME ==================================================/
+
   cnt=0;
   ddb=0.0;
 
   db_chg_splpos=slider_next_chg(1, tgtdb);
-  db_chg_splpos > 0 ? (db=slider7;) : (tgtdb = slider7; db_chg_splpos = samplesblock;);
+  db_chg_splpos > 0 ? (db=gain_sldr) : (tgtdb = gain_sldr; db_chg_splpos = samplesblock;);
 
   ddb=(tgtdb-db)/db_chg_splpos;
 
@@ -214,9 +1505,92 @@ out_pin: right output
 
 
 
+//***************************************** VU OUT *************************************************/
 
 
+  (VU_enabled || lbx_support || rec_needle) && !idle ?
+  (
+      slider20 = round_dec(vu(dbL), 1);
+      slider21 = round_dec(vu(dbR), 1);
 
+      // Holdtime for Max VU
+      vu(dbL) > slider24 ? (
+          slider24 = round_dec(vu(dbL), 1);
+          holdcounter1 = holdtime1;
+          ) : (
+          holdcounter1 > 0 ? (
+              holdcounter1 -= samplesblock;
+          ) : (
+              slider24 = round_dec(vu(dbL), 1);
+          );
+      );
+
+      mode != 1 ? (
+        vu(dbR) > slider25 ? (
+            slider25 = round_dec(vu(dbR), 1);
+            holdcounter2 = holdtime1;
+            ) : (
+            holdcounter2 > 0 ? (
+                holdcounter2 -= samplesblock;
+            ) : (
+                slider25 = round_dec(vu(dbR), 1);
+            );
+        )
+      ) : (
+        slider25 = -20;
+      )
+    ) : (
+      slider20 = -20;
+      slider21 = -20;
+      slider24 = -20;
+      slider25 = -20;
+  );
+
+  !idle ? (
+      rec_needle == 1 ? (
+          mode != 1 ? (
+              slider_automate(slider20);
+              slider_automate(slider21);
+            ):(
+              slider_automate(slider20);
+          );
+      );
+  );
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Hold_enabled && !idle ? (
+    dbL > peakL ? (
+      peakL = dbL;
+      holdcounter1 = holdtime1;
+    ) : (
+      holdcounter1 > 0 ? (
+        holdcounter1 -= samplesblock;
+      ) : (
+        peakL = dbL;
+      );
+    );
+
+    mode != 1 ? (
+      dbR > peakR ? (
+        peakR = dbR;
+        holdcounter2 = holdtime1;
+      ) : (
+        holdcounter2 > 0 ? (
+          holdcounter2 -= samplesblock;
+        ) : (
+          peakR = dbR;
+        );
+      )
+    ) : (
+      peakR == -20;
+    )
+) : (
+  peakL == -20;
+  peakR == -20;
+);
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 
@@ -224,1127 +1598,241 @@ out_pin: right output
 @sample
 
 //========================================= VOLUME ==================================================/
+  gain_sldr != 0 && !idle ? (
+    cnt == db_chg_splpos ? (
+      ddb=0.0; db_chg_splpos=slider_next_chg(1, tgtdb);
+      db_chg_splpos > cnt ? (
+        ddb=(tgtdb-db)/(db_chg_splpos-cnt);
+      );
+    );
 
-  cnt == db_chg_splpos ? (ddb=0.0; db_chg_splpos=slider_next_chg(1, tgtdb);
-     db_chg_splpos > cnt ? (ddb=(tgtdb-db)/(db_chg_splpos-cnt);););
+    adj=exp(db*AMP_DB_i);
 
-  adj=exp(db*AMP_DB_i);
+    spl0 *= adj;
+    spl1 *= adj;
 
-  spl0 *= adj;
-  spl1 *= adj;
-
-  db += ddb;
-  cnt += 1;
-
-
+    db += ddb;
+    cnt += 1;
+  );
 
 
 //======================================== VU METER =================================================/
 
-  tot_nbr_spl += 1;
+  !idle ? (
+      tot_nbr_spl += 1;
 
-  smpL = spl0;
-  smpR = spl1;
+      smpL = spl0;
+      smpR = spl1;
 
-  mode == 1 ? (smpL = (spl0 + spl1) * 0.5; smpR = smpL;);
-  mode >= 2 ? (smpL = (spl0 + spl1) * 0.5; smpR = (spl0 - spl1) * 0.5;);
+      mode == 1 ? (summedMode == 0 ?
+                  (smpL = (spl0 + spl1) * 0.5; smpR = smpL):
+                  (smpL = (spl0 > spl1 ? spl0 : spl1); smpR = smpL);
+      );
+      mode == 2 ? (smpL = (spl0 + spl1) * 0.5; smpR = (spl0 - spl1) * 0.5);
 
-  smpL = abs(smpL);
-  smpR = abs(smpR);
+      smpL = abs(smpL);
+      smpR = abs(smpR);
 
-  scnt += 1;
-  scnt === 10 ? (
+      scnt += 1;
+      scnt === 10 ? (
 
+  // move left needle
+              force = smpL * fact_up  -  (nd_posL * .1 + offset);
 
-//************************************* move left needle *********************************************
+              nd_speedL += force * dt / mom;
+              nd_speedL = nd_speedL * damp;
+              nd_posL += nd_speedL * dt;
+              nd_posL < 0 || nd_posL > 1 ? nd_speedL = 0;
 
-      force = smpL * fact_up  -  (nd_posL * .1 + offset);
-
-      nd_speedL += force * dt / mom;
-      nd_speedL = nd_speedL * damp;
-      nd_posL += nd_speedL * dt;
-      nd_posL < 0 || nd_posL > 1 ? nd_speedL = 0;
-
-      nd_posL = min(max(nd_posL,0),1);
-
-
-//************************************* move right needle ********************************************
-
-      force = smpR * fact_up  - (nd_posR * .1 + offset);
-
-      nd_speedR += force * dt / mom;
-      nd_speedR = nd_speedR * damp;
-      nd_posR += nd_speedR * dt;
-      nd_posR < 0 || nd_posR > 1 ? nd_speedR = 0;
-
-      nd_posR = min(max(nd_posR,0),1);
-
-      overL -= 100 / slider11;
-      overR -= 100 / slider11;
-
-      scnt = 0;
-  ); //scnt
+              nd_posL = min(max(nd_posL,0),1);
 
 
-//*****************************************************************************************************
+  // move right needle
+              mode != 1 ? (
+                force = smpR * fact_up  - (nd_posR * .1 + offset);
 
-  smpL > lim ? overL = srate;
-  smpR > lim ? overR = srate;
+                nd_speedR += force * dt / mom;
+                nd_speedR = nd_speedR * damp;
+                nd_posR += nd_speedR * dt;
+                nd_posR < 0 || nd_posR > 1 ? nd_speedR = 0;
+
+                nd_posR = min(max(nd_posR,0),1);
+              );
 
 
-//*****************************************************************************************************
+          // Peak LED
+          overL -= 100 / led_hold;
+          overR -= 100 / led_hold;
 
-  tot_nbr_spl_g  = tot_nbr_spl;
+          scnt = 0;
 
-  overL_g = overL;
-  overR_g = overR;
-  nd_posL_g = nd_posL;
-  nd_posR_g = nd_posR;
+      ); //scnt
 
-  tot_nbr_spl_g === tot_nbr_spl ? (
-  dbL = (nd_posL_g * 23) - 20;
-  dbR = (nd_posR_g * 23) - 20;
+  //*****************************************************************************************************
+
+      smpL > lim ? overL = srate;
+      smpR > lim ? overR = srate;
+
+
+  //*****************************************************************************************************
+
+      tot_nbr_spl_g  = tot_nbr_spl;
+
+      overL_g = overL;
+      overR_g = overR;
+
+      nd_posL_g = nd_posL;
+      nd_posR_g = nd_posR;
+
+      tot_nbr_spl_g === tot_nbr_spl ? (
+        dbL = (nd_posL_g * 23) - 20;
+        dbR = (nd_posR_g * 23) - 20;
+      ) : (
+        errcnt += 1; // thread collision
+      );
+
   ) : (
-  errcnt += 1; // thread collision
-  );
-
+      overL = overL_g = smpL = 0;
+      overR = overR_g = smpR = 0;
+  ); //idle
 
 //*****************************************************************************************************
 
-  slider50 = dbL;
-  slider51 = dbR;
-  slider52 = sign(overL);
-  slider53 = sign(overR);
-
-  play_state == 5 ? (
-    slider_automate(slider50|slider51|slider52|slider53);
+  (VU_enabled || lbx_support) && !idle ? (
+      slider22 = sign(overL);
+      slider23 = sign(overR);
+    ) : (
+      slider22 = 0;
+      slider23 = 0;
   );
 
 
-
-
-
-
-
-
-
-
-
-
-
-@gfx 480 235
-
-
-//========================================= GFX INIT ================================================/
-
-  // override drawing functions for graphical window scaling
-  gsc = min(gfx_w/480,gfx_h/235); igsc = 1.5/gsc;
-  gxo = max(0,  gfx_w/2 - gfx_h*480/235/2);
-
-
-  function gfx_lineto(x,y,aa) ( gfx_x*=gsc; gfx_y*=gsc; gfx_x+=gxo;
-       gfx_lineto(x*gsc+gxo,y*gsc,aa); gfx_x-=gxo; gfx_x*=igsc; gfx_y*=igsc; );
-
-  function gfx_rectto(x,y)(gfx_x*=gsc; gfx_y*=gsc; gfx_x+=gxo; gsc>.5 ?
-       gfx_rectto(x*gsc+gxo,y*gsc); gfx_x-=gxo;  gfx_x*=igsc; gfx_y*=igsc; );
-
-  function gfx_drawnumber(y,x) (
-       gsc>.5 ? (
-          gsc<.7 && x>1 ? x=1;
-          gfx_x*=gsc; gfx_y*=gsc; gfx_x+=gxo; gfx_drawnumber(y,x);
-          gfx_x-=gxo;  gfx_x*=igsc; gfx_y*=igsc;
-       );
-  );
-
-
-  function gfx_drawchar(x) (gsc>.5 ? gfx_drawchar(x););
-  function gfx_drawstr(x) (gsc>.5 ? gfx_drawstr(x););
-  function gfx_printf(x,y) ( gsc>.5 ? gfx_printf(x,y); );
-  function gfx_arc(x, y, r, a1, a2, aa) (gsc>.5 ?
-      gfx_arc(x, y, r, a1, a2, aa) : gfx_arc(x, y, r, a1, a2, 1);
-  );
-
-
-  //slider function
-  function drag_slider(x, y, z, dx)
-    globals(mouse_y, cap_last_y, cap_drag)
+//***************************************** Peak OUT *************************************************/
+PK_enabled && !idle ?
+(
+  mode == 0 ? ( _sample(left, spl0); _sample(right, spl1) );
+  mode == 1 ? ( _sample(left, (spl0+spl1) * 0.5); slider27 = -316.5; );
+  mode == 2 ? ( _sample(left, (spl0+spl1) * 0.5); _sample(right, (spl0-spl1) ) );
+) : (
+  PK_current_max == 0 && !PK_Reset ?
   (
-    x = min(max(x + dx * (cap_last_y-mouse_y),y),z);
-    cap_last_y=mouse_y;
-    cap_drag=1;
-    x;
+    slider26 = -316.5;
+    slider27 = -316.5;
+  );
+  (PK_current_max || !PK_current_max) && mode == 1 ? (
+    slider27 = -316.5;
+  )
+);
+
+
+
+
+
+@gfx 500 245
+
+// update meter parameters
+compute_meter();
+
+// set framebuffer color
+gfx_clear = packed_RGB(Frm_Buf[color]);
+
+// override drawing functions for graphical window scaling
+gsc = min(gfx_w/500,gfx_h/245);
+scaling = gfx_w/500;
+
+
+// Fonts
+FONT_SZ_MIN = 2;
+FONT_SZ_MAX = 72;
+fsz = FONT_SZ_MIN + min(gfx_w/100, FONT_SZ_MAX - FONT_SZ_MIN);
+fsz *= 1.0 + cfg_textsize/10;
+
+gfx_setfont(1, "Arial", fsz*2.1, '' );
+gfx_setfont(2, "Arial", fsz*2.2, '' );
+gfx_setfont(3, "Arial", fsz*2.6, 'u');
+gfx_setfont(4, "Arial", fsz*2.7, 'b');
+gfx_setfont(5, "Arial", fsz*3.0, 'b');
+gfx_setfont(6, "Arial", fsz*5.0, '' );
+gfx_setfont(7, "Arial", fsz*2.2, 'b' );
+gfx_setfont(8, "Arial", fsz*1.8, '' );
+
+
+// draw meter
+w1 = $pi * 16.5 / 180;
+w2 = $pi * 45 / 180;
+xw = max(1,floor((gfx_w-30) / 2));
+yw = floor(xw / 1.5);
+r1 = floor(yw * 0.85);
+
+chan = 0;
+while (chan <= 1) (
+
+  !gfx_ext_flags ? (
+    xd = 10 + chan*(xw+10);
+    mode === 1 ? xd += floor(xw/2);
+    yd = 10;
+    xa = floor(xd + xw *.5);
+    ya = floor(yd + yw * 1.1);
+  ) : (
+    xd = chan*(xw *.5);
+    yd = 1;
+    xw = max(1,floor(gfx_w * .75));
+    yw = floor(xw * .67);
+    mode = 1;
+    mode === 1 ? xd = floor(xw *.175);
+    r1 = floor(yw * .9);
+    xa = floor(xd + xw * .5);
+    ya = floor(yd + yw * 1.12);
   );
 
-  function drag_slider_precise(x, y, z, dx)
-    globals(mouse_cap)
+  /////////////////////////////////////
+  draw_meter_bg();
+  draw_3D();
+  draw_arcs();
+  draw_scale();
+  draw_peak_str();
+  draw_vu_str();
+  draw_embedded_gain();
+
+  draw_peak_LED();
+  draw_hold_arc (hold_needle, peakL, peakR);
+  compute_draw_needle(hold_needle, peakL, peakR, 2);
+  compute_draw_needle(ph, dbL, dbR, 1);
+  VU_enabled && (gsc >=.238) ? (
+    draw_level_display(slider24, slider25, vu);
+  );
+  PK_enabled && (gsc >=.238) ? (
+    draw_level_display(slider26, slider27, peak);
+  );
+  draw_coil_cover();
+  draw_channel_labels();
+  /////////////////////////////////////
+
+); // close channel
+
+draw_vu_pk_buttons();
+draw_noUserTheme();
+draw_preference_mask();
+draw_bottombar();
+draw_tooltips();
+do_mouse();
+
+
+
+PK_enabled ? (
+  !idle ?
   (
-  (mouse_cap & 4) ? dx *= 0.1;
-  drag_slider(x, y, z, dx);
+    PK_current_max == 0 ? (
+      slider26 = round_dec(dbfs(left[peak]), 1);
+      slider27 = round_dec(dbfs(right[peak]), 1);
+    ) : (
+      slider26 = round_dec(dbfs(left[clip]), 1);
+      slider27 = round_dec(dbfs(right[clip]), 1);
+    )
+  ) : (
+    PK_Reset;
   );
+);
 
-  function cycle_slider(x, y, z, dx)
-    globals(last_mouse_cap)
-  (
-    (last_mouse_cap & 16) ? x -= dx : x += dx;
-    y > z ? ( dx=y; y=z; z=dx; );
-    x > z ? y : x < y ? z : x;
-  );
 
-  function draw_buttonsize(xp, yp, wp,hp)
-    instance(w,h,x,y)
-    globals(g_button_right_extent,gfx_r,gfx_g,gfx_b,gfx_x,gfx_y,gfx_w)
-  (
-    w=wp; h=hp; x=xp; y=yp;
-  );
-
-  function hit_button(xp,yp,cm)
-    instance(w,h,x,y)
-    globals(cap_mode, cap_last_x, cap_last_y)
-  (
-    xp>=x&&yp>=y&&xp<x+w&&yp<y+h  ? (
-      cap_last_x = xp;
-      cap_last_y = yp;
-      cap_mode = cm;
-    );
-  );
-
-
-  // font init
-  fontinit != 1 ? (
-      gfx_setfont(1, "Arial", 14, '');
-      gfx_setfont(2, "Arial", 20, 'b');
-      gfx_setfont(3, "Arial", 17, 'u' );
-      gfx_setfont(4, "Arial", 15, '');
-      fontinit = 1;
-  );
-
-
-
-
-//======================================= MOUSE LOGIC ===============================================/
-
-  has_click = (mouse_cap&1) && !(last_cap&1) ? 1 : 0;
-  last_cap = mouse_cap;
-
-
-  (mouse_cap & 1) ? (
-          !(last_mouse_cap & 1) ? (
-              !cap_drag && cap_timer < 12 ? (
-                  cap_mode == 3 ? ( slider3 = -18; slider_automate(slider3) );
-                  cap_mode == 4 ? ( slider4 = -6; slider_automate(slider4) );
-                  cap_mode == 5 ? ( slider5 = 50; slider_automate(slider5) );
-                  cap_mode == 6 ? ( slider6 = 0.0053; slider_automate(slider6) );
-                  cap_mode == 11 ? ( slider11 = 3; slider_automate(slider11) );
-              );
-
-              (cap_mode == 7) && !cap_drag && cap_timer < 12 ? (
-                  cap_mode == 7 ? ( slider7 = 0; slider_automate(slider7) );
-                  cap_mode=0;
-                ) : (
-                  cap_mode = cap_drag = cap_timer = 0;
-
-                  gfx_ext_flags == 1 ? (
-                      cap_last_x = mouse_x;
-                      cap_last_y = mouse_y;
-                      cap_mode=7;
-                  );
-
-                  uistyle_button.hit_button(mouse_x,mouse_y,1);
-                  mode_button.hit_button(mouse_x,mouse_y,2);
-                  reflevel_button.hit_button(mouse_x,mouse_y,3);
-                  warnlevel_button.hit_button(mouse_x,mouse_y,4);
-                  response_button.hit_button(mouse_x,mouse_y,5);
-                  damping_button.hit_button(mouse_x,mouse_y,6);
-                  volume_button.hit_button(mouse_x,mouse_y,7);
-                  peakhold_button.hit_button(mouse_x,mouse_y,11);
-                  help_button.hit_button(mouse_x,mouse_y,61);
-                );
-          );
-
-          // drag
-          cap_mode == 3 && cap_last_y != mouse_y ? (
-              slider3=drag_slider(slider3,-36,0,1); slider_automate(slider3) );
-          cap_mode == 4 && cap_last_y != mouse_y ? (
-              slider4=drag_slider(slider4,-20,0,1); slider_automate(slider4) );
-          cap_mode == 5 && cap_last_y != mouse_y ? (
-              slider5=drag_slider(slider5,0,100,1); slider_automate(slider5) );
-          cap_mode == 6 && cap_last_y != mouse_y ? (
-              slider6=drag_slider(slider6,0,0.01,0.0001); slider_automate(slider6) );
-          cap_mode == 7 && cap_last_y != mouse_y ? (
-              slider7=drag_slider_precise(slider7,-18,18,0.1); slider_automate(slider7) );
-          cap_mode == 11 && cap_last_y != mouse_y ? (
-              slider11=drag_slider_precise(slider11,1,10,.1); slider_automate(slider11) );
-          ) : (
-          // cycle click
-            cap_mode == 1 && !cap_drag ? (
-                slider1=cycle_slider(slider1,0,9,1); slider_automate(slider1); cap_mode=0 );
-            cap_mode == 2 && !cap_drag ? (
-                slider2=cycle_slider(slider2,0,2,1); slider_automate(slider2); cap_mode=0 ) : (
-            cap_mode == 61 && !cap_drag ? (
-                slider61=cycle_slider(slider61,0,1,1); slider_automate(slider61); cap_mode=0 );
-          );
-  );
-
-
-
-
-
-
-
-
-  //************************************* Right Click Button Menus ************************************
-
-  Bottom_bar_visible ? (
-
-      // UI Style Menu
-      cap_mode && cap_timer < 10 ? cap_timer += 1;
-      ui_color_slider && (mouse_cap==0 && last_mouse_cap==2) ? (
-          gfx_x = 25;
-          gfx_y = ylo - gfx_texth*17.1;
-          sprintf(
-              #menustr,"Classic|Knight|Purple|Mint|Pastel|Warm|Ivory|Trooper|Ultimate|Mooncake|",#menustr,
-              slider1==0?"!":"", slider1==1?"!":"", slider1==2?"!":"", slider1==3?"!":"", slider1==4?"!":"",
-              slider1==5?"!":"", slider1==6?"!":"", slider1==7?"!":"", slider1==8?"!":"", slider1==9?"!":""
-          );
-          ret = gfx_showmenu(#menustr);
-          ret > 0 ? (
-              (ret-=1) < 10 ? (slider1 = ret; slider_automate(slider1); );
-          );
-      );
-
-      // Mode Menu
-      cap_mode && cap_timer < 3 ? cap_timer += 1;
-      mode_slider && (mouse_cap==0 && last_mouse_cap==2) ? (
-          gfx_x = 101;
-          gfx_y = ylo - gfx_texth*6.1;
-          sprintf(
-              #menustr,"Stereo|Summed|Mid / Side|",#menustr,
-              slider2==0?"!":"", slider2==1?"!":"", slider2==2?"!":""
-          );
-          ret = gfx_showmenu(#menustr);
-          ret > 0 ? (
-              (ret-=1) < 3 ? (slider2 = ret; slider_automate(slider2); );
-          );
-      );
-
-  );
-
-  cap_mode && cap_timer < 10 ? cap_timer += 1;
-  last_mouse_cap = mouse_cap;
-
-
-
-
-
-
-
-
-//========================================== STYLES =================================================/
-
-  style = slider1;
-
-  style == 0 ? ( gfx_clear = 30 + 60 * 256 + 110 * 65536; );
-  style == 1 ? ( gfx_clear = 18 + 18 * 256 + 18 * 65536; );
-  style == 2 ? ( gfx_clear = 16 + 10 * 256 + 26 * 65536; );
-  style == 3 ? ( gfx_clear = 52 + 89 * 256 + 86 * 65536; );
-  style == 4 ? ( gfx_clear = 245 + 169 * 256 + 171 * 65536; );
-  style == 5 ? ( gfx_clear = 26 + 25 * 256 + 21 * 65536; );
-  style == 6 ? ( gfx_clear = 204 + 199 * 256 + 180 * 65536; );
-  style == 7 ? ( gfx_clear = 163 + 162 * 256 + 158 * 65536; );
-  style == 8 ? ( gfx_clear = 46 + 46 * 256 + 46 * 65536; );
-  style == 9 ? ( gfx_clear = 30 + 31 * 256 + 35 * 65536; );
-
-
-  w1 = $pi * 16.5 / 180;
-  w2 = $pi * 45 / 180;
-  xw = max(1,floor((gfx_w-30) / 2));
-  yw = floor(xw / 1.5);
-  r1 = floor(yw * 0.85);
-
-  chan = 0;
-
-  while (chan <= 1) (
-      xd = 10 + chan*(xw+10);
-      mode === 1 ? xd += floor(xw/2);
-      yd = 10;
-      xa = floor(xd + xw / 2);
-      ya = floor(yd + yw * 1.1);
-
-
-
-
-    //************************************* meter background styles **************************************
-
-      // background style 0: classic
-      style == 0 ? ( gfx_r=1; gfx_g=1; gfx_b=0.7;  gfx_rect(xd,yd,xw,yw);  );
-
-      // background style 1: dark knight
-      style == 1 ? ( gfx_r=gfx_g=0.18431 ;gfx_b = 0.2;  gfx_rect(xd,yd,xw,yw);   );
-
-      // background style 2: purple
-      style == 2 ? ( gfx_r=0.14110; gfx_g=0.09020; gfx_b=0.21961;  gfx_rect(xd,yd,xw,yw);  );
-
-      // background style 3: mint
-      style == 3 ? ( gfx_r=0.65490; gfx_g=0.94902; gfx_b=0.92157;  gfx_rect(xd,yd,xw,yw);  );
-
-      // background style 4: pastel
-      style == 4 ? ( gfx_r=0;gfx_g=1;gfx_b=.9;  gfx_rect(xd,yd,xw,yw);
-      !gfx_ext_flags ? (gfx_r=0.65; gfx_g=0.37; gfx_b=0.6;  gfx_rect(xd,yd+yw;,xw-(xw/1.35),yw*yw ) );
-                     gfx_r=0.85490; gfx_g=0.85490; gfx_b=0.96078;  gfx_rect(xd,yd,xw,yw); gfx_a=0.79; );
-
-      // background style 5: warm
-      style == 5 ? ( gfx_r=1; gfx_g=0.76471; gfx_b=0.32549; gfx_a=1;  gfx_rect(xd,yd,xw,yw);
-                     gfx_r=0.87451; gfx_g=0.49412; gfx_b=0.08235; gfx_a=.10; gfx_rect(xd,yd,xw,yw/yd*1.6);
-                     gfx_r=0.87451; gfx_g=0.49412; gfx_b=0.08235; gfx_a=.13; gfx_rect(xd,yd,xw,yw/yd*1.5);
-                     gfx_r=0.87451; gfx_g=0.49412; gfx_b=0.08235; gfx_a=.15; gfx_rect(xd,yd,xw,yw/yd*1.4);
-                     gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.1/2; gfx_rect(xd,ya*.76,xw,yw/yd*1.7);
-                     gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.10; gfx_circle(xa,ya*1.15,r1*0.87,1,1);
-                     gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.13; gfx_circle(xa,ya*1.20,r1*0.87,1,1);
-                     gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.15; gfx_circle(xa,ya*1.25,r1*0.87,1,1);
-                     gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.18; gfx_circle(xa,ya*1.30,r1*0.87,1,1);
-                     gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.25; gfx_circle(xa,ya*1.27,r1*0.77,1,1);
-                     gfx_r=0.10196; gfx_g=0.09804; gfx_b=0.08235; gfx_a=1;  gfx_rect(xd,ya*0.91,xw,yw*2); );
-
-      // background style 6: ivory
-      style == 6 ? ( gfx_r=0.86667; gfx_g=0.85490; gfx_b=0.78039;  gfx_rect(xd,yd,xw,yw); );
-
-      // background style 7: trooper
-      style == 7 ? ( gfx_r=gfx_g=gfx_b=0.0; gfx_a=1;  gfx_rect(xd,yd,xw,yw);
-                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.1; gfx_rect(xd,yd,xw,yw/yd*1.6);
-                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.2; gfx_rect(xd,yd,xw,yw/yd*1.5);
-                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.3; gfx_rect(xd,yd,xw,yw/yd*1.4);
-                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.1; gfx_rect(xd,ya*.76,xw,yw/yd*1.7);
-                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.10; gfx_circle(xa,ya*1.10,r1*0.87,1,1);
-                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.12; gfx_circle(xa,ya*1.15,r1*0.87,1,1);
-                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.14; gfx_circle(xa,ya*1.20,r1*0.87,1,1);
-                     gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.15; gfx_circle(xa,ya*1.29,r1*0.87,1,1);
-                     gfx_r=0.63922; gfx_g=0.63529; gfx_b=0.61961; gfx_a=1;  gfx_rect(xd,ya*0.91,xw,yw*2); );
-
-      // background style 8: ultimate
-      style == 8 ? ( gfx_r=0.55294; gfx_g=0.55294; gfx_b=0.55294;  gfx_rect(xd,yd,xw,yw);
-                     gfx_r=0.42745; gfx_g=0.42745; gfx_b=0.42745;  gfx_a=.65;
-                     gfx_rect(xd+1,yd,xw-1,yw-1,0); gfx_a=1; );
-
-      // background style 9: mooncake
-      style == 9 ? ( gfx_r=0.03922; gfx_g=0.04314; gfx_b=0.04314;  gfx_rect(xd,yd,xw,yw); );
-
-
-
-      //EXT_FLAGS*****************
-
-      // tcp / mcp scaling & summing
-      gfx_ext_flags == 1 ? (
-          chan = 0;
-          xd = chan*(xw/2);
-          yd = 2;
-          xw = max(1,floor(gfx_w / 1.4));
-          yw = floor(xw / 1.5);
-          mode = 1;
-          mode === 1 ? xd = floor(xw/4.5);
-          r1 = floor(yw * 0.90);
-          xa = floor(xd + xw / 2);
-          ya = floor(yd + yw * 1.12);
-
-          // background style
-          style == 0 ? ( gfx_r=1; gfx_g=1; gfx_b=0.7;  gfx_rect(xd*.5,yd,xw*1.2,yw);  );
-          style == 1 ? ( gfx_r=gfx_g=0.18431; gfx_b=0.2;  gfx_rect(xd*0.5,yd,xw*1.2,yw);  );
-          style == 2 ? ( gfx_r=0.14110; gfx_g=0.09020; gfx_b=0.21961;  gfx_rect(xd*.5,yd,xw*1.2,yw);  );
-          style == 3 ? ( gfx_r=0.65490; gfx_g=0.94902; gfx_b=0.92157;  gfx_rect(xd*.5,yd,xw*1.2,yw);  );
-          style == 4 ? ( gfx_r=0; gfx_g=1; gfx_b=.9;  gfx_rect(xd*.5,yd,xw*1.2,yw);
-                         gfx_r=0.85490; gfx_g=0.85490; gfx_b=0.96078;  gfx_rect(xd*.5,yd,xw*1.2,yw);
-                         gfx_a=0.79; );
-          style == 5 ? ( gfx_r=1; gfx_g=0.76471; gfx_b=0.32549; gfx_a=1;  gfx_rect(xd*.5,yd,xw*1.2,yw);
-                         gfx_r=0.87451; gfx_g=0.49412; gfx_b=0.08235; gfx_a=.10; gfx_rect(xd*.5,yd,xw*1.2,yw/yd*.30);
-                         gfx_r=0.87451; gfx_g=0.49412; gfx_b=0.08235; gfx_a=.13; gfx_rect(xd*.5,yd,xw*1.2,yw/yd*.27);
-                         gfx_r=0.87451; gfx_g=0.49412; gfx_b=0.08235; gfx_a=.15; gfx_rect(xd*.5,yd,xw*1.2,yw/yd*.24);
-                         gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.22; gfx_rect(xd*.5,ya*.76,xw*1.2,yw/yd*0.5);
-                         gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.10; gfx_circle(xa,ya*1.15,r1*0.87,1,1);
-                         gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.13; gfx_circle(xa,ya*1.20,r1*0.87,1,1);
-                         gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.15; gfx_circle(xa,ya*1.25,r1*0.87,1,1);
-                         gfx_r=1; gfx_g=0.88235; gfx_b=0.53725; gfx_a=.18; gfx_circle(xa,ya*1.30,r1*0.87,1,1);
-                         gfx_r=0.10196; gfx_g=0.09804; gfx_b=0.08235; gfx_a=1;  gfx_rect(xd*.5,ya*0.9,xw*1.2,yw*2); );
-          style == 6 ? ( gfx_r=0.86667; gfx_g=0.85490; gfx_b=0.78039;  gfx_rect(xd*.5,yd,xw*1.2,yw); );
-          style == 7 ? ( gfx_r=gfx_g=gfx_b=0.0; gfx_a=1;  gfx_rect(xd*.5,yd,xw*1.2,yw);
-                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.2; gfx_rect(xd*.5,yd,xw*1.2,yw/yd*.30);
-                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.3; gfx_rect(xd*.5,yd,xw*1.2,yw/yd*.27);
-                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.4; gfx_rect(xd*.5,yd,xw*1.2,yw/yd*.24);
-                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.1; gfx_rect(xd*.5,ya*.76,xw,yw/yd*.22);
-                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.10; gfx_circle(xa,ya*1.10,r1*0.87,1,1);
-                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.12; gfx_circle(xa,ya*1.15,r1*0.87,1,1);
-                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.14; gfx_circle(xa,ya*1.20,r1*0.87,1,1);
-                         gfx_r=0.14902; gfx_g=0.15294; gfx_b=0.16078; gfx_a=.15; gfx_circle(xa,ya*1.29,r1*0.87,1,1);
-                         gfx_r=0.63922; gfx_g=0.63529; gfx_b=0.61961; gfx_a=1;  gfx_rect(xd*.5,ya*0.9,xw*1.2,yw*2); );
-          style == 8 ? ( gfx_r=0.55294; gfx_g=0.55294; gfx_b=0.55294;  gfx_rect(xd*.5,yd,xw*1.2,yw); );
-          style == 9 ? ( gfx_r=0.03922; gfx_g=0.04314; gfx_b=0.04314;  gfx_rect(xd*.5,yd,xw*1.2,yw); );
-      );
-
-      //EXT_FLAGS END*************
-
-
-
-
-    //*************************************** meter scale styles *****************************************
-
-      // scale  style 0: classic
-      style == 0 ? (gfx_set(0,0,0); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
-        gfx_set(.95,0,0); // bold line
-        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
-        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
-      );
-
-      // scale style 1: dark knight
-      style == 1 ? (gfx_set(1,1,1); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
-        gfx_set(.94902,.32157,.72941); // bold line
-        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
-        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
-      );
-
-      // scale style 2: purple
-      style == 2 ? (gfx_set(.63922,.45882,1); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
-        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
-        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
-      );
-
-      // scale style 3: mint
-      style == 3 ? (gfx_set(0,0,0); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
-        gfx_set(.29020,.85098,.69020); // bold line
-        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
-        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
-      );
-
-      // scale style 4: pastel
-      style == 4 ? (gfx_set(.37647,.55294,.70980); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
-        gfx_set(.96078,.86667,.60392); // bold line
-        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
-        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
-      );
-
-      // scale style 5: warm
-      style == 5 ? (gfx_set(0,0,0); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
-        gfx_set(.81373,.08627,.09412); // bold line
-        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
-        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
-      );
-
-      // scale style 6: ivory
-      style == 6 ? (gfx_set(.36070,.34902,.31373); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
-        gfx_set(.89412,.29412,.23922); // bold line
-        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
-        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
-      );
-
-      // scale style 7: trooper
-      style == 7 ? (gfx_set(.84706,.85098,.85882); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
-        gfx_set(.95,0,0); // bold line
-        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
-        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
-      );
-
-      // scale style 8: ultimate
-      style == 8 ? (gfx_set(.18039,.18039,.18039); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
-        gfx_set(.18039,.18039,.18039); // bold line
-        gfx_arc(xa, ya, r1 + 1, w1, w2, 1); gfx_arc(xa, ya, r1 + 2, w1, w2, 1);
-        gfx_arc(xa, ya, r1 + 3, w1, w2, 1); gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
-      );
-
-      // scale style 9: mooncake
-      style == 9 ? (gfx_set(.35686,.36471,.40392); gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
-        gfx_set(.01961,.95686,.56471); // bold line
-        gfx_arc(xa, ya, r1 + 0, w1, w2, 1); gfx_arc(xa, ya, r1 + 1, w1, w2, 1);
-        gfx_arc(xa, ya, r1 + 2, w1, w2, 1); gfx_arc(xa, ya, r1 + 3, w1, w2, 1);
-        gfx_arc(xa, ya, r1 + 4, w1, w2, 1);
-      );
-
-
-
-
-    //*************************************** meter font styles ******************************************
-
-    // -20dB - 0dB *********************
-      gfx_setfont(1);
-
-      style == 0 ? (gfx_set(.20000,.20000,.20000));   style == 1 ? (gfx_set(1.0000,1.0000,1.0000));
-      style == 2 ? (gfx_set(.63922,.45882,1.0000));   style == 3 ? (gfx_set(.20000,.20000,.20000));
-      style == 4 ? (gfx_set(.37647,.55294,.70980));   style == 5 ? (gfx_set(.20000,.20000,.20000));
-      style == 6 ? (gfx_set(.36070,.34902,.31373));   style == 7 ? (gfx_set(.84706,.85098,.85882));
-      style == 8 ? (gfx_set(.18039,.18039,.18039));   style == 9 ? (gfx_set(.35686,.36471,.40392));
-
-
-    // Draw scale notches and values if scaling allows
-
-      //EXT_FLAGS*****************
-
-      gsc <=.5 ? (
-            jj = 0;
-            while ( jj <=10 ) (
-                //ii = print[jj];
-                ph =  pos[jj];
-                ph = (45 + ph*90) * $pi / 180;
-                cosp = cos(ph) * r1;
-                sinp = sin(ph) * r1;
-                x1 = xa - cosp ;
-                y1 = ya - sinp ;
-                x2 = xa - cosp * 1.1;
-                y2 = ya - sinp * 1.1;
-                gfx_x = x1;
-                gfx_y = y1;
-                gfx_lineto(x2, y2);
-                jj += 1.8;
-            );
-      );  //gsc
-
-      //EXT_FLAGS END*************
-
-
-      gsc >.5 ? (
-          jj = 0;
-          while ( jj <= 10 ) (
-              ii = print[jj];
-
-              ph =  pos[jj];
-              ph = (45 + ph*90) * $pi / 180;
-
-              cosp = cos(ph) * r1;
-              sinp = sin(ph) * r1;
-
-              x1 = xa - cosp ;
-              y1 = ya - sinp ;
-              x2 = xa - cosp * 1.1;
-              y2 = ya - sinp * 1.1;
-              x3 = xa - cosp * 1.15;
-              y3 = ya - sinp * 1.11;
-
-              gfx_x = x1;
-              gfx_y = y1;
-              gfx_lineto(x2, y2);
-
-              gfx_x = x3 - 8;
-              gfx_y = y3 - gfx_texth;
-              gfx_printf("%3d", ii);
-
-              jj += 1;
-
-
-
-
-            // +1dB - +3dB *********************
-              jj == 8 ? (
-                  style == 0 ? (gfx_set(1.0000,.00000,.00000));   style == 1 ? (gfx_set(.94902,.32157,.72941));
-                  style == 2 ? (gfx_set(.63922,.45882,1.0000));   style == 3 ? (gfx_set(.20000,.20000,.20000));
-                  style == 4 ? (gfx_set(.37647,.55294,.70980));   style == 5 ? (gfx_set(.81373,.08627,.09412));
-                  style == 6 ? (gfx_set(.89412,.29412,.23922));   style == 7 ? (gfx_set(.84706,.85098,.85882));
-                  style == 8 ? (gfx_set(.18039,.18039,.18039));   style == 9 ? (gfx_set(.01961,.95686,.56471));
-              );
-
-          );
-
-
-
-        //**************************************** peak font styles ******************************************
-
-          gfx_x = xd + xw * .9 - 30; gfx_y = yd + yw * .9 - 10;
-
-          style == 0 ? (gfx_set(.00000,.00000,.00000));   style == 1 ? (gfx_set(.44706,.85882,1.0000));
-          style == 2 ? (gfx_set(.30980,.39216,.83922));   style == 3 ? (gfx_set(.37647,.65098,.62745));
-          style == 4 ? (gfx_set(.37647,.55294,.70980));   style == 5 ? (gfx_set(.00000,.00000,.00000));
-          style == 6 ? (gfx_set(.40784,.39608,.36078));   style == 7 ? (gfx_set(.84706,.85098,.85882));
-          style == 8 ? (gfx_set(.18039,.18039,.18039));   style == 9 ? (gfx_set(.24706,.25490,.29412));
-          gfx_drawstr("PEAK");
-
-
-
-        //****************************************** VU font styles ******************************************
-
-          gfx_setfont(2); // large
-          gfx_x = xa - 10; gfx_y = yd + yw * .6;
-
-          embedded_gain_sldr == 0 ? (
-              style == 0 ? (gfx_set(.00000,.00000,.00000));   style == 1 ? (gfx_set(.94902,.32157,.72941));
-              style == 2 ? (gfx_set(.30980,.39216,.83922));   style == 3 ? (gfx_set(.37647,.65098,.62745));
-              style == 4 ? (gfx_set(.37647,.55294,.70980));   style == 5 ? (gfx_set(.00000,.00000,.00000));
-              style == 6 ? (gfx_set(.40784,.39608,.36078));   style == 7 ? (gfx_set(.95000,.00000,.00000));
-              style == 8 ? (gfx_set(.18039,.18039,.18039));   style == 9 ? (gfx_set(.24706,.25490,.29412));
-              gfx_drawstr("VU");
-          );
-
-      );  //gsc
-
-
-      //EXT_FLAGS*****************
-
-      // MCP gain slider
-      embedded_gain_sldr = (
-          gfx_ext_flags == 1 ? (
-              slider7!= 0 ? (
-                  style == 0 ? (gfx_set(.00000,.00000,.00000,.65));   style == 1 ? (gfx_set(1.0000,1.0000,1.0000,.65));
-                  style == 2 ? (gfx_set(.30980,.39216,.83922,.95));   style == 3 ? (gfx_set(.00000,.00000,.00000,.45));
-                  style == 4 ? (gfx_set(.37647,.55294,.70980,.95));   style == 5 ? (gfx_set(.00000,.00000,.00000,.65));
-                  style == 6 ? (gfx_set(.40784,.39608,.36078,.85));   style == 7 ? (gfx_set(.84706,.85098,.85882,.65));
-                  style == 8 ? (gfx_set(.18039,.18039,.18039,.85));   style == 9 ? (gfx_set(.01961,.95686,.56471) );
-                  slider7 > 0 ? gfx_x= xa -10;  slider7 < 0 ? gfx_x = xa -13;
-                  slider7 >= 10 ? gfx_x = xa -14; slider7 <= -10 ? gfx_x = xa -17;
-                  gfx_y = yd + yw * .6; gfx_printf("%.2f",slider7,true);
-              );
-          );
-      );
-
-      //EXT_FLAGS END*************
-
-
-
-
-        //******************************************** LED styles ********************************************
-
-          // LEDs style 0: classic
-          style == 0 ? (gfx_set(.95,.1,.1); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
-            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
-          );
-
-          // LEDs style 1: knight
-          style == 1 ? (gfx_set(.14510,.14510,.15294); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
-          style == 1 ? (gfx_set(.94902,.32157,.72941); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
-            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
-          );
-
-          // LEDs style 2: purple
-          style == 2 ? (gfx_set(.07843,.05098,.12157); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
-          style == 2 ? (gfx_set(.94118,.31765,.98824); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
-            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
-          );
-
-          // LEDs style 3: mint
-          style == 3 ? (gfx_set(.56078,.85098,.81961); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
-          style == 3 ? (gfx_set(.05098,.94902,.01961); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
-            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
-          );
-
-          // LEDs style 4: pastel
-          style == 4 ? (gfx_set(.80784,.80784,.91373); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
-          style == 4 ? (gfx_set(.63922,1,.65098); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
-            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
-          );
-
-          // LEDs style 5: warm
-          style == 5 ? (gfx_set(.93725,.70196,.26275); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
-          style == 5 ? (gfx_set(1,.05882,.10980,1); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
-            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
-            gfx_set(1,1,.94532,.2); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
-            gfx_circle(xd+xw*0.9+4, yd+yw*0.9 - 4,4,1,1) );
-          );
-
-          // LEDs style 6: ivory
-          style == 6 ? (gfx_set(.81569,.79608,.72157); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
-          style == 6 ? (gfx_set(.89412,.29412,.17647); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
-            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
-          );
-
-          // LEDs style 7: trooper
-          style == 7 ? (gfx_set(.10980,.10588,.12549); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
-          style == 7 ? (gfx_set(.95,0,0); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
-            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
-          );
-
-          // LEDs style 8: ultimate
-          style == 8 ? (gfx_set(.49020,.49020,.49020); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
-          style == 8 ? (gfx_set(.04314,.88235,.04314); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
-            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
-          );
-
-          // LEDs style 9: mooncake
-          style == 9 ? (gfx_set(.10196,.10588,.10588); gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) );
-          style == 9 ? (gfx_set(.01961,.95686,.56471); (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ? (
-            gfx_circle(xd+xw*0.9+6, yd+yw*0.9 - 4,4,1,1) )
-          );
-
-
-
-
-    //******************************************* needle styles ******************************************
-
-      // draw needle
-      chan == 0 ? ph = dbL : ph = dbR;
-
-      ph = 45 + (ph+20)/23*90;
-      ph = ph * ($pi / 180);
-
-      cosp = cos(ph);
-      sinp = sin(ph);
-
-      x1 = xa - cosp * r1 * 0.15;
-      y1 = ya - sinp * r1 * 0.15;
-      x2 = xa - cosp * r1 * 1.1;
-      y2 = ya - sinp * r1 * 1.1;
-
-
-      style == 0 ? (gfx_set(0,0,0); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
-      style == 1 ? (gfx_set(.44706,.85882,1); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
-      style == 2 ? (gfx_set(.16863,.73333,1); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
-      style == 3 ? (gfx_set(0,0,0); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
-      style == 4 ? (gfx_set(.45490,.67059,.85882); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
-      style == 5 ? (gfx_set(.37647,.19216,.07059); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
-      style == 6 ? (gfx_set(.32941,.31765,.28235); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
-      style == 7 ? (gfx_set(.63922,.63529,.61961); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
-      style == 8 ? (gfx_set(.18039,.18039,.18039); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
-      style == 9 ? (gfx_set(.01961,.95686,.56471); gfx_x = x1; gfx_y = y1; gfx_lineto(x2, y2));
-
-
-      // draw thick needle lines and shadows if scaling allows
-      gsc >.5 ? (
-          gfx_x = x1+1; gfx_y = y1; gfx_lineto(x2+1, y2);
-
-          //needle shadow
-          style == 0 ? gfx_set(.60000,.60000,.60000);   style == 1 ? gfx_set(.07059,.07059,.09412);
-          style == 2 ? gfx_set(.07843,.05098,.12157);   style == 3 ? gfx_set(.29020,.85098,.69020);
-          style == 4 ? gfx_set(.60000,.60000,.60,.3);   style == 5 ? gfx_set(.87451,.49412,.08235);
-          style == 6 ? gfx_set(.64314,.63137,.59608);   style == 7 ? gfx_set(.18824,.18431,.20392);
-          style == 8 ? gfx_set(.42745,.42745,.42745);   style == 9 ? gfx_set(.10196,.10588,.10588);
-          gfx_x = x1+4; gfx_y = y1; gfx_lineto(x2+4, y2);
-      );
-
-
-
-
-    //******************************************** needle circle *****************************************
-
-      style == 0 ? (gfx_set(.12,.24,.43);          gfx_circle(xa,ya,r1*0.16,1,1));
-      style == 1 ? (gfx_set(.07059,.07059,.07059); gfx_circle(xa,ya,r1*0.16,1,1));
-      style == 2 ? (gfx_set(.06275,.03922,.10196); gfx_circle(xa,ya,r1*0.16,1,1));
-      style == 3 ? (gfx_set(.20392,.34902,.33725); gfx_circle(xa,ya,r1*0.16,1,1));
-      style == 4 ? (gfx_set(.96078,.66275,.67059); gfx_circle(xa,ya,r1*0.16,1,1));
-      style == 5 ? (gfx_set(.10196,.09804,.08235); gfx_circle(xa,ya*1.32,r1*.65,1,1));
-      style == 6 ? (gfx_set(.8,.78039,.70588);     gfx_circle(xa,ya,r1*0.16,1,1));
-      style == 7 ? (gfx_set(.63922,.63529,.61961); gfx_circle(xa,ya,r1*0.2,1,1));
-      style == 8 ? (gfx_set(.18039,.18039,.18039); gfx_circle(xa,ya,r1*0.2,1,1));
-      style == 9 ? (gfx_set(.11765,.12157,.13725); gfx_circle(xa,ya,r1*0.2,1,1));
-
-
-
-
-    //******************************************* channel labels *****************************************
-
-    // channel labeling
-
-      !PREFERENCE_MASK ? (
-
-          Bottom_bar_visible && (gfx_h <= yw+69 && gfx_w >= 275) && show_help
-            && (abs(mouse_x) >= 50 && abs(mouse_x) < 306 && abs(mouse_y-ylo) < gfx_texth/2) ? (
-            //(ui_color_slider || mode_slider || volume_slider || help_text_button) ? (
-            gfx_set(1,1,1,.05) ):( gfx_set(1,1,1,1);
-          );
-
-          gfx_x = xd; gfx_y = yd+yw+4; ):( gfx_set(0,0,0,0)
-      );
-          gfx_h <= yw+32 ? gfx_set(0,0,0,0);
-
-          mode == 0 ? (chan_name = "LEFT" ; chan_name1 = "RIGHT");
-          mode == 1 ? (chan_name = "SUMMED");
-          mode == 2 ? (chan_name = "MID" ; chan_name1 = "SIDE");
-
-
-      chan == 0 ?
-          gfx_drawstr(chan_name) : gfx_drawstr(chan_name1);
-
-      chan += 1; mode === 1 ? chan += 1;
-
-      gfx_a=1;  // fix meter bg issue
-
-
-  ); // close channel section - see === STYLES ===
-
-
-
-
-
-
-//==================================== PREFERENCE MASK ============================================/
-
-  gfx_ext_flags == 0 && PREFERENCE_MASK ? (
-
-      mode == 1 ? (xd = xd*2) : (xd = xd);
-
-      // mask background
-      gfx_set(.1,.1,.1,.95); Bottom_bar_visible ? ( gfx_rect(3,3,gfx_w-6,gfx_h-28) ) : (gfx_rect(3,3,gfx_w-6,gfx_h-6));
-
-      // slider() bg
-      gfx_set(.5,.5,.5,.15);
-      gfx_rect(xd+27,80,54,15);  reflevel_button.draw_buttonsize(xd+27,80,54,15);
-      gfx_rect(xd+27,100,54,15); warnlevel_button.draw_buttonsize(xd+27,100,54,15);
-      gfx_rect(xd+85,100,36,15); peakhold_button.draw_buttonsize(xd+85,100,36,15);
-      gfx_rect(xd+27,130,54,15); response_button.draw_buttonsize(xd+27,130,54,15);
-      gfx_rect(xd+27,150,54,15); damping_button.draw_buttonsize(xd+27,150,54,15);
-
-      // preferences: mask header
-      gfx_setfont(2); gfx_r=gfx_g=gfx_b=1;gfx_a=.4; gfx_printf("*** Preferences ***",gfx_x=xd-79,gfx_y=10 );
-
-      // preferences: meter options
-      gfx_setfont(3); gfx_r=gfx_g=gfx_b=1;gfx_a=1; gfx_printf("Meter Options",gfx_x=xd-52,gfx_y=50 );
-
-      // reference level
-      gfx_setfont(4); gfx_r=gfx_g=gfx_b=1; gfx_a=1; gfx_drawstr("Reference Level :",gfx_x=xd-86,gfx_y=80 );
-      slider3 > -10 ? gfx_drawstr(sprintf(#,"%.f dB",slider3),gfx_x=xd+40,gfx_y=80);
-      slider3 <= -10 ? gfx_drawstr(sprintf(#,"%.f dB",slider3),gfx_x=xd+35,gfx_y=80);
-
-      // peak warn level
-      gfx_setfont(4); gfx_r=gfx_g=gfx_b=1; gfx_a=1; gfx_drawstr("Peak Warn Level :",gfx_x=xd-86,gfx_y=100 );
-      slider4 > -10 ? gfx_drawstr(sprintf(#,"%.f dB",slider4),gfx_x=xd+40,gfx_y=100);
-      slider4 <= -10 ? gfx_drawstr(sprintf(#,"%.f dB",slider4),gfx_x=xd+35,gfx_y=100);
-
-      // peak hold time
-      gfx_setfont(4); gfx_r=gfx_g=gfx_b=1; gfx_a=1;
-      slider11 >= 10 ? gfx_drawstr(sprintf(#,"%.f",slider11),gfx_x=xd+94,gfx_y=100) : (
-                        gfx_drawstr(sprintf(#,"%.1f",slider11),gfx_x=xd+93,gfx_y=100) );
-
-      // meter response
-      gfx_setfont(4); gfx_r=gfx_g=gfx_b=1; gfx_a=1; gfx_drawstr("Meter Response :",gfx_x=xd-86,gfx_y=130 );
-      slider5 == 100 ? gfx_drawstr(sprintf(#,"%.f %%",slider5),gfx_x=xd+36,gfx_y=130);
-      slider5 >= 10 && slider5 <= 99 ? gfx_drawstr(sprintf(#,"%.f %%",slider5),gfx_x=xd+40,gfx_y=130);
-      slider5 < 10 ? gfx_drawstr(sprintf(#,"%.f %%",slider5),gfx_x=xd+43,gfx_y=130);
-
-      // meter damping
-      gfx_setfont(4); gfx_r=gfx_g=gfx_b=1; gfx_a=1; gfx_drawstr("Meter Damping :",gfx_x=xd-86,gfx_y=150 );
-      slider6 == 0.01 ? gfx_drawstr(sprintf(#,"%.f %%",slider6*10000),gfx_x=xd+36,gfx_y=150);
-      slider6 >= 0.001 && slider6 != 0.01 ? gfx_drawstr(sprintf(#,"%.f %%",slider6*10000),gfx_x=xd+40,gfx_y=150);
-      slider6 < 0.001 ? gfx_drawstr(sprintf(#,"%.f %%",slider6*10000),gfx_x=xd+43,gfx_y=150);
-
-
-      // button & slider positions
-      ref_level_slider = abs(mouse_x) >= xd+27 && abs(mouse_x) <= xd+81 && abs(mouse_y) > 80 && abs(mouse_y) < 95;
-      warn_level_slider = abs(mouse_x) >= xd+27 && abs(mouse_x) <= xd+81 && abs(mouse_y) > 100 && abs(mouse_y) < 115;
-      peak_hold_slider = abs(mouse_x) >= xd+85 && abs(mouse_x) <= xd+121 && abs(mouse_y) > 100 && abs(mouse_y) < 115;
-      meter_resp_slider = abs(mouse_x) >= xd+27 && abs(mouse_x) <= xd+81 && abs(mouse_y) > 130 && abs(mouse_y) < 145;
-      meter_damp_slider = abs(mouse_x) >= xd+27 && abs(mouse_x) <= xd+81 && abs(mouse_y) > 150 && abs(mouse_y) < 165;
-
-
-      // mouse-over help text
-      gfx_h >= 225 && show_help == 1 ? (
-          gfx_setfont(1); gfx_set(1,1,1,.65);
-
-          ref_level_slider ? ( gfx_x = xd-105; gfx_y = ylo-38;
-          gfx_drawstr ("Sets the dBFS reference level for 0dB VU.") );
-
-          warn_level_slider ? ( gfx_x = xd-106; gfx_y = ylo-38;
-          gfx_drawstr ("Sets the dBFS warn level for the Peak LED.") );
-
-          peak_hold_slider ? (
-            gfx_w >= 275 ? (
-              gfx_x = xd-136; gfx_y = ylo-38;
-              gfx_drawstr ("Sets the hold time for the Peak LED.  ( 100 ms to 1 sec )")
-              ) : (
-              gfx_x = xd-88; gfx_y = ylo-38;
-              gfx_drawstr ("Sets the hold time for the Peak LED.") );
-          );
-
-          meter_resp_slider ? (
-            gfx_w >= 408 ? (
-              gfx_x = xd-75; gfx_y = ylo-46; gfx_drawstr ("Sets the meter response time.");
-              gfx_x = xd-210; gfx_y = ylo-32;
-              gfx_drawstr ("Small values result in shorter response times, large values in longer response times.")
-              ) : (
-              gfx_x = xd-75; gfx_y = ylo-38; gfx_drawstr ("Sets the meter response time.") );
-          );
-
-          meter_damp_slider ? (
-            gfx_w >= 420 ? (
-              gfx_x = xd-85; gfx_y = ylo-46; gfx_drawstr ("Sets the momentum for the needle.");
-              gfx_x = xd-215; gfx_y = ylo-32;
-              gfx_drawstr ("Small values result in a higher overshoot, large values in a smoother needle movement.")
-              ) : (
-              gfx_x = xd-85; gfx_y = ylo-38; gfx_drawstr ("Sets the momentum for the needle.") );
-          );
-      );
-
-  );  // close PREFERENCE_MASK
-
-
-
-
-
-
-//********************************************* bottom bar *******************************************
-
-  Bottom_bar_visible = (gfx_h >= yw+55 && gfx_w >= 275);
-
-  xw2 = max(1,floor((gfx_w) / 2));
-  yw2 = floor(xw / 1.025);
-  gfx_setfont(2); // large
-
-  // button & slider positions
-  ui_color_slider = abs(mouse_x) >= 50 && abs(mouse_x) < 114 && abs(mouse_y-ylo) < gfx_texth/2;
-  mode_slider = abs(mouse_x) >= 124 && abs(mouse_x) < 188 && abs(mouse_y-ylo) < gfx_texth/2;
-  volume_slider = abs(mouse_x) >= 198 && abs(mouse_x) < 272 && abs(mouse_y-ylo) < gfx_texth/2;
-  help_text_button = abs(mouse_x) >= 282 && abs(mouse_x) < 306 && abs(mouse_y-ylo) < gfx_texth/2;
-
-
-  gfx_ext_flags == 0 ? (
-      Bottom_bar_visible ? (
-
-          // bottom bar bg
-          gfx_set(0,0,0,bb_t); gfx_rect(gfx_x=x,gfx_y=ylo-gfx_texth/1.7,xw2*2.01,gfx_texth+10,yw2);
-
-          // separator line
-          gfx_set(.15,.15,.15,.15); gfx_line(gfx_x=x,gfx_y=ylo-gfx_texth/1.6,xw2*2.01,ylo-gfx_texth/1.6);
-
-          // version txt
-          gfx_setfont(1); gfx_set(1,1,1,1); gfx_drawstr(version,1|4,gfx_x+gfx_texth+35,gfx_y+gfx_texth+11);
-
-          // gui color selector
-          style == 0 ? gfx_set(0.12000,.24000,.43000,.3);   style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
-          style == 2 ? gfx_set(0.14110,.09020,.21961,.6);   style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
-          style == 4 ? gfx_set(0.96078,.66275,.67059,.1);   style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
-          style == 6 ? gfx_set(0.80000,.78039,.70588,.1);   style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
-          style == 8 ? gfx_set(0.55294,.55294,.55294,.1);   style == 9 ? gfx_set(.11765,.12157,.13725,.6);
-          gfx_rect(gfx_x=50,gfx_y=ylo-gfx_texth/2,gfx_texth+50,gfx_texth+1,1);
-          uistyle_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+50,gfx_texth+1);
-
-          gfx_setfont(1); // small
-          style == 0 ? gfx_set(1.00000,1.00000,0.70000,.8); style == 1 ? gfx_set(0.44706,0.85882,1.00000,.9);
-          style == 2 ? gfx_set(0.16863,0.73333,1.00000,.9); style == 3 ? gfx_set(0.29020,0.85098,0.69020,1);
-          style == 4 ? gfx_set(0.71373,0.86667,0.93725,1);  style == 5 ? gfx_set(1.00000,0.88235,0.53725,.9);
-          style == 6 ? gfx_set(0.86667,0.85490,0.78039,.9); style == 7 ? gfx_set(0.84706,0.85098,0.85882,.9);
-          style == 8 ? gfx_set(0.74902,0.74902,0.74902,.9); style == 9 ? gfx_set(0.01961,0.95686,0.56471,.9);
-          gfx_drawstr( strcpy_fromslider(UI,slider1),1,gfx_x+gfx_texth+50,gfx_y+gfx_texth+1);
-
-
-          // mode selector
-          style == 0 ? gfx_set(0.12000,.24000,.43000,.3);   style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
-          style == 2 ? gfx_set(0.14110,.09020,.21961,.6);   style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
-          style == 4 ? gfx_set(0.96078,.66275,.67059,.1);   style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
-          style == 6 ? gfx_set(0.80000,.78039,.70588,.1);   style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
-          style == 8 ? gfx_set(0.55294,.55294,.55294,.1);   style == 9 ? gfx_set(.11765,.12157,.13725,.6);
-          gfx_rect(gfx_x=124,gfx_y=ylo-gfx_texth/2,gfx_texth+50,gfx_texth+1,1);
-          mode_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+50,gfx_texth+1);
-
-          gfx_setfont(1); // small
-          style == 0 ? gfx_set(1.00000,1.00000,0.70000,.8); style == 1 ? gfx_set(0.44706,0.85882,1.00000,.9);
-          style == 2 ? gfx_set(0.16863,0.73333,1.00000,.9); style == 3 ? gfx_set(0.29020,0.85098,0.69020,1);
-          style == 4 ? gfx_set(0.71373,0.86667,0.93725,1);  style == 5 ? gfx_set(1.00000,0.88235,0.53725,.9);
-          style == 6 ? gfx_set(0.86667,0.85490,0.78039,.9); style == 7 ? gfx_set(0.84706,0.85098,0.85882,.9);
-          style == 8 ? gfx_set(0.74902,0.74902,0.74902,1);  style == 9 ? gfx_set(0.01961,0.95686,0.56471,.9);
-          gfx_drawstr(  strcpy_fromslider(Mode,slider2),1,gfx_x+gfx_texth+50,gfx_y+gfx_texth+1);
-
-
-          // volume level
-          style == 0 ? gfx_set(0.12000,.24000,.43000,.3);   style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
-          style == 2 ? gfx_set(0.14110,.09020,.21961,.6);   style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
-          style == 4 ? gfx_set(0.96078,.66275,.67059,.1);   style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
-          style == 6 ? gfx_set(0.80000,.78039,.70588,.1);   style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
-          style == 8 ? gfx_set(0.55294,.55294,.55294,.1);   style == 9 ? gfx_set(.11765,.12157,.13725,.6);
-          gfx_rect(gfx_x=198,gfx_y=ylo-gfx_texth/2,gfx_texth+60,gfx_texth+1,1);
-          volume_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+60,gfx_texth+1);
-
-          gfx_setfont(1); // small
-          style == 0 ? gfx_set(1.00000,1.00000,0.70000,.8); style == 1 ? gfx_set(0.44706,0.85882,1.00000,.9);
-          style == 2 ? gfx_set(0.16863,0.73333,1.00000,.9); style == 3 ? gfx_set(0.29020,0.85098,0.69020,1);
-          style == 4 ? gfx_set(0.71373,0.86667,0.93725,1);  style == 5 ? gfx_set(1.00000,0.88235,0.53725,.9);
-          style == 6 ? gfx_set(0.86667,0.85490,0.78039,.9); style == 7 ? gfx_set(0.84706,0.85098,0.85882,.9);
-          style == 8 ? gfx_set(0.74902,0.74902,0.74902,1);  style == 9 ? gfx_set(0.01961,0.95686,0.56471,.9);
-          gfx_drawstr(sprintf(#,"VOL :  %.2f",slider7),1,gfx_x+gfx_texth+60,gfx_y+gfx_texth+1);
-
-
-          // help text?
-          gfx_w >= 336 ? (
-              style == 0 ? gfx_set(0.12000,.24000,.43000,.3);   style == 1 ? gfx_set(0.18431,.18431,.20000,.4);
-              style == 2 ? gfx_set(0.14110,.09020,.21961,.6);   style == 3 ? gfx_set(0.20392,.34902,.33725,.2);
-              style == 4 ? gfx_set(0.96078,.66275,.67059,.1);   style == 5 ? gfx_set(1.00000,.76471,.32549,.07);
-              style == 6 ? gfx_set(0.80000,.78039,.70588,.1);   style == 7 ? gfx_set(0.63922,.63529,.61961,.1);
-              style == 8 ? gfx_set(0.55294,.55294,.55294,.1);   style == 9 ? gfx_set(.11765,.12157,.13725,.6);
-              gfx_rect(gfx_x=282,gfx_y=ylo-gfx_texth/2,gfx_texth+10,gfx_texth+1,1);
-              help_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+10,gfx_texth+1);
-
-              gfx_setfont(1); // small
-              style == 0 ? gfx_set(1.00000,1.00000,0.70000,.8); style == 1 ? gfx_set(0.44706,0.85882,1.00000,.9);
-              style == 2 ? gfx_set(0.16863,0.73333,1.00000,.9); style == 3 ? gfx_set(0.29020,0.85098,0.69020,1);
-              style == 4 ? gfx_set(0.71373,0.86667,0.93725,1);  style == 5 ? gfx_set(1.00000,0.88235,0.53725,.9);
-              style == 6 ? gfx_set(0.86667,0.85490,0.78039,.9); style == 7 ? gfx_set(0.84706,0.85098,0.85882,.9);
-              style == 8 ? gfx_set(0.74902,0.74902,0.74902,1);  style == 9 ? gfx_set(0.01961,0.95686,0.56471,.9);
-              gfx_drawstr(sprintf(#,"?",help_text),1,gfx_x+gfx_texth+10,gfx_y+gfx_texth+1);
-
-              show_help == 1 ? (
-                gfx_a=0.7; gfx_rect(gfx_x=282,gfx_y=ylo-gfx_texth/2-1,gfx_texth+11,gfx_texth+3,0) );
-                  has_click && help_text_button ? (
-                    show_help == 1 ? ( show_help = 0; has_click = 0; ) : ( show_help = 1; has_click = 0; ) ;
-              );    gfx_a=1;
-          );
-
-
-          show_help == 1 ? (
-              gfx_setfont(1); style == 4 ? gfx_set(1,1,1,1);
-              style == 6 ? gfx_set(.32941,.31765,.28235); style == 7 ? gfx_set(1,1,1,1);
-
-              ui_color_slider ? ( gfx_w >= 399 ? ( gfx_x = 10; gfx_y = ylo-28;
-                gfx_drawstr ("Click left mouse button to cycle through UI Styles.  Right-click to show popup menu.") );
-                gfx_x = 10; gfx_y = ylo-28;
-                gfx_drawstr ("Click left mouse button to cycle through UI Styles.");
-              );
-
-              mode_slider ? ( gfx_w >= 444 ? ( gfx_x = 10; gfx_y = ylo-28;
-                gfx_drawstr ("Click left mouse button to cycle through channel modes.  Right-click to show popup menu.") );
-                gfx_x = 10; gfx_y = ylo-28;
-                gfx_drawstr ("Click left mouse button to cycle through channel modes.");
-              );
-
-              volume_slider ? ( gfx_w >= 380 ? ( gfx_x = 10; gfx_y = ylo-28;
-                gfx_drawstr ("Click & drag to adjust volume... hold Ctrl for fine tuning.  Double-click to reset.") );
-                gfx_x = 10; gfx_y = ylo-28;
-                gfx_drawstr ("Click & drag to adjust volume... hold Ctrl for fine tuning.");
-              );
-
-              help_text_button ? ( gfx_w >= 358 ? ( gfx_x = 10; gfx_y = ylo-28;
-                gfx_drawstr ("Show or hide tooltips  - or hide permanently by creating a plugin preset.") );
-                gfx_w <= 357 && gfx_w >=336 ? ( gfx_x = 10; gfx_y = ylo-28;
-                gfx_drawstr ("Show or hide tooltips.") );
-              );
-
-          );
-
-      );
-
-  ); // close !gfx_ext_flags
-
-
-
-
-
-
-//======================================= SLIDER MASK ===============================================/
-
-  yu = gfx_texth*7/8;
-  ylo = gfx_h-yu;
-
-
-  function set_color(trgb)(
-  gfx_set((trgb&$xff0000)/$xff0000,(trgb&$xff00)/$xff00,(trgb&$xff)/$xff);
-  );
-
-  // button & slider positions
-  ui_slider_button = abs(mouse_x-tx) < gfx_texth/2 && abs(mouse_y-ylo) < gfx_texth/2;
-
-  gfx_ext_flags == 0 ? (
-      gfx_w > 300 && ( Bottom_bar_visible ? (gfx_h >= yw+55 ):( PREFERENCE_MASK ? (gfx_h >= yw+39)) ) ? (
-          !(gfx_ext_flags&1) ? (
-              mode = slider2;
-              set_color(TEXT_COLOR);
-              tx = gfx_w-(gfx_texth+0.5)*3/2;
-              gfx_rect(gfx_x=tx-gfx_texth/4, gfx_y=ylo-gfx_texth/2, gfx_texth+1, gfx_texth+1, 0);
-              gfx_drawstr("☰",1|4, gfx_x+gfx_texth+1, gfx_y+gfx_texth+1);
-
-              has_click && ui_slider_button ? ( PREFERENCE_MASK == 0 ?
-                  ( PREFERENCE_MASK = 1; has_click = 0; ) :
-                  ( PREFERENCE_MASK = 0; has_click = 0; ) ;
-              );
-          );
-      );
-  );
-
-
-
-
-
-
-
-
-
-
-/****************************************** END OF CODE *********************************************\
-
-
+// EOF
