@@ -1,0 +1,80 @@
+// Instructions for using the Colortable for the VU Meter (ZenoMOD):
+
+// This Colortable defines the colors for the various elements of the user interface.
+// You can edit the Colortable to change the appearance of the VU Meter or create a new one.
+//
+// Hexadecimal values are used to set the colors for individual UI elements. A hexadecimal
+// value is a combination of six digits or letters representing the intensity of red, green,
+// and blue in a color. For example, #000000 corresponds to black and #FFFFFF corresponds
+// to white. This Colortable uses a special format for color values that starts with
+// an $x and ends with a ;. So you have to use " $x000000; " instead of " #000000 ".
+//
+// You can use online tools such as "color-hex.com" or "color.adobe.com" to select your
+// color palettes and obtain their hexadecimal values.
+//
+// Each line corresponds to a UI element and has the following format:
+//
+// UI_Element[Theme-Slot] = $x000000; // Comment
+//
+//
+// The [Theme-Slot] is a number between 1 and 12 indicating which slot is used in the
+// VU Meter's theme settings. Theme slots [01] to [10] are reserved for the included themes
+// and should not be used here. Theme slots [11] and [12] are intended for user themes.
+//
+// The file "User Theme 01.jsfx-inc" is assigned to theme slot [11].
+// The file "User Theme 02.jsfx-inc" is assigned to theme slot [12].
+// Please respect this assignment.
+//
+// Below you will find the UI elements and their associated color values:
+//
+//
+//*******************************************************************************************\\
+
+
+@init
+
+Frm_Buf[11] = $x000000; 	// Background color of the plugin
+FG_Covr[11] = $x000000; 	// Color of the front cover
+MeterBG[11] = $x000000; 	// Background color of the meter
+MtrArc1[11] = $x000000; 	// Color of the meter scale -20 to 0
+MtrArc2[11] = $x000000; 	// Color of the meter scale +0 to +3
+SclDig1[11] = $x000000; 	// Color of the scale values -20 to 0
+SclDig2[11] = $x000000; 	// Color of the scale values +1 to +3
+NdlLine[11] = $x000000; 	// Main color of the pointer needle
+NdlShdw[11] = $x000000; 	// Shadow color of the pointer needle
+NdlHold[11] = $x000000;		// Color of the current hold needle
+ArcHold[11] = $x000000;		// Color of the current hold arc
+PkLED_0[11] = $x000000; 	// Background color of the peak LED
+PkLED_1[11] = $x000000; 	// Color of the illuminated peak LED
+DsplBtn[11] = $x000000;		// Color of the VU and peak display buttons
+BotBBtn[11] = $x282B30; 	// Background color of the BottomBar buttons
+Font_Ch[11] = $x000000;		// Color of the Channel print
+Font_Vu[11] = $x000000; 	// Color of the VU print
+Font_Pk[11] = $x000000; 	// Color of the Peak print
+FontVol[11] = $x000000; 	// Color of the volume display in MCP / TCP
+Font_BB[11] = $xFFFFFF; 	// Textcolor of the BottomBar buttons
+FontTip[11] = $xFFFFFF; 	// Textcolor of the helpful ToolTips
+Shdw_3D[11] = $x000000; 	// 3D shadow color of the VU Meter
+Lght_3D[11] = $x000000; 	// 3D lighting color of the VU Meter
+
+EFX_3Di[11] = 1; 	// Display 3D effects? 0 = no, 1 = yes.
+Coil_sz[11] = 1; 	// Value for the coil cover size. 0 = flat, 1 = small, 2 = medium, 3 = large.
+Pref_ac[11] = 85;	// The opacity of the preference mask in percent. Valid values are between 0 (no opacity) and 100 (full opacity).
+
+
+
+
+//*******************************************************************************************//
+//
+//
+//
+// I hope this guide has helped you understand and use the Colortable for the VU Meter. If you
+// have any questions or feedback, please leave a forum post at "bit.ly/VUMeterZenoMOD".
+// Enjoy the VU Meter!
+//
+// Cheers,
+// ZenoMOD
+//
+//
+//
+// EOF
