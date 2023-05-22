@@ -106,9 +106,9 @@ NdlHold[05]=$x53FFC3;	NdlHold[06]=$xfdb119;	NdlHold[07]=$xDFE0E2;	NdlHold[08]=$x
 ArcHold[05]=$x53FFC3;   ArcHold[06]=$xfdb119;   ArcHold[07]=$xDFE0E2;   ArcHold[08]=$x00fe95;   ArcHold[09]=$x989fb4;
 PkLED_0[05]=$xEFB343;   PkLED_0[06]=$xD0CBB8;   PkLED_0[07]=$x2a2a2a;   PkLED_0[08]=$x7D7D7D;   PkLED_0[09]=$x272828;
 PkLED_1[05]=$xFF0F1C;   PkLED_1[06]=$xE44B2D;   PkLED_1[07]=$xf43232;   PkLED_1[08]=$x00fe95;   PkLED_1[09]=$x05F490;
-DsplBtn[05]=$xffedcb;	DsplBtn[06]=$xFFFFFF;	DsplBtn[07]=$xbababa;	DsplBtn[08]=$xd5d5d5;	DsplBtn[09]=$x989fb4;	
+DsplBtn[05]=$xffedcb;	DsplBtn[06]=$xFFFFFF;	DsplBtn[07]=$xbababa;	DsplBtn[08]=$xd5d5d5;	DsplBtn[09]=$x989fb4;
 BotBBtn[05]=$x6B5328;   BotBBtn[06]=$xA19E91;   BotBBtn[07]=$x676765;   BotBBtn[08]=$x555555;   BotBBtn[09]=$x3F4148;
-Font_Ch[05]=$xFFF9ED;	Font_Ch[06]=$xFFFFFF;	Font_Ch[07]=$xFFFFFF;	Font_Ch[08]=$xd5d5d5;	Font_Ch[09]=$xd4d4d5;	
+Font_Ch[05]=$xFFF9ED;	Font_Ch[06]=$xFFFFFF;	Font_Ch[07]=$xFFFFFF;	Font_Ch[08]=$xd5d5d5;	Font_Ch[09]=$xd4d4d5;
 Font_Vu[05]=$x000000;   Font_Vu[06]=$x68655C;   Font_Vu[07]=$xa90000;   Font_Vu[08]=$x2E2E2E;   Font_Vu[09]=$x3F414B;
 Font_Pk[05]=$x000000;   Font_Pk[06]=$x68655C;   Font_Pk[07]=$x9E9E9C;   Font_Pk[08]=$x2E2E2E;   Font_Pk[09]=$x5F6271;
 FontVol[05]=$x000000;   FontVol[06]=$x68655C;   FontVol[07]=$xACADAF;   FontVol[08]=$x2E2E2E;   FontVol[09]=$x989fb4;
@@ -135,7 +135,7 @@ PkLED_0[10]=$x262626;
 PkLED_1[10]=$x00BFF5;
 DsplBtn[10]=$xe5f8fe;
 BotBBtn[10]=$x5D5D76;
-Font_Ch[10]=$xe5f8fe;	
+Font_Ch[10]=$xe5f8fe;
 Font_Vu[10]=$xe5f8fe;
 Font_Pk[10]=$xe5f8fe;
 FontVol[10]=$xcccccc;
@@ -184,13 +184,15 @@ function set_color(trgb) (
 // Draw Error message if no user theme exists
 function draw_noUserTheme () (
   color == 11 ? (
-  ( 
-      Frm_Buf[11] = FG_Covr[11] = MeterBG[11] = MtrArc1[11] = MtrArc2[11] =
-      SclDig1[11] = SclDig2[11] = NdlLine[11] = NdlShdw[11] = NdlHold[11] =
-	  ArcHold[11] = PkLED_0[11] = PkLED_1[11] = Font_Ch[11] = Font_Vu[11] =
-	  Font_Pk[11] = FontVol[11] = Shdw_3D[11] = Lght_3D[11] = DsplBtn[11] ) == $x000000 && 
-	  Font_BB[11] == $xFFFFFF && BotBBtn[11] == $x282B30 && FontTip[11] == $xFFFFFF ?
-      (
+  (
+    Frm_Buf[11] == $x000000 && FG_Covr[11] == $x000000 && MeterBG[11] == $x000000 &&
+	  MtrArc1[11] == $x000000 && MtrArc2[11] == $x000000 && SclDig1[11] == $x000000 &&
+	  SclDig2[11] == $x000000 && NdlLine[11] == $x000000 && NdlShdw[11] == $x000000 &&
+	  NdlHold[11] == $x000000 && ArcHold[11] == $x000000 && PkLED_0[11] == $x000000 &&
+	  PkLED_1[11] == $x000000 && Font_Ch[11] == $x000000 && Font_Vu[11] == $x000000 &&
+	  Font_Pk[11] == $x000000 && FontVol[11] == $x000000 && Shdw_3D[11] == $x000000 &&
+	  Lght_3D[11] == $x000000 && DsplBtn[11] == $x000000)&&
+	  Font_BB[11] == $xFFFFFF && BotBBtn[11] == $x282B30 && FontTip[11] == $xFFFFFF ?(
 		gsc >= 0.47 ?
 		(
           gfx_setfont(6);
@@ -199,7 +201,7 @@ function draw_noUserTheme () (
           gfx_drawstr(sprintf(#NoTheme1,"LOL xD"),261,
           gfx_w - strlen(#NoTheme1)/5,
           gfx_h - gfx_texth * 3);
-		  gfx_setfont(2);
+		  		gfx_setfont(2);
           gfx_x = 0;  gfx_y = 0;
           gfx_drawstr(sprintf(#NoTheme2,"An 'Ooops' has occurred:"),261,
           gfx_w - gfx_texth + strlen(#NoTheme2)/5,
@@ -227,14 +229,16 @@ function draw_noUserTheme () (
       );
   );
   color == 12 ? (
-  ( 
-      Frm_Buf[12] = FG_Covr[12] = MeterBG[12] = MtrArc1[12] = MtrArc2[12] =
-      SclDig1[12] = SclDig2[12] = NdlLine[12] = NdlShdw[12] = NdlHold[12] =
-	  ArcHold[12] = PkLED_0[12] = PkLED_1[12] = Font_Ch[12] = Font_Vu[12] =
-	  Font_Pk[12] = FontVol[12] = Shdw_3D[12] = Lght_3D[12] = DsplBtn[12] ) == $x000000 &&
-	  Font_BB[12] == $xFFFFFF && BotBBtn[12] == $x282B30 && FontTip[12] == $xFFFFFF ?
-      (
-	    gsc >= 0.47 ?
+  (
+    Frm_Buf[12] == $x000000 && FG_Covr[12] == $x000000 && MeterBG[12] == $x000000 &&
+	  MtrArc1[12] == $x000000 && MtrArc2[12] == $x000000 && SclDig1[12] == $x000000 &&
+	  SclDig2[12] == $x000000 && NdlLine[12] == $x000000 && NdlShdw[12] == $x000000 &&
+	  NdlHold[12] == $x000000 && ArcHold[12] == $x000000 && PkLED_0[12] == $x000000 &&
+	  PkLED_1[12] == $x000000 && Font_Ch[12] == $x000000 && Font_Vu[12] == $x000000 &&
+	  Font_Pk[12] == $x000000 && FontVol[12] == $x000000 && Shdw_3D[12] == $x000000 &&
+	  Lght_3D[12] == $x000000 && DsplBtn[12] == $x000000)&&
+	  Font_BB[12] == $xFFFFFF && BotBBtn[12] == $x282B30 && FontTip[12] == $xFFFFFF ?(
+	  gsc >= 0.47 ?
 		(
           gfx_setfont(6);
           gfx_set(1,1,1,1);
@@ -242,7 +246,7 @@ function draw_noUserTheme () (
           gfx_drawstr(sprintf(#NoTheme1,"LOL xD"),261,
           gfx_w - strlen(#NoTheme1)/5,
           gfx_h - gfx_texth * 3);
-		  gfx_setfont(2);
+		  		gfx_setfont(2);
           gfx_x = 0;  gfx_y = 0;
           gfx_drawstr(sprintf(#NoTheme2,"An 'Ooops' has occurred:"),261,
           gfx_w - gfx_texth + strlen(#NoTheme2)/5,
