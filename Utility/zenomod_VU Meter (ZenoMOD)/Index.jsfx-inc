@@ -75,13 +75,13 @@ SclDig1[00]=$x333333;   SclDig1[01]=$xFFFFFF;   SclDig1[02]=$xA375FF;   SclDig1[
 SclDig2[00]=$xFF0000;   SclDig2[01]=$xF252BA;   SclDig2[02]=$xA375FF;   SclDig2[03]=$x8f7e69;   SclDig2[04]=$x1D1F24;
 NdlLine[00]=$x000000;   NdlLine[01]=$x72DBFF;   NdlLine[02]=$x2BBBFF;   NdlLine[03]=$xbecfc8;   NdlLine[04]=$x1D1F24;
 NdlShdw[00]=$x999999;   NdlShdw[01]=$x121218;   NdlShdw[02]=$x140D1F;   NdlShdw[03]=$x091611;   NdlShdw[04]=$xb1b4bb;
-NdlHold[00]=$xfdb119;	NdlHold[01]=$xbbbbcb;	NdlHold[02]=$xfe51ff;	NdlHold[03]=$x9966cc;	NdlHold[04]=$x9A9A9A;
+NdlHold[00]=$xfdb119;		NdlHold[01]=$xbbbbcb;		NdlHold[02]=$xfe51ff;		NdlHold[03]=$x9966cc;		NdlHold[04]=$x9A9A9A;
 ArcHold[00]=$xfdb119;   ArcHold[01]=$x9898a5;   ArcHold[02]=$xfe51ff;   ArcHold[03]=$x9966cc;   ArcHold[04]=$x9A9A9A;
 PkLED_0[00]=$xFFFFB3;   PkLED_0[01]=$x252527;   PkLED_0[02]=$x140D1F;   PkLED_0[03]=$x0e2219;   PkLED_0[04]=$xD1D4D3;
 PkLED_1[00]=$xF21A1A;   PkLED_1[01]=$xF252BA;   PkLED_1[02]=$xF051FC;   PkLED_1[03]=$xAD84D6;   PkLED_1[04]=$xFF0F1C;
-DsplBtn[00]=$xFAA802;	DsplBtn[01]=$x9898a5;	DsplBtn[02]=$xA375FF;	DsplBtn[03]=$x8f7e69;	DsplBtn[04]=$x1D1F24;
+DsplBtn[00]=$xFAA802;		DsplBtn[01]=$x9898a5;		DsplBtn[02]=$xA375FF;		DsplBtn[03]=$x8f7e69;		DsplBtn[04]=$x1D1F24;
 BotBBtn[00]=$x285094;   BotBBtn[01]=$x505059;   BotBBtn[02]=$x513584;   BotBBtn[03]=$x23533e;   BotBBtn[04]=$x666B7D;
-Font_Ch[00]=$xFFFFFF;	Font_Ch[01]=$xFFFFFF;	Font_Ch[02]=$xbdb9c3;	Font_Ch[03]=$xc3d2cb;	Font_Ch[04]=$xFFFFFF;
+Font_Ch[00]=$xFFFFFF;		Font_Ch[01]=$xFFFFFF;		Font_Ch[02]=$xbdb9c3;		Font_Ch[03]=$xc3d2cb;		Font_Ch[04]=$xFFFFFF;
 Font_Vu[00]=$x000000;   Font_Vu[01]=$xF252BA;   Font_Vu[02]=$x4F64D6;   Font_Vu[03]=$x4b665a;   Font_Vu[04]=$x1D1F24;
 Font_Pk[00]=$x000000;   Font_Pk[01]=$x72DBFF;   Font_Pk[02]=$x4F64D6;   Font_Pk[03]=$x5e8071;   Font_Pk[04]=$x1D1F24;
 FontVol[00]=$x000000;   FontVol[01]=$xFFFFFF;   FontVol[02]=$x4F64D6;   FontVol[03]=$x698f7e;   FontVol[04]=$x1D1F24;
@@ -89,9 +89,9 @@ Font_BB[00]=$xFFFFB3;   Font_BB[01]=$x72DBFF;   Font_BB[02]=$x2BBBFF;   Font_BB[
 FontTip[00]=$xFFFFFF;   FontTip[01]=$x72DBFF;   FontTip[02]=$x2BBBFF;   FontTip[03]=$x59cc99;   FontTip[04]=$xFFFFFF;
 Shdw_3D[00]=$x000000;   Shdw_3D[01]=$x000000;   Shdw_3D[02]=$x261c3c;   Shdw_3D[03]=$x10261c;   Shdw_3D[04]=$xA7ACB2;
 Lght_3D[00]=$x000000;   Lght_3D[01]=$x000000;   Lght_3D[02]=$x261c3c;   Lght_3D[03]=$x173427;   Lght_3D[04]=$xD1D4D3;
-EFX_3Di[00]=0.000000;	EFX_3Di[01]=0.000000;	EFX_3Di[02]=1.000000;	EFX_3Di[03]=1.000000;	EFX_3Di[04]=1.000000;
-Coil_sz[00]=1.000000;	Coil_sz[01]=1.000000;	Coil_sz[02]=1.000000;	Coil_sz[03]=2.000000;	Coil_sz[04]=0.000000;
-Pref_ac[00]=95;			Pref_ac[01]=75;			Pref_ac[02]=75;			Pref_ac[03]=70;			Pref_ac[04]=95;
+EFX_3Di[00]=0.000000;		EFX_3Di[01]=0.000000;		EFX_3Di[02]=1.000000;		EFX_3Di[03]=1.000000;		EFX_3Di[04]=1.000000;
+Coil_sz[00]=1.000000;		Coil_sz[01]=1.000000;		Coil_sz[02]=1.000000;		Coil_sz[03]=2.000000;		Coil_sz[04]=0.000000;
+Pref_ac[00]=95;					Pref_ac[01]=75;					Pref_ac[02]=75;					Pref_ac[03]=70;					Pref_ac[04]=95;
 
 Frm_Buf[05]=$x1A1915;   Frm_Buf[06]=$xCCC7B4;   Frm_Buf[07]=$x757572;   Frm_Buf[08]=$x2E2E2E;   Frm_Buf[09]=$x2a2b31;
 FG_Covr[05]=$x1A1915;   FG_Covr[06]=$xCCC7B4;   FG_Covr[07]=$x757572;   FG_Covr[08]=$x2E2E2E;   FG_Covr[09]=$x2a2b31;
@@ -102,13 +102,13 @@ SclDig1[05]=$x333333;   SclDig1[06]=$x5C5950;   SclDig1[07]=$xD8D9DB;   SclDig1[
 SclDig2[05]=$xD01618;   SclDig2[06]=$xE44B3D;   SclDig2[07]=$xD8D9DB;   SclDig2[08]=$x2E2E2E;   SclDig2[09]=$x05F490;
 NdlLine[05]=$x603112;   NdlLine[06]=$x545148;   NdlLine[07]=$xA3A29E;   NdlLine[08]=$x2E2E2E;   NdlLine[09]=$x05F490;
 NdlShdw[05]=$xDF7E15;   NdlShdw[06]=$xc6c4b3;   NdlShdw[07]=$x252525;   NdlShdw[08]=$x6D6D6D;   NdlShdw[09]=$x1A1B1B;
-NdlHold[05]=$x53FFC3;	NdlHold[06]=$xfdb119;	NdlHold[07]=$xDFE0E2;	NdlHold[08]=$x00fe95;	NdlHold[09]=$x989fb4;
+NdlHold[05]=$x53FFC3;		NdlHold[06]=$xfdb119;		NdlHold[07]=$xDFE0E2;		NdlHold[08]=$x00fe95;		NdlHold[09]=$x989fb4;
 ArcHold[05]=$x53FFC3;   ArcHold[06]=$xfdb119;   ArcHold[07]=$xDFE0E2;   ArcHold[08]=$x00fe95;   ArcHold[09]=$x989fb4;
 PkLED_0[05]=$xEFB343;   PkLED_0[06]=$xD0CBB8;   PkLED_0[07]=$x2a2a2a;   PkLED_0[08]=$x7D7D7D;   PkLED_0[09]=$x272828;
 PkLED_1[05]=$xFF0F1C;   PkLED_1[06]=$xE44B2D;   PkLED_1[07]=$xf43232;   PkLED_1[08]=$x00fe95;   PkLED_1[09]=$x05F490;
-DsplBtn[05]=$xffedcb;	DsplBtn[06]=$xFFFFFF;	DsplBtn[07]=$xbababa;	DsplBtn[08]=$xd5d5d5;	DsplBtn[09]=$x989fb4;
+DsplBtn[05]=$xffedcb;		DsplBtn[06]=$xFFFFFF;		DsplBtn[07]=$xbababa;		DsplBtn[08]=$xd5d5d5;		DsplBtn[09]=$x989fb4;
 BotBBtn[05]=$x6B5328;   BotBBtn[06]=$xA19E91;   BotBBtn[07]=$x676765;   BotBBtn[08]=$x555555;   BotBBtn[09]=$x3F4148;
-Font_Ch[05]=$xFFF9ED;	Font_Ch[06]=$xFFFFFF;	Font_Ch[07]=$xFFFFFF;	Font_Ch[08]=$xd5d5d5;	Font_Ch[09]=$xd4d4d5;
+Font_Ch[05]=$xFFF9ED;		Font_Ch[06]=$xFFFFFF;		Font_Ch[07]=$xFFFFFF;		Font_Ch[08]=$xd5d5d5;		Font_Ch[09]=$xd4d4d5;
 Font_Vu[05]=$x000000;   Font_Vu[06]=$x68655C;   Font_Vu[07]=$xa90000;   Font_Vu[08]=$x2E2E2E;   Font_Vu[09]=$x3F414B;
 Font_Pk[05]=$x000000;   Font_Pk[06]=$x68655C;   Font_Pk[07]=$x9E9E9C;   Font_Pk[08]=$x2E2E2E;   Font_Pk[09]=$x5F6271;
 FontVol[05]=$x000000;   FontVol[06]=$x68655C;   FontVol[07]=$xACADAF;   FontVol[08]=$x2E2E2E;   FontVol[09]=$x989fb4;
@@ -116,9 +116,9 @@ Font_BB[05]=$xFFE189;   Font_BB[06]=$xDDDAC7;   Font_BB[07]=$xD8D9DB;   Font_BB[
 FontTip[05]=$xFFE189;   FontTip[06]=$xFFFFFF;   FontTip[07]=$xFFFFFF;   FontTip[08]=$xFFFFFF;   FontTip[09]=$x05F490;
 Shdw_3D[05]=$xDF7E15;   Shdw_3D[06]=$x000000;   Shdw_3D[07]=$x222324;   Shdw_3D[08]=$x6D6D6D;   Shdw_3D[09]=$x000000;
 Lght_3D[05]=$xFFE189;   Lght_3D[06]=$x000000;   Lght_3D[07]=$x1e1f20;   Lght_3D[08]=$x000000;   Lght_3D[09]=$x000000;
-EFX_3Di[05]=1.000000;	EFX_3Di[06]=0.000000;	EFX_3Di[07]=1.000000;	EFX_3Di[08]=0.000000;	EFX_3Di[09]=0.000000;
-Coil_sz[05]=3.000000;	Coil_sz[06]=1.000000;	Coil_sz[07]=2.000000;	Coil_sz[08]=2.000000;	Coil_sz[09]=2.000000;
-Pref_ac[05]=95;			Pref_ac[06]=95;			Pref_ac[07]=90;			Pref_ac[08]=90;			Pref_ac[09]=70;
+EFX_3Di[05]=1.000000;		EFX_3Di[06]=0.000000;		EFX_3Di[07]=1.000000;		EFX_3Di[08]=0.000000;		EFX_3Di[09]=0.000000;
+Coil_sz[05]=3.000000;		Coil_sz[06]=1.000000;		Coil_sz[07]=2.000000;		Coil_sz[08]=2.000000;		Coil_sz[09]=2.000000;
+Pref_ac[05]=95;					Pref_ac[06]=95;					Pref_ac[07]=90;					Pref_ac[08]=90;					Pref_ac[09]=70;
 
 Frm_Buf[10]=$x000000;
 FG_Covr[10]=$x0D0D0D;
@@ -200,24 +200,30 @@ function draw_noUserTheme () (
           gfx_x = 0;  gfx_y = 0;
           gfx_drawstr(sprintf(#NoTheme1,"LOL xD"),261,
           gfx_w - strlen(#NoTheme1)/5,
-          gfx_h - gfx_texth * 3);
+          gfx_h - gfx_texth * 4);
 		  		gfx_setfont(2);
           gfx_x = 0;  gfx_y = 0;
           gfx_drawstr(sprintf(#NoTheme2,"An 'Ooops' has occurred:"),261,
-          gfx_w - gfx_texth + strlen(#NoTheme2)/5,
-          gfx_h - gfx_texth * 3);
+          gfx_w - strlen(#NoTheme2)/5,
+          gfx_h - gfx_texth * 4);
           gfx_x = 0;  gfx_y = 0;
           gfx_drawstr(sprintf(#NoTheme3,"The User-Theme: ''User 01'' could not be found !"),261,
-          gfx_w - gfx_texth + strlen(#NoTheme3)/5,
-          gfx_h - gfx_texth * 1);
+          gfx_w - strlen(#NoTheme3)/5,
+          gfx_h - gfx_texth * 2);
           gfx_x = 0;  gfx_y = 0;
           gfx_drawstr(sprintf(#NoTheme4,"Please change at least one color in ''User Theme 01.jsfx-inc''."),261,
-          gfx_w - gfx_texth + strlen(#NoTheme4)/5,
+          gfx_w - strlen(#NoTheme4)/5,
           gfx_h + gfx_texth * 1);
           gfx_x = 0;  gfx_y = 0;
-          gfx_drawstr(sprintf(#NoTheme5,"If ''User Theme 01.jsfx-inc'' file doesn't exist, visit the forum thread."),261,
-          gfx_w - gfx_texth + strlen(#NoTheme5)/5,
+          gfx_drawstr(sprintf(#NoTheme5,"No idea how to do that ?"),261,
+          gfx_w - strlen(#NoTheme5)/5,
           gfx_h + gfx_texth * 3);
+				gfx_setfont(5);
+		  set_color($xBC0AE2);
+		  gfx_x = 0;  gfx_y = 0;
+          gfx_drawstr(sprintf(#NoTheme6,"bit.ly/ThemeVU"),261,
+          gfx_w - strlen(#NoTheme6)/5,
+          gfx_h + gfx_texth * 5);
 		  ) : (
           gfx_setfont(6);
           gfx_set(1,1,1,1);
@@ -245,24 +251,30 @@ function draw_noUserTheme () (
           gfx_x = 0;  gfx_y = 0;
           gfx_drawstr(sprintf(#NoTheme1,"LOL xD"),261,
           gfx_w - strlen(#NoTheme1)/5,
-          gfx_h - gfx_texth * 3);
+          gfx_h - gfx_texth * 4);
 		  		gfx_setfont(2);
           gfx_x = 0;  gfx_y = 0;
           gfx_drawstr(sprintf(#NoTheme2,"An 'Ooops' has occurred:"),261,
-          gfx_w - gfx_texth + strlen(#NoTheme2)/5,
-          gfx_h - gfx_texth * 3);
+          gfx_w - strlen(#NoTheme2)/5,
+          gfx_h - gfx_texth * 4);
           gfx_x = 0;  gfx_y = 0;
           gfx_drawstr(sprintf(#NoTheme3,"The User-Theme: ''User 02'' could not be found !"),261,
-          gfx_w - gfx_texth + strlen(#NoTheme3)/5,
-          gfx_h - gfx_texth * 1);
+          gfx_w - strlen(#NoTheme3)/5,
+          gfx_h - gfx_texth * 2);
           gfx_x = 0;  gfx_y = 0;
           gfx_drawstr(sprintf(#NoTheme4,"Please change at least one color in ''User Theme 02.jsfx-inc''."),261,
-          gfx_w - gfx_texth + strlen(#NoTheme4)/5,
+          gfx_w - strlen(#NoTheme4)/5,
           gfx_h + gfx_texth * 1);
           gfx_x = 0;  gfx_y = 0;
-          gfx_drawstr(sprintf(#NoTheme5,"If ''User Theme 02.jsfx-inc'' file doesn't exist, visit the forum thread."),261,
-          gfx_w - gfx_texth + strlen(#NoTheme5)/5,
+          gfx_drawstr(sprintf(#NoTheme5,"No idea how to do that ?"),261,
+          gfx_w - strlen(#NoTheme5)/5,
           gfx_h + gfx_texth * 3);
+				gfx_setfont(5);
+		  set_color($xBC0AE2);
+		  gfx_x = 0;  gfx_y = 0;
+          gfx_drawstr(sprintf(#NoTheme6,"bit.ly/ThemeVU"),261,
+          gfx_w - strlen(#NoTheme6)/5,
+          gfx_h + gfx_texth * 5);
 		  ) : (
           gfx_setfont(6);
           gfx_set(1,1,1,1);

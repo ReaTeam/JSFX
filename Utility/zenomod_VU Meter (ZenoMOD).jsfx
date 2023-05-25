@@ -1,13 +1,47 @@
 desc: VU Meter (ZenoMOD)
 author: ZenoMOD
-version: 1.7.4
+version: 1.7.5
 changelog:
-  - Fix tooltip drawing for the record button
-  - Fix theme query in the index file
+  - Fix scrolling to max parameters on MacOS Trackpad / Touchpad when mouse over parameter
+  - Fix rec circle not displayed or displayed incorrectly on some OS
+  - Rephrase LOL error message a bit to avoid confusion
+  - Add "VU Meter (ZenoMOD) - UserThemes" Forum-Link to LOL error message
+  - Add some love to preference mask
+  - Update ReaPack metadata
+  - Update Stash Link
+  - Upate Stash README
 provides: zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc
 link: Forum Thread https://forum.cockos.com/showthread.php?t=262611
 donation: Donate via PayPal https://www.paypal.me/ZenoBock
-about: Simple VU Meter - a fine freeware by chris-s, modified and functionally extended by Zeno.
+about:
+  ## VU Meter by ZenoMOD
+  ---
+
+  **Requires add-on package:** *VU Meter (ZenoMOD) - UserThemes*
+
+
+  Features:
+  - Fully resizeable vector GUI
+  - 11 different UI styles
+  - 2 extra User Theme slots
+  - 3 channel modes: Stereo, Summed, Mid/Side
+  - VU hold needle/arc (current)
+  - VU hold display (current)
+  - Peak hold display (current/max)
+  - +-18dB volume slider for gain staging or automation
+  - Preference menu with extensive setting options
+  - Embedded UI - always shows SUMMED (L+R) or SUMMED (L||R)
+  - Context-sensitive Tooltips
+  - Write meter output automation
+  - Very low on CPU
+
+
+
+  Credits:
+  * chris-s - Simple VU Meter
+  * aurelien - embedded gain
+
+  Thanks to all who support this project <3
 
 tags: analysis analyzer vu meter loudness
 
@@ -33,7 +67,7 @@ slider12: 0<0,1,1>                                                              
 slider13: 0<0,1,1{Off,On}>                                                                                  -VU Rec?
 
 // Parameter Modulation sliders...
-slider20: <-20,3,.1:log=-2.5>                                                                               -VU - Left/Mid 
+slider20: <-20,3,.1:log=-2.5>                                                                               -VU - Left/Mid
 slider21: <-20,3,.1:log=-2.5>                                                                               -VU - Right/Side
 slider22: <0,1,1{-,PEAK}>                                                                                   -Peak LED L
 slider23: <0,1,1{-,PEAK}>                                                                                   -Peak LED R
@@ -53,6 +87,8 @@ slider44: 1<0,1,1{Off,On}>                                                      
 slider45: 0<-3,2,.5>                                                                                        -Text Size
 slider46: 0<0,1,1{Off,On}>                                                                                  -LBX Support
 slider47: 12<0,20,1>                                                                                        -Preference Page Blur
+
+slider50: 0<0,1,1{Off,On}>                                                                                  -Trackpad Support
 
 slider64: 1<1,2,1>                                                                                          -Preference Page
 
@@ -75,7 +111,7 @@ import zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 02.jsfx-inc
 @init
 
 // version
-version = (" v1.7.4");
+version = (" v1.7.5");
 
 
 
@@ -303,6 +339,7 @@ function do_mouse () (
           fontsize_button.hit_button(mouse_x,mouse_y,45);
           lbxSupport_button.hit_button(mouse_x,mouse_y,46);
           pageblur_button.hit_button(mouse_x,mouse_y,47);
+          trackpadSupport_button.hit_button(mouse_x,mouse_y,50);
         );
         prefpage_button.hit_button(mouse_x,mouse_y,64);
       );
@@ -352,13 +389,16 @@ function do_mouse () (
     cap_mode == 44 && !cap_drag ? (
         slider44=cycle_slider(slider44,0,1,1); cap_mode=0 );
     cap_mode == 46 && !cap_drag ? (
-        slider46=cycle_slider(slider46,0,1,1); cap_mode=0
+        slider46=cycle_slider(slider46,0,1,1); cap_mode=0 );
+    cap_mode == 50 && !cap_drag ? (
+        slider50=cycle_slider(slider50,0,1,1); cap_mode=0
   ) : (
     cap_mode == 64 && !cap_drag ? (
         slider64=cycle_slider(slider64,1,2,1); cap_mode=0 );
   );
 
-
+  Trackpad == 0 ?
+  (
     // wheel
     ref_level_slider ? (
         slider3=wheel_slider(slider3,-36,0,1); mouse_wheel=0 ):
@@ -394,8 +434,11 @@ function do_mouse () (
         slider46=wheel_slider(slider46,0,1,1); mouse_wheel=0 ):
     pageblur_slider ? (
         slider47=wheel_slider(slider47,0,20,1); mouse_wheel=0 ):
+    trackpadSupport_slider ? (
+        slider50=wheel_slider(slider50,0,1,1); mouse_wheel=0 ):
     ( mouse_wheel = 0 );
   );
+);
 
 
 //************************************* Right Click Button Menus ************************************
@@ -899,7 +942,7 @@ function draw_vu_pk_buttons () (
     // button vu
     pos_x3 = xd-(4*scaling);
     pos_y3 = 140*scaling;
-    pos_w3 = 10*scaling;//(xd+(5*scaling));
+    pos_w3 = 10*scaling;
     pos_h3 = 22*scaling;
     vudisplay_button.draw_buttonsize(pos_x3,pos_y3,pos_w3,pos_h3);
 
@@ -911,7 +954,7 @@ function draw_vu_pk_buttons () (
     // button pk
     pos_x4 = (xd+xw)-(6*scaling);
     pos_y4 = 140*scaling;
-    pos_w4 = 20*scaling;//(xd+xw)+(1*scaling);
+    pos_w4 = 20*scaling;
     pos_h4 = 22*scaling;
     pkdisplay_button.draw_buttonsize(pos_x4,pos_y4,pos_w4,pos_h4);
 
@@ -949,6 +992,8 @@ function draw_preference_mask () (
       // slider() bg
       prev_X = 445*scaling;     prev_Y = 8*scaling;   prev_W = 20*scaling; prev_H = 20*scaling;
       next_X = 472*scaling;     next_Y = 8*scaling;   next_W = 20*scaling; next_H = 20*scaling;
+      love_X = 8*scaling;       love_Y = 8*scaling;   love_W = 20*scaling; love_H = 20*scaling;
+      ppme_X = 28*scaling;       ppme_Y = 8*scaling;   ppme_W = 20*scaling; ppme_H = 20*scaling;
 
       ref_X  = xd+(15*scaling); ref_Y  = 40*scaling;  ref_W  = 54*scaling; ref_H  = 15*scaling;
       warn_X = xd+(15*scaling); warn_Y = 60*scaling;  warn_W = 54*scaling; warn_H = 15*scaling;
@@ -962,9 +1007,10 @@ function draw_preference_mask () (
       Smmd_X = xd+(15*scaling); Smmd_Y = 170*scaling; Smmd_W = 54*scaling; Smmd_H = 15*scaling;
 
       lbx_X  = xd+(15*scaling); lbx_Y  = 40*scaling;  lbx_W  = 54*scaling; lbx_H  = 15*scaling;
-      Tips_X = xd+(15*scaling); Tips_Y = 60*scaling;  Tips_W = 54*scaling; Tips_H = 15*scaling;
-      FtSz_X = xd+(15*scaling); FtSz_Y = 80*scaling;  FtSz_W = 54*scaling; FtSz_H = 15*scaling;
-      blur_X = xd+(15*scaling); blur_Y = 100*scaling; blur_W = 54*scaling; blur_H = 15*scaling;
+      Trpd_X = xd+(15*scaling); Trpd_Y = 60*scaling;  Trpd_W = 54*scaling; Trpd_H = 15*scaling;
+      Tips_X = xd+(15*scaling); Tips_Y = 90*scaling;  Tips_W = 54*scaling; Tips_H = 15*scaling;
+      FtSz_X = xd+(15*scaling); FtSz_Y = 110*scaling;  FtSz_W = 54*scaling; FtSz_H = 15*scaling;
+      blur_X = xd+(15*scaling); blur_Y = 130*scaling; blur_W = 54*scaling; blur_H = 15*scaling;
 
 
       //Prefence Page Buttons
@@ -984,6 +1030,21 @@ function draw_preference_mask () (
       // page label
       gfx_x=prev_X; gfx_y=prev_Y+(3*scaling);
       gfx_drawstr("PAGE :",258,prev_X-(8*scaling), prev_Y+prev_H);
+
+      // ♥
+      set_color($xBC0AE2);
+      gfx_triangle(14*scaling,17*scaling,18*scaling,22.5*scaling,22*scaling,17*scaling);
+      gfx_circle(15.75*scaling,16*scaling,2.25*scaling,1,1);
+      gfx_circle(20*scaling,16*scaling,2.25*scaling,1,1);
+
+      in_love = mouse_x >= love_X && mouse_x <= love_X+love_W && mouse_y > love_Y && mouse_y < love_Y+love_H;
+
+      in_love ? (
+        gfx_setfont(1);
+        gfx_set(.5,.5,.5,1);
+        gfx_x=ppme_X; gfx_y=ppme_Y-(1*scaling);
+        gfx_drawstr("paypal.me/ZenoBock",260,ppme_X+ppme_W, ppme_Y+ppme_H);
+      );
 
       // prev page
       gfx_setfont(4);
@@ -1088,12 +1149,14 @@ function draw_preference_mask () (
       Pref_Page == 2 ? (
         gfx_set(0,0,0,.5);
         gfx_rect(lbx_X,lbx_Y,lbx_W,lbx_H);     lbxSupport_button.draw_buttonsize(lbx_X,lbx_Y,lbx_W,lbx_H);
+        gfx_rect(Trpd_X,Trpd_Y,Trpd_W,Trpd_H); trackpadSupport_button.draw_buttonsize(Trpd_X,Trpd_Y,Trpd_W,Trpd_H);
         gfx_rect(Tips_X,Tips_Y,Tips_W,Tips_H); displayTooltips_button.draw_buttonsize(Tips_X,Tips_Y,Tips_W,Tips_H);
         gfx_rect(FtSz_X,FtSz_Y,FtSz_W,FtSz_H); fontsize_button.draw_buttonsize(FtSz_X,FtSz_Y,FtSz_W,FtSz_H);
         gfx_rect(blur_X,blur_Y,blur_W,blur_H); pageblur_button.draw_buttonsize(blur_X,blur_Y,blur_W,blur_H);
 
         // button & slider positions
         lbxSupport_slider = mouse_x >= lbx_X && mouse_x <= lbx_X+lbx_W && mouse_y > lbx_Y && mouse_y < lbx_Y+lbx_H;
+        trackpadSupport_slider = mouse_x >= Trpd_X && mouse_x <= Trpd_X+Trpd_W && mouse_y > Trpd_Y && mouse_y < Trpd_Y+Trpd_H;
         displayTooltips_slider = mouse_x >= Tips_X && mouse_x <= Tips_X+Tips_W && mouse_y > Tips_Y && mouse_y < Tips_Y+Tips_H;
         fontsize_slider = mouse_x >= FtSz_X && mouse_x <= FtSz_X+FtSz_W && mouse_y > FtSz_Y && mouse_y < FtSz_Y+FtSz_H;
         pageblur_slider = mouse_x >= blur_X && mouse_x <= blur_X+blur_W && mouse_y > blur_Y && mouse_y < blur_Y+blur_H;
@@ -1106,6 +1169,12 @@ function draw_preference_mask () (
         gfx_drawstr("LBX Support :",258,xd-(15*scaling), lbx_Y+lbx_H);
         gfx_x=lbx_X; gfx_y=lbx_Y;
         gfx_drawstr(strcpy_fromslider(lbx_support,slider46),261,lbx_X+lbx_W, lbx_Y+lbx_H);
+
+        // Trackpad support
+        gfx_x=Trpd_X; gfx_y=Trpd_Y;
+        gfx_drawstr("Trackpad Support :",258,xd-(15*scaling), Trpd_Y+Trpd_H);
+        gfx_x=Trpd_X; gfx_y=Trpd_Y;
+        gfx_drawstr(strcpy_fromslider(Trackpad,slider50),261,Trpd_X+Trpd_W, Trpd_Y+Trpd_H);
 
         // peak warn level
         gfx_x=Tips_X; gfx_y=Tips_Y;
@@ -1163,6 +1232,7 @@ function compute_meter () (
   cfg_textsize = slider45;
   lbx_support = slider46;
   Pref_blur = slider47;
+  Trackpad = slider50;
   Pref_Page = slider64;
 
 
@@ -1257,15 +1327,16 @@ function draw_bottombar () (
     gfx_setfont(1); // small
     set_color(Font_BB[color]);
     // draw "⚫" in color
+    //gfx_drawchar(char)
       gfx_setfont(1);
       rec_needle ? set_color($xF71414) : (set_color(Font_BB[color]); gfx_a=0.1);
       gfx_x=270*scaling; gfx_y=ylo-gfx_texth/2.5;
-      gfx_drawstr("⚫",261,gfx_x+gfx_texth+(14*scaling),gfx_y+gfx_texth-1);
+      gfx_circle(gfx_x+(13*scaling), (gfx_y+gfx_texth/2)-.5, gfx_texth/3, 1, 1 );
 
     // draw "REC"
       set_color(Font_BB[color]);
       gfx_x=290*scaling; gfx_y=ylo-gfx_texth/2.5;
-      gfx_drawstr("Rec",261,gfx_x+gfx_texth+(18*scaling),gfx_y+gfx_texth);
+      gfx_drawstr("Rec",261,gfx_x+gfx_texth+(12*scaling),gfx_y+gfx_texth);
   );
 
 
@@ -1311,7 +1382,7 @@ function draw_tooltips () (
           meter_resp_slider || meter_damp_slider || vu_holdtime_slider ||
           pk_holdtime_slider || vu_needlehold_slider || pk_currentmax_slider ||
           summed_mode_slider || lbxSupport_slider || displayTooltips_slider ||
-          fontsize_slider || pageblur_slider
+          fontsize_slider || pageblur_slider || trackpadSupport_slider
         )
       ) ?
       (
@@ -1406,6 +1477,11 @@ function draw_tooltips () (
 
           lbxSupport_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
             gfx_drawstr ("Turns on constant VU parameter output (necessary for LBX Stripper).",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          trackpadSupport_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Disables mouse wheel to avoid parameter scrolling on MacOS Trackpad / Touchpad.",
             261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
           );
 
