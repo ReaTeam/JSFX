@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="4f481c3f05d7fb8fbed38c5dd9ceb554faa69b70">
+<index version="1" name="ReaTeam JSFX" commit="f9c15dff11c50a27047a98c5f2c9044832209fa0">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -4001,7 +4001,27 @@ add "Time Asymmetry" slider, bugfixes.]]></changelog>
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 Simple VU Meter - a fine freeware by chris-s, modified and functionally extended by Zeno.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 VU Meter by ZenoMOD\par}
+{\pard \qc \f0 \sa180 \li0 \fi0 \emdash\emdash\emdash\emdash\emdash\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 {\b Requires add-on package:} {\i VU Meter (ZenoMOD) - UserThemes}\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Features:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Fully resizeable vector GUI\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab 11 different UI styles\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab 2 extra User Theme slots\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab 3 channel modes: Stereo, Summed, Mid/Side\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab VU hold needle/arc (current)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab VU hold display (current)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Peak hold display (current/max)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab +-18dB volume slider for gain staging or automation\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Preference menu with extensive setting options\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Embedded UI - always shows SUMMED (L+R) or SUMMED (L||R)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Context-sensitive Tooltips\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Write meter output automation\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Very low on CPU\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Credits:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab chris-s - Simple VU Meter\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab aurelien - embedded gain\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Thanks to all who support this project <3\par}
 }
 ]]></description>
         <link rel="website" href="https://forum.cockos.com/showthread.php?t=262611">Forum Thread</link>
@@ -4110,6 +4130,18 @@ fix: Channel mode labels are no longer grayed out when mouse cursor is in trigge
 - Fix theme query in the index file]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/4f481c3f05d7fb8fbed38c5dd9ceb554faa69b70/Utility/zenomod_VU%20Meter%20(ZenoMOD).jsfx</source>
         <source file="zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/4f481c3f05d7fb8fbed38c5dd9ceb554faa69b70/Utility/zenomod_VU%20Meter%20(ZenoMOD)/Index.jsfx-inc</source>
+      </version>
+      <version name="1.7.5" author="ZenoMOD" time="2023-05-25T16:17:50Z">
+        <changelog><![CDATA[- Fix scrolling to max parameters on MacOS Trackpad / Touchpad when mouse over parameter
+- Fix rec circle not displayed or displayed incorrectly on some OS
+- Rephrase LOL error message a bit to avoid confusion
+- Add "VU Meter (ZenoMOD) - UserThemes" Forum-Link to LOL error message
+- Add some love to preference mask
+- Update ReaPack metadata
+- Update Stash Link
+- Upate Stash README]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/f9c15dff11c50a27047a98c5f2c9044832209fa0/Utility/zenomod_VU%20Meter%20(ZenoMOD).jsfx</source>
+        <source file="zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f9c15dff11c50a27047a98c5f2c9044832209fa0/Utility/zenomod_VU%20Meter%20(ZenoMOD)/Index.jsfx-inc</source>
       </version>
     </reapack>
   </category>
