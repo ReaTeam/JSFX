@@ -1,23 +1,18 @@
 desc: VU Meter (ZenoMOD)
 author: ZenoMOD
-version: 1.7.5
+version: 1.7.6
 changelog:
-  - Fix scrolling to max parameters on MacOS Trackpad / Touchpad when mouse over parameter
-  - Fix rec circle not displayed or displayed incorrectly on some OS
-  - Rephrase LOL error message a bit to avoid confusion
-  - Add "VU Meter (ZenoMOD) - UserThemes" Forum-Link to LOL error message
-  - Add some love to preference mask
-  - Update ReaPack metadata
-  - Update Stash Link
-  - Upate Stash README
+  - Add checkmarks to right-click context menus
+  - Change VU Hold Time to 2 seconds as the default value
+  - Fix an internal code switch that caused gating in the audio path [p=2681849]
+  - Remove mouse wheel support from the Trackpad Support preference button
 provides: zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc
 link: Forum Thread https://forum.cockos.com/showthread.php?t=262611
 donation: Donate via PayPal https://www.paypal.me/ZenoBock
 about:
   ## VU Meter by ZenoMOD
-  ---
 
-  **Requires add-on package:** *VU Meter (ZenoMOD) - UserThemes*
+  **Requires add-on:** *VU Meter (ZenoMOD) - UserThemes*
 
 
   Features:
@@ -79,7 +74,7 @@ slider27: <-60,0,.01>                                                           
 
 // Settings...
 slider40: 3<1,10,.01>                                                                                       -LED Hold (ds)
-slider41: 5<1,10,1>                                                                                         -VU Hold (s)
+slider41: 2<1,10,1>                                                                                         -VU Hold (s)
 slider42: 3<1,10,1>                                                                                         -PK Hold (s)
 
 slider43: 0<0,1,1{L + R,L || R}>                                                                            -Summed Mode
@@ -111,7 +106,7 @@ import zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 02.jsfx-inc
 @init
 
 // version
-version = (" v1.7.5");
+version = (" v1.7.6");
 
 
 
@@ -270,7 +265,6 @@ function wheel_slider(x, y, z, dx)
 
 function draw_buttonsize(xp, yp, wp, hp)
   instance(w,h,x,y)
-  globals(g_button_right_extent,gfx_r,gfx_g,gfx_b,gfx_x,gfx_y,gfx_w)
 (
   w=wp; h=hp; x=xp; y=yp;
 );
@@ -299,7 +293,7 @@ function do_mouse () (
         cap_mode == 5 ? ( slider5 = 50; );
         cap_mode == 6 ? ( slider6 = 0.0053; );
         cap_mode == 40 ? ( slider40 = 3; );
-        cap_mode == 41 ? ( slider41 = 5; );
+        cap_mode == 41 ? ( slider41 = 2; );
         cap_mode == 42 ? ( slider42 = 3; );
         cap_mode == 45 ? ( slider45 = 0; );
         cap_mode == 47 ? ( slider47 = 12; );
@@ -434,8 +428,6 @@ function do_mouse () (
         slider46=wheel_slider(slider46,0,1,1); mouse_wheel=0 ):
     pageblur_slider ? (
         slider47=wheel_slider(slider47,0,20,1); mouse_wheel=0 ):
-    trackpadSupport_slider ? (
-        slider50=wheel_slider(slider50,0,1,1); mouse_wheel=0 ):
     ( mouse_wheel = 0 );
   );
 );
@@ -450,8 +442,8 @@ function do_mouse () (
     gfx_x = 50*scaling;
     gfx_y = ylo-(gfx_texth+6) - 290;
     sprintf(
-      #menustr,"Classic|Knight|Purple|Moss|Moo|Warm|Ivory|Trooper|Ultimate|Mooncake|Black||User 01|User 02",
-      #menustr, slider1==0?"!":"", slider1==1?"!":"", slider1==2?"!":"", slider1==3?"!":"", slider1==4?"!":"",
+      #menustr,"%sClassic|%sKnight|%sPurple|%sMoss|%sMoo|%sWarm|%sIvory|%sTrooper|%sUltimate|%sMooncake|%sBlack||%sUser 01|%sUser 02",
+      slider1==0?"!":"", slider1==1?"!":"", slider1==2?"!":"", slider1==3?"!":"", slider1==4?"!":"",
                 slider1==5?"!":"", slider1==6?"!":"", slider1==7?"!":"", slider1==8?"!":"", slider1==9?"!":"",
                 slider1==10?"!":"", slider1==11?"!":"", slider1==12?"!":""
     );
@@ -468,7 +460,7 @@ function do_mouse () (
     gfx_x = 120*scaling;
     gfx_y = ylo-(gfx_texth+6) - 60;
     sprintf(
-      #menustr,"Stereo|Summed|Mid / Side",#menustr,
+      #menustr,"%sStereo|%sSummed|%sMid / Side",
       slider2==0?"!":"", slider2==1?"!":"", slider2==2?"!":""
     );
     ret = gfx_showmenu(#menustr);
@@ -479,6 +471,7 @@ function do_mouse () (
 
   cap_mode && cap_timer < 8 ? cap_timer += 1;
   last_mouse_cap = mouse_cap;
+
 );
 
 
@@ -830,57 +823,58 @@ function compute_draw_needle (needle, input1, input2, type) (
 );
 
 
-function draw_level_display (var1, var2, mode) (
+function draw_level_display (var1, var2, mode)
+  local(x,y,w,h, x2,y2,w2,h2, str1,str2) (
   !gfx_ext_flags ? (
     mode == peak ? (
-      pos_x = xd+(185*scaling);
-      pos_y = 140*scaling;
-      pos_w = (xd+xw)-(3*scaling);
-      pos_h = (yd+yw)-(4*scaling);
+      x = xd+(185*scaling);
+      y = 140*scaling;
+      w = (xd+xw)-(3*scaling);
+      h = (yd+yw)-(4*scaling);
     );
     mode == vu ? (
-      pos_x2 = xd+(3*scaling);
-      pos_y2 = 140*scaling;
-      pos_w2 = (xd+xw)-(183*scaling);
-      pos_h2 = (yd+yw)-(4*scaling);
+      x2 = xd+(3*scaling);
+      y2 = 140*scaling;
+      w2 = (xd+xw)-(183*scaling);
+      h2 = (yd+yw)-(4*scaling);
     );
     mode == peak ? (
-      pkReset_button.draw_buttonsize(pos_x,pos_y,48*scaling,22*scaling);
+      pkReset_button.draw_buttonsize(x,y,48*scaling,22*scaling);
     );
   ) : (
     mode == peak ? (
-      pos_x = xd+(330*scaling);
-      pos_y = 210*scaling;
-      pos_w = (xd+xw)+(45*scaling);
-      pos_h = (yd+yw)-(10*scaling);
+      x = xd+(330*scaling);
+      y = 210*scaling;
+      w = (xd+xw)+(45*scaling);
+      h = (yd+yw)-(10*scaling);
     );
     mode == vu ? (
-      pos_x2 = xd-(50*scaling);
-      pos_y2 = 210*scaling;
-      pos_w2 = (xd+xw)-(335*scaling);
-      pos_h2 = (yd+yw)-(10*scaling);
+      x2 = xd-(50*scaling);
+      y2 = 210*scaling;
+      w2 = (xd+xw)-(335*scaling);
+      h2 = (yd+yw)-(10*scaling);
     );
   );
 
     gfx_set(.01,.01,.01,.30);
     mode == peak ? (
-      gfx_x=pos_x;
-      gfx_y=pos_y;
-      gfx_rectto(pos_w,pos_h);
+      gfx_x=x;
+      gfx_y=y;
+      gfx_rectto(w,h);
       loop(25,
-        gfx_x=pos_x-1;
-        gfx_y=pos_y-1;
-        gfx_blurto(pos_w+2,pos_h+2);
+        gfx_x=x-1;
+        gfx_y=y-1;
+        gfx_blurto(w+2,h+2);
       );
     );
     mode == vu ? (
-      gfx_x=pos_x2;
-      gfx_y=pos_y2;
-      gfx_rectto(pos_w2,pos_h2);
+      gfx_x=x2;
+      gfx_y=y2;
+      gfx_rectto(w2,h2);
       loop(25,
-        gfx_x=pos_x2-1;
-        gfx_y=pos_y2-1;
-        gfx_blurto(pos_w2+2,pos_h2+2);
+        gfx_x=x2-1;
+        gfx_y=y2-1;
+        gfx_blurto(w2+2,h2+2);
       );
     );
 
@@ -894,74 +888,75 @@ function draw_level_display (var1, var2, mode) (
     mode == peak ? (
       chan == 0 ? (
         str1 = sprintf(str1,"%.1f",var1);
-        gfx_x = pos_x;
-        gfx_y = pos_y;
+        gfx_x = x;
+        gfx_y = y;
         var1 <= -316 ? (
-          gfx_drawstr("--", 261,pos_w,pos_h);
+          gfx_drawstr("--", 261,w,h);
         ) : (
-          gfx_drawstr(str1, 261,pos_w,pos_h);
+          gfx_drawstr(str1, 261,w,h);
         )
       ) : (
         str2 = sprintf(str2,"%.1f",var2);
-        gfx_x = pos_x;
-        gfx_y = pos_y;
+        gfx_x = x;
+        gfx_y = y;
         var2 <= -316 ? (
-          gfx_drawstr("--", 261,pos_w,pos_h);
+          gfx_drawstr("--", 261,w,h);
         ) : (
-          gfx_drawstr(str2, 261,pos_w,pos_h);
+          gfx_drawstr(str2, 261,w,h);
         )
       );
     );
     mode == vu ? (
       chan == 0 ? (
         str1 = sprintf(str1,"%.1f",var1);
-        gfx_x = pos_x2;
-        gfx_y = pos_y2;
+        gfx_x = x2;
+        gfx_y = y2;
         var1 <= -20 ? (
-          gfx_drawstr("--", 261,pos_w2,pos_h2);
+          gfx_drawstr("--", 261,w2,h2);
         ) : (
-          gfx_drawstr(str1, 261,pos_w2,pos_h2);
+          gfx_drawstr(str1, 261,w2,h2);
         )
       ) : (
         str2 = sprintf(str2,"%.1f",var2);
-        gfx_x = pos_x2;
-        gfx_y = pos_y2;
+        gfx_x = x2;
+        gfx_y = y2;
         var2 <= -20 ? (
-          gfx_drawstr("--", 261,pos_w2,pos_h2);
+          gfx_drawstr("--", 261,w2,h2);
         ) : (
-          gfx_drawstr(str2, 261,pos_w2,pos_h2);
+          gfx_drawstr(str2, 261,w2,h2);
         )
       );
     );
 );
 
-function draw_vu_pk_buttons () (
+function draw_vu_pk_buttons ()
+  local (x,y,w,h, x2,y2,w2,h2) (
   !gfx_ext_flags ? (
     set_color(DsplBtn[color]);
 
     // button vu
-    pos_x3 = xd-(4*scaling);
-    pos_y3 = 140*scaling;
-    pos_w3 = 10*scaling;
-    pos_h3 = 22*scaling;
-    vudisplay_button.draw_buttonsize(pos_x3,pos_y3,pos_w3,pos_h3);
+    x = xd-(4*scaling);
+    y = 140*scaling;
+    w = 10*scaling;
+    h = 22*scaling;
+    vudisplay_button.draw_buttonsize(x,y,w,h);
 
     VU_enabled ? ( gfx_setfont(7) ):( gfx_setfont(5) );
     gfx_x = (xd+xd)-(6*scaling);
-    gfx_y = pos_y3;
-    gfx_drawstr(">", 261,pos_w3,163*scaling;);
+    gfx_y = y;
+    gfx_drawstr(">", 261,w,163*scaling;);
 
     // button pk
-    pos_x4 = (xd+xw)-(6*scaling);
-    pos_y4 = 140*scaling;
-    pos_w4 = 20*scaling;
-    pos_h4 = 22*scaling;
-    pkdisplay_button.draw_buttonsize(pos_x4,pos_y4,pos_w4,pos_h4);
+    x2 = (xd+xw)-(6*scaling);
+    y2 = 140*scaling;
+    w2 = 20*scaling;
+    h2 = 22*scaling;
+    pkdisplay_button.draw_buttonsize(x2,y2,w2,h2);
 
     PK_enabled ? ( gfx_setfont(7) ):( gfx_setfont(5) );
-    gfx_x = pos_x4;
-    gfx_y = pos_y4;
-    gfx_drawstr("<", 260,pos_w4,163*scaling;);
+    gfx_x = x2;
+    gfx_y = y2;
+    gfx_drawstr("<", 260,w2,163*scaling;);
   );
 );
 
@@ -1234,7 +1229,6 @@ function compute_meter () (
   Pref_blur = slider47;
   Trackpad = slider50;
   Pref_Page = slider64;
-
 
   ext_tail_size =
   (
@@ -1639,7 +1633,7 @@ Hold_enabled && !idle ? (
 @sample
 
 //========================================= VOLUME ==================================================/
-  gain_sldr != 0 && !idle ? (
+  gain_sldr != 0 ? (
     cnt == db_chg_splpos ? (
       ddb=0.0; db_chg_splpos=slider_next_chg(1, tgtdb);
       db_chg_splpos > cnt ? (
