@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="c161ec3e8ffc1dc5c5afee0131eaea870367b4a7">
+<index version="1" name="ReaTeam JSFX" commit="05b16d02b387b543890d1c0f008dc128c409435c">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -4025,6 +4025,7 @@ add "Time Asymmetry" slider, bugfixes.]]></changelog>
 ]]></description>
         <link rel="website" href="https://forum.cockos.com/showthread.php?t=262611">Forum Thread</link>
         <link rel="donation" href="https://www.paypal.me/ZenoBock">Donate via PayPal</link>
+        <link rel="donation" href="https://www.buymeacoffee.com/zenomod">Buy Me a Coffee</link>
       </metadata>
       <version name="1.7.0" author="ZenoMOD" time="2022-03-16T17:41:20Z">
         <changelog><![CDATA[fix: playback initialization error
@@ -4149,6 +4150,12 @@ fix: Channel mode labels are no longer grayed out when mouse cursor is in trigge
 - Remove mouse wheel support from the Trackpad Support preference button]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/c161ec3e8ffc1dc5c5afee0131eaea870367b4a7/Utility/zenomod_VU%20Meter%20(ZenoMOD).jsfx</source>
         <source file="zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c161ec3e8ffc1dc5c5afee0131eaea870367b4a7/Utility/zenomod_VU%20Meter%20(ZenoMOD)/Index.jsfx-inc</source>
+      </version>
+      <version name="1.7.7" author="ZenoMOD" time="2023-06-17T17:18:20Z">
+        <changelog><![CDATA[- Revised double-click speed for parameter reset [p=2683566]
+- Fix idle bug. The meter now correctly detects if audio is present at the left input when the input signal is panned hard left [p=2683919]]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/05b16d02b387b543890d1c0f008dc128c409435c/Utility/zenomod_VU%20Meter%20(ZenoMOD).jsfx</source>
+        <source file="zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/05b16d02b387b543890d1c0f008dc128c409435c/Utility/zenomod_VU%20Meter%20(ZenoMOD)/Index.jsfx-inc</source>
       </version>
     </reapack>
   </category>
