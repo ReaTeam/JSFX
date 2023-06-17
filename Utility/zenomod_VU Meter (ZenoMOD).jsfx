@@ -1,14 +1,14 @@
 desc: VU Meter (ZenoMOD)
 author: ZenoMOD
-version: 1.7.6
+version: 1.7.7
 changelog:
-  - Add checkmarks to right-click context menus
-  - Change VU Hold Time to 2 seconds as the default value
-  - Fix an internal code switch that caused gating in the audio path [p=2681849]
-  - Remove mouse wheel support from the Trackpad Support preference button
+  - Revised double-click speed for parameter reset [p=2683566]
+  - Fix idle bug. The meter now correctly detects if audio is present at the left input when the input signal is panned hard left [p=2683919]
 provides: zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc
 link: Forum Thread https://forum.cockos.com/showthread.php?t=262611
-donation: Donate via PayPal https://www.paypal.me/ZenoBock
+donation:
+  Donate via PayPal https://www.paypal.me/ZenoBock
+  Buy Me a Coffee https://www.buymeacoffee.com/zenomod
 about:
   ## VU Meter by ZenoMOD
 
@@ -106,7 +106,7 @@ import zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 02.jsfx-inc
 @init
 
 // version
-version = (" v1.7.6");
+version = (" v1.7.7");
 
 
 
@@ -208,13 +208,13 @@ function round_dec (x, places)
 
 
 // Update and hold values for Peak level
-function _sample(ch, _spl) local(s) (
+function _sample(ch, _spl, decay) local(s) (
   s = abs(_spl);
   ch[value] = max(ch[value], s);
   ch[peak_timeout] -= 1;
   ch[peak_timeout] <= 0 || s > ch[peak] ? (
     ch[peak] = s;
-    ch[peak_timeout] = holdtime2;
+    ch[peak_timeout] = decay;
   );
   ch[clip] = max(ch[clip], s);
 );
@@ -222,7 +222,7 @@ function _sample(ch, _spl) local(s) (
 
 // Convert linear Amplitude value to Decibel
 function dbfs(x) (
-  2*10*log10(x);
+  20*log10(x);
 );
 
 
@@ -287,7 +287,7 @@ function do_mouse () (
 
   (mouse_cap & 1) ? (
     !(last_mouse_cap & 1) ? (
-      !cap_drag && cap_timer < 12 ? (
+      !cap_drag && cap_timer < 13 ? (
         cap_mode == 3 ? ( slider3 = -18; );
         cap_mode == 4 ? ( slider4 = -6; );
         cap_mode == 5 ? ( slider5 = 50; );
@@ -297,11 +297,12 @@ function do_mouse () (
         cap_mode == 42 ? ( slider42 = 3; );
         cap_mode == 45 ? ( slider45 = 0; );
         cap_mode == 47 ? ( slider47 = 12; );
+      ) : (
+        cap_mode = cap_drag = cap_timer = 0;
       );
 
-      (cap_mode == 7) && !cap_drag && cap_timer < 12 ? (
+      (cap_mode == 7) && !cap_drag && cap_timer < 13 ? (
         cap_mode == 7 ? ( slider7 = 0; slider_automate(slider7) );
-        cap_mode=0;
       ) : (
         cap_mode = cap_drag = cap_timer = 0;
 
@@ -361,7 +362,7 @@ function do_mouse () (
     cap_mode == 47 && cap_last_y != mouse_y ? (
         slider47=drag_slider(slider47,0,20,1); );
   ) : (
-  // cycle click
+    // cycle click
     cap_mode == 1 && !cap_drag ? (
         slider1=cycle_slider(slider1,0,12,1); cap_mode=0 );
     cap_mode == 2 && !cap_drag ? (
@@ -386,55 +387,55 @@ function do_mouse () (
         slider46=cycle_slider(slider46,0,1,1); cap_mode=0 );
     cap_mode == 50 && !cap_drag ? (
         slider50=cycle_slider(slider50,0,1,1); cap_mode=0
-  ) : (
-    cap_mode == 64 && !cap_drag ? (
-        slider64=cycle_slider(slider64,1,2,1); cap_mode=0 );
-  );
+    ) : (
+      cap_mode == 64 && !cap_drag ? (
+          slider64=cycle_slider(slider64,1,2,1); cap_mode=0 );
+    );
 
-  Trackpad == 0 ?
-  (
-    // wheel
-    ref_level_slider ? (
-        slider3=wheel_slider(slider3,-36,0,1); mouse_wheel=0 ):
-    warn_level_slider ? (
-        slider4=wheel_slider(slider4,-20,0,1); mouse_wheel=0 ):
-    meter_resp_slider ? (
-        slider5=wheel_slider(slider5,0,100,1); mouse_wheel=0 ):
-    meter_damp_slider ? (
-        slider6=wheel_slider(slider6,0,0.01,.0001); mouse_wheel=0 ):
-    volume_slider ? (
-        slider7=wheel_slider(slider7,-18,18,.5); slider_automate(slider7); mouse_wheel=0 ):
-    peak_hold_slider ? (
-        slider40=wheel_slider(slider40,1,10,1); mouse_wheel=0 ):
-    ui_color_slider ? (
-        slider1=wheel_slider(slider1,0,12,1); mouse_wheel=0 ):
-    mode_slider ? (
-        slider2=wheel_slider(slider2,0,2,1); mouse_wheel=0 ):
-    vu_needlehold_slider? (
-        slider8=wheel_slider(slider8,0,3,1); mouse_wheel=0 ):
-    vu_holdtime_slider ? (
-        slider41=wheel_slider(slider41,1,10,1); mouse_wheel=0 ):
-    pk_currentmax_slider ? (
-        slider11=wheel_slider(slider11,0,1,1); mouse_wheel=0 ):
-    pk_holdtime_slider ? (
-        slider42=wheel_slider(slider42,1,10,1); mouse_wheel=0 ):
-    summed_mode_slider ? (
-        slider43=wheel_slider(slider43,0,1,1); mouse_wheel=0 ):
-    displayTooltips_slider ? (
-        slider44=wheel_slider(slider44,0,1,1); mouse_wheel=0 ):
-    fontsize_slider ? (
-        slider45=wheel_slider(slider45,-3,2,.1); mouse_wheel=0 ):
-    lbxSupport_slider ? (
-        slider46=wheel_slider(slider46,0,1,1); mouse_wheel=0 ):
-    pageblur_slider ? (
-        slider47=wheel_slider(slider47,0,20,1); mouse_wheel=0 ):
-    ( mouse_wheel = 0 );
+    Trackpad == 0 ?
+    (
+      // wheel
+      ref_level_slider ? (
+          slider3=wheel_slider(slider3,-36,0,1); mouse_wheel=0 ):
+      warn_level_slider ? (
+          slider4=wheel_slider(slider4,-20,0,1); mouse_wheel=0 ):
+      meter_resp_slider ? (
+          slider5=wheel_slider(slider5,0,100,1); mouse_wheel=0 ):
+      meter_damp_slider ? (
+          slider6=wheel_slider(slider6,0,0.01,.0001); mouse_wheel=0 ):
+      volume_slider ? (
+          slider7=wheel_slider(slider7,-18,18,.5); slider_automate(slider7); mouse_wheel=0 ):
+      peak_hold_slider ? (
+          slider40=wheel_slider(slider40,1,10,1); mouse_wheel=0 ):
+      ui_color_slider ? (
+          slider1=wheel_slider(slider1,0,12,1); mouse_wheel=0 ):
+      mode_slider ? (
+          slider2=wheel_slider(slider2,0,2,1); mouse_wheel=0 ):
+      vu_needlehold_slider? (
+          slider8=wheel_slider(slider8,0,3,1); mouse_wheel=0 ):
+      vu_holdtime_slider ? (
+          slider41=wheel_slider(slider41,1,10,1); mouse_wheel=0 ):
+      pk_currentmax_slider ? (
+          slider11=wheel_slider(slider11,0,1,1); mouse_wheel=0 ):
+      pk_holdtime_slider ? (
+          slider42=wheel_slider(slider42,1,10,1); mouse_wheel=0 ):
+      summed_mode_slider ? (
+          slider43=wheel_slider(slider43,0,1,1); mouse_wheel=0 ):
+      displayTooltips_slider ? (
+          slider44=wheel_slider(slider44,0,1,1); mouse_wheel=0 ):
+      fontsize_slider ? (
+          slider45=wheel_slider(slider45,-3,2,.1); mouse_wheel=0 ):
+      lbxSupport_slider ? (
+          slider46=wheel_slider(slider46,0,1,1); mouse_wheel=0 ):
+      pageblur_slider ? (
+          slider47=wheel_slider(slider47,0,20,1); mouse_wheel=0 ):
+      ( mouse_wheel = 0 );
+    );
   );
-);
 
 
 //************************************* Right Click Button Menus ************************************
-
+ 
   // UI Style Menu
   cap_mode && cap_timer < 13 ? cap_timer += 1;
   ui_color_slider && (mouse_cap==0 && last_mouse_cap==2) ? (
@@ -469,7 +470,7 @@ function do_mouse () (
     );
   );
 
-  cap_mode && cap_timer < 8 ? cap_timer += 1;
+  //cap_mode && cap_timer < 8 ? cap_timer += 1;
   last_mouse_cap = mouse_cap;
 
 );
@@ -1524,7 +1525,15 @@ compute_meter();
 
 
 @block
-idle = (ph <= 0.78539816339745 && !smpL && !smpR && peakL == -20 && peakR == -20 && spl0 = spl1 <= 0.00000005298331 && !PK_Reset);
+
+idle = (
+  peakL <= -20 &&
+  peakR <= -20 &&
+  spl0 <= 0.00000005298331 &&
+  spl1 <= 0.00000005298331 &&
+  ph <= 0.78539816339745 &&
+  !PK_Reset
+);
 
 //========================================= VOLUME ==================================================/
 
@@ -1545,8 +1554,8 @@ idle = (ph <= 0.78539816339745 && !smpL && !smpR && peakL == -20 && peakR == -20
 
   (VU_enabled || lbx_support || rec_needle) && !idle ?
   (
-      slider20 = round_dec(vu(dbL), 1);
-      slider21 = round_dec(vu(dbR), 1);
+        slider20 = round_dec(vu(dbL), 1);
+        slider21 = round_dec(vu(dbR), 1);
 
       // Holdtime for Max VU
       vu(dbL) > slider24 ? (
@@ -1745,9 +1754,9 @@ Hold_enabled && !idle ? (
 //***************************************** Peak OUT *************************************************/
 PK_enabled && !idle ?
 (
-  mode == 0 ? ( _sample(left, spl0); _sample(right, spl1) );
-  mode == 1 ? ( _sample(left, (spl0+spl1) * 0.5); slider27 = -316.5; );
-  mode == 2 ? ( _sample(left, (spl0+spl1) * 0.5); _sample(right, (spl0-spl1) ) );
+  mode == 0 ? ( _sample(left, spl0, holdtime2); _sample(right, spl1, holdtime2) );
+  mode == 1 ? ( _sample(left, (spl0+spl1) * 0.5, holdtime2); slider27 = -316.5; );
+  mode == 2 ? ( _sample(left, (spl0+spl1) * 0.5, holdtime2); _sample(right, (spl0-spl1), holdtime2 ) );
 ) : (
   PK_current_max == 0 && !PK_Reset ?
   (
