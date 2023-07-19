@@ -1,6 +1,6 @@
 desc: Goniometer
 author: Vladimir Belov
-version: 0.18alpha
+version: 1.00
 changelog: New goniometer visualization mode.
 
 //tags: analysis visualization
