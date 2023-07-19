@@ -1,4 +1,4 @@
-version: 2.0.3
+version: 2.0.4
 desc:ReaRack2 - Oscillator-Additive
 noindex:   true
 author:    Malcolm Smith
@@ -7,7 +7,9 @@ author:    Malcolm Smith
 
 about:     Audio oscillator module for the ReaRack modular JSFX synth system. No aliasing.
 
-changelog: Version 2.0.3 (08/03/2019) Fixed the FM function.
+changelog: Version 2.0.4 (13/10/2021) Improved CPU performance following a suggestion from
+           REAPER forum user Hermenator to use the Chebychev method for calculating the additive waveform.
+           Version 2.0.3 (08/03/2019) Fixed the FM function.
            Version 2.0.2 (18/02/2018) Added pitch bend input for pitch change.
                                       Added pitch modulation depth slider.
            Version 2.0.1 (10/02/2018) Improved accuracy of input CC decoding.
@@ -298,59 +300,106 @@ modaudio == 1 ? adj = blkadj*(1+inlev)*10: adj = blkadj;
 ////////////////////////////Define waveforms////////////////////
 shape == 0 ? (
     // Sawtooth
-  sample = 0;
-  wharm = 1;
+    s0 = 0;
+    s1 = sin(pos);
+    sx = 2*cos(pos);
+    sample = s1;
+    wharm = 2;
     while(wharm < cutoff)(
-    nsample = sin(wharm*pos)/wharm;
-    sample += nsample;
-    wharm +=1;
+      sn = sx*s1 - s0;
+      sample += sn/wharm;
+      s0 = s1; s1 = sn;
+      wharm +=1;
     );
+    
+    sn = sx*s1 - s0;  // sn = next harmonic (remove if you want to reuse last harmonic)
+    
     sweepmode == 1 ?
     (
-    sample += (1+((1-lasthout)*(reso-1)))*sin(wharm*pos)/wharm;
-    sample += reso*lasthout*(sin((wharm+1)*pos)/(wharm+1));
+    sample += (1+((1-lasthout)*(reso-1)))*sn/wharm;
+    s0 = s1; s1 = sn;   // (remove if you want a lower harmonic, already done in loop)
+    wharm +=1;          // (remove if you want a lower harmonic, already done in loop)
+    sn = sx*s1 - s0;
+    sample += reso*lasthout*sn/wharm;
     ):(
-    sample += reso*sin(wharm*pos)/wharm;
+    sample += reso*sn/wharm;
     );
   ):(
 shape == 1 ? (
     // Triangle
-  sample = 0;
-  wharm = 0;
+    s0 = 0;
+    s1 = sin(pos);
+    sx = 2*cos(pos);
+    sample = s1;
+    wharm = 1;
+    sgn = -1;
+    oddw2 = 3*3;
     while(wharm < cutoff-1)(
-    nsample = (-1)^wharm*(sin((2*wharm+1)*pos)/(2*wharm+1)^2);
-    sample += nsample;
-    wharm +=1;
+      sn = sx*s1 - s0; // sin(2x)
+      s0 = s1; s1 = sn;
+      sn = sx*s1 - s0; // sin(3x)
+      sample += sgn*sn/oddw2;
+      s0 = s1; s1 = sn; sgn *= -1;
+      wharm +=1;
+      oddw2 += 8*wharm;
     );
+    
+    sn = sx*s1 - s0; // sin(even*x) (remove if you want to reuse last harmonic)
+    s0 = s1; s1 = sn;            // (remove if you want to reuse last harmonic)
+    sn = sx*s1 - s0; // sin(odd*x)  (remove if you want to reuse last harmonic)
+    
     sweepmode == 1 ?
     (
-    sample += (1+((1-lasthout)*(reso-1)))*((-1)^wharm*(sin((2*wharm+1)*pos)/(2*wharm+1)^2));
+    sample += (1+((1-lasthout)*(reso-1)))*sgn*sn/oddw2;
+    s0 = s1; s1 = sn; sgn *= -1;
     wharm += 1;
-    sample += reso*lasthout*((-1)^wharm*(sin((2*wharm+1)*pos)/(2*wharm+1)^2));
+    oddw2 += 8*wharm;
+    sn = sx*s1 - s0;
+    s0 = s1; s1 = sn;
+    sn = sx*s1 - s0;
+    sample += reso*lasthout*sgn*sn/oddw2;
     ):(
-    sample += reso*((-1)^wharm*(sin((2*wharm+1)*pos)/(2*wharm+1)^2));
+    sample += reso*sgn*sn/oddw2;
     );
     sample *= 16/$pi^2;    
   ):(
 shape == 2 ? (
     // Pulse
-  sample = 0;
-  wharm = 1;
+    s0 = 0;
+    s1 = sin(pw/2);
+    sx = 2*cos(pw/2);
+    c0 = 1;
+    c1 = cos(pos);
+    cx = 2*cos(pos);
+    sample = 2*s1*c1;
+    wharm = 2;
     while(wharm <= cutoff)(
-    nsample = (2/(wharm*$pi))*sin((wharm*pw)/2)*cos(wharm*pos);
-    sample += nsample;
-    wharm +=1;
+      sn = sx*s1 - s0;
+      cn = cx*c1 - c0;
+      sample += (2/wharm)*sn*cn;
+      s0 = s1; s1 = sn;
+      c0 = c1; c1 = cn;
+      wharm +=1;
     );
+    
+    sn = sx*s1 - s0;  // remove if you want a lower resonant freq
+    cn = cx*c1 - c0;  // remove if you want a lower resonant freq
+  
     sweepmode == 1 ?
     (
-    sample += (1+((1-lasthout)*(reso-1)))*(2/(wharm*$pi))*sin((wharm*pw)/2)*cos(wharm*pos);
-    sample += reso*lasthout*(2/((wharm+1)*$pi))*sin(((wharm+1)*pw)/2)*cos((wharm+1)*pos);
+    sample += (1+((1-lasthout)*(reso-1)))*(2/wharm)*sn*cn;
+    s0 = s1; s1 = sn;
+    c0 = c1; c1 = cn;
+    wharm += 1;
+    sn = sx*s1 - s0;
+    cn = cx*c1 - c0;
+    sample += reso*lasthout*(2/wharm)*sn*cn;
     ):(
-    sample += reso*(2/(wharm*$pi))*sin((wharm*pw)/2)*cos(wharm*pos);
+    sample += reso*(2/wharm)*sn*cn;
     );
-    sample += (pw/tau);
-    sample = $pi*sample-$pi/2;
-    );
+    
+    sample += (pw-$pi)/2;
+  );
   );
 );
 

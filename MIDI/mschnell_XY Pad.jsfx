@@ -1,0 +1,107 @@
+desc: XY Pad
+author: mschnell
+version: 2.0
+changelog: add x and y hidden gader
+about:
+  # XY Pad 
+      Sends out high resolution CC messages when the circle is dragged
+      Moreover DAW-Parameters (hidden sliders) "x" and "Y" are provided for being directly linked from other plugins
+
+slider1:0<0,16,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Channel
+slider2:16<0,31,1{0 Bank Sel,1 Mod Wheel,2 Breath,3,4 Foot P,5 Porta,6 Data Entry,7 Vol,8 Balance,9,10 Pan,11 Expression,12 Ctrl 1,13 Ctrl 2,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,}>X CC # (Hi Res)
+slider3:17<0,31,1{0 Bank Sel,1 Mod Wheel,2 Breath,3,4 Foot P,5 Porta,6 Data Entry,7 Vol,8 Balance,9,10 Pan,11 Expression,12 Ctrl 1,13 Ctrl 2,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,}>Y CC # (Hi Res)
+slider4:0<0,1,0.0001>-X
+slider5:0<0,1,0.0001>-Y
+
+
+in_pin:none
+out_pin:none
+
+@init
+
+xh  = 0;
+xl  = 0;
+yh  = 0;
+yl  = 0;
+xh_ = -1;
+xl_ = -1;
+yh_ = -1;
+yl_ = -1;
+x_  = -1;
+y_  = -1;
+
+@slider
+mes1   = 0x0B0 + slider1;
+mes2xl = slider2 + 0x20;
+mes2xh = slider2;
+mes2yl = slider3 + 0x20;
+mes2yh = slider3;
+
+@block
+  xh != xh_ ? (
+    xh_ = xh;
+    midisend(0, mes1, mes2xh, xh_);  
+  );
+  xl != xl_ ? (
+    xl_ = xl;
+    midisend(0, mes1, mes2xl, xl_);  
+  );
+  yh != yh_ ? (
+    yh_ = yh;
+    midisend(0, mes1, mes2yh, yh_);  
+  );
+  yl != yl_ ? (
+    yl_ = yl;
+    midisend(0, mes1, mes2yl, yl_);  
+  );
+
+
+@gfx 640 400
+
+  mouse_cap & 1 ? (
+    _x = mouse_x;
+    _y = mouse_y;
+    x = _x / gfx_w;
+    y = _y / gfx_h;
+  
+    x *= 16384;
+    y *= 16384;
+    y = 16383-y;
+    x |= 0;
+    y |= 0;
+  
+    x < 0 ? (
+       x = 0;
+      _x = 0;
+     ) : x > 16383 ? (
+       x = 16383; 
+      _x = gfx_w-1;
+    );  
+    y < 0 ? (
+       y = 0;
+      _y =  gfx_h -1; 
+     ) : y > 16383 ? (
+       y = 16383; 
+      _y = 0;
+    );  
+
+    xh = x / 128;
+    xh |= 0;
+    xl = x -xh * 128;
+    yh = y / 128;
+    yh |= 0;
+    yl = y -yh * 128;
+  
+  
+    (x != x_) || (y!=y_) ? (
+      x_ = x;
+      y_ = y;
+      gfx_r = gfx_g = gfx_b = 0.15;
+      gfx_rect(0, 0, gfx_w, gfx_h);
+      gfx_r = gfx_g = gfx_b = 1;
+      gfx_circle(_x, _y, 7);
+      gfx_circle(_x, _y, 6);
+      slider4 = x / 16383;
+      slider5 = y / 16383;
+    );  
+  );

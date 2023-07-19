@@ -1,0 +1,1882 @@
+desc: VU Meter (ZenoMOD)
+author: ZenoMOD
+version: 1.7.7
+changelog:
+  - Revised double-click speed for parameter reset [p=2683566]
+  - Fix idle bug. The meter now correctly detects if audio is present at the left input when the input signal is panned hard left [p=2683919]
+provides: zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc
+link: Forum Thread https://forum.cockos.com/showthread.php?t=262611
+donation:
+  Donate via PayPal https://www.paypal.me/ZenoBock
+  Buy Me a Coffee https://www.buymeacoffee.com/zenomod
+about:
+  ## VU Meter by ZenoMOD
+
+  **Requires add-on:** *VU Meter (ZenoMOD) - UserThemes*
+
+
+  Features:
+  - Fully resizeable vector GUI
+  - 11 different UI styles
+  - 2 extra User Theme slots
+  - 3 channel modes: Stereo, Summed, Mid/Side
+  - VU hold needle/arc (current)
+  - VU hold display (current)
+  - Peak hold display (current/max)
+  - +-18dB volume slider for gain staging or automation
+  - Preference menu with extensive setting options
+  - Embedded UI - always shows SUMMED (L+R) or SUMMED (L||R)
+  - Context-sensitive Tooltips
+  - Write meter output automation
+  - Very low on CPU
+
+
+
+  Credits:
+  * chris-s - Simple VU Meter
+  * aurelien - embedded gain
+
+  Thanks to all who support this project <3
+
+tags: analysis analyzer vu meter loudness
+
+Disclaimer: Use of this software is on your own risk!
+
+//*************************************** END INFO **************************************************/
+
+
+slider1: 1<0,12,1{Classic,Knight,Purple,Moss,Moo,Warm,Ivory,Trooper,Ultimate,Mooncake,Black,User 01,User 02}>-UI Style
+slider2: 0<0,2,1{Stereo,Summed,Mid / Side}>                                                                 -Mode
+slider3: -18<-36,0,1>                                                                                       -Ref Level
+slider4: -6<-20,0,1>                                                                                        -Warn Level
+slider5: 50<0,100>                                                                                          -Response
+slider6: 0.0053<0,.01,0.0001>                                                                               -Damping
+slider7: 0<-18,18,0.1>                                                                                      -Volume (dB)
+
+slider8: 1<0,3,1{Off,On,Arc,Needle}>                                                                        -Needle Hold on/off
+slider9: 0<0,1,1{Off,On}>                                                                                   -Display VU
+slider10: 0<0,1,1{Off,On}>                                                                                  -Display PK
+
+slider11: 1<0,1,1{Current,Max}>                                                                             -PK Current/Max
+slider12: 0<0,1,1>                                                                                          -PK Reset
+slider13: 0<0,1,1{Off,On}>                                                                                  -VU Rec?
+
+// Parameter Modulation sliders...
+slider20: <-20,3,.1:log=-2.5>                                                                               -VU - Left/Mid
+slider21: <-20,3,.1:log=-2.5>                                                                               -VU - Right/Side
+slider22: <0,1,1{-,PEAK}>                                                                                   -Peak LED L
+slider23: <0,1,1{-,PEAK}>                                                                                   -Peak LED R
+
+slider24: <-20,3,.1:log=-2.5>                                                                               -VU Current - Left/Mid
+slider25: <-20,3,.1:log=-2.5>                                                                               -VU Current - Right/Side
+slider26: <-60,0,.01>                                                                                       -PK Current - Left/Mid
+slider27: <-60,0,.01>                                                                                       -PK Current - Right/Side
+
+// Settings...
+slider40: 3<1,10,.01>                                                                                       -LED Hold (ds)
+slider41: 2<1,10,1>                                                                                         -VU Hold (s)
+slider42: 3<1,10,1>                                                                                         -PK Hold (s)
+
+slider43: 0<0,1,1{L + R,L || R}>                                                                            -Summed Mode
+slider44: 1<0,1,1{Off,On}>                                                                                  -Display Tooltips
+slider45: 0<-3,2,.5>                                                                                        -Text Size
+slider46: 0<0,1,1{Off,On}>                                                                                  -LBX Support
+slider47: 12<0,20,1>                                                                                        -Preference Page Blur
+
+slider50: 0<0,1,1{Off,On}>                                                                                  -Trackpad Support
+
+slider64: 1<1,2,1>                                                                                          -Preference Page
+
+
+in_pin: left input
+in_pin: right input
+out_pin: left output
+out_pin: right output
+
+options: no_meter
+options: gfx_hz=60
+
+import zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc
+import zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 01.jsfx-inc
+import zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 02.jsfx-inc
+
+
+
+
+@init
+
+// version
+version = (" v1.7.7");
+
+
+
+
+/////////////////////////////////////////////////////////////////
+/////////////////// INITIALIZE VARIABLES ////////////////////////
+/////////////////////////////////////////////////////////////////
+
+// volume
+AMP_dB_i = 1/8.68588963806504;
+db = slider7; // init here but not in @slider for playback start
+
+// vu meter
+errcnt = 0;
+tot_nbr_spl = 0;
+scnt = 0;
+fact_up = 0;
+offset = 0.0074;
+nd_posL = nd_posR = 0;
+nd_speedL = nd_speedR = 0;
+dt = 10 / srate;
+mom = 0.00042;
+damp = 1 - 0.0053 * (48000 / srate);
+dbL = dbR = -20;
+peakL = peakR = -20;
+overL = overR = 0;
+holdcounter1 = 0;
+holdcounter2 = 0;
+
+// peak meter
+peak_timeout = 0;
+value = 0;
+peak = 1;
+left = 0;
+right = 4;
+clip = 3;
+slider26 = -316.5;
+slider27 = -316.5;
+
+// preferences
+yu = 12.25;
+ylo = gfx_h-yu;
+slider64 = 1;
+
+
+
+/////////////////////////////////////////////////////////////////
+////////////////////// METER FUNCTIONS //////////////////////////
+/////////////////////////////////////////////////////////////////
+
+// Polynomial Regression on 'dbL' and 'dbR' to fit VU
+function vu(x)(
+  (x > -10.739772 && x < 3.1) ? (
+    0.0000000018574144851277023*pow(x,7)
+    -0.000000007181675534274909*pow(x,6)
+    +0.00000026010069461917307*pow(x,5)
+    -0.000010602895408755132*pow(x,4)
+    +0.0002816973632214551*pow(x,3)
+    -0.009181854972743169*pow(x,2)
+    +0.39887854736070294*x
+    +1.9117333817772166
+  ) : (
+  x > -15.549665 && x <= -10.739772) ? (
+    0.000045203665592780654*pow(x,5)
+    +0.0025379041863024046*pow(x,4)
+    +0.05990413162348811*pow(x,3)
+    +0.6988138346039348*pow(x,2)
+    +4.640331857325891*x
+    +12.134166801893349
+  ) : (
+  x > -17.826267 && x <= -15.549665) ? (
+    -0.0038388028713626453*pow(x,4)
+    -0.23246545149124698*pow(x,3)
+    -5.395512159008137*pow(x,2)
+    -55.499232285589244*x
+    -216.99316401521162
+  ) : (
+  x > -20 && x <= -17.826237) ? (
+    0.0000028446420086192774*pow(x,7)
+    +0.000047054132856009275*pow(x,6)
+    -0.007734424207833404*pow(x,5)
+    -0.3519383256717419*pow(x,4)
+    -5.193316606317936*pow(x,3)
+    -8.882367411579192*pow(x,2)
+    +436.30657196835705*x
+    +2902.0746462408774
+  ) :
+    -20;
+);
+
+
+// Round Numbers to first decimal place
+function round_dec (x, places)
+  local (mult, div) (
+  mult = 10 ^ places;
+   div = 1/mult;
+   x = div * sign (x) * floor(abs (mult * x) + 0.5);
+);
+
+
+// Update and hold values for Peak level
+function _sample(ch, _spl, decay) local(s) (
+  s = abs(_spl);
+  ch[value] = max(ch[value], s);
+  ch[peak_timeout] -= 1;
+  ch[peak_timeout] <= 0 || s > ch[peak] ? (
+    ch[peak] = s;
+    ch[peak_timeout] = decay;
+  );
+  ch[clip] = max(ch[clip], s);
+);
+
+
+// Convert linear Amplitude value to Decibel
+function dbfs(x) (
+  20*log10(x);
+);
+
+
+
+
+/////////////////////////////////////////////////////////////////
+////////////////////// MOUSE FUNCTIONS //////////////////////////
+/////////////////////////////////////////////////////////////////
+
+function drag_slider(x, y, z, dx)
+  globals(mouse_y, cap_last_y, cap_drag)
+(
+  x = min(max(x + dx * ((cap_last_y - mouse_y) / 4), y), z);
+  cap_last_y = mouse_y;
+  cap_drag = 1;
+  x;
+);
+
+function drag_slider_precise(x, y, z, dx)
+  globals(mouse_cap)
+(
+  (mouse_cap & 4) ? dx *= 0.1;
+  drag_slider(x, y, z, dx);
+);
+
+function cycle_slider(x, y, z, dx)
+  globals(last_mouse_cap)
+(
+  (last_mouse_cap & 16) ? x -= dx : x += dx;
+  y > z ? ( dx=y; y=z; z=dx; );
+  x > z ? y : x < y ? z : x;
+);
+
+function wheel_slider(x, y, z, dx)
+  globals(mouse_wheel)
+(
+  x = min(max(x + dx * sign(mouse_wheel) , y), z);
+  x;
+);
+
+function draw_buttonsize(xp, yp, wp, hp)
+  instance(w,h,x,y)
+(
+  w=wp; h=hp; x=xp; y=yp;
+);
+
+function hit_button(xp,yp,cm)
+  instance(w,h,x,y)
+  globals(cap_mode, cap_last_x, cap_last_y)
+(
+  xp>=x&&yp>=y&&xp<x+w&&yp<y+h  ? (
+    cap_last_x = xp;
+    cap_last_y = yp;
+    cap_mode = cm;
+  );
+);
+
+
+function do_mouse () (
+  has_click = (mouse_cap&1) && !(last_cap&1) ? 1 : 0;
+  last_cap = mouse_cap;
+
+  (mouse_cap & 1) ? (
+    !(last_mouse_cap & 1) ? (
+      !cap_drag && cap_timer < 13 ? (
+        cap_mode == 3 ? ( slider3 = -18; );
+        cap_mode == 4 ? ( slider4 = -6; );
+        cap_mode == 5 ? ( slider5 = 50; );
+        cap_mode == 6 ? ( slider6 = 0.0053; );
+        cap_mode == 40 ? ( slider40 = 3; );
+        cap_mode == 41 ? ( slider41 = 2; );
+        cap_mode == 42 ? ( slider42 = 3; );
+        cap_mode == 45 ? ( slider45 = 0; );
+        cap_mode == 47 ? ( slider47 = 12; );
+      ) : (
+        cap_mode = cap_drag = cap_timer = 0;
+      );
+
+      (cap_mode == 7) && !cap_drag && cap_timer < 13 ? (
+        cap_mode == 7 ? ( slider7 = 0; slider_automate(slider7) );
+      ) : (
+        cap_mode = cap_drag = cap_timer = 0;
+
+        gfx_ext_flags == 1 ? (
+            cap_last_x = mouse_x;
+            cap_last_y = mouse_y;
+            cap_mode=7;
+        );
+
+        uistyle_button.hit_button(mouse_x,mouse_y,1);
+        mode_button.hit_button(mouse_x,mouse_y,2);
+        reflevel_button.hit_button(mouse_x,mouse_y,3);
+        warnlevel_button.hit_button(mouse_x,mouse_y,4);
+        response_button.hit_button(mouse_x,mouse_y,5);
+        damping_button.hit_button(mouse_x,mouse_y,6);
+        volume_button.hit_button(mouse_x,mouse_y,7);
+        vuneedlehold_button.hit_button(mouse_x,mouse_y,8);
+        vudisplay_button.hit_button(mouse_x,mouse_y,9);
+        pkdisplay_button.hit_button(mouse_x,mouse_y,10);
+        pkcurrentmax_button.hit_button(mouse_x,mouse_y,11);
+        pkReset_button.hit_button(mouse_x,mouse_y,12);
+        rec_button.hit_button(mouse_x,mouse_y,13);
+        peakhold_button.hit_button(mouse_x,mouse_y,40);
+        vuholdtime_button.hit_button(mouse_x,mouse_y,41);
+        pkholdtime_button.hit_button(mouse_x,mouse_y,42);
+        summedmode_button.hit_button(mouse_x,mouse_y,43);
+        Pref_Page != 1 ? (
+          displayTooltips_button.hit_button(mouse_x,mouse_y,44);
+          fontsize_button.hit_button(mouse_x,mouse_y,45);
+          lbxSupport_button.hit_button(mouse_x,mouse_y,46);
+          pageblur_button.hit_button(mouse_x,mouse_y,47);
+          trackpadSupport_button.hit_button(mouse_x,mouse_y,50);
+        );
+        prefpage_button.hit_button(mouse_x,mouse_y,64);
+      );
+    );
+
+    // drag
+    cap_mode == 3 && cap_last_y != mouse_y ? (
+        slider3=drag_slider(slider3,-36,0,1); );
+    cap_mode == 4 && cap_last_y != mouse_y ? (
+        slider4=drag_slider(slider4,-20,0,1); );
+    cap_mode == 5 && cap_last_y != mouse_y ? (
+        slider5=drag_slider(slider5,0,100,1); );
+    cap_mode == 6 && cap_last_y != mouse_y ? (
+        slider6=drag_slider(slider6,0,0.01,0.0001); );
+    cap_mode == 7 && cap_last_y != mouse_y ? (
+        slider7=drag_slider_precise(slider7,-18,18,0.1); slider_automate(slider7) );
+    cap_mode == 40 && cap_last_y != mouse_y ? (
+        slider40=drag_slider_precise(slider40,1,10,.1); );
+    cap_mode == 41 && cap_last_y != mouse_y ? (
+        slider41=drag_slider(slider41,1,10,1); );
+    cap_mode == 42 && cap_last_y != mouse_y ? (
+        slider42=drag_slider(slider42,1,10,1); );
+    cap_mode == 45 && cap_last_y != mouse_y ? (
+        slider45=drag_slider(slider45,-3,2,.1); );
+    cap_mode == 47 && cap_last_y != mouse_y ? (
+        slider47=drag_slider(slider47,0,20,1); );
+  ) : (
+    // cycle click
+    cap_mode == 1 && !cap_drag ? (
+        slider1=cycle_slider(slider1,0,12,1); cap_mode=0 );
+    cap_mode == 2 && !cap_drag ? (
+        slider2=cycle_slider(slider2,0,2,1); cap_mode=0 );
+    cap_mode == 8 && !cap_drag ? (
+        slider8=cycle_slider(slider8,0,3,1); cap_mode=0 );
+    cap_mode == 9 && !cap_drag ? (
+        slider9=cycle_slider(slider9,0,1,1); cap_mode=0 );
+    cap_mode == 10 && !cap_drag ? (
+        slider10=cycle_slider(slider10,0,1,1); cap_mode=0 );
+    cap_mode == 11 && !cap_drag ? (
+        slider11=cycle_slider(slider11,0,1,1); cap_mode=0 );
+    cap_mode == 12 && !cap_drag ? (
+        slider12=cycle_slider(slider12,0,1,1); cap_mode=0 );
+    cap_mode == 13 && !cap_drag ? (
+        slider13=cycle_slider(slider13,0,1,1); cap_mode=0 );
+    cap_mode == 43 && !cap_drag ? (
+        slider43=cycle_slider(slider43,0,1,1); cap_mode=0 );
+    cap_mode == 44 && !cap_drag ? (
+        slider44=cycle_slider(slider44,0,1,1); cap_mode=0 );
+    cap_mode == 46 && !cap_drag ? (
+        slider46=cycle_slider(slider46,0,1,1); cap_mode=0 );
+    cap_mode == 50 && !cap_drag ? (
+        slider50=cycle_slider(slider50,0,1,1); cap_mode=0
+    ) : (
+      cap_mode == 64 && !cap_drag ? (
+          slider64=cycle_slider(slider64,1,2,1); cap_mode=0 );
+    );
+
+    Trackpad == 0 ?
+    (
+      // wheel
+      ref_level_slider ? (
+          slider3=wheel_slider(slider3,-36,0,1); mouse_wheel=0 ):
+      warn_level_slider ? (
+          slider4=wheel_slider(slider4,-20,0,1); mouse_wheel=0 ):
+      meter_resp_slider ? (
+          slider5=wheel_slider(slider5,0,100,1); mouse_wheel=0 ):
+      meter_damp_slider ? (
+          slider6=wheel_slider(slider6,0,0.01,.0001); mouse_wheel=0 ):
+      volume_slider ? (
+          slider7=wheel_slider(slider7,-18,18,.5); slider_automate(slider7); mouse_wheel=0 ):
+      peak_hold_slider ? (
+          slider40=wheel_slider(slider40,1,10,1); mouse_wheel=0 ):
+      ui_color_slider ? (
+          slider1=wheel_slider(slider1,0,12,1); mouse_wheel=0 ):
+      mode_slider ? (
+          slider2=wheel_slider(slider2,0,2,1); mouse_wheel=0 ):
+      vu_needlehold_slider? (
+          slider8=wheel_slider(slider8,0,3,1); mouse_wheel=0 ):
+      vu_holdtime_slider ? (
+          slider41=wheel_slider(slider41,1,10,1); mouse_wheel=0 ):
+      pk_currentmax_slider ? (
+          slider11=wheel_slider(slider11,0,1,1); mouse_wheel=0 ):
+      pk_holdtime_slider ? (
+          slider42=wheel_slider(slider42,1,10,1); mouse_wheel=0 ):
+      summed_mode_slider ? (
+          slider43=wheel_slider(slider43,0,1,1); mouse_wheel=0 ):
+      displayTooltips_slider ? (
+          slider44=wheel_slider(slider44,0,1,1); mouse_wheel=0 ):
+      fontsize_slider ? (
+          slider45=wheel_slider(slider45,-3,2,.1); mouse_wheel=0 ):
+      lbxSupport_slider ? (
+          slider46=wheel_slider(slider46,0,1,1); mouse_wheel=0 ):
+      pageblur_slider ? (
+          slider47=wheel_slider(slider47,0,20,1); mouse_wheel=0 ):
+      ( mouse_wheel = 0 );
+    );
+  );
+
+
+//************************************* Right Click Button Menus ************************************
+ 
+  // UI Style Menu
+  cap_mode && cap_timer < 13 ? cap_timer += 1;
+  ui_color_slider && (mouse_cap==0 && last_mouse_cap==2) ? (
+    gfx_setfont(1);
+    gfx_x = 50*scaling;
+    gfx_y = ylo-(gfx_texth+6) - 290;
+    sprintf(
+      #menustr,"%sClassic|%sKnight|%sPurple|%sMoss|%sMoo|%sWarm|%sIvory|%sTrooper|%sUltimate|%sMooncake|%sBlack||%sUser 01|%sUser 02",
+      slider1==0?"!":"", slider1==1?"!":"", slider1==2?"!":"", slider1==3?"!":"", slider1==4?"!":"",
+                slider1==5?"!":"", slider1==6?"!":"", slider1==7?"!":"", slider1==8?"!":"", slider1==9?"!":"",
+                slider1==10?"!":"", slider1==11?"!":"", slider1==12?"!":""
+    );
+    ret = gfx_showmenu(#menustr);
+    ret > 0 ? (
+      (ret-=1) < 13 ? (slider1 = ret );
+    );
+  );
+
+  // Mode Menu
+  cap_mode && cap_timer < 3 ? cap_timer += 1;
+  mode_slider && (mouse_cap==0 && last_mouse_cap==2) ? (
+    gfx_setfont(1);
+    gfx_x = 120*scaling;
+    gfx_y = ylo-(gfx_texth+6) - 60;
+    sprintf(
+      #menustr,"%sStereo|%sSummed|%sMid / Side",
+      slider2==0?"!":"", slider2==1?"!":"", slider2==2?"!":""
+    );
+    ret = gfx_showmenu(#menustr);
+    ret > 0 ? (
+      (ret-=1) < 3 ? (slider2 = ret);
+    );
+  );
+
+  //cap_mode && cap_timer < 8 ? cap_timer += 1;
+  last_mouse_cap = mouse_cap;
+
+);
+
+
+
+
+/////////////////////////////////////////////////////////////////
+/////////////////////// DRAW FUNCTIONS //////////////////////////
+/////////////////////////////////////////////////////////////////
+//*************************************************************//
+//*********************** CASE MODEL **************************//
+
+function draw_meter_bg() (
+  set_color(MeterBG[color]);
+  !gfx_ext_flags ? (
+    gfx_rect(xd,yd,xw,yw);
+  ):(
+    gfx_rect(xd*.001,yd*.99,xw*1.387,yw);
+  );
+);
+
+
+function draw_arcs() (
+  set_color(MtrArc1[color]);
+  gfx_arc(xa, ya, r1, -45 * ($pi / 180), w2, 1);
+  set_color(MtrArc2[color]);
+  gsc >= 0.36 ? (
+    i = 1;
+    while (i <= 4) (
+      gfx_arc(xa, ya, r1 + i, w1, w2, 1);
+      i += 1;
+    );
+  ) : (
+    i = 1;
+    while (i <= 3) (
+      gfx_arc(xa, ya, r1 + i, w1, w2, 1);
+      i += 1;
+    );
+  );
+);
+
+
+function draw_scale() (
+  gfx_setfont(1);
+  set_color(SclDig1[color]);
+  jj = 0;
+  while ( jj <= 10 ) (
+    ii = print[jj];
+    ph =  pos[jj];
+    ph = (45 + ph*90) * $pi / 180;
+    cosp = cos(ph) * r1;
+    sinp = sin(ph) * r1;
+    x1 = xa - cosp ;
+    y1 = ya - sinp ;
+    x2 = xa - cosp * 1.1;
+    y2 = ya - sinp * 1.1;
+    gsc >.237 ? (
+      !gfx_ext_flags ? (
+        x3 = xa - cosp * 1.13;
+        y3 = ya - sinp * 1.11;
+      ) : (
+        x3 = xa - cosp * 1.18;
+        y3 = ya - sinp * 1.12;
+      );
+    );
+    gfx_x = x1;
+    gfx_y = y1 ;
+    gfx_lineto(x2, y2);
+
+    !gfx_ext_flags ? (
+      gfx_x = x3*.998 - (gfx_w/500*6);
+    ) : (
+      gfx_x = x3*.975 - (gfx_w/500*6);
+    );
+    gfx_y = y3 - gfx_texth;
+    gsc >.237 ? (gfx_printf("%3d", ii));
+
+    gsc >.237 ? (jj += 1):(jj += 1.8);
+    jj == 8 ? (set_color(SclDig2[color]));
+  );
+);
+
+
+function draw_peak_str() (
+  gfx_setfont(1);
+  gfx_x = 0;  gfx_y = 0;
+  set_color(Font_Pk[color]);
+  !gfx_ext_flags ? (
+    !PK_enabled ? (
+      gfx_drawstr(sprintf(#,"PEAK"),6,
+      (xd + xw * .9)-2, (yd + yw * 1.8)+ 3)
+    )
+  ) : (
+    !PK_enabled ? (
+      gsc >= .33 ?
+      gfx_drawstr(sprintf(#,"PEAK"),6,
+      (xd + xw * .9)-5, (yd + yw * 1.8)- 5)
+    );
+  );
+);
+
+
+function draw_vu_str() (
+  !embedded_gain_sldr ?
+  (
+    gfx_setfont(5);
+    gfx_x = 0;  gfx_y = 0;
+    set_color(Font_Vu[color]);
+    !gfx_ext_flags ? (
+      gfx_x=xa-50*scaling; gfx_y=yd;
+      gfx_drawstr(sprintf(#,"VU"),261,
+      xa+50*scaling,yw+62*scaling);
+      ) : (
+      gfx_x=xa-50*scaling; gfx_y=yd;
+      !summedMode ? (
+        gfx_drawstr(sprintf(#,"L + R"),261,
+        xa+50*scaling,yw+70*scaling);
+        ) : (
+        gfx_drawstr(sprintf(#,"L || R"),261,
+        xa+50*scaling,yw+70*scaling);
+      );
+    );
+  );
+);
+
+
+function draw_embedded_gain() (
+  embedded_gain_sldr =
+  (
+    gfx_ext_flags ? (
+      gfx_setfont(6);
+      set_color(FontVol[color]);
+      slider7 != 0 ? (
+        gfx_x=xa-50*scaling; gfx_y=yd;
+        gfx_drawstr(sprintf(#,"%.2f",slider7),261,
+        xa+50*scaling,yw+70*scaling);
+      );
+    );
+  );
+);
+
+
+function LED_xy_pos () (
+  !gfx_ext_flags ? (
+    led_x = xd+xw*0.9+(8*scaling);
+  ) : (
+    !PK_enabled ? (
+      led_x = xd+xw*0.9+(8*scaling);
+    ) : (
+      gsc >= .238 ? led_x = xd+xw*1+(8*scaling) : led_x = xd+xw*0.9+(8*scaling);
+    );
+  );
+
+  !PK_enabled ?
+  (
+    led_y = yd+yw*0.9-4
+    ) : (
+    !gfx_ext_flags ? (
+      led_y = yd+yw*0.17-4
+    ) : (
+      gsc >= .238 ? led_y = yd+yw*0.19-4 : led_y = yd+yw*0.9-4)
+  );
+  !gfx_ext_flags ?
+  (
+    led_scl = scaling*4) : (gsc <= .5 ?
+    (led_scl = scaling*10) : (led_scl = scaling*8)
+  );
+);
+
+
+function draw_coil_cover () (
+  set_color(FG_Covr[color]);
+  !gfx_ext_flags ? (
+    Coil_sz[color] == 1 ? gfx_circle(xa,ya,r1*0.16,1,1);
+    Coil_sz[color] == 2 ? gfx_circle(xa,ya,r1*0.2,1,1);
+    Coil_sz[color] == 3 ? gfx_circle(xa,ya*1.32,r1*.65,1,1);
+  ) : (
+    Coil_sz[color] == 1 ? gfx_circle(xa*.99,ya*.97,r1*0.16,1,1);
+    Coil_sz[color] == 2 ? gfx_circle(xa*.99,ya,r1*0.2,1,1);
+    Coil_sz[color] == 3 ? gfx_circle(xa*.99,ya*1.33,r1*.65,1,1);
+  );
+  !gfx_ext_flags ? (
+    Coil_sz[color] == 0 ? (
+      gfx_rect(xd,ya*0.89,xw,gfx_h);
+    ) : (
+      gfx_rect(xd,ya*0.91,xw,gfx_h);
+    );
+  ) : (
+    gfx_rect(xd*.04,ya*0.895,xw*1.385,gfx_h);
+  );
+);
+
+
+function draw_3D () (
+  EFX_3Di[color] ? (
+    !gfx_ext_flags ? (
+        i = 0;
+        loop(3,
+            set_color(Shdw_3D[color]);
+            gfx_a = 0.1 + i * 0.025;
+            gfx_rect(xd, yd, xw, yw / yd * (1.6 - i * 0.1));
+            i += 1;
+        );
+        i = 0;
+        loop(4,
+            set_color(Lght_3D[color]);
+            gfx_a = 0.125 + i * 0.025;
+            gfx_circle(xa, ya * (1.20 + i * 0.05), r1 * 0.87, 1, 1);
+            i += 1;
+        );
+    ) : (
+        i = 0;
+        loop(3,
+            set_color(Shdw_3D[color]);
+            gfx_a = 0.1 + i * 0.025;
+            gfx_rect(xd * .001, yd*.99, xw * 1.385, yw / yd * (0.3 - i * 0.03)/2);
+            i += 1;
+        );
+        i = 0;
+        loop(4,
+            set_color(Lght_3D[color]);
+            gfx_a = 0.1 + i * 0.025;
+            gfx_circle(xa, ya * (1.15 + i * 0.05), r1 * 0.87, 1, 1);
+            i += 1;
+        );
+    );
+    gfx_a=1;
+  );
+);
+
+
+function draw_channel_labels () (
+  gfx_setfont(5);
+
+    (mouse_x >= 50 && mouse_x < 306) && (mouse_y-ylo < gfx_texth/2) ?
+    (
+      set_color(Font_Ch[color]); gfx_a = .5;
+      ):(
+      set_color(Font_Ch[color]); gfx_a = 1;
+    );
+
+    !gfx_ext_flags ?
+    (
+      gfx_x = xd+(6*scaling);
+      ):(
+      gfx_x = xd-(55*scaling);
+    );
+
+    gfx_y = yd+yw+(2*scaling);
+    set_color(Font_Ch[color]);
+
+  gfx_ext_flags || gfx_h <= yd+yw+gfx_texth ?
+  (
+    gfx_a = 0;
+  );
+  mode == 0 ? (chan_name = "LEFT" ; chan_name1 = "RIGHT");
+  mode == 1 ? (!summedMode ? (chan_name = "SUMMED (L+R)"):(chan_name = "SUMMED (L||R)"));
+  mode == 2 ? (chan_name = "MID" ; chan_name1 = "SIDE");
+  chan == 0 ? gfx_drawstr(chan_name) : gfx_drawstr(chan_name1);
+  chan += 1; mode === 1 ? chan += 1;
+);
+
+
+
+
+/////////////////////////////////////////////////////////////////
+/////////////////////// DRAW FUNCTIONS //////////////////////////
+/////////////////////////////////////////////////////////////////
+//*************************************************************//
+//******************* NEEDLE & LED MODEL **********************//
+
+function draw_peak_LED() (
+  LED_xy_pos ();
+  set_color(PkLED_0[color]);
+  gfx_circle(led_x, led_y, led_scl, 1,1);
+
+  set_color(PkLED_1[color]);
+  (chan == 0 && overL_g > 0) || (chan == 1 && overR_g > 0) ?
+  gfx_circle(led_x, led_y, led_scl, 1, 1);
+);
+
+
+function draw_vu_needle () (
+  set_color(NdlLine[color]);
+  gfx_line(x1,y1,x2,y2,1);
+
+  // draw thick needle lines and shadows if scaling allows
+  gsc >.5 ? (
+    gfx_line(x1+1,y1,x2+1,y2,1);
+
+    set_color(NdlShdw[color]);
+    gfx_line(x1+4,y1,x2+4,y2,1);
+  );
+);
+
+
+function draw_hold_needle () (
+  Hold_enabled && !Hold_Ndl_off && !idle && !gfx_ext_flags? (
+    set_color(NdlHold[color]);
+    gfx_line(x1,y1,x2,y2,1);
+
+    // draw thick needle lines
+    gsc >.5 ? (
+      gfx_line(x1+1,y1,x2+1,y2,1);
+
+      set_color(NdlShdw[color]);
+      gfx_line(x1+4,y1,x2+4,y2,1);
+    );
+  );
+);
+
+
+function draw_hold_arc (hold_needle, peakL, peakR) (
+  Hold_enabled && !idle ? (
+    (gfx_ext_flags) || (!Hold_Arc_off && !gfx_ext_flags) ? (
+      chan == 0 ? hold_needle = peakL : hold_needle = peakR;
+
+      set_color(ArcHold[color]);
+
+      start = -45 * ($pi / 180);
+      end = start + (hold_needle + 20) / 23 * (w2 - start);
+
+      gfx_arc(xa, ya, r1 - 3, start, end, 1);
+      gfx_arc(xa, ya, r1 - 4, start, end, 1);
+      gfx_arc(xa, ya, r1 - 5, start, end, 1);
+
+      gsc >= 0.34 ? (
+        gfx_arc(xa, ya, r1 - 6, start, end, 1);
+      );
+    );
+  );
+);
+
+
+function compute_draw_needle (needle, input1, input2, type) (
+  chan == 0 ? needle = input1 : needle = input2;
+  ph = 45 + (needle+20)/23*90;
+  ph = ph * ($pi / 180);
+
+  cosp = cos(ph);
+  sinp = sin(ph);
+
+  x1 = xa - cosp * r1 * 0.15;
+  y1 = ya - sinp * r1 * 0.15;
+  x2 = xa - cosp * r1 * 1.1;
+  y2 = ya - sinp * r1 * 1.1;
+
+  type == 1 ? (draw_vu_needle());
+  type == 2 ? (draw_hold_needle());
+);
+
+
+function draw_level_display (var1, var2, mode)
+  local(x,y,w,h, x2,y2,w2,h2, str1,str2) (
+  !gfx_ext_flags ? (
+    mode == peak ? (
+      x = xd+(185*scaling);
+      y = 140*scaling;
+      w = (xd+xw)-(3*scaling);
+      h = (yd+yw)-(4*scaling);
+    );
+    mode == vu ? (
+      x2 = xd+(3*scaling);
+      y2 = 140*scaling;
+      w2 = (xd+xw)-(183*scaling);
+      h2 = (yd+yw)-(4*scaling);
+    );
+    mode == peak ? (
+      pkReset_button.draw_buttonsize(x,y,48*scaling,22*scaling);
+    );
+  ) : (
+    mode == peak ? (
+      x = xd+(330*scaling);
+      y = 210*scaling;
+      w = (xd+xw)+(45*scaling);
+      h = (yd+yw)-(10*scaling);
+    );
+    mode == vu ? (
+      x2 = xd-(50*scaling);
+      y2 = 210*scaling;
+      w2 = (xd+xw)-(335*scaling);
+      h2 = (yd+yw)-(10*scaling);
+    );
+  );
+
+    gfx_set(.01,.01,.01,.30);
+    mode == peak ? (
+      gfx_x=x;
+      gfx_y=y;
+      gfx_rectto(w,h);
+      loop(25,
+        gfx_x=x-1;
+        gfx_y=y-1;
+        gfx_blurto(w+2,h+2);
+      );
+    );
+    mode == vu ? (
+      gfx_x=x2;
+      gfx_y=y2;
+      gfx_rectto(w2,h2);
+      loop(25,
+        gfx_x=x2-1;
+        gfx_y=y2-1;
+        gfx_blurto(w2+2,h2+2);
+      );
+    );
+
+    gfx_ext_flags ? (
+      gfx_setfont(5);
+    ) : (
+      gfx_setfont(7);
+    );
+
+    set_color(Font_Ch[color]);
+    mode == peak ? (
+      chan == 0 ? (
+        str1 = sprintf(str1,"%.1f",var1);
+        gfx_x = x;
+        gfx_y = y;
+        var1 <= -316 ? (
+          gfx_drawstr("--", 261,w,h);
+        ) : (
+          gfx_drawstr(str1, 261,w,h);
+        )
+      ) : (
+        str2 = sprintf(str2,"%.1f",var2);
+        gfx_x = x;
+        gfx_y = y;
+        var2 <= -316 ? (
+          gfx_drawstr("--", 261,w,h);
+        ) : (
+          gfx_drawstr(str2, 261,w,h);
+        )
+      );
+    );
+    mode == vu ? (
+      chan == 0 ? (
+        str1 = sprintf(str1,"%.1f",var1);
+        gfx_x = x2;
+        gfx_y = y2;
+        var1 <= -20 ? (
+          gfx_drawstr("--", 261,w2,h2);
+        ) : (
+          gfx_drawstr(str1, 261,w2,h2);
+        )
+      ) : (
+        str2 = sprintf(str2,"%.1f",var2);
+        gfx_x = x2;
+        gfx_y = y2;
+        var2 <= -20 ? (
+          gfx_drawstr("--", 261,w2,h2);
+        ) : (
+          gfx_drawstr(str2, 261,w2,h2);
+        )
+      );
+    );
+);
+
+function draw_vu_pk_buttons ()
+  local (x,y,w,h, x2,y2,w2,h2) (
+  !gfx_ext_flags ? (
+    set_color(DsplBtn[color]);
+
+    // button vu
+    x = xd-(4*scaling);
+    y = 140*scaling;
+    w = 10*scaling;
+    h = 22*scaling;
+    vudisplay_button.draw_buttonsize(x,y,w,h);
+
+    VU_enabled ? ( gfx_setfont(7) ):( gfx_setfont(5) );
+    gfx_x = (xd+xd)-(6*scaling);
+    gfx_y = y;
+    gfx_drawstr(">", 261,w,163*scaling;);
+
+    // button pk
+    x2 = (xd+xw)-(6*scaling);
+    y2 = 140*scaling;
+    w2 = 20*scaling;
+    h2 = 22*scaling;
+    pkdisplay_button.draw_buttonsize(x2,y2,w2,h2);
+
+    PK_enabled ? ( gfx_setfont(7) ):( gfx_setfont(5) );
+    gfx_x = x2;
+    gfx_y = y2;
+    gfx_drawstr("<", 260,w2,163*scaling;);
+  );
+);
+
+
+function draw_preference_mask () (
+  //Prefence Mask
+  PREFERENCE_MASK && !gfx_ext_flags ? (
+
+      mode == 1 ? (xd = xd*2) : (xd = xd);
+
+      // mask background
+      gfx_setfont(1);
+      gfx_set(.1,.1,.1,Pref_ac[color]/100);
+      gfx_rect(0,0,gfx_w,gfx_h+1);
+
+      loop(Pref_blur,
+        gfx_x=0; gfx_y=0;
+        gfx_blurto(gfx_w,gfx_h+1);
+      );
+
+
+      // preferences: mask header
+      gfx_setfont(5); gfx_set(1,1,1,.5);
+      gfx_x=1*scaling; gfx_y=1*scaling;
+      gfx_drawstr("***** Preferences *****",261, gfx_w-(1*scaling), ref_Y-gfx_texth/3);
+
+
+      // slider() bg
+      prev_X = 445*scaling;     prev_Y = 8*scaling;   prev_W = 20*scaling; prev_H = 20*scaling;
+      next_X = 472*scaling;     next_Y = 8*scaling;   next_W = 20*scaling; next_H = 20*scaling;
+      love_X = 8*scaling;       love_Y = 8*scaling;   love_W = 20*scaling; love_H = 20*scaling;
+      ppme_X = 28*scaling;       ppme_Y = 8*scaling;   ppme_W = 20*scaling; ppme_H = 20*scaling;
+
+      ref_X  = xd+(15*scaling); ref_Y  = 40*scaling;  ref_W  = 54*scaling; ref_H  = 15*scaling;
+      warn_X = xd+(15*scaling); warn_Y = 60*scaling;  warn_W = 54*scaling; warn_H = 15*scaling;
+      peak_X = xd+(75*scaling); peak_Y = 60*scaling;  peak_W = 45*scaling; peak_H = 15*scaling;
+      resp_X = xd+(15*scaling); resp_Y = 80*scaling;  resp_W = 54*scaling; resp_H = 15*scaling;
+      damp_X = xd+(15*scaling); damp_Y = 100*scaling; damp_W = 54*scaling; damp_H = 15*scaling;
+      NdHl_X = xd+(15*scaling); NdHl_Y = 130*scaling; NdHl_W = 54*scaling; NdHl_H = 15*scaling;
+      vuHl_X = xd+(75*scaling); vuHl_Y = 130*scaling; vuHl_W = 54*scaling; vuHl_H = 15*scaling;
+      CuMx_X = xd+(15*scaling); CuMx_Y = 150*scaling; CuMx_W = 54*scaling; CuMx_H = 15*scaling;
+      pkHl_X = xd+(75*scaling); pkHl_Y = 150*scaling; pkHl_W = 54*scaling; pkHl_H = 15*scaling;
+      Smmd_X = xd+(15*scaling); Smmd_Y = 170*scaling; Smmd_W = 54*scaling; Smmd_H = 15*scaling;
+
+      lbx_X  = xd+(15*scaling); lbx_Y  = 40*scaling;  lbx_W  = 54*scaling; lbx_H  = 15*scaling;
+      Trpd_X = xd+(15*scaling); Trpd_Y = 60*scaling;  Trpd_W = 54*scaling; Trpd_H = 15*scaling;
+      Tips_X = xd+(15*scaling); Tips_Y = 90*scaling;  Tips_W = 54*scaling; Tips_H = 15*scaling;
+      FtSz_X = xd+(15*scaling); FtSz_Y = 110*scaling;  FtSz_W = 54*scaling; FtSz_H = 15*scaling;
+      blur_X = xd+(15*scaling); blur_Y = 130*scaling; blur_W = 54*scaling; blur_H = 15*scaling;
+
+
+      //Prefence Page Buttons
+      gfx_set(0,0,0,.5);
+
+      gfx_rect(prev_X,prev_Y,prev_W,prev_H);
+      gfx_rect(next_X,next_Y,next_W,next_H);
+      pref_page == 1 ? (
+        prefpage_button.draw_buttonsize(next_X,next_Y,next_W,next_H);
+      ) : (
+        prefpage_button.draw_buttonsize(prev_X,prev_Y,prev_W,prev_H);
+      );
+
+      // preferences: page buttons
+      gfx_setfont(1); gfx_set(.5,.5,.5,1);
+
+      // page label
+      gfx_x=prev_X; gfx_y=prev_Y+(3*scaling);
+      gfx_drawstr("PAGE :",258,prev_X-(8*scaling), prev_Y+prev_H);
+
+      // ♥
+      set_color($xBC0AE2);
+      gfx_triangle(14*scaling,17*scaling,18*scaling,22.5*scaling,22*scaling,17*scaling);
+      gfx_circle(15.75*scaling,16*scaling,2.25*scaling,1,1);
+      gfx_circle(20*scaling,16*scaling,2.25*scaling,1,1);
+
+      in_love = mouse_x >= love_X && mouse_x <= love_X+love_W && mouse_y > love_Y && mouse_y < love_Y+love_H;
+
+      in_love ? (
+        gfx_setfont(1);
+        gfx_set(.5,.5,.5,1);
+        gfx_x=ppme_X; gfx_y=ppme_Y-(1*scaling);
+        gfx_drawstr("paypal.me/ZenoBock",260,ppme_X+ppme_W, ppme_Y+ppme_H);
+      );
+
+      // prev page
+      gfx_setfont(4);
+      Pref_Page == 1 ? ( gfx_set(.25,.25,.25) ):( gfx_set(1,1,1,1) );
+      gfx_x=prev_X; gfx_y=prev_Y;
+      gfx_drawstr("<",261,prev_X+prev_W, prev_Y+prev_H);
+
+      // next page
+      gfx_setfont(4);
+      Pref_Page == 2 ? ( gfx_set(.25,.25,.25) ):( gfx_set(1,1,1,1) );
+      gfx_x=next_X; gfx_y=next_Y;
+      gfx_drawstr(">",261,next_X+next_W, next_Y+next_H);
+
+
+      // Preference Page 1
+      Pref_Page == 1 ? (
+        gfx_set(0,0,0,.5);
+        gfx_rect(ref_X,ref_Y,ref_W,ref_H);     reflevel_button.draw_buttonsize(ref_X,ref_Y,ref_W,ref_H);
+        gfx_rect(warn_X,warn_Y,warn_W,warn_H); warnlevel_button.draw_buttonsize(warn_X,warn_y,warn_W,warn_H);
+        gfx_rect(peak_X,peak_Y,peak_W,peak_H); peakhold_button.draw_buttonsize(peak_X,peak_Y,peak_W,peak_H);
+        gfx_rect(resp_X,resp_Y,resp_W,resp_H); response_button.draw_buttonsize(resp_X,resp_Y,resp_W,resp_H);
+        gfx_rect(damp_X,damp_Y,damp_W,damp_H); damping_button.draw_buttonsize(damp_X,damp_Y,damp_W,damp_H);
+        gfx_rect(NdHl_X,NdHl_Y,NdHl_W,NdHl_H); vuneedlehold_button.draw_buttonsize(NdHl_X,NdHl_Y,NdHl_W,NdHl_H);
+        gfx_rect(vuHl_X,vuHl_Y,vuHl_W,vuHl_H); vuholdtime_button.draw_buttonsize(vuHl_X,vuHl_Y,vuHl_W,vuHl_H);
+        gfx_rect(CuMx_X,CuMx_Y,CuMx_W,CuMx_H); pkcurrentmax_button.draw_buttonsize(CuMx_X,CuMx_Y,CuMx_W,CuMx_H);
+        gfx_rect(pkHl_X,pkHl_Y,pkHl_W,pkHl_H); pkholdtime_button.draw_buttonsize(pkHl_X,pkHl_Y,pkHl_W,pkHl_H);
+        gfx_rect(Smmd_X,Smmd_Y,Smmd_W,Smmd_H); summedmode_button.draw_buttonsize(Smmd_X,Smmd_Y,Smmd_W,Smmd_H);
+
+        // button & slider positions
+        ref_level_slider = mouse_x >= ref_X && mouse_x <= ref_X+ref_W && mouse_y > ref_Y && mouse_y < ref_Y+ref_H;
+        warn_level_slider = mouse_x >= warn_X && mouse_x <= warn_X+warn_W && mouse_y > warn_Y && mouse_y < warn_Y+warn_H;
+        peak_hold_slider = mouse_x >= peak_X && mouse_x <= peak_X+peak_W && mouse_y > peak_Y && mouse_y < peak_Y+peak_H;
+        meter_resp_slider = mouse_x >= resp_X && mouse_x <= resp_X+resp_W && mouse_y > resp_Y && mouse_y < resp_Y+resp_H;
+        meter_damp_slider = mouse_x >= damp_X && mouse_x <= damp_X+damp_W && mouse_y > damp_Y && mouse_y < damp_Y+damp_H;
+        vu_needlehold_slider = mouse_x >= NdHl_X && mouse_x <= NdHl_X+NdHl_W && mouse_y > NdHl_Y && mouse_y < NdHl_Y+NdHl_H;
+        vu_holdtime_slider = mouse_x >= vuHl_X && mouse_x <= vuHl_X+vuHl_W && mouse_y > vuHl_Y && mouse_y < vuHl_Y+vuHl_H;
+        pk_currentmax_slider = mouse_x >= CuMx_X && mouse_x <= CuMx_X+CuMx_W && mouse_y > CuMx_Y && mouse_y < CuMx_Y+CuMx_H;
+        pk_holdtime_slider = mouse_x >= pkHl_X && mouse_x <= pkHl_X+pkHl_W && mouse_y > pkHl_Y && mouse_y < pkHl_Y+pkHl_H;
+        summed_mode_slider = mouse_x >= Smmd_X && mouse_x <= Smmd_X+Smmd_W && mouse_y > Smmd_Y && mouse_y < Smmd_Y+Smmd_H;
+
+        // preferences: meter options
+        gfx_setfont(1); gfx_set(1,1,1,1);
+
+        // reference level
+        gfx_x=ref_X; gfx_y=ref_Y;
+        gfx_drawstr("Reference Level :",258,xd-(15*scaling), ref_Y+ref_H);
+        gfx_x=ref_X; gfx_y=ref_Y;
+        gfx_drawstr(sprintf(#,"%.f dB",slider3),261,ref_X+ref_W, ref_Y+ref_H);
+
+        // peak warn level
+        gfx_x=warn_X; gfx_y=warn_Y;
+        gfx_drawstr("Peak Warn Level :",258,xd-(15*scaling), peak_Y+peak_H);
+        gfx_x=warn_X; gfx_y=warn_Y;
+        gfx_drawstr(sprintf(#,"%.f dB",slider4),261,warn_X+warn_W, warn_Y+warn_H);
+
+        // peak warn hold time
+        gfx_x=peak_X; gfx_y=peak_Y;
+        gfx_drawstr(sprintf(#,"%.f ds",slider40),261,peak_X+peak_W, peak_Y+peak_H);
+
+        // meter response
+        gfx_x=resp_X; gfx_y=resp_Y;
+        gfx_drawstr("Meter Response :",258,xd-(15*scaling), resp_Y+resp_H);
+        gfx_x=resp_X; gfx_y=resp_Y;
+        gfx_drawstr(sprintf(#,"%.f %%",slider5),261,resp_X+resp_W, resp_Y+resp_H);
+
+        // meter damping
+        gfx_x=damp_X; gfx_y=damp_Y;
+        gfx_drawstr("Meter Damping :",258,xd-(15*scaling), damp_Y+damp_H);
+        gfx_x=damp_X; gfx_y=damp_Y;
+        gfx_drawstr(sprintf(#,"%.f %%",slider6*10000),261,damp_X+damp_W, damp_Y+damp_H);
+
+        // summed mode
+        gfx_x=Smmd_X; gfx_y=Smmd_Y;
+        gfx_drawstr("Summed Mode :",258,xd-(15*scaling), Smmd_Y+Smmd_H);
+        gfx_x=Smmd_X; gfx_y=Smmd_Y;
+        gfx_drawstr(strcpy_fromslider(summedMode,slider43),261,Smmd_X+Smmd_W, Smmd_Y+Smmd_H);
+
+        // vu hold needle
+        gfx_x=NdHl_X; gfx_y=NdHl_Y;
+        gfx_drawstr(strcpy_fromslider(Needle_Hold_Sldr,slider8),261,NdHl_X+NdHl_W, NdHl_Y+NdHl_H);
+
+        // vu display hold time
+        gfx_x=vuHl_X; gfx_y=vuHl_Y;
+        gfx_drawstr("VU Display / Needle Hold :",258,xd-(15*scaling), vuHl_Y+vuHl_H);
+        gfx_x=vuHl_X; gfx_y=vuHl_Y;
+        gfx_drawstr(sprintf(#,"%.f sec",slider41),261,vuHl_X+vuHl_W, vuHl_Y+vuHl_H);
+
+        // peak current max
+        gfx_x=CuMx_X; gfx_y=CuMx_Y;
+        gfx_drawstr(strcpy_fromslider(PK_current_max,slider11),261,CuMx_X+CuMx_W, CuMx_Y+CuMx_H);
+
+        // peak display hold time
+        gfx_x=pkHl_X; gfx_y=pkHl_Y;
+        gfx_drawstr("Peak Display Hold :",258,xd-(15*scaling), pkHl_Y+pkHl_H);
+        PK_current_max ? ( gfx_set(.25,.25,.25) );
+        gfx_x=pkHl_X; gfx_y=pkHl_Y;
+        gfx_drawstr(sprintf(#,"%.f sec",slider42),261,pkHl_X+pkHl_W, pkHl_Y+pkHl_H);
+      );
+
+
+      // Preference Page 2
+      Pref_Page == 2 ? (
+        gfx_set(0,0,0,.5);
+        gfx_rect(lbx_X,lbx_Y,lbx_W,lbx_H);     lbxSupport_button.draw_buttonsize(lbx_X,lbx_Y,lbx_W,lbx_H);
+        gfx_rect(Trpd_X,Trpd_Y,Trpd_W,Trpd_H); trackpadSupport_button.draw_buttonsize(Trpd_X,Trpd_Y,Trpd_W,Trpd_H);
+        gfx_rect(Tips_X,Tips_Y,Tips_W,Tips_H); displayTooltips_button.draw_buttonsize(Tips_X,Tips_Y,Tips_W,Tips_H);
+        gfx_rect(FtSz_X,FtSz_Y,FtSz_W,FtSz_H); fontsize_button.draw_buttonsize(FtSz_X,FtSz_Y,FtSz_W,FtSz_H);
+        gfx_rect(blur_X,blur_Y,blur_W,blur_H); pageblur_button.draw_buttonsize(blur_X,blur_Y,blur_W,blur_H);
+
+        // button & slider positions
+        lbxSupport_slider = mouse_x >= lbx_X && mouse_x <= lbx_X+lbx_W && mouse_y > lbx_Y && mouse_y < lbx_Y+lbx_H;
+        trackpadSupport_slider = mouse_x >= Trpd_X && mouse_x <= Trpd_X+Trpd_W && mouse_y > Trpd_Y && mouse_y < Trpd_Y+Trpd_H;
+        displayTooltips_slider = mouse_x >= Tips_X && mouse_x <= Tips_X+Tips_W && mouse_y > Tips_Y && mouse_y < Tips_Y+Tips_H;
+        fontsize_slider = mouse_x >= FtSz_X && mouse_x <= FtSz_X+FtSz_W && mouse_y > FtSz_Y && mouse_y < FtSz_Y+FtSz_H;
+        pageblur_slider = mouse_x >= blur_X && mouse_x <= blur_X+blur_W && mouse_y > blur_Y && mouse_y < blur_Y+blur_H;
+
+        // preferences: meter options
+        gfx_setfont(1); gfx_set(1,1,1,1);
+
+        // lbx support
+        gfx_x=lbx_X; gfx_y=lbx_Y;
+        gfx_drawstr("LBX Support :",258,xd-(15*scaling), lbx_Y+lbx_H);
+        gfx_x=lbx_X; gfx_y=lbx_Y;
+        gfx_drawstr(strcpy_fromslider(lbx_support,slider46),261,lbx_X+lbx_W, lbx_Y+lbx_H);
+
+        // Trackpad support
+        gfx_x=Trpd_X; gfx_y=Trpd_Y;
+        gfx_drawstr("Trackpad Support :",258,xd-(15*scaling), Trpd_Y+Trpd_H);
+        gfx_x=Trpd_X; gfx_y=Trpd_Y;
+        gfx_drawstr(strcpy_fromslider(Trackpad,slider50),261,Trpd_X+Trpd_W, Trpd_Y+Trpd_H);
+
+        // peak warn level
+        gfx_x=Tips_X; gfx_y=Tips_Y;
+        gfx_drawstr("Display Tooltips :",258,xd-(15*scaling), Tips_Y+Tips_H);
+        gfx_x=Tips_X; gfx_y=Tips_Y;
+        gfx_drawstr(strcpy_fromslider(show_help,slider44),261,Tips_X+Tips_W, Tips_Y+Tips_H);
+
+        // meter response
+        gfx_x=FtSz_X; gfx_y=FtSz_Y;
+        gfx_drawstr("Font Size Multiplicator :",258,xd-(15*scaling), FtSz_Y+FtSz_H);
+        gfx_x=FtSz_X; gfx_y=FtSz_Y;
+        gfx_drawstr(sprintf(#,"%.1f x",slider45),261,FtSz_X+FtSz_W, FtSz_Y+FtSz_H);
+
+        // meter response
+        gfx_x=blur_X; gfx_y=blur_Y;
+        gfx_drawstr("Background Blur :",258,xd-(15*scaling), blur_Y+blur_H);
+        gfx_x=blur_X; gfx_y=blur_Y;
+        gfx_drawstr(sprintf(#,"%.f x",slider47),261,blur_X+blur_W, blur_Y+blur_H);
+      );
+  ); // close PREFERENCE_MASK
+);
+
+
+function compute_meter () (
+  fact_up = 10 ^ ((-slider3 - 10)/20) * 0.3785 ;
+  wl   = slider4;
+  mode = slider2;
+  lim = 10 ^ (wl / 20);
+  mom = 0.00010 + 0.00032 *  slider5^3 / 125000;
+  damp = 1 - slider6 * (48000 / srate);
+
+  color = slider1;
+  gain_sldr = slider7;
+  Needle_Hold_Sldr = slider8;
+  Hold_enabled = (slider8 >= 1);
+  Hold_Arc_off = (slider8 == 3);
+  Hold_Ndl_off = (slider8 == 2);
+  VU_enabled = (slider9 == 1);
+  PK_enabled = (slider10 == 1);
+  PK_current_max = slider11;
+  PK_Reset = slider12;
+  slider12 == 1 ? (
+    left[peak] = -316.5;
+    right[peak] = -316.5;
+    left[clip] = -316.5;
+    right[clip] = -316.5;
+    slider12 = 0;
+  );
+  rec_needle = slider13;
+  led_hold = slider40;
+  holdtime1 = slider41*srate;
+  holdtime2 = slider42*srate;
+  summedMode = slider43;
+  show_help = slider44;
+  cfg_textsize = slider45;
+  lbx_support = slider46;
+  Pref_blur = slider47;
+  Trackpad = slider50;
+  Pref_Page = slider64;
+
+  ext_tail_size =
+  (
+    Hold_enabled >= 1 ? (
+      holdtime1 ) : ( -1;
+    )
+  );
+);
+
+
+
+/////////////////////////////////////////////////////////////////
+/////////////////////// DRAW FUNCTIONS //////////////////////////
+/////////////////////////////////////////////////////////////////
+//*************************************************************//
+//*********************** BOTTOM BAR **************************//
+
+function draw_bottombar () (
+  // button & slider positions
+  ui_color_slider = mouse_x >= 50*scaling && mouse_x < 111*scaling && abs(mouse_y-ylo) < gfx_texth*0.4;
+  mode_slider = mouse_x >= 120*scaling && mouse_x < 181*scaling && abs(mouse_y-ylo) < gfx_texth*0.4;
+  volume_slider = mouse_x >= 190*scaling && mouse_x < 261*scaling && abs(mouse_y-ylo) < gfx_texth*0.4;
+  record_slider = mouse_x >= 270*scaling && mouse_x < 321*scaling && abs(mouse_y-ylo) < gfx_texth*0.4;
+
+  xw2 = max(1,floor((gfx_w) / 2));
+  yw2 = floor(xw / 1.025);
+  gfx_setfont(2);
+
+  !gfx_ext_flags ?
+  (
+    // bottom bar bg
+    gfx_set(0,0,0,.5); gfx_rect(gfx_x=x, gfx_y=ylo-gfx_texth/1.7, xw2*2.01, gfx_h+1);
+
+    // blur bb bg
+    loop(20,
+      gfx_x=x; gfx_y=ylo-gfx_texth/1.7;
+      gfx_blurto(xw2*2.01,gfx_h+1);
+    );
+
+    // separator line
+    gfx_set(.15,.15,.15,.3); gfx_line(gfx_x=x,gfx_y=ylo-gfx_texth/1.6,xw2*2.01,ylo-gfx_texth/1.6);
+
+    // version txt
+    gfx_setfont(1); gfx_set(1,1,1,1);
+    gfx_drawstr(version, 261, (45*scaling), gfx_y+gfx_texth*(1.5));
+
+
+    // gui color selector
+    set_color(BotBBtn[color]); gfx_a=.25;
+    gfx_rect(gfx_x=50*scaling, gfx_y=ylo-gfx_texth/2.5, gfx_texth+(50*scaling), gfx_texth+1, 1);
+    set_color(Font_BB[color]); gfx_a=.05;
+    gfx_rect(gfx_x=50*scaling, gfx_y=ylo-gfx_texth/2.5, gfx_texth+(50*scaling), gfx_texth+1, 0);
+    uistyle_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+(50*scaling),gfx_texth+1);
+
+    gfx_setfont(1); // small
+    set_color(Font_BB[color]);
+    gfx_drawstr(strcpy_fromslider(UI,slider1),261,gfx_x+gfx_texth+(50*scaling), gfx_y+gfx_texth);
+
+    // mode selector
+    set_color(BotBBtn[color]); gfx_a=.25;
+    gfx_rect(gfx_x=120*scaling, gfx_y=ylo-gfx_texth/2.5, gfx_texth+(50*scaling), gfx_texth+1, 1);
+    set_color(Font_BB[color]); gfx_a=.05;
+    gfx_rect(gfx_x=120*scaling, gfx_y=ylo-gfx_texth/2.5, gfx_texth+(50*scaling), gfx_texth+1, 0);
+    mode_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+(50*scaling),gfx_texth+1);
+
+    gfx_setfont(1); // small
+    set_color(Font_BB[color]);
+    gfx_drawstr(strcpy_fromslider(Mode,slider2),261,gfx_x+gfx_texth+(50*scaling),gfx_y+gfx_texth);
+
+
+    // volume level
+    set_color(BotBBtn[color]); gfx_a=.25;
+    gfx_rect(gfx_x=190*scaling,gfx_y=ylo-gfx_texth/2.5,gfx_texth+(60*scaling),gfx_texth+1,1);
+    set_color(Font_BB[color]); gfx_a=.05;
+    gfx_rect(gfx_x=190*scaling,gfx_y=ylo-gfx_texth/2.5,gfx_texth+(60*scaling),gfx_texth+1,0);
+    volume_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+(60*scaling),gfx_texth+1);
+
+    gfx_setfont(1); // small
+    set_color(Font_BB[color]);
+    gfx_drawstr(sprintf(#,"VOL :  %.2f",slider7),261,gfx_x+gfx_texth+(60*scaling),gfx_y+gfx_texth);
+
+
+    // VU REC ?
+    set_color(BotBBtn[color]); gfx_a=.25;
+    gfx_rect(gfx_x=270*scaling,gfx_y=ylo-gfx_texth/2.5,gfx_texth+(40*scaling),gfx_texth+1,1);
+    set_color(Font_BB[color]); gfx_a=.05;
+    gfx_rect(gfx_x=270*scaling,gfx_y=ylo-gfx_texth/2.5,gfx_texth+(40*scaling),gfx_texth+1,0);
+    rec_button.draw_buttonsize(gfx_x,gfx_y,gfx_texth+(60*scaling),gfx_texth+1);
+
+    gfx_setfont(1); // small
+    set_color(Font_BB[color]);
+    // draw "⚫" in color
+    //gfx_drawchar(char)
+      gfx_setfont(1);
+      rec_needle ? set_color($xF71414) : (set_color(Font_BB[color]); gfx_a=0.1);
+      gfx_x=270*scaling; gfx_y=ylo-gfx_texth/2.5;
+      gfx_circle(gfx_x+(13*scaling), (gfx_y+gfx_texth/2)-.5, gfx_texth/3, 1, 1 );
+
+    // draw "REC"
+      set_color(Font_BB[color]);
+      gfx_x=290*scaling; gfx_y=ylo-gfx_texth/2.5;
+      gfx_drawstr("Rec",261,gfx_x+gfx_texth+(12*scaling),gfx_y+gfx_texth);
+  );
+
+
+  // preference button
+  gfx_setfont(1);
+  yu = gfx_texth*7/8;
+  ylo = gfx_h-yu;
+
+  // button & slider positions
+  ui_slider_button = abs(mouse_x-tx) < gfx_texth/2 && abs(mouse_y-ylo) < gfx_texth/2;
+
+  gfx_ext_flags == 0 ?
+  (
+    !(gfx_ext_flags&1) ?
+  (
+      mode = slider2;
+      //set_color(TEXT_COLOR);
+      gfx_set(1,1,1);
+      tx = gfx_w-(gfx_texth+0.5)*1.1;
+      gfx_rect(gfx_x=tx-gfx_texth/4, gfx_y=ylo-gfx_texth/2.5, gfx_texth+1, gfx_texth+1, 0);
+      gfx_drawstr("☰",261, gfx_x+gfx_texth+1, gfx_y+gfx_texth+1);
+
+      has_click && ui_slider_button ? ( PREFERENCE_MASK == 0 ?
+        ( PREFERENCE_MASK = 1; has_click = 0; ) :
+        ( PREFERENCE_MASK = 0; has_click = 0; ) ;
+      );
+    );
+  );
+);
+
+
+
+
+function draw_tooltips () (
+  !gfx_ext_flags ?
+  (
+    // draw tooltips
+    show_help ?
+    (
+      ui_color_slider || mode_slider || volume_slider || record_slider || (
+        PREFERENCE_MASK && (
+          ref_level_slider || warn_level_slider || peak_hold_slider ||
+          meter_resp_slider || meter_damp_slider || vu_holdtime_slider ||
+          pk_holdtime_slider || vu_needlehold_slider || pk_currentmax_slider ||
+          summed_mode_slider || lbxSupport_slider || displayTooltips_slider ||
+          fontsize_slider || pageblur_slider || trackpadSupport_slider
+        )
+      ) ?
+      (
+        gfx_setfont(8);
+        gfx_set(0,0,0,.2);
+        gfx_rect(gfx_x=-1, gfx_y=ylo-gfx_texth-(18*scaling), gfx_w+1, gfx_texth+(7*scaling));
+
+        loop(50,
+          gfx_x=0; gfx_y=ylo-gfx_texth-(18*scaling);
+          gfx_blurto(gfx_w,gfx_y+gfx_texth+(10*scaling));
+        );
+      );
+
+      set_color(FontTip[color]);
+
+      ui_color_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+        gfx_drawstr ("'Left-click' or 'mouse wheel' to cycle through UI Styles.  'Right-click' to show popup menu.",
+        261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+      );
+
+      mode_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+        gfx_drawstr ("'Left-click' to cycle through channel modes.  'Right-click' to show popup menu.",
+        261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+      );
+
+      volume_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+        gfx_drawstr ("'Left-click & drag' or 'mouse wheel' to adjust volume... hold 'Ctrl' for fine tuning.  'Double-click' to reset.",
+        261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+      );
+
+      record_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+        gfx_drawstr ("Records VU Meter output as automation. Track must be in 'write mode'.",
+        261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+      );
+
+      PREFERENCE_MASK ?
+      (
+          ref_level_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the dBFS reference level for 0dB VU.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          warn_level_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the dBFS warn level for the Peak LED.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          peak_hold_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the hold time for the Peak LED. ( 100 ms to 1 sec )",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          meter_resp_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the meter response time.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          meter_damp_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the momentum for the needle.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          vu_needlehold_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Enable or disable Hold Needle, Arc, or both (does not affect embedded UI).",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          vu_holdtime_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the holdtime for the VU Display and VU Needle.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          pk_currentmax_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the Peak Display to Current Hold or Max Hold.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          pk_holdtime_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            PK_current_max ? (
+              gfx_drawstr ("Sets the holdtime for the Peak Display  (disable 'Max').",
+              261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+            ) : (
+              gfx_drawstr ("Sets the holdtime for the Peak Display.",
+              261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+            );
+          );
+
+          summed_mode_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Sets the Summed Mode: Choose between ''Mono'' or ''Logical OR''.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          lbxSupport_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Turns on constant VU parameter output (necessary for LBX Stripper).",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          trackpadSupport_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Disables mouse wheel to avoid parameter scrolling on MacOS Trackpad / Touchpad.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          displayTooltips_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Toggles tooltips on / off.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+          fontsize_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Adjusts the font size.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+          pageblur_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
+            gfx_drawstr ("Adjusts the amount of background blur on the preference page.",
+            261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
+          );
+
+      ); // close PREFERENCE_MASK
+    );
+  );
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@slider
+//********************************************************************************************************
+//********************************************************************************************************
+compute_meter();
+
+
+
+
+
+
+@block
+
+idle = (
+  peakL <= -20 &&
+  peakR <= -20 &&
+  spl0 <= 0.00000005298331 &&
+  spl1 <= 0.00000005298331 &&
+  ph <= 0.78539816339745 &&
+  !PK_Reset
+);
+
+//========================================= VOLUME ==================================================/
+
+  cnt=0;
+  ddb=0.0;
+
+  db_chg_splpos=slider_next_chg(1, tgtdb);
+  db_chg_splpos > 0 ? (db=gain_sldr) : (tgtdb = gain_sldr; db_chg_splpos = samplesblock;);
+
+  ddb=(tgtdb-db)/db_chg_splpos;
+
+
+
+
+
+//***************************************** VU OUT *************************************************/
+
+
+  (VU_enabled || lbx_support || rec_needle) && !idle ?
+  (
+        slider20 = round_dec(vu(dbL), 1);
+        slider21 = round_dec(vu(dbR), 1);
+
+      // Holdtime for Max VU
+      vu(dbL) > slider24 ? (
+          slider24 = round_dec(vu(dbL), 1);
+          holdcounter1 = holdtime1;
+          ) : (
+          holdcounter1 > 0 ? (
+              holdcounter1 -= samplesblock;
+          ) : (
+              slider24 = round_dec(vu(dbL), 1);
+          );
+      );
+
+      mode != 1 ? (
+        vu(dbR) > slider25 ? (
+            slider25 = round_dec(vu(dbR), 1);
+            holdcounter2 = holdtime1;
+            ) : (
+            holdcounter2 > 0 ? (
+                holdcounter2 -= samplesblock;
+            ) : (
+                slider25 = round_dec(vu(dbR), 1);
+            );
+        )
+      ) : (
+        slider25 = -20;
+      )
+    ) : (
+      slider20 = -20;
+      slider21 = -20;
+      slider24 = -20;
+      slider25 = -20;
+  );
+
+  !idle ? (
+      rec_needle == 1 ? (
+          mode != 1 ? (
+              slider_automate(slider20);
+              slider_automate(slider21);
+            ):(
+              slider_automate(slider20);
+          );
+      );
+  );
+
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Hold_enabled && !idle ? (
+    dbL > peakL ? (
+      peakL = dbL;
+      holdcounter1 = holdtime1;
+    ) : (
+      holdcounter1 > 0 ? (
+        holdcounter1 -= samplesblock;
+      ) : (
+        peakL = dbL;
+      );
+    );
+
+    mode != 1 ? (
+      dbR > peakR ? (
+        peakR = dbR;
+        holdcounter2 = holdtime1;
+      ) : (
+        holdcounter2 > 0 ? (
+          holdcounter2 -= samplesblock;
+        ) : (
+          peakR = dbR;
+        );
+      )
+    ) : (
+      peakR == -20;
+    )
+) : (
+  peakL == -20;
+  peakR == -20;
+);
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+@sample
+
+//========================================= VOLUME ==================================================/
+  gain_sldr != 0 ? (
+    cnt == db_chg_splpos ? (
+      ddb=0.0; db_chg_splpos=slider_next_chg(1, tgtdb);
+      db_chg_splpos > cnt ? (
+        ddb=(tgtdb-db)/(db_chg_splpos-cnt);
+      );
+    );
+
+    adj=exp(db*AMP_DB_i);
+
+    spl0 *= adj;
+    spl1 *= adj;
+
+    db += ddb;
+    cnt += 1;
+  );
+
+
+//======================================== VU METER =================================================/
+
+  !idle ? (
+      tot_nbr_spl += 1;
+
+      smpL = spl0;
+      smpR = spl1;
+
+      mode == 1 ? (summedMode == 0 ?
+                  (smpL = (spl0 + spl1) * 0.5; smpR = smpL):
+                  (smpL = (spl0 > spl1 ? spl0 : spl1); smpR = smpL);
+      );
+      mode == 2 ? (smpL = (spl0 + spl1) * 0.5; smpR = (spl0 - spl1) * 0.5);
+
+      smpL = abs(smpL);
+      smpR = abs(smpR);
+
+      scnt += 1;
+      scnt === 10 ? (
+
+  // move left needle
+              force = smpL * fact_up  -  (nd_posL * .1 + offset);
+
+              nd_speedL += force * dt / mom;
+              nd_speedL = nd_speedL * damp;
+              nd_posL += nd_speedL * dt;
+              nd_posL < 0 || nd_posL > 1 ? nd_speedL = 0;
+
+              nd_posL = min(max(nd_posL,0),1);
+
+
+  // move right needle
+              mode != 1 ? (
+                force = smpR * fact_up  - (nd_posR * .1 + offset);
+
+                nd_speedR += force * dt / mom;
+                nd_speedR = nd_speedR * damp;
+                nd_posR += nd_speedR * dt;
+                nd_posR < 0 || nd_posR > 1 ? nd_speedR = 0;
+
+                nd_posR = min(max(nd_posR,0),1);
+              );
+
+
+          // Peak LED
+          overL -= 100 / led_hold;
+          overR -= 100 / led_hold;
+
+          scnt = 0;
+
+      ); //scnt
+
+  //*****************************************************************************************************
+
+      smpL > lim ? overL = srate;
+      smpR > lim ? overR = srate;
+
+
+  //*****************************************************************************************************
+
+      tot_nbr_spl_g  = tot_nbr_spl;
+
+      overL_g = overL;
+      overR_g = overR;
+
+      nd_posL_g = nd_posL;
+      nd_posR_g = nd_posR;
+
+      tot_nbr_spl_g === tot_nbr_spl ? (
+        dbL = (nd_posL_g * 23) - 20;
+        dbR = (nd_posR_g * 23) - 20;
+      ) : (
+        errcnt += 1; // thread collision
+      );
+
+  ) : (
+      overL = overL_g = smpL = 0;
+      overR = overR_g = smpR = 0;
+  ); //idle
+
+//*****************************************************************************************************
+
+  (VU_enabled || lbx_support) && !idle ? (
+      slider22 = sign(overL);
+      slider23 = sign(overR);
+    ) : (
+      slider22 = 0;
+      slider23 = 0;
+  );
+
+
+//***************************************** Peak OUT *************************************************/
+PK_enabled && !idle ?
+(
+  mode == 0 ? ( _sample(left, spl0, holdtime2); _sample(right, spl1, holdtime2) );
+  mode == 1 ? ( _sample(left, (spl0+spl1) * 0.5, holdtime2); slider27 = -316.5; );
+  mode == 2 ? ( _sample(left, (spl0+spl1) * 0.5, holdtime2); _sample(right, (spl0-spl1), holdtime2 ) );
+) : (
+  PK_current_max == 0 && !PK_Reset ?
+  (
+    slider26 = -316.5;
+    slider27 = -316.5;
+  );
+  (PK_current_max || !PK_current_max) && mode == 1 ? (
+    slider27 = -316.5;
+  )
+);
+
+
+
+
+
+@gfx 500 245
+
+// update meter parameters
+compute_meter();
+
+// set framebuffer color
+gfx_clear = packed_RGB(Frm_Buf[color]);
+
+// override drawing functions for graphical window scaling
+gsc = min(gfx_w/500,gfx_h/245);
+scaling = gfx_w/500;
+
+
+// Fonts
+FONT_SZ_MIN = 2;
+FONT_SZ_MAX = 72;
+fsz = FONT_SZ_MIN + min(gfx_w/100, FONT_SZ_MAX - FONT_SZ_MIN);
+fsz *= 1.0 + cfg_textsize/10;
+
+gfx_setfont(1, "Arial", fsz*2.1, '' );
+gfx_setfont(2, "Arial", fsz*2.2, '' );
+gfx_setfont(3, "Arial", fsz*2.6, 'u');
+gfx_setfont(4, "Arial", fsz*2.7, 'b');
+gfx_setfont(5, "Arial", fsz*3.0, 'b');
+gfx_setfont(6, "Arial", fsz*5.0, '' );
+gfx_setfont(7, "Arial", fsz*2.2, 'b' );
+gfx_setfont(8, "Arial", fsz*1.8, '' );
+
+
+// draw meter
+w1 = $pi * 16.5 / 180;
+w2 = $pi * 45 / 180;
+xw = max(1,floor((gfx_w-30) / 2));
+yw = floor(xw / 1.5);
+r1 = floor(yw * 0.85);
+
+chan = 0;
+while (chan <= 1) (
+
+  !gfx_ext_flags ? (
+    xd = 10 + chan*(xw+10);
+    mode === 1 ? xd += floor(xw/2);
+    yd = 10;
+    xa = floor(xd + xw *.5);
+    ya = floor(yd + yw * 1.1);
+  ) : (
+    xd = chan*(xw *.5);
+    yd = 1;
+    xw = max(1,floor(gfx_w * .75));
+    yw = floor(xw * .67);
+    mode = 1;
+    mode === 1 ? xd = floor(xw *.175);
+    r1 = floor(yw * .9);
+    xa = floor(xd + xw * .5);
+    ya = floor(yd + yw * 1.12);
+  );
+
+  /////////////////////////////////////
+  draw_meter_bg();
+  draw_3D();
+  draw_arcs();
+  draw_scale();
+  draw_peak_str();
+  draw_vu_str();
+  draw_embedded_gain();
+
+  draw_peak_LED();
+  draw_hold_arc (hold_needle, peakL, peakR);
+  compute_draw_needle(hold_needle, peakL, peakR, 2);
+  compute_draw_needle(ph, dbL, dbR, 1);
+  VU_enabled && (gsc >=.238) ? (
+    draw_level_display(slider24, slider25, vu);
+  );
+  PK_enabled && (gsc >=.238) ? (
+    draw_level_display(slider26, slider27, peak);
+  );
+  draw_coil_cover();
+  draw_channel_labels();
+  /////////////////////////////////////
+
+); // close channel
+
+draw_vu_pk_buttons();
+draw_noUserTheme();
+draw_preference_mask();
+draw_bottombar();
+draw_tooltips();
+do_mouse();
+
+
+
+PK_enabled ? (
+  !idle ?
+  (
+    PK_current_max == 0 ? (
+      slider26 = round_dec(dbfs(left[peak]), 1);
+      slider27 = round_dec(dbfs(right[peak]), 1);
+    ) : (
+      slider26 = round_dec(dbfs(left[clip]), 1);
+      slider27 = round_dec(dbfs(right[clip]), 1);
+    )
+  ) : (
+    PK_Reset;
+  );
+);
+
+
+// EOF

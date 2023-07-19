@@ -1,0 +1,138 @@
+desc: RCInflator 2 (Oxford Edition)
+author: lewloiwc
+version: 1.0
+about:
+  This edition clones the behavior of the Sonnox Oxford Inflator in every aspect including "bandsplit" mode. It improves upon the original RCInflator (Oxford Edition) by RCJacH with additions by sai'ke and chmaha.
+
+  For discussion see https://forum.cockos.com/showthread.php?t=256286.
+
+slider1:input_slider=0<-6,12,0.01>Input (dB)
+slider2:effect_slider=0<0,100,0.1>Effect (%)
+slider3:curve_slider=0<-50,50,0.1>Curve
+slider4:clip_slider=1<0,1,1{Off,On}>Clip 0 dB
+slider5:band_split_slider=0<0,1,1{Off,On}>Band Split
+slider6:effect_in_slider=1<0,1,1{Off,On}>Effect In
+slider7:output_slider=0<-12,0,0.01>Output (dB)
+
+in_pin:Input L
+in_pin:Input R
+out_pin:Output L
+out_pin:Output R
+
+
+
+@init //----------------------------------------------------------------
+
+ext_nodenorm = 1;
+
+function clamp(x,min,max)
+(
+    x < min ? min : x > max ? max : x;
+);
+
+function SVFOP_set(cutoff)
+(
+    this.c = tan($pi*(cutoff/srate - 0.25))*0.5 + 0.5;
+);
+
+function SVFOPlpf(x)
+instance(
+    c,i
+)
+(
+    x = i + c*(x - i);
+    i = 2*x - i;
+    x;
+);
+
+function SVFOPhpf(x)
+instance(
+    c,r,i
+)
+(
+    r = (1 - c)*i + c*x;
+    i = 2*r - i;
+    x - r;
+);
+
+function band_split_set(xA,xB)
+(
+    //Low
+        this.A.SVFOP_set(xA);
+    //High
+        this.B.SVFOP_set(xB);
+    //Mid
+        this.gain = this.B.c*(1 - this.A.c)/(this.B.c - this.A.c);
+        this.gain_div = 1/this.gain;
+);
+
+function band_split(x)
+(
+    //Low
+        this.L = this.A.SVFOPlpf(x);
+    //High
+        this.H = this.B.SVFOPhpf(x);
+    //Mid
+        this.M = x - this.L - this.H;
+);
+
+function waveshaper(x)
+local(
+    y
+)
+(
+    (
+        (y = abs(x)) < 1 ? (
+            A*y + B*sqr(y) + C*y*sqr(y) - D*(sqr(y) - 2*sqr(y)*y + sqr(sqr(y)));
+        ) :
+        y < 2 ? (
+            2*y - sqr(y);
+        )
+    )*wet*sign(x) + x*dry;
+);
+
+spl0.band_split_set(240,2400);
+spl1.band_split_set(240,2400);
+
+
+
+@slider //----------------------------------------------------------------
+
+pre = exp(input_slider*(log(10)*0.05));
+post = exp(output_slider*(log(10)*0.05));
+
+wet = effect_slider*0.01*0.99999955296;
+dry = 1 - effect_slider*0.01;
+
+A = curve_slider*0.01 + 1.5;
+B = curve_slider*-0.02;
+C = curve_slider*0.01 - 0.5;
+D = 0.0625 - curve_slider*0.0025 + sqr(curve_slider)*0.000025;
+
+
+
+@sample //----------------------------------------------------------------
+
+clip_slider ? (
+    spl0 = clamp(spl0*pre,-1,1);
+    spl1 = clamp(spl1*pre,-1,1);
+) : (
+    spl0 = clamp(spl0*pre,-2,2);
+    spl1 = clamp(spl1*pre,-2,2);
+);
+
+effect_in_slider ? (
+    band_split_slider ? (
+        spl0.band_split(spl0);
+        spl1.band_split(spl1);
+
+        spl0 = waveshaper(spl0.L) + waveshaper(spl0.M*spl0.gain)*spl0.gain_div + waveshaper(spl0.H);
+        spl1 = waveshaper(spl1.L) + waveshaper(spl1.M*spl1.gain)*spl1.gain_div + waveshaper(spl1.H);
+    ) : (
+        spl0 = waveshaper(spl0);
+        spl1 = waveshaper(spl1);
+    );
+);
+
+abs(spl0) < 0.0000000000000000555111512312578270211815834045 ? spl0 = 0 : spl0 *= post;
+abs(spl1) < 0.0000000000000000555111512312578270211815834045 ? spl1 = 0 : spl1 *= post;

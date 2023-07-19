@@ -1,0 +1,61 @@
+desc: Mute monitor when recording
+author: mschnell
+version: 1.0
+changelog: initial commit
+about:
+  ## Mute Monitor when Recording
+
+  You need to use an audio interface with at least four output channels. (Mine - NI Audio 6 - has the main Monitor outputs fixed to channels 1+2, and the internal headphone amp can be selected to use channels 1+2 or 3+4,  and the direct mic signal can be mixed in. Here 3+4 is to be used.)
+
+  In the (ASIO) driver menu you need to set the interface output count to at least 4.
+
+  You simply load the plugin in the Monitor FX chain.
+
+  Set the pin routing to have output to channels 1,2,3,4.
+
+  Now with it's GUI you can select which channels are Monitor rather than headphone, and you can adapt Minitor and Headphone volume separately.
+
+  The Monitor channels will be muted when recording.
+
+slider1:0<0,1,1{1/2,3/4}>Monitor Channels 
+slider2:mgain_db=0<-24,24,1>Monitor Gain (dB)
+slider3:hgain_db=0<-24,24,1>Headphone Gain (dB)
+
+
+in_pin:left input
+in_pin:right input
+out_pin:left output 1
+out_pin:right output 1
+out_pin:left output 2
+out_pin:right output 2
+
+@slider
+  mgain=10^(mgain_db/20);
+  hgain=10^(hgain_db/20);
+
+@sample
+
+  !(play_state & 4) ? (
+    ! slider1 ? (
+      spl2 = spl0 * hgain;
+      spl3 = spl1 * hgain;
+      spl0 *= mgain;
+      spl1 *= mgain;
+     ) : ( 
+      spl2 = spl0 * mgain;
+      spl3 = spl1 * mgain;
+      spl0 *= hgain;
+      spl1 *= hgain;
+    );     
+   ) : ( 
+    ! slider1 ? (
+      spl2 = spl0 * hgain;
+      spl3 = spl1 * hgain;
+      spl0 = 0;
+      spl1 = 0;
+     ) : (
+      spl0 *= hgain;
+      spl1 *= hgain;
+    ); 
+  );  
+ 

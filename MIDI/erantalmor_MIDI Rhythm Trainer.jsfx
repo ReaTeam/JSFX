@@ -1,0 +1,1227 @@
+desc: MIDI Rhythm Trainer
+author: Eran Talmor
+version: 1.15
+changelog: Fixed bug masking / unmasking the 32nd division
+link:
+  Youtube tutorial https://youtu.be/cifj6eh_LF0
+  Forum Thread https://forum.cockos.com/showthread.php?t=250891
+about:
+  # MIDI Rhythm Trainer
+
+  A tool for improving your sense of rhythm.
+
+  Key features:
+
+  * Define a rhythmic pattern, and play along to hit the pattern. Only accurate notes will be heard!
+  * Get visual and audio feedback on your performance:
+      * Controllable target accuracy ("error bound")
+      * Only accurate notes are  heard
+      * Colors for early/late notes
+      * "Probability Density" curves shows where you are usually hitting over time. 
+  * Error bound: control the level of accuracy you wish to achieve.
+  * Auto error bound shrink: let the tool challenge you as you improve.
+  * Support complex polyrhythms, e.g: 4 beat pattern, divided to 5 in the right hand, 7 in the left hand.
+  * Set up complex splits - up to 4 "lanes",  receiving separate key ranges and input channels.
+  * Set "click' sounds for each lane (like a metronome).
+  * "Swing" and "Phase" parameters.
+  * See you progress on a "10 minute training graph"
+
+/*******************************************************************************
+*  Copyright 2021, Eran Talmor                                                 *
+*  This program is free software: you can redistribute it and/or modify        *
+*  it under the terms of the GNU General Public License as published by        *
+*  the Free Software Foundation, either version 3 of the License, or           *
+*  (at your option) any later version.                                         *
+*                                                                              *
+*  This program is distributed in the hope that it will be useful,             *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                *
+*  GNU General Public License (http://www.gnu.org/licenses/)for more details.  *
+*******************************************************************************/
+
+slider1:4<1,32,1>Beats
+slider2:0<0,3,1{1,2,3,4}>Lanes
+slider3:50<1,100,0.1>Error Bound (%)
+slider4:0<0,1,1{Off,On}>Auto Shrink Error Bound
+
+// Hidden sliders per lane
+slider13:8<1,32,1>-Divisions1
+slider14:0<-0.91666, 0.91666,0.01>-Swing1
+slider15:0<0,1,0.01>-Phase1
+slider16:0<0,1,1>-Click1
+slider17:60<0,127,1>-ClickNote1
+slider18:1<1,16,1>-ClickChannel1
+slider19:60<0,127,1>-ClickVel1
+slider20:-1<-2147483648,2147483647,1>-Mask1
+slider21:0<1,16,1>-InputChannel1
+slider22:0<0,127,1>-InputMinNote1
+slider23:127<0,127,1>-InputMaxNote1
+
+slider26:8<1,32,1>-Divisions2
+slider27:0<-0.91666, 0.91666,0.01>-Swing2
+slider28:0<0,1,0.01>-Phase2
+slider29:0<0,1,1>-Click2
+slider30:62<0,127,1>-ClickNote2
+slider31:1<1,16,1>-ClickChannel2
+slider32:60<0,127,1>-ClickVel2
+slider33:-1<-2147483648,2147483647,1>-Mask2
+slider34:0<0,16,1>-InputChannel2
+slider35:0<0,127,1>-InputMinNote2
+slider36:127<0,127,1>-InputMaxNote2
+
+slider39:8<1,32,1>-Divisions3
+slider40:0<-0.91666, 0.91666,0.01>-Swing3
+slider41:0<0,1,0.01>-Phase3
+slider42:0<0,1,1>-Click3
+slider43:64<0,127,1>-ClickNote3
+slider44:1<1,16,1>-ClickChannel3
+slider45:60<0,127,1>-ClickVel3
+slider46:-1<-2147483648,2147483647,1>-Mask3
+slider47:0<0,16,1>-InputChannel3
+slider48:0<0,127,1>-InputMinNote3
+slider49:127<0,127,1>-InputMaxNote3
+
+slider52:8<1,32,1>-Divisions4
+slider53:0<-0.91666, 0.91666,0.01>-Swing4
+slider54:0<0,1,0.01>-Phase4
+slider55:0<0,1,1>-Click4
+slider56:65<0,127,1>-ClickNote4
+slider57:1<1,16,1>-ClickChannel4
+slider58:60<0,127,1>-ClickVel4
+slider59:-1<-2147483648,2147483647,1>-Mask4
+slider60:0<0,16,1>-InputChannel4
+slider61:0<0,127,1>-InputMinNote4
+slider62:127<0,127,1>-InputMaxNote4
+
+@init
+note_on = $x90;
+
+sliders_per_lane = 13;
+first_lane_slider = 13;
+slider_offset_divs = 0;
+slider_offset_swing = 1;
+slider_offset_phase = 2;
+slider_offset_click = 3;
+slider_offset_click_note = 4;
+slider_offset_click_channel = 5;
+slider_offset_click_vel = 6;
+slider_offset_mask = 7;
+slider_offset_in_channel = 8;
+slider_offset_in_min_note = 9;
+slider_offset_in_max_note = 10;
+
+control_phase = 1;
+control_swing = 2;
+control_button_div_up = 3;
+control_button_div_down = 4;
+control_button_click = 5;
+control_button_vel_up = 6;
+control_button_vel_down = 7;
+control_button_click_note = 8;
+control_button_click_channel_down = 9;
+control_button_click_channel_up = 10;
+control_button_in_channel_up = 11;
+control_button_in_channel_down = 12;
+control_button_in_min_note = 13;
+control_button_in_max_note = 14;
+
+control_button_training_clear = 15;
+
+hist_idx = 0;
+max_hist = 200;
+max_age = 60;
+max_graph = 10*60;
+hit_memory = 0.85;
+prev_select = -1;
+histogram_buckets = 1024;
+histogram_size = histogram_buckets*2;
+hist_idx = 0;
+
+heap_top = 0;
+
+function malloc(size) local(p) (
+  p = heap_top;
+  heap_top += size;
+  p;
+);
+
+v_history_time = malloc(max_hist); 
+v_history_rel_time = malloc(max_hist);
+v_history_hits = malloc(max_hist);
+v_history_lane = malloc(max_hist);
+v_history_notes = malloc(max_hist);
+memset(v_history_time, 0, max_hist);
+memset(v_history_rel_time, 0, max_hist);
+memset(v_history_hits, 0, max_hist);
+memset(v_history_lane, 0, max_hist);
+memset(v_history_notes, 0, max_hist);
+v_midi_monitor_last_hit = malloc(4);
+v_play_indices = malloc(4);
+v_play_timers = malloc(4);
+v_play_off_timers = malloc(4);
+v_graph_hit_rate = malloc(max_graph);
+v_graph_error_bound = malloc(max_graph);
+v_histogram = malloc(4*histogram_size);
+v_histogram_tmp = malloc(histogram_size);
+v_histogram_max_value = malloc(4);
+v_rounds = malloc(4);
+v_beat_pos = malloc(4);
+
+v_normal_dist = malloc(31);
+v_normal_dist[0] = 0;
+v_normal_dist[1] = 0.0398;
+v_normal_dist[2] = 0.0793;
+v_normal_dist[3] = 0.1179;
+v_normal_dist[4] = 0.1554;
+v_normal_dist[5] = 0.1915;
+v_normal_dist[6] = 0.2257;
+v_normal_dist[7] = 0.258;
+v_normal_dist[8] = 0.2881;
+v_normal_dist[9] = 0.3159;
+v_normal_dist[10] = 0.3413;
+v_normal_dist[11] = 0.3643;
+v_normal_dist[12] = 0.3849;
+v_normal_dist[13] = 0.4032;
+v_normal_dist[14] = 0.4192;
+v_normal_dist[15] = 0.4332;
+v_normal_dist[16] = 0.4452;
+v_normal_dist[17] = 0.4554;
+v_normal_dist[18] = 0.4641;
+v_normal_dist[19] = 0.4713;
+v_normal_dist[20] = 0.4772;
+v_normal_dist[21] = 0.4821;
+v_normal_dist[22] = 0.4861;
+v_normal_dist[23] = 0.4893;
+v_normal_dist[24] = 0.4918;
+v_normal_dist[25] = 0.4938;
+v_normal_dist[26] = 0.4953;
+v_normal_dist[27] = 0.4965;
+v_normal_dist[28] = 0.4974;
+v_normal_dist[29] = 0.4981;
+v_normal_dist[30] = 0.4987;
+
+v_normal_mask = malloc(histogram_size);
+
+function normal_dist(x)
+(
+  abs_idx = min(30, floor(abs(x)*10));
+  next_idx = min(30, abs_idx+1);
+  dx = abs(x)*10 - abs_idx;
+  p1 = (x >= 0 ? v_normal_dist[abs_idx] : -v_normal_dist[abs_idx]);
+  p2 = (x >- 0 ? v_normal_dist[next_idx] : -v_normal_dist[next_idx]);
+  p1*(1-dx) + p2*dx;
+);
+
+function normal_slice(x, w)
+(
+  normal_dist(x+w/2) - normal_dist(x-w/2);
+);
+
+function setNormalMask(h)
+(
+  memset(v_normal_mask, 0, histogram_size);
+  i = 0;
+  while (i<=histogram_buckets/2) (
+    v_normal_mask[i*2] = normal_slice(h*(i/histogram_buckets),0.1)/5;
+    v_normal_mask[histogram_size-i*2] = v_normal_mask[i*2];
+    i += 1;
+  );
+  fft(v_normal_mask, histogram_buckets);
+);
+
+function resetPlay() local(i)
+(
+  memset(v_play_timers, -1, 4);
+  memset(v_play_indices, -1, 4);
+);
+
+resetPlay();
+
+function isPlaying()
+(
+  // playing or recording
+  play_state == 1 || play_state == 5;
+);
+
+// Relative time to the beats
+function getRelTime(offset) local(p)
+(
+  p = (beat_position + (offset * (tempo / 60) / srate))/beats;
+  p - floor(p);
+);
+
+// Getters and Setters
+function getSliderIdx(lane, offset)
+(
+   first_lane_slider + sliders_per_lane*lane + offset;
+);
+
+function getSlider(lane, offset) local(idx)
+( 
+  slider(getSliderIdx(lane, offset))
+);
+
+function setSlider(lane, offset, value, min_val, max_val, reset_play) local(idx)
+( 
+  idx = getSliderIdx(lane, offset);
+  slider(idx) = min(max_val, max(min_val, value));
+  slider_automate(2 ^ idx);
+  reset_play ? resetPlay();
+);
+
+
+function getDivs(lane)
+( 
+  getSlider(lane, slider_offset_divs);
+);
+
+function updateMaxDivs() local(i)
+(
+  max_divs = 0;
+  i=0;
+  while (i<num_lanes) (
+    max_divs = max(max_divs, getDivs(i));
+    i += 1;
+  );
+  setNormalMask(max_divs*20);
+);
+
+function setDivs(lane, value)
+(
+  value = floor(value);
+  setSlider(lane, slider_offset_divs, value, 1, 32, 1);
+  updateMaxDivs();
+);
+
+function getSwing(lane)
+(
+  getSlider(lane, slider_offset_swing);
+);
+
+function setSwing(lane, value) local(idx)
+(
+  setSlider(lane, slider_offset_swing, value, -0.91666, 0.91666, 1);
+);
+
+function getPhase(lane)
+(
+  getSlider(lane, slider_offset_phase);
+);
+
+function setPhase(lane, value) local(idx)
+(
+  setSlider(lane, slider_offset_phase, value, 0, 1, 1);
+);
+
+function getClick(lane)
+(
+  getSlider(lane, slider_offset_click);
+);
+
+function setClick(lane, value) local(idx)
+(
+  setSlider(lane, slider_offset_click, value, 0, 1, 1);
+);
+
+function getClickNote(lane)
+(
+  getSlider(lane, slider_offset_click_note);
+);
+
+function setClickNote(lane, value) local(idx)
+(
+  setSlider(lane, slider_offset_click_note, value, 0, 127, 0);
+);
+
+function getClickVel(lane)
+(
+  getSlider(lane, slider_offset_click_vel);
+);
+
+function setClickVel(lane, value) local(idx)
+(
+  setSlider(lane, slider_offset_click_vel, value, 0, 127, 0);
+);
+
+function getClickChannel(lane)
+(
+  getSlider(lane, slider_offset_click_channel);
+);
+
+function setClickChannel(lane, value) local(idx)
+(
+  setSlider(lane, slider_offset_click_channel, value, 1, 16, 1);
+);
+
+function isGridEnabled(lane, idx) local(d,idx,mask)
+(
+  d = getDivs(lane);
+  idx = (idx + d) % d;
+  mask = getSlider(lane, slider_offset_mask);
+  mask & (1<<idx);
+);
+
+function getGridMask(lane, idx)
+(
+  d = getDivs(lane);
+  idx = (idx + d) % d;
+  1 & (getSlider(lane, slider_offset_mask) >> idx);
+);
+
+function setGridMask(lane, idx, value)
+(
+  d = getDivs(lane);
+  idx = (idx + d) % d;
+  value ?
+    setSlider(lane, slider_offset_mask, getSlider(lane, slider_offset_mask) | (1<<idx), -2147483648, 2147483647, 0)
+  : setSlider(lane, slider_offset_mask, getSlider(lane, slider_offset_mask) & (-1 ~ 1<<idx), -2147483648, 2147483647, 0);
+);
+
+function getInputChannel(lane)
+(
+  getSlider(lane, slider_offset_in_channel);
+);
+
+function setInputChannel(lane, value) local(idx)
+(
+  setSlider(lane, slider_offset_in_channel, value, 0, 16, 0);
+);
+
+function getInputMinNote(lane)
+(
+  getSlider(lane, slider_offset_in_min_note);
+);
+
+function setInputMinNote(lane, value) local(idx)
+(
+  setSlider(lane, slider_offset_in_min_note, value, 0, 127, 0);
+);
+
+function getInputMaxNote(lane)
+(
+  getSlider(lane, slider_offset_in_max_note);
+);
+
+function setInputMaxNote(lane, value) local(idx)
+(
+  setSlider(lane, slider_offset_in_max_note, value, 0, 127, 0);
+);
+
+//
+function getGridRaw(lane, divs, i)
+(
+  (i + (i&1 ? getSwing(lane) : 0) + getPhase(lane))/divs;
+);
+
+function getGrid(lane, divs, i) local(r)
+(
+  r = getGridRaw(lane, divs, (i+divs)%divs);
+  (i<0) ? r-1 : (i>=divs) ? r+floor(i/divs) : r;
+);
+
+function getErrorRange()
+(
+  error_bound/max_divs;
+);
+
+function getEarly(lane, divs, i)
+(
+  max(0, getGrid(lane, divs, i) - getErrorRange()/2);
+);
+
+function getLate(lane, divs, i)
+(
+  min(1, getGrid(lane, divs, i) + getErrorRange()/2);
+);
+
+function getMidiMonitorAge(lane)
+(
+  time_precise() - v_midi_monitor_last_hit[lane];
+);
+
+function adjustErrorBound(hit_rate) local(level)
+(
+  (hit_rate > 0.9) ? 
+    (level = (error_bound < 0.2 ? 0.001 : error_bound <= 0.3 ? 0.002 : error_bound <= 0.4 ?  0.005 : 0.01);
+    (error_bound = max(0, error_bound - level)));
+  slider3 = error_bound*100;
+);
+
+// returns: 0 == hit, -1 == early, 1 == late
+function isHit(reltime, lane) local(i, hit, min_late, min_early, delta_early, delta_late, divs)
+(
+  i=0;
+  hit = 0;
+  min_late = 1;
+  min_early = 1;
+  divs = getDivs(lane);
+  while(
+    delta_early = getEarly(lane, divs, i) - reltime;
+    delta_late = reltime - getLate(lane, divs, i);
+    hit |= isGridEnabled(lane, i) && (delta_early <= 0) && (delta_late <= 0);
+    delta_early > 0 ? (min_early = min(min_early, delta_early));
+    delta_late > 0 ? (min_late = min(min_late, delta_late));
+    i += 1;
+    !hit && (i <= divs)
+  );
+  hit ? 0 : (min_late > min_early ? -1 : 1); 
+);
+
+function controlId(lane, control)
+(
+  (lane + 1)*1000 + control;
+);
+
+@slider
+
+beats = slider1;
+num_lanes = slider2+1;
+error_bound = slider3/100;
+auto_shrink = slider4;
+
+updateMaxDivs();
+resetPlay();
+
+@block
+
+function playGrid(lane) local(sp_per_beat, sp_now, divs, sp_grid, channel, i, prev_beat_position)
+(
+  beat_position < prev_beat_position ? resetPlay();
+
+  channel = getClickChannel(lane)-1;
+  (v_play_off_timers[lane] < samplesblock) ? (
+    midisend(max(0, v_play_off_timers[lane]), $x90 + channel, getClickNote(lane), 0);
+    v_play_off_timers[lane] = 1000000;
+  );   
+
+  sp_per_beat = srate * 60 / tempo;
+  sp_now = floor(0.001 + beat_position * sp_per_beat);
+  divs = getDivs(lane);  
+
+  while (v_play_timers[lane] < 0) (
+    v_play_indices[lane] += 1;
+    sp_grid = floor(0.001 + 1 * getGrid(lane, divs, v_play_indices[lane]) * sp_per_beat * beats);
+    v_play_timers[lane] = sp_grid - sp_now;
+  );
+
+  // find next "grid line" such that timer will be >= sampleblock
+  (v_play_timers[lane] < samplesblock) ? (
+    isGridEnabled(lane, v_play_indices[lane]) && v_play_timers[lane] >= 0 ? (
+      midisend(max(0, v_play_timers[lane]), $x90 + channel, getClickNote(lane), getClickVel(lane));
+      v_play_off_timers[lane] = v_play_timers[lane] + 1;
+    );
+  );
+  
+  v_play_timers[lane] -= samplesblock;
+  v_play_off_timers[lane] -= samplesblock;
+  prev_beat_position = beat_position;
+);
+
+function decayHistogram(lane) local(i, decay_rate, round, prev_round, prev_pos)
+(
+  decay_rate = 0.95;
+  
+  round = floor(beat_position / beats);
+  (v_rounds[lane] != round) || (beat_position < v_beat_pos[lane]) ? (
+    i = 0;
+    while (i<histogram_buckets) (
+      v_histogram[histogram_size*lane + 2*i] *= decay_rate;
+      i+=1;
+    );
+    v_histogram_max_value[lane] *= decay_rate;
+    v_rounds[lane] = round;
+    v_beat_pos[lane] = beat_position;
+  );
+);
+
+function recordHistogram(reltime, lane)
+(
+  bucket = floor(reltime * histogram_buckets);
+  // record as complex number x + 0i, i.e. x goes to event element
+  v_histogram[histogram_size*lane + 2*bucket] += 1;
+);
+
+function recordHistory(reltime, hit, lane, note)
+(
+  v_history_time[hist_idx] = time_precise();
+  v_history_rel_time[hist_idx] = reltime;
+  v_history_hits[hist_idx] = hit;
+  v_history_lane[hist_idx] = lane;
+  v_history_notes[hist_idx] = note;
+  events_count = events_count * hit_memory + 1;
+  hits_count = hits_count * hit_memory + (hit==0);
+  hit_rate = hits_count/events_count;
+  (auto_shrink) ? (adjustErrorBound(hit_rate));
+  hist_idx = (hist_idx + 1) % max_hist;
+);
+
+function recordTraining() local(t, prev_time)
+(
+  t = time();
+  t != prev_time ? (
+    graph_idx = (graph_idx+1) % max_graph;
+    v_graph_hit_rate[graph_idx] = hit_rate;
+    v_graph_error_bound[graph_idx] = error_bound;
+    prev_time = t
+  )
+);
+
+function recordMidiMonitor(lane)
+(
+  v_midi_monitor_last_hit[lane] = time_precise();
+);
+
+function learnNote(note) local(i) 
+(
+  i = 0;
+  while (listen_note_control && i < num_lanes)
+  (
+    listen_note_control == controlId(i, control_button_click_note) ? 
+      (setClickNote(i, note); listen_note_control = 0)
+    : listen_note_control == controlId(i, control_button_in_min_note) ? 
+      (setInputMinNote(i, note); listen_note_control = 0)     
+    : listen_note_control == controlId(i, control_button_in_max_note) ? 
+      (setInputMaxNote(i, note); listen_note_control = 0);     
+
+    i += 1;
+  );
+  listen_note_control = 0;
+);
+
+function getLaneOfNote(note, channel) local(i, result)
+(
+  result = -1;
+  i = 0;
+  while (i < num_lanes && (result == -1)) (
+    in_chan = getInputChannel(i);
+    ((in_chan == 0) || (in_chan == channel + 1)) && (note >= getInputMinNote(i)) && (note <= getInputMaxNote(i)) ?
+      result = i;
+    i += 1;
+  );
+  result; 
+);
+
+isPlaying() ? (
+  getClick(0) ? playGrid(0);
+  getClick(1) && (num_lanes>1) ? playGrid(1);
+  getClick(2) && (num_lanes>2) ? playGrid(2);
+  getClick(3) && (num_lanes>3) ? playGrid(3);
+);
+
+while (midirecv(offset,msg1,msg2,msg3)) ( // REAPER 4.59+ syntax w while()
+   noteStatus = msg1 & $xF0;
+   channel = msg1 & 0x0F;
+   is_note_on = noteStatus==note_on && msg3!=0;
+   
+   is_note_on ? ( 
+     note = msg2;
+     lane = getLaneOfNote(note, channel);
+     lane >= 0 ? recordMidiMonitor(lane);
+   );
+   isPlaying() && is_note_on ? (
+     listen_note_control ? (
+       learnNote(note);
+       midisend(offset, msg1, msg2, msg3)
+     )
+     : lane < 0 ?
+       midisend(offset, msg1, msg2, msg3)
+     : (
+       reltime = getRelTime(offset);
+       
+       hit = isHit(reltime, lane);
+       hit == 0 ? midisend(offset,msg1,note,msg3);
+       decayHistogram(lane);
+       recordHistory(reltime, hit, lane, note);
+       recordHistogram(reltime, lane);
+     )
+   ) : (
+     is_note_on && listen_note_control ? learnNote(note);
+     midisend(offset,msg1,msg2,msg3); // passthrough other events
+   );
+);
+
+isPlaying() ? recordTraining();
+
+@gfx
+#value_edit = "";
+
+function isLButtonRelease()
+(
+  (1 ~ mouse_cap) & (1 & prev_mouse_cap);
+);
+
+function isRButtonPress()
+(
+  rr +=
+  (2 & mouse_cap) & (2 ~ prev_mouse_cap);
+  (2 & mouse_cap) & (2 ~ prev_mouse_cap);
+);
+
+function isRButtonRelease()
+(
+  (2 ~ mouse_cap) & (2 & prev_mouse_cap);
+);
+
+function isLButtonDoubleClick()
+(
+  isLButtonRelease() && (time_precise() - prev_mouse_l_button_release_time < 0.4); 
+);
+
+function rgb(r,g,b) 
+(
+  gfx_r = r;
+  gfx_g = g;
+  gfx_b = b;
+);
+
+function verticalDashedLine(x, y1, y2, dash, space) local(i, y)
+(
+  y = y1;
+  dash = max(0, dash-1);
+  loop ((y2-y1)/(dash + space),
+    gfx_line(x,y, x, y+dash);
+    y += dash+space);
+);
+
+function drawFrame(x,y,w,h)
+(
+  gfx_x = x;
+  gfx_y = y;
+  gfx_a = 1;
+  rgb(0.5,0.5,0.5);
+  gfx_lineto(x+w,y);
+  rgb(1,1,1);
+  gfx_lineto(x+w,y+h);
+  gfx_lineto(x,y+h);
+  rgb(0.5,0.5,0.5);
+  gfx_lineto(x,y);
+);
+
+function printCenter(x,y,str) local(w,h)
+(
+  gfx_measurestr(str,w,h);
+  gfx_x = x-w/2;
+  gfx_y = y-h/2;
+  gfx_printf(str);
+);
+
+function printValueEdit(x,y) local(w,h, margin)
+(
+  (strlen(#value_edit) > 0) ? 
+  (
+    rgb(0,0,0);
+    gfx_setfont(1, "Arial", 24);
+    gfx_measurestr(#value_edit,w,h);
+    gfx_a=0.6;
+    margin=4;
+    gfx_rect(x-w/2-margin, y-h/2-margin, w+margin*2, h+margin*2);
+    gfx_a=1;
+    gfx_x = x-w/2;
+    gfx_y = y-h/2;
+    rgb(1,1,1);
+    gfx_printf(#value_edit);
+    #value_edit = "";
+  );
+);
+
+function printBottomLeft(x,y,str) local(w,h)
+(
+  gfx_measurestr(str,w,h);
+  gfx_x = x-w;
+  gfx_y = y-h;
+  gfx_printf(str);
+);
+
+function printBottomRight(x,y,str) local(w,h)
+(
+  gfx_measurestr(str,w,h);
+  gfx_x = x;
+  gfx_y = y-h;
+  gfx_printf(str);
+);
+
+function noteName(note) local(names,sharps,nm,sh,str)
+(
+  names  = "CCDDEFFGGAAB";
+  sharps = $x54A;
+  nm = str_getchar(names, note%12);
+  sh = ((1 << (note%12)) & sharps ? "#" : "");
+  sprintf(str,"%c%s\%d", nm, sh, floor(note/12));
+  str;
+);
+
+
+fresh_event_thresh = 2;
+function drawEvent(x, y, note, age) local(str)
+(
+  gfx_circle(x, y, 4, 1, 0);
+  
+  (age < fresh_event_thresh) ? (
+    gfx_a = ((fresh_event_thresh-age)/fresh_event_thresh);
+    gfx_circle(x, y, 7, 0, 0);
+  )
+);
+
+function isMouseInRect(l,t,w,h)
+(
+  mouse_x >= l && mouse_x <= l+w && mouse_y >= t && mouse_y <= t+h;
+);
+
+function dragPhase(lane,focus_control,divs, l,t,w,h) local(dx, ph, orig_value, orig_x, prev_x, resolution, ctrl_id)
+(
+  ctrl_id = controlId(lane, control_phase);
+  
+  (mouse_x != prev_x) && (active_control == ctrl_id) ? (
+      dx = orig_value + (mouse_x - orig_x)*divs/w/2;
+      resolution = mouse_cap & 4 ? 12 : 360;  
+      dx = floor(dx*resolution + 0.5) / resolution;
+      setPhase(lane, dx);
+      prev_x = mouse_x;
+    ) 
+  : active_control == 0 && focus_control == ctrl_id && (mouse_cap & 1) ? (
+      active_control = focus_control;
+      orig_value = getPhase(lane);
+      orig_x = mouse_x;
+  );
+  
+  focus_control == ctrl_id && isLButtonDoubleClick() ? setPhase(lane, 0);
+  
+  (active_control == ctrl_id || focus_control == ctrl_id) ? (
+    ph = getPhase(lane);
+    sprintf(#value_edit, "Phase: %0.2f (%0.0f\xB0)", ph, ph*360);
+  );  
+);
+
+function dragSwing(lane,focus_control,divs, l,t,w,h) local(dx, sw, orig_value, orig_x, prev_x, resolution, ctrl_id)
+(
+  ctrl_id = controlId(lane, control_swing);
+  
+  (mouse_x != prev_x) && (active_control == ctrl_id) ? (
+      dx = orig_value + (mouse_x - orig_x)*divs/w/2;
+      resolution = mouse_cap & 4 ? 12 : 360;  
+      dx = floor(dx*resolution + 0.5) / resolution;
+      setSwing(lane, dx);
+      prev_x = mouse_x;
+    ) 
+  : active_control == 0 && focus_control == ctrl_id && (mouse_cap & 1) ? (
+      active_control = focus_control;
+      orig_value = getSwing(lane);
+      orig_x = mouse_x;
+  );
+  
+  focus_control == ctrl_id && isLButtonDoubleClick() ? setSwing(lane, 0);
+
+  (active_control == ctrl_id || focus_control == ctrl_id) ? (
+    sw = getSwing(lane);
+    sprintf(#value_edit, "Swing: %0.2f (%0.0f\xB0)", sw, sw*360);  );
+);
+
+function emptyRect(l,t,w,h)
+(
+  gfx_x = l;
+  gfx_y = t;
+  gfx_lineto(l+w-1,t);
+  gfx_lineto(l+w-1,t+h-1);
+  gfx_lineto(l,t+h-1);
+  gfx_lineto(l,t);
+);
+
+function drawText(w,h,str) local(strw, strh)
+(
+  rgb(0.7, 0.7, 0.7);
+  l = gfx_x;
+  t = gfx_y;
+  gfx_a = 1;
+  gfx_measurestr(str, strw, strh);
+  w=max(w,strw+8);
+  printCenter(l+w/2, t+h/2, str);
+  gfx_x = l + w;
+  gfx_y = t;
+);
+
+function drawButton(lane, id, w, h, str, state) local(strw, strh, focus, button_id, focus_brightness, state_brightness, press_brighness, delta)
+(
+  l = gfx_x;
+  t = gfx_y;
+  gfx_measurestr(str, strw, strh);
+  w=max(w,strw+8);
+  button_id = controlId(lane, id);
+  !active_control && isMouseInRect(l,t,w,h) && mouse_cap & 1 ? active_control = button_id;
+  focus = (!active_control || active_control == button_id) && isMouseInRect(l,t,w,h);
+  focus_brightness = 0.1 * focus;
+  state_brightness = 0.1 * state;
+  press_brightness = 0.2 * focus * (mouse_cap & 1);
+  delta = focus_brightness - press_brightness;
+  rgb(0.2 + delta, 0.2 + delta+state_brightness, 0.2 + delta+state_brightness);
+  gfx_rect(l+1,t+1,w-2,h-2);
+  gfx_a = 1;  
+  rgb(0.7+delta, 0.7+delta, 0.7+delta);
+  printCenter(l+w/2, t+h/2, str);
+  gfx_x = l+w;
+  gfx_y = t;
+  focus;
+);
+
+function toggleListen(control)
+(
+  listen_note_control = listen_note_control == control ? 0 : control;
+);
+
+function drawToolBar(lane, l, t, w, h) local(release, f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, button_width, button_left, button_top, click_note)
+(
+  gfx_setfont(1, "Arial", 14);
+  release = isLButtonRelease();
+  mouse_wheel_dir = mouse_wheel / 120;
+  expand_toolbar ? (
+    rgb(0,0,0);
+    gfx_a = 0.6;
+    gfx_rect(l-1,t-1,w+2,h+2);
+    gfx_a = 1;
+  ) : gfx_a = 0.6;
+  gfx_x = l+1;
+  gfx_y = t;
+  f0 = drawButton(lane, control_button_expand, h, h, expand_toolbar ? "<<" : ">>", 0);
+  release && f0 ? expand_toolbar = !expand_toolbar;
+  
+  
+  expand_toolbar ? (
+    click_note = getClickNote(lane);
+    min_note = getInputMinNote(lane);
+    max_note = getInputMaxNote(lane);
+    control_button_click_note_id = controlId(lane, control_button_click_note);
+    control_button_in_max_note_id = controlId(lane, control_button_in_max_note);
+    control_button_in_min_note_id = controlId(lane, control_button_in_min_note);
+        
+    button_width = h;
+    drawText(0, h, "Divisions:");
+    f2 = drawButton(lane, control_button_div_down, button_width, h, "-", 0);
+    f1 = drawButton(lane, control_button_div_up, button_width, h, "+", 0);
+    
+    drawText(0, h, "Click:");
+    f5 = drawButton(lane, control_button_click, button_width*1.5, h, getClick(lane)? "ON" : "OFF", getClick(lane));
+    f6 = drawButton(lane, control_button_click_note, button_width*1.5, h, noteName(click_note), 
+                    (listen_note_control == control_button_click_note_id));
+    f4 = drawButton(lane, control_button_vel_down, button_width, h,  "V-", 0);
+    f3 = drawButton(lane, control_button_vel_up, button_width, h, "V+", 0);
+    f11 = drawButton(lane, control_button_in_channel_down, button_width, h, "CH-", 0);
+    f12 = drawButton(lane, control_button_in_channel_up, button_width, h, "CH+", 0);
+    
+    drawText(0, h, "Input Filter:");    
+    f10 = drawButton(lane, control_button_in_min_note, button_width*1.5, h, noteName(min_note),
+                    (listen_note_control == control_button_in_min_note_id));
+    drawText(0, h, "->");
+    f9 = drawButton(lane, control_button_in_max_note, button_width*1.5, h, noteName(max_note),
+                    (listen_note_control == control_button_in_max_note_id));                 
+    f8 = drawButton(lane, control_button_in_channel_down, button_width, h, "CH-", 0);
+    f7 = drawButton(lane, control_button_in_channel_up, button_width, h, "CH+", 0);
+
+    release && f1 ? setDivs(lane, getDivs(lane)+1); 
+    release && f2 ? setDivs(lane, getDivs(lane)-1); 
+    release && f3 ? setClickVel(lane, floor(getClickVel(lane)/4)*4+4); 
+    release && f4 ? setClickVel(lane, floor(getClickVel(lane)/4)*4-4);
+    release && f5 ? setClick(lane, !getClick(lane));
+    release && f6 ? toggleListen(control_button_click_note_id);
+    release && f7 ? setInputChannel(lane, getInputChannel(lane)+1);
+    release && f8 ? setInputChannel(lane, getInputChannel(lane)-1);
+    release && f9 ? toggleListen(control_button_in_max_note_id);
+    release && f10 ? toggleListen(control_button_in_min_note_id);
+    release && f11 ? setClickChannel(lane, getClickChannel(lane)-1);
+    release && f12 ? setClickChannel(lane, getClickChannel(lane)+1);
+        
+    f1 || f2 ? sprintf(#value_edit, "Divisions: %d", getDivs(lane));
+    f3 || f4 ? sprintf(#value_edit, "Click Velocity: %d", getClickVel(lane));
+    f5 ? sprintf(#value_edit, "Click: %s", getClick(lane) ? "On" : "Off");
+    (listen_note_control == control_button_click_note_id) ? sprintf(#value_edit, "Click Note: LISTENING") 
+    : f6 ? sprintf(#value_edit, "Click Note: %s (%d)", noteName(click_note), click_note);
+    in_chan = getInputChannel(lane);
+    f7 || f8 ? (
+      in_chan ? sprintf(#value_edit, "Input Channel: %d", in_chan)
+              : sprintf(#value_edit, "Input Channel: ALL");
+    );
+    f11 || f12 ? sprintf(#value_edit, "Click Channel: %d", getClickChannel(lane));
+    
+    (listen_note_control == control_button_in_max_note_id) ? sprintf(#value_edit, "Input Max Note: LISTENING") 
+    : f9 ? sprintf(#value_edit, "Input Max Note: %s (%d)", noteName(max_note), max_note);
+    (listen_note_control == control_button_in_min_note_id) ? sprintf(#value_edit, "Input Min Note: LISTENING") 
+    : f10 ? sprintf(#value_edit, "Input Min Note: %s (%d)", noteName(min_note), min_note); 
+    mouse_wheel_dir ? (
+      f5 ? setClick(lane, mouse_wheel_dir)
+      : (f1 || f2) ? setDivs(lane, getDivs(lane)+mouse_wheel_dir)
+      : (f3 || f4) ? setClickVel(lane, getClickVel(lane)+mouse_wheel_dir)
+      : f6 && (listen_note_control != control_button_click_note_id) ? setClickNote(lane, click_note+mouse_wheel_dir)
+      : (f7 || f8) ? setInputChannel(lane, getInputChannel(lane)+mouse_wheel_dir)
+      : f9 && (listen_note_control != control_button_in_max_note_id) ? setInputMaxNote(lane, max_note+mouse_wheel_dir)
+      : f10 && (listen_note_control != control_button_in_min_note_id) ? setInputMinNote(lane, min_note+mouse_wheel_dir)
+      : (f11 || f12) ? setClickChannel(lane, getClickChannel(lane)+mouse_wheel_dir)
+    );
+  )
+);
+
+function drawMidiMonitor(lane, l,t,w,h) local(age)
+(
+  age = getMidiMonitorAge(lane);
+  gfx_a = 1-min(age,1);
+  rgb(1,1,0);
+  gfx_rect(l,t,w,h);
+  gfx_a = 0.2;
+  emptyRect(l,t,w-1,h-1);
+);
+
+function drawHistogram(lane, l, t, w, h) local (value, x, y, normalized)
+(
+  rgb(0.5, 0.5, 0.5);
+  gfx_a = 0.6;
+  memcpy(v_histogram_tmp, v_histogram + lane*histogram_size, histogram_size);
+  i = 0;
+  while(i < histogram_buckets) (
+    v_histogram_tmp[i*2] /= histogram_buckets;
+    i+=1;
+  );
+  fft(v_histogram_tmp, histogram_buckets);
+  convolve_c(v_histogram_tmp, v_normal_mask, histogram_buckets);
+  ifft(v_histogram_tmp, histogram_buckets);
+  i = 0;
+  max_value = 0;
+  prev_max_value = v_histogram_max_value[lane];
+  while(i < w) (
+    x = l+i;
+    value = v_histogram_tmp[2*floor(i/w*histogram_buckets)];
+    max_value = max(value, max_value);
+    normalized = value / (prev_max_value ? prev_max_value : 1); 
+    y = max(t, t+h*(1-normalized/2));
+    gfx_line(x,y,x,t+h);
+    i+=1;
+  );
+  fit_speed = 0.05;
+  v_histogram_max_value[lane] = (1-fit_speed)*prev_max_value + fit_speed*max_value;
+);
+
+function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high,i,divs, toolbar_height, focus_control)
+(  
+  focus_control = 0;
+  toolbar_height = 20;
+ 
+  rgb(0.2, 0.2, 0.2);
+  gfx_a = 1;
+  gfx_rect(l, t, w, h);
+
+  // Draw "grid" area
+  divs = getDivs(lane);
+    
+  // Draw green areas
+  rgb(0, 0.4, 0);
+  i=-1;
+  loop(divs+2,
+    isGridEnabled(lane, i) ? (
+      low = l+getEarly(lane, divs, i)*w;
+      high = l+getLate(lane, divs, i)*w+1;
+      gfx_rect(low, t, high-low, h);
+    );
+    i+=1;
+  );
+  drawHistogram(lane, l, t, w, h);
+  
+  // Draw dashed rhythm lines
+  i=0;
+  ctrl_phase_id = controlId(lane, control_phase);
+  ctrl_swing_id = controlId(lane, control_swing);
+  loop(divs, 
+    grid = l+getGrid(lane, divs, i)*w;
+    grid_mask_mode ? (
+      mouse_focus = isMouseInRect(grid - w/divs/2, t, w/divs, h - toolbar_height);
+      mouse_focus && (mouse_cap & 2) ? setGridMask(lane, i, 2-grid_mask_mode);
+    )
+    : (
+      mouse_focus = isMouseInRect(grid-8, t, 16, h - toolbar_height);
+      mouse_focus && isRButtonPress() ? grid_mask_mode = 1 + getGridMask(lane, i);
+      ((i+1)%2) && ((!active_control && mouse_focus) || (active_control == ctrl_phase_id)) ? (
+        focus_control = ctrl_phase_id;
+        rgb(0,0.5,0.5);
+        gfx_rect(grid-6, t, 12, h);
+      );
+      (i%2) && ((!active_control && mouse_focus) || (active_control == ctrl_swing_id)) ? (
+        focus_control = ctrl_swing_id;
+        rgb(0.5,0,1);
+        gfx_rect(grid-6, t, 12, h);
+      );
+    );
+    rgb(0.67, 0.67, 0.67);
+    verticalDashedLine(grid, t, t+h, 1, 5);
+    isGridEnabled(lane, i) ? 
+      (sprintf(str, "%d", i+1); rgb(1,1,1)) 
+    : (sprintf(str, "(%d)", i+1); rgb(0.5, 0.5, 0.5));
+    gfx_setfont(1, "Arial", 16);
+    printCenter(grid,t+h/2,str);
+    i+=1;
+  );
+  
+  isRButtonRelease() ? grid_mask_mode = 0;
+    
+  // Draw beat marks
+  rgb(0.8, 0.8, 0.8);
+  (lane == 0) ? gfx_setfont(1, "Arial", 12);
+  i=0;
+  loop(beats,
+    grid = l + i*w/beats;
+    gfx_line(grid,t, grid,t+h*0.1);
+    gfx_line(grid,t+h*0.9, grid,t+h);
+    (lane == 0) ? (
+      gfx_x = grid + 3;
+      gfx_y = t + 1;
+      gfx_printf("%d",i+1);
+    );
+    i+=1;
+  );
+  gfx_setfont(1, "Arial", 14);
+  
+  isPlaying() ? (
+    i=0;
+    now = time_precise();
+    // Draw history (events)
+    loop(max_hist,
+      birth = v_history_time[i];
+      (birth != 0) && (v_history_lane[i] == lane) ? (
+        hit = v_history_hits[i];
+        age = min(max_age, now - birth);
+        (hit == 0) ? rgb(0,1,0) : 
+          (hit == 1) ? rgb(1,0,0) : rgb(0,0,1);
+        x = w * v_history_rel_time[i];
+        y = age*20;
+        gfx_a = 1 - sqrt(y/h);
+        y < h ? (drawEvent(l+x,t+y, v_history_notes[i], age));
+        age == max_age ? (v_history_time[i] = 0);
+      );
+      i += 1;
+    );
+    gfx_a = 1;
+    
+    // Draw vertical time line 
+    rgb(1,1,0);
+    x = l + w * getRelTime();
+    gfx_line(x, t, x, t+h);
+  );  
+  
+  drawToolBar(lane, l+2,t+h-toolbar_height-1,w-2,20);
+  drawMidiMonitor(lane, l+w-12, t+h-14, 8, 8);  
+    
+  dragPhase(lane,focus_control,divs, l, t, w, h);
+  dragSwing(lane,focus_control,divs, l, t, w, h);
+  
+  printValueEdit(l+w/2, t+h/2);
+ 
+  drawFrame(l-1, t-1, w+2, h+2);
+);
+
+function clearTrainingGraph()
+(
+  memset(v_graph_error_bound, 0, max_graph);
+  memset(v_graph_hit_rate, 0, max_graph);
+  memset(v_histogram, 0, 4*histogram_size);
+  memset(v_histogram_max_value, 1, 4);
+  graph_idx = 0;
+  hit_rate = 0;
+);
+
+function drawTrainingGraphTitle(left, top) local(errorMs)
+(
+  gfx_a = 1;
+  gfx_x = left;
+  gfx_y = top;
+  gfx_setfont(1, "Arial", 15);
+  rgb(1,1,1);
+  gfx_printf("10 Minute Training Graph (");
+  rgb(1,1,0);
+  gfx_printf("Hit Rate: %0.0f%%", hit_rate*100);
+  rgb(1,1,1);
+  gfx_printf(", ");
+  rgb(0,1,1);
+  errorMs = floor(0.5 + error_bound * beats * 30000 / tempo / max_divs);
+  gfx_printf("Error Bound: %0.0f%% = \xB1%dms", error_bound*100, errorMs);
+  rgb(1,1,1);
+  gfx_printf(")");
+  
+  gfx_x += 20;
+  drawButton(0, control_button_training_clear, 0, 16, "clear", 0) && isLButtonRelease() ?
+    clearTrainingGraph();
+);
+
+function drawTrainingGraph(graph_left, graph_top, graph_width, graph_height) local(i, graph_x_ratio, pr)
+( 
+  gfx_a = 1;
+  rgb(0.27, 0.27, 0.4); // greyish purple
+  gfx_rect(graph_left, graph_top, graph_width, graph_height);
+
+  gfx_setfont(1, "Arial", 12);
+  graph_x_ratio = graph_width/(max_graph-1);
+  i=0;
+  rgb(0.67, 0.67, 0.67); 
+  loop(max_graph/10,
+    (i%60 == 0) ?
+      (gfx_line(graph_left + i*graph_x_ratio, graph_top, graph_left + i*graph_x_ratio, graph_top+graph_height);
+      sprintf(str, "%2d:00", 1+i/60);
+      printBottomLeft(graph_left + (i+60)*graph_x_ratio-1, graph_top + graph_height, str))
+    : verticalDashedLine(graph_left + i*graph_x_ratio, graph_top, graph_top+graph_height, 4, 5);
+    i += 10);
+  gfx_line(graph_left + width, graph_top, graph_left + width, graph_top + graph_height);
+
+  // Draw verical time line
+  rgb(1, 1, 1);
+  gfx_line(graph_left + graph_idx*graph_x_ratio, graph_top, graph_left + graph_idx*graph_x_ratio, graph_top + graph_height);
+
+  // hit rate
+  i=0;
+  rgb(1,1,0);
+  gfx_x = graph_left;
+  gfx_y = graph_top + graph_height*(1 - v_graph_hit_rate[0]);
+  loop(max_graph,
+    hr = max(0, min(1, 1 - v_graph_hit_rate[i]));
+    gfx_lineto(graph_left + i*graph_x_ratio, graph_top + graph_height*hr);
+    i+=1);
+
+  // error_bound
+  i=0;
+  rgb(0,1,1);
+  gfx_x = graph_left;
+  gfx_y = graph_top + graph_height*(1 - v_graph_error_bound[0]);
+  loop(max_graph,
+    pr = max(0, min(1, 1 - v_graph_error_bound[i]));
+    gfx_lineto(xmargin + i*graph_x_ratio, graph_top + graph_height*pr);
+    i+=1);
+
+  drawFrame(xmargin-1, graph_top-1, width+2, graph_height+2);
+);
+
+xmargin = 4;
+header_margin = 20;
+footer_margin = 4;
+
+gfx_x = xmargin;
+gfx_y = 1;
+rgb(1,1,1);
+gfx_setfont(1, "Arial", 15);
+gfx_printf("Rhythm Grid:");
+
+width = gfx_w-xmargin*2;
+total_grid_height = max(200, (gfx_h - header_margin - footer_margin) * 0.7);
+total_grid_height -= total_grid_height % num_lanes;
+
+grid_margin = 6;
+grid_height = total_grid_height / num_lanes;
+DrawGrid(0, xmargin, header_margin, width, grid_height-grid_margin);
+y = header_margin + grid_height;
+num_lanes > 1 ? (DrawGrid(1, xmargin, y, width, grid_height-grid_margin); y+=grid_height);
+num_lanes > 2 ? (DrawGrid(2, xmargin, y, width, grid_height-grid_margin); y+=grid_height);
+num_lanes > 3 ? (DrawGrid(3, xmargin, y, width, grid_height-grid_margin); y+=grid_height);
+
+drawTrainingGraphTitle(xmargin, y);
+y+=20;
+drawTrainingGraph(xmargin, y, width, max(80, gfx_h - footer_margin - y));
+
+isLButtonRelease() ? prev_mouse_l_button_release_time = time_precise();
+prev_mouse_cap = mouse_cap;
+mouse_wheel = 0;
+mouse_cap & 1 == 0 ? active_control = 0;
+
+@serialize
+// This causes the general state to be kept between DAW "play"s
+file_var(0, dummy);

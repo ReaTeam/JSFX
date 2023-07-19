@@ -1,0 +1,2763 @@
+desc: MIDI XY Pad Controller (bor-T)
+author: bor-T
+version: 0.1
+
+
+tags: midi controller
+
+about:
+  # Midi controller.
+A virtual midi controller that allows you to control midi signals with the mouse and the x and y axes.It is made
+for recording long sound bubblegum, from which you can create interesting samples.
+
+license: MIT
+
+/*
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+in_pin: none
+out_pin: none
+
+options: no_meter
+
+@init
+ext_noinit = 1;
+
+xvalue = 64;
+yvalue = 64;
+yvalue_note = 0;
+
+//pad sizes
+pad.h = 385;
+pad.w = 408;
+pad.x = 286; // margin left
+pad.y = 20; // margin top
+pad.x1 = pad.x;
+pad.x2 = pad.x + pad.w;
+pad.y1 = pad.y;
+pad.y2 = pad.y + pad.h;
+pad_marker_size = 12;
+
+cur_mousex = pad.w / 2 + pad.x1;
+cur_mousey = pad.h / 2 + pad.y1;
+click_onx = 0;
+click_ony = 0;
+send_on = 0;
+noteon = 144;
+noteoff = 128;
+main_note = main_note_hover_pr = pr_start_note = 0;
+msg2 = 60;
+mw = 176;
+xvalue = fltr_value_cc74 = fltr_value_check_cc74 = fltr_value_mw = fltr_value_check_mw = 64;
+fltr_value_cc74_on = 1;
+fltr_value_mw_on = 1;
+fltr_reverse = 0;
+grid_pitch_quan = 1;
+mw_p = 0;
+vel = 127;
+mode = 0;
+pnc = 0;
+pitch_dimension = 4;
+sl_delay_pre = 50;
+sl_delay_mode = 2;
+sl_head = sl_ptr = sl_tail = sl_buf_start = 1000; // sl_delay buffer start
+sl_buf_end = 989000; // sl_delay buffer end
+sl_trgr = 1;
+
+wm_delay_pre = 50;
+wm_delay_mode = 1;
+wm_head = wm_ptr = wm_tail = wm_buf_start = 990000; // wm_delay buffer start
+wm_buf_end = 992000; // wm_delay buffer end
+wm_no_move = 1;
+wm_return = 1;
+
+mouse_wheel_step = 1 / 6;
+wm_pitch_value_check = wm_pitch_value = 64;
+
+fake_active = 1;
+
+octave_pw = 5;
+
+octave_range = 0;
+octave_start = 0;
+octave_end = 10;
+
+one_note_scale = 1;
+
+lsb_send_timer = 0;
+theme_color = 0;
+
+diez_draw = 993000;
+diez_draw[0] = 0;
+diez_draw[1] = 1;
+diez_draw[2] = 0;
+diez_draw[3] = 1;
+diez_draw[4] = 0;
+diez_draw[5] = 0;
+diez_draw[6] = 1;
+diez_draw[7] = 0;
+diez_draw[8] = 1;
+diez_draw[9] = 0;
+diez_draw[10] = 1;
+diez_draw[11] = 0;
+
+note_names = 993050;
+note_names[0] = "C";
+note_names[1] = "C#";
+note_names[2] = "D";
+note_names[3] = "D#";
+note_names[4] = "E";
+note_names[5] = "F";
+note_names[6] = "F#";
+note_names[7] = "G";
+note_names[8] = "G#";
+note_names[9] = "A";
+note_names[10] = "A#";
+note_names[11] = "B";
+
+//notes grid snap
+
+//full
+ns_full = 993100;
+ns_full[-1] = 12;
+ns_full[0] = 1;
+ns_full[1] = 1;
+ns_full[2] = 1;
+ns_full[3] = 1;
+ns_full[4] = 1;
+ns_full[5] = 1;
+ns_full[6] = 1;
+ns_full[7] = 1;
+ns_full[8] = 1;
+ns_full[9] = 1;
+ns_full[10] = 1;
+ns_full[11] = 1;
+
+// major
+ns_maj = 993150;
+ns_maj[-1] = 7;
+ns_maj[0] = 1;
+ns_maj[1] = 0;
+ns_maj[2] = 1;
+ns_maj[3] = 0;
+ns_maj[4] = 1;
+ns_maj[5] = 1;
+ns_maj[6] = 0;
+ns_maj[7] = 1;
+ns_maj[8] = 0;
+ns_maj[9] = 1;
+ns_maj[10] = 0;
+ns_maj[11] = 1;
+
+//natural minor
+ns_n_min = 993200;
+ns_n_min[-1] = 7;
+ns_n_min[0] = 1;
+ns_n_min[1] = 0;
+ns_n_min[2] = 1;
+ns_n_min[3] = 1;
+ns_n_min[4] = 0;
+ns_n_min[5] = 1;
+ns_n_min[6] = 0;
+ns_n_min[7] = 1;
+ns_n_min[8] = 1;
+ns_n_min[9] = 0;
+ns_n_min[10] = 1;
+ns_n_min[11] = 0;
+
+//melodic minor
+ns_m_min = 993250;
+ns_m_min[-1] = 7;
+ns_m_min[0] = 1;
+ns_m_min[1] = 0;
+ns_m_min[2] = 1;
+ns_m_min[3] = 1;
+ns_m_min[4] = 0;
+ns_m_min[5] = 1;
+ns_m_min[6] = 0;
+ns_m_min[7] = 1;
+ns_m_min[8] = 0;
+ns_m_min[9] = 1;
+ns_m_min[10] = 0;
+ns_m_min[11] = 1;
+
+//harmonic minor
+ns_h_min = 993300;
+ns_h_min[-1] = 7;
+ns_h_min[0] = 1;
+ns_h_min[1] = 0;
+ns_h_min[2] = 1;
+ns_h_min[3] = 1;
+ns_h_min[4] = 0;
+ns_h_min[5] = 1;
+ns_h_min[6] = 0;
+ns_h_min[7] = 1;
+ns_h_min[8] = 1;
+ns_h_min[9] = 0;
+ns_h_min[10] = 0;
+ns_h_min[11] = 1;
+
+//pentatonic
+ns_pen = 993350;
+ns_pen[-1] = 5;
+ns_pen[0] = 1;
+ns_pen[1] = 0;
+ns_pen[2] = 1;
+ns_pen[3] = 0;
+ns_pen[4] = 1;
+ns_pen[5] = 0;
+ns_pen[6] = 0;
+ns_pen[7] = 1;
+ns_pen[8] = 0;
+ns_pen[9] = 1;
+ns_pen[10] = 0;
+ns_pen[11] = 0;
+
+//blues
+ns_blu = 993400;
+ns_blu[-1] = 6;
+ns_blu[0] = 1;
+ns_blu[1] = 0;
+ns_blu[2] = 0;
+ns_blu[3] = 1;
+ns_blu[4] = 0;
+ns_blu[5] = 1;
+ns_blu[6] = 1;
+ns_blu[7] = 1;
+ns_blu[8] = 0;
+ns_blu[9] = 0;
+ns_blu[10] = 1;
+ns_blu[11] = 0;
+
+//custom
+ns_cst = 993450;
+ns_cst[-1] = 1;
+ns_cst[0] = 1;
+ns_cst[1] = 0;
+ns_cst[2] = 0;
+ns_cst[3] = 0;
+ns_cst[4] = 0;
+ns_cst[5] = 0;
+ns_cst[6] = 0;
+ns_cst[7] = 0;
+ns_cst[8] = 0;
+ns_cst[9] = 0;
+ns_cst[10] = 0;
+ns_cst[11] = 0;
+
+//major triad
+ns_maj_tr = 993500;
+ns_maj_tr[-1] = 3;
+ns_maj_tr[0] = 1;
+ns_maj_tr[1] = 0;
+ns_maj_tr[2] = 0;
+ns_maj_tr[3] = 0;
+ns_maj_tr[4] = 1;
+ns_maj_tr[5] = 0;
+ns_maj_tr[6] = 0;
+ns_maj_tr[7] = 1;
+ns_maj_tr[8] = 0;
+ns_maj_tr[9] = 0;
+ns_maj_tr[10] = 0;
+ns_maj_tr[11] = 0;
+
+//minor triad
+ns_min_tr = 993550;
+ns_min_tr[-1] = 3;
+ns_min_tr[0] = 1;
+ns_min_tr[1] = 0;
+ns_min_tr[2] = 0;
+ns_min_tr[3] = 1;
+ns_min_tr[4] = 0;
+ns_min_tr[5] = 0;
+ns_min_tr[6] = 0;
+ns_min_tr[7] = 1;
+ns_min_tr[8] = 0;
+ns_min_tr[9] = 0;
+ns_min_tr[10] = 0;
+ns_min_tr[11] = 0;
+
+//major 7th
+ns_maj_7th = 993600;
+ns_maj_7th[-1] = 4;
+ns_maj_7th[0] = 1;
+ns_maj_7th[1] = 0;
+ns_maj_7th[2] = 0;
+ns_maj_7th[3] = 0;
+ns_maj_7th[4] = 1;
+ns_maj_7th[5] = 0;
+ns_maj_7th[6] = 0;
+ns_maj_7th[7] = 1;
+ns_maj_7th[8] = 0;
+ns_maj_7th[9] = 0;
+ns_maj_7th[10] = 0;
+ns_maj_7th[11] = 1;
+
+//minor 7th
+ns_min_7th = 993650;
+ns_min_7th[-1] = 4;
+ns_min_7th[0] = 1;
+ns_min_7th[1] = 0;
+ns_min_7th[2] = 0;
+ns_min_7th[3] = 1;
+ns_min_7th[4] = 0;
+ns_min_7th[5] = 0;
+ns_min_7th[6] = 0;
+ns_min_7th[7] = 1;
+ns_min_7th[8] = 0;
+ns_min_7th[9] = 0;
+ns_min_7th[10] = 1;
+ns_min_7th[11] = 0;
+
+//dom 7th
+ns_dom_7th = 993700;
+ns_dom_7th[-1] = 4;
+ns_dom_7th[0] = 1;
+ns_dom_7th[1] = 0;
+ns_dom_7th[2] = 0;
+ns_dom_7th[3] = 0;
+ns_dom_7th[4] = 1;
+ns_dom_7th[5] = 0;
+ns_dom_7th[6] = 0;
+ns_dom_7th[7] = 1;
+ns_dom_7th[8] = 0;
+ns_dom_7th[9] = 0;
+ns_dom_7th[10] = 1;
+ns_dom_7th[11] = 0;
+
+//dom triad
+ns_dim_tr = 993750;
+ns_dim_tr[-1] = 3;
+ns_dim_tr[0] = 1;
+ns_dim_tr[1] = 0;
+ns_dim_tr[2] = 0;
+ns_dim_tr[3] = 1;
+ns_dim_tr[4] = 0;
+ns_dim_tr[5] = 0;
+ns_dim_tr[6] = 1;
+ns_dim_tr[7] = 0;
+ns_dim_tr[8] = 0;
+ns_dim_tr[9] = 0;
+ns_dim_tr[10] = 0;
+ns_dim_tr[11] = 0;
+
+//dim 7th
+ns_dim_7th = 993800;
+ns_dim_7th[-1] = 4;
+ns_dim_7th[0] = 1;
+ns_dim_7th[1] = 0;
+ns_dim_7th[2] = 0;
+ns_dim_7th[3] = 1;
+ns_dim_7th[4] = 0;
+ns_dim_7th[5] = 0;
+ns_dim_7th[6] = 1;
+ns_dim_7th[7] = 0;
+ns_dim_7th[8] = 0;
+ns_dim_7th[9] = 1;
+ns_dim_7th[10] = 0;
+ns_dim_7th[11] = 0;
+
+//aug 5th
+ns_aug = 993850;
+ns_aug[-1] = 3;
+ns_aug[0] = 1;
+ns_aug[1] = 0;
+ns_aug[2] = 0;
+ns_aug[3] = 0;
+ns_aug[4] = 1;
+ns_aug[5] = 0;
+ns_aug[6] = 0;
+ns_aug[7] = 0;
+ns_aug[8] = 1;
+ns_aug[9] = 0;
+ns_aug[10] = 0;
+ns_aug[11] = 0;
+
+// array for one note scale
+ns_on_notes = 993900;
+
+note_scale = ns_full;
+grid_view = 0;
+
+//functions
+
+
+
+// COLORS
+function color_black()(gfx_r = gfx_g = gfx_b = 0.04;
+gfx_a = 1;);
+
+function color_l_gray()(gfx_r = gfx_g = gfx_b = 0.3;
+gfx_a = 1;);
+
+function color_gray()(gfx_r = gfx_g = gfx_b = 0.2;
+gfx_a = 1;);
+
+function color_d_gray()(gfx_r = gfx_g = gfx_b = 0.1;
+gfx_a = 1;);
+
+function color_l_red()(theme_color == 0 ? (gfx_r = 0.8;
+gfx_g = 0.2;
+gfx_b = 0.2;
+gfx_a = 1;) : (gfx_r = gfx_g = gfx_b = 0.635;
+gfx_a = 1;););
+
+function color_diez_red()(theme_color == 0 ? (gfx_r = 0.73;
+gfx_g = 0.182;
+gfx_b = 0.182;
+gfx_a = 1;) : (gfx_r = gfx_g = gfx_b = 0.518;
+gfx_a = 1;););
+
+function color_red()(theme_color == 0 ? (gfx_r = 0.6;
+gfx_g = 0.16;
+gfx_b = 0.16;
+gfx_a = 1;) : (gfx_r = gfx_g = gfx_b = 0.425;
+gfx_a = 1;););
+
+function color_m_red()(theme_color == 0 ? (gfx_r = 0.45;
+gfx_g = 0.12;
+gfx_b = 0.12;
+gfx_a = 1;) : (gfx_r = gfx_g = gfx_b = 0.243;
+gfx_a = 1;););
+
+function color_d_red()(theme_color == 0 ? (gfx_r = 0.3;
+gfx_g = 0.1;
+gfx_b = 0.1;
+gfx_a = 1;) : (gfx_r = gfx_g = gfx_b = 0.200;
+gfx_a = 1;););
+
+function color_gray_red()(theme_color == 0 ? (gfx_r = 0.14;
+gfx_g = 0.08;
+gfx_b = 0.08;
+gfx_a = 1;) : (gfx_r = gfx_g = gfx_b = 0.075;
+gfx_a = 1;););
+
+function color_red_in()(gfx_r = gfx_g = gfx_b = 0.169;
+gfx_a = 1;);
+
+function color_diez_red_in()(gfx_r = gfx_g = gfx_b = 0.212;
+gfx_a = 1;);
+
+function color_m_red_in()(gfx_r = gfx_g = gfx_b = 0.118;
+gfx_a = 1;);
+
+function color_d_red_in()(gfx_r = gfx_g = gfx_b = 0.075;
+gfx_a = 1;);
+
+function color_d_gray_in()(gfx_r = gfx_g = gfx_b = 0.04;
+gfx_a = 1;);
+
+function color_red_in_wheel()(gfx_r = gfx_g = gfx_b = 0.32;
+gfx_a = 1;);
+
+function color_d_red_in_wheel()(gfx_r = gfx_g = gfx_b = 0.15;
+gfx_a = 1;);
+
+function color_d_gray_in_wheel()(gfx_r = gfx_g = gfx_b = 0.075;
+gfx_a = 1;);
+
+
+function num_round(num)(
+
+  (num * 10) % 10 >= 5 ? (
+    num = ceil(num);
+  ) : (
+    num = floor(num);
+  )
+);
+
+function draw_box(x1, y1, x2, y2)
+(
+  gfx_line(x1, y1, x2 - 1, y1); // top
+  gfx_line(x2 - 1, y1, x2 - 1, y2 - 1); // right
+  gfx_line(x2 - 1, y2 - 1, x1, y2 - 1); // bottom
+  gfx_line(x1, y2 - 1, x1, y1); // left
+);
+
+function init_pad()(cur_mousex = pad.w / 2 + pad.x1;
+  cur_mousey = pad.h / 2 + pad.y1;
+);
+
+function init_custom()(
+  ns_cst[-1] = 1;
+  ns_cst[0] = 1;
+  ns_cst[1] = 0;
+  ns_cst[2] = 0;
+  ns_cst[3] = 0;
+  ns_cst[4] = 0;
+  ns_cst[5] = 0;
+  ns_cst[6] = 0;
+  ns_cst[7] = 0;
+  ns_cst[8] = 0;
+  ns_cst[9] = 0;
+  ns_cst[10] = 0;
+  ns_cst[11] = 0;
+);
+
+
+function mouse_on_piano_roll()(
+  mouse_x >= pr_x && mouse_x <= pr_x + pr_w && mouse_y >= pr_y && mouse_y <= pr_y + pr_h;
+);
+
+
+function mouse_on_pad()(
+  mouse_x > pad.x1 && mouse_x < pad.x2 && mouse_y > pad.y1 && mouse_y < pad.y2
+);
+
+
+function button(mode* , active, value, name, pos_x1, pos_x2, pos_y1, pos_y2)(
+  active ? (color_d_red();) : (color_d_red_in(););
+  gfx_x = pos_x1;
+  gfx_y = pos_y1;
+  gfx_rectto(pos_x2, pos_y2);
+  gfx_setfont(1, "Monospace", 10);
+  mode == value ? (
+    mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2 && active && in_proccess == 0 ? (
+      color_l_red();
+      gfx_x = pos_x1 + 1;
+      gfx_y = pos_y1 + 1;
+      gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+      color_d_gray();
+      gfx_measurestr(name, strw, strh);
+      gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+      gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+      gfx_drawstr(name);
+    ) : (
+      active ? (color_red();) : (color_red_in(););
+      gfx_x = pos_x1 + 1;
+      gfx_y = pos_y1 + 1;
+      gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+      active ? (color_d_gray();) : (color_d_gray_in(););
+      gfx_measurestr(name, strw, strh);
+      gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+      gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+      gfx_drawstr(name);
+    );
+  ) : (
+    mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2 && change_note == 0 && active ? (
+      color_l_red();
+      gfx_x = pos_x1 + 1;
+      gfx_y = pos_y1 + 1;
+      gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+      color_d_gray();
+      gfx_measurestr(name, strw, strh);
+      gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+      gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+      gfx_drawstr(name);
+      mouse_cap == 1 ? (
+        mode = value;
+        change_note = 0;
+      );
+    ) : (
+      active ? (color_d_gray();) : (color_black(););
+      gfx_x = pos_x1 + 1;
+      gfx_y = pos_y1 + 1;
+      gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+      active ? (color_red();) : (color_red_in(););
+      gfx_measurestr(name, strw, strh);
+      gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+      gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+      gfx_drawstr(name);
+    );
+  );
+  gfx_x = pos_x2;
+  gfx_y = pos_y2;
+);
+;
+
+function button_mode(mode_bm* ,
+ active, value, name, pos_x1, pos_x2, pos_y1, pos_y2)(
+  mouse_cap != 1 ? (bm_trg = 0;);
+  mouse_cap == 1 &&
+  mode_bm != value &&
+  mouse_x > pos_x1 &&
+  mouse_x < pos_x2 &&
+  mouse_y > pos_y1 &&
+  mouse_y < pos_y2 &&
+  active &&
+  in_proccess == 0 &&
+  bm_trg == 0 ? (
+    msg2 = 60;
+    init_pad();
+    value == 2 ? (fltr_value_mw = fltr_value_cc74 = 64;);
+    value == 0 || value == 3 ? (pitch_value = 8192;) : (pitch_value = 64;);
+    bm_trg = 1;
+  );
+
+  button(mode_bm, active, value, name, pos_x1, pos_x2, pos_y1, pos_y2);
+);
+
+function button_on_off(mode* ,
+ active, name, pos_x1, pos_x2, pos_y1, pos_y2)(
+  mouse_cap != 1 ? (
+    button_on_off_stop = 0;
+  );
+
+  active ? (color_d_red();) : (color_d_red_in(););
+  gfx_x = pos_x1;
+  gfx_y = pos_y1;
+  gfx_rectto(pos_x2, pos_y2);
+  gfx_setfont(1, "Monospace", 10);
+
+  mode == 1 ? (
+    mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2 && active ? (
+      button_on_off_stop == 0 && in_proccess == 0 ? (color_l_red();) : (color_red(););
+      gfx_x = pos_x1 + 1;
+      gfx_y = pos_y1 + 1;
+      gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+      color_d_gray();
+      gfx_measurestr(name, strw, strh);
+      gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+      gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+      gfx_drawstr(name);
+      mouse_cap == 1 && button_on_off_stop == 0 && in_proccess == 0 ? (
+        mode = 0;
+        button_on_off_stop = 1;
+      );
+    ) : (
+      active ? (color_red();) : (color_red_in(););
+      gfx_x = pos_x1 + 1;
+      gfx_y = pos_y1 + 1;
+      gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+      active ? (color_d_gray();) : (color_d_gray_in(););
+      gfx_measurestr(name, strw, strh);
+      gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+      gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+      gfx_drawstr(name);
+    );
+  ) : (
+    mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2 && change_note == 0 && active ? (
+      button_on_off_stop == 1 ? (color_l_red();) : (color_red(););
+      gfx_x = pos_x1 + 1;
+      gfx_y = pos_y1 + 1;
+      gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+      color_d_gray();
+      gfx_measurestr(name, strw, strh);
+      gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+      gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+      gfx_drawstr(name);
+      mouse_cap == 1 && button_on_off_stop == 0 && in_proccess == 0 ? (
+        mode = 1;
+        button_on_off_stop = 1;
+      );
+    ) : (
+      active ? (color_d_gray();) : (color_black(););
+      gfx_x = pos_x1 + 1;
+      gfx_y = pos_y1 + 1;
+      gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+      active ? (color_red();) : (color_red_in(););
+      gfx_measurestr(name, strw, strh);
+      gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+      gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+      gfx_drawstr(name);
+    );
+  );
+  gfx_x = pos_x2;
+  gfx_y = pos_y2;
+);
+
+function button_pnc(mode* , active, diez, value, name, pos_x1, pos_x2, pos_y1, pos_y2)(
+  mouse_cap != 1 ? ( button_on_off_stop = 0;);
+  active ? (color_d_red();) : (color_d_red_in(););
+  gfx_x = pos_x1;
+  gfx_y = pos_y1;
+  gfx_rectto(pos_x2, pos_y2);
+  gfx_setfont(1, "Monospace", 10);
+  mode == value ? (
+    mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2 && active ? (
+      button_on_off_stop == 0 && in_proccess == 0 ? (color_l_red();) : (color_red(););
+      gfx_x = pos_x1 + 1;
+      gfx_y = pos_y1 + 1;
+      gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+      color_d_gray();
+      gfx_measurestr(name, strw, strh);
+      gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+      gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+      gfx_drawstr(name);
+    ) : (
+      active ? (color_red();) : (color_red_in(););
+      gfx_x = pos_x1 + 1;
+      gfx_y = pos_y1 + 1;
+      gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+      active ? (color_d_gray();) : (color_d_gray_in(););
+      gfx_measurestr(name, strw, strh);
+      gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+      gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+      gfx_drawstr(name);
+    );
+  ) : (
+
+    mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2 && change_note == 0 && active ? (
+      button_on_off_stop == 0 && in_proccess == 0 ? (color_l_red();) : (color_red(););
+gfx_x = pos_x1 + 1;
+gfx_y = pos_y1 + 1;
+gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+color_d_gray();
+gfx_measurestr(name, strw, strh);
+gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+gfx_drawstr(name);
+mouse_cap == 1 && button_on_off_stop == 0 ? (
+  mode = value;
+  change_note = 0;
+  button_on_off_stop = 1;
+  init_pad(););
+  ) : (
+  active ? (diez == 0 ? (color_d_gray();) : (color_d_red(););) : (color_black(););
+  gfx_x = pos_x1 + 1;
+  gfx_y = pos_y1 + 1;
+  gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+  active ? (color_red();) : (color_red_in(););
+  gfx_measurestr(name, strw, strh);
+  gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+  gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+  gfx_drawstr(name);
+    );
+  );
+gfx_x = pos_x2;
+gfx_y = pos_y2;
+);
+
+function show_char_info_logic()(
+  msg2_gfx = msg2;
+
+  // Pitch Wheel
+  mouse_on_piano_roll() && mode == 0 ? msg2_gfx = main_note_hover_pr + octave_pw * 12;
+
+  // One Note
+  mode == 1 ? (
+    mouse_on_piano_roll() ? msg2_gfx = main_note_hover_pr + (octave_start + ceil(octave_range / 2 - 0.5)) * 12;
+    !in_proccess && !mouse_on_piano_roll() ? (note_scale == ns_cst ? (msg2_gfx = msg2;) : (msg2_gfx = main_note + (octave_start + ceil(octave_range / 2 - 0.5)) * 12;););
+  );
+
+  // Grid
+  mode == 2 ? (
+    mouse_on_piano_roll() && !in_proccess ? msg2_gfx = main_note_hover_pr + (octave_start + ceil(octave_range / 2 - 0.5)) * 12;
+    sl_midi_pend ? msg2_gfx = main_note;
+    !mouse_on_pad() && !mouse_on_piano_roll() && !in_proccess ? (note_scale == ns_cst ? (msg2_gfx = msg2;) : (msg2_gfx = scale_note_start;););
+    mouse_cap == 5 && in_proccess ? msg2_gfx = show_char_info_msg2;
+  );
+
+);
+
+
+function show_char_info(msg2_value, pos_x1, pos_x2, pos_y1, pos_y2)(
+
+show_char_info_logic();
+color_d_gray();
+gfx_x = pos_x1;
+gfx_y = pos_y1;
+gfx_rectto(pos_x2, pos_y2);
+gfx_setfont(1, "Monospace", 30);
+color_red();
+msg2_value_note = note_names[msg2_value % 12];
+gfx_measurestr(msg2_value_note, str_w, str_h);
+gfx_x = num_round((pos_x1 + pos_x2 - str_w) / 2);
+gfx_y = pos_y1 + 1;
+gfx_drawstr(msg2_value_note);
+gfx_setfont(1, "Monospace", 11);
+(mode == 3 || mode == 0 || in_proccess || mouse_on_pad()) ||
+((mode == 1 && (one_note_scale || note_scale == ns_cst)) ||
+(mode == 2 && note_scale == ns_cst) && !mouse_on_piano_roll()) ? (
+    msg2_value_pre_oct = floor(msg2_value / 12) - 1;
+    msg2_value_oct = sprintf(#, "OCT %i", msg2_value_pre_oct);
+    gfx_measurestr(msg2_value_oct, str_w, str_h);
+    gfx_x = num_round((pos_x1 + pos_x2 - str_w) / 2);
+    gfx_y = pos_y1 + 35;
+    gfx_drawstr(msg2_value_oct);
+  ) : (
+    (mode == 1 && (one_note_scale || note_scale == ns_cst)) || (mode == 2 && note_scale == ns_cst) ? (
+      gfx_measurestr("NOTE", str_w, str_h);
+      gfx_x = num_round((pos_x1 + pos_x2 - str_w) / 2);
+      gfx_y = pos_y1 + 35;
+      gfx_drawstr("NOTE");
+    ) : (
+      gfx_measurestr("SCALE", str_w, str_h);
+      gfx_x = num_round((pos_x1 + pos_x2 - str_w) / 2);
+      gfx_y = pos_y1 + 35;
+      gfx_drawstr("SCALE");
+    );
+  );
+  color_d_red();
+  draw_box(pos_x1, pos_y1, pos_x2, pos_y2);
+  gfx_x = pos_x2;
+  gfx_y = pos_y2;
+);
+
+function show_char_info_pad(msg2_value, pos_x1, pos_x2, pos_y1, pos_y2)(
+  show_char_info_logic();
+  color_d_gray();
+  gfx_x = pos_x1;
+  gfx_y = pos_y1;
+  gfx_setfont(1, "Monospace", 10);
+  color_red();
+  msg2_value_note = sprintf(#, "%s%i", note_names[msg2_value % 12], msg2_value_pre_oct);
+  gfx_measurestr(msg2_value_note, str_w, str_h);
+  gfx_x = pos_x1 + 5;
+  mode == 0 ? gfx_y = pos_y1 + 3;
+  mode == 1 ? gfx_y = num_round((pos_y1 + pos_y2 - str_h) / 2);
+  gfx_drawstr(msg2_value_note);
+  mode == 1 ? (
+    msg2_value_pre_oct = octave_end - 2 + bpr_mode_1_correction;
+    msg2_value_oct = sprintf(#, "OCT %i", msg2_value_pre_oct);
+    gfx_x = pos_x1 + 5;
+    gfx_y = pos_y1 + 3;
+    gfx_drawstr(msg2_value_oct);
+    msg2_value_pre_oct = octave_start - 1;msg2_value_oct = sprintf(#, "OCT %i", msg2_value_pre_oct);
+    gfx_x = pos_x1 + 5;
+    gfx_y = pos_y2 - 16;
+    gfx_drawstr(msg2_value_oct);
+  );
+
+  mode == 0 ? (
+    quan_gfx_coof_x100 = floor((8192 * 100) / (pitch_dimension * 12));
+    quan_gfx_pre_acc = (pitch_value * 100) % quan_gfx_coof_x100;
+    quan_gfx_pre_100 = ((quan_gfx_pre_acc / quan_gfx_coof_x100) * 10000) / 100;
+    quan_gfx_pre_100 > 50 ? (quan_gfx_pre_num = ceil(quan_gfx_pre_100 - 100);) : (quan_gfx_pre_num = floor(quan_gfx_pre_100););
+    color_l_gray();
+    gfx_x = pos_x1 + 5;
+    gfx_y = pos_y2 - 16;
+    gfx_drawstr(sprintf(#, "Acc %3d %3d cents", (pitch_value * 100) / quan_gfx_coof_x100 - (12 * pitch_dimension), quan_gfx_pre_num));
+    gfx_line(gfx_x + 5, pos_y2 - 7, gfx_x + 55, pos_y2 - 7;, 1);
+    gfx_line(gfx_x + 5, pos_y2 - 7, gfx_x + 5, pos_y2 - 13, 1);
+    gfx_line(gfx_x + 30, pos_y2 - 7, gfx_x + 30, pos_y2 - 10, 1);
+    gfx_line(gfx_x + 55, pos_y2 - 7, gfx_x + 55, pos_y2 - 13, 1);
+    i = 5;
+    loop(9, ( // y short lines
+      i += 5;
+      gfx_line(gfx_x + i, pos_y2 - 7;, gfx_x + i, pos_y2 - 9, 1);)
+    );
+    q_sl = gfx_x + 5 + 25 + (quan_gfx_pre_num / 2);
+    q_sl2 = (quan_gfx_pre_num / 2);
+    gfx_line(q_sl, pos_y2 - 11, q_sl, pos_y2 - 13, 1);
+  );
+  gfx_x = pos_x2;
+  gfx_y = pos_y2;
+);
+
+
+
+function show_char_name(active, str, pos_x, pos_y)(
+  gfx_setfont(1, "Monospace", 11);
+  active ? (color_red();) : (color_red_in(););
+  gfx_x = pos_x;
+  gfx_y = pos_y;
+  gfx_drawstr(str);
+);
+
+function button_pr(mode* , active* , value, note_char, diez, pos_x1, pos_x2, pos_y1, pos_y2, pos2_x1, pos2_x2, pos2_y1, pos2_y2)(
+  mode == value && active ? (
+    active ? (color_red();) : (color_red_in());
+  ) : (
+    (mouse_x >= pos_x1 && mouse_x <= pos_x2 && mouse_y >= pos_y1 && mouse_y <= pos_y2) ||
+    (mouse_x >= pos2_x1 && mouse_x <= pos2_x2 && mouse_y >= pos2_y1 && mouse_y <= pos2_y2) && change_note == 0 && active ? (
+      color_l_red();
+      main_note_hover_pr = value;
+      mouse_cap == 1 ? (
+        mode = value;
+        change_note = 0;
+      );
+    ) : (
+      active ? (diez == 0 ? (color_d_gray()) : (color_d_red());) : (diez == 0 ? (color_black()) : (color_d_gray()););
+    );
+  );
+  gfx_x = pos_x1;
+  gfx_y = pos_y1;
+  gfx_rectto(pos_x2, pos_y2);
+  gfx_x = pos2_x1;
+  gfx_y = pos2_y1;
+  gfx_rectto(pos2_x2, pos2_y2);
+);
+
+function button_pr_cst(mode* , active* , value, note_char, diez, pos_x1, pos_x2, pos_y1, pos_y2, pos2_x1, pos2_x2, pos2_y1, pos2_y2)(
+  diez == 0 ? (color_black();) : (color_d_gray(););
+  note_scale != ns_cst ? (psn = pr_start_note;) : (psn = 0;);
+  mode[value - psn < 0 ? (value - psn + 12) : (value - psn);] && active ? (
+    mode == ns_cst ? (diez == 0 ? (color_red();) : (color_diez_red());) : (diez == 0 ? (color_red_in()) : (color_diez_red_in()););
+    (mouse_x >= pos_x1 && mouse_x <= pos_x2 && mouse_y >= pos_y1 && mouse_y <= pos_y2) ||
+    (mouse_x >= pos2_x1 && mouse_x <= pos2_x2 && mouse_y >= pos2_y1 && mouse_y <= pos2_y2) && !in_proccess ? (
+      mode == ns_cst ? (
+        color_l_red();
+        mouse_cap == 1 && !click && mode[-1] > 1 ? (
+          mode[value] = 0;
+          mode[-1] -= 1;
+          click = 1;
+        );
+        mouse_cap != 1 ? (click = 0;);
+      );
+      main_note_hover_pr = value;
+    );
+  ) : (
+    (mouse_x >= pos_x1 && mouse_x <= pos_x2 && mouse_y >= pos_y1 && mouse_y <= pos_y2) ||
+    (mouse_x >= pos2_x1 && mouse_x <= pos2_x2 && mouse_y >= pos2_y1 && mouse_y <= pos2_y2) && !in_proccess ? (
+      main_note_hover_pr = value;
+      mode == ns_cst ? (
+        color_l_red();
+        mouse_cap == 1 && !click ? (
+          mode[value] = 1;
+          mode[-1] += 1;
+          click = 1;
+          main_note = value;
+        );
+        mouse_cap != 1 ? (click = 0;);
+      );
+    ) : (
+      mode == ns_cst ? (diez == 0 ? (color_d_gray()) : (color_d_red());) : (diez == 0 ? (color_black()) : (color_d_red_in()););
+    );
+  );
+  gfx_x = pos_x1;
+  gfx_y = pos_y1;
+  gfx_rectto(pos_x2, pos_y2);
+  gfx_x = pos2_x1;
+  gfx_y = pos2_y1;
+  gfx_rectto(pos2_x2, pos2_y2);
+);
+
+
+
+function button_pad(mode_bp* , active* , value, note_char, oct_num, diez, note_scale, pos_x1, pos_x2, pos_y1, pos_y2)(
+  mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2 && note_scale ? (
+    pad_point_y = pos_y1 + ((pos_y2 - pos_y1) / 2);
+    pad_point_x = pos_x1 + ((pos_x2 - pos_x1) / 2);
+  );
+
+  oct = #;
+  strcpy(oct, note_char);
+  strcat(oct, sprintf(#, "%i", oct_num - 1););
+  color_d_red();
+  gfx_x = pos_x1;
+  gfx_y = pos_y1;
+  gfx_rectto(pos_x2, pos_y2);
+  (mode_bp == value || main_note == value) && (mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) && (send_on || sl_midi_pend) ? (
+    color_red();
+    mode == 2 && (mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2) && active && note_scale && mouse_cap == 5 ? (show_char_info_msg2 = value;);
+  ) : (
+    (mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2) && active ? (
+      note_scale ? (
+        mouse_cap != 5 ? (mode_bp = value;);
+        mode == 2 && mouse_cap == 5 ? (show_char_info_msg2 = value;);
+        color_red();
+      ) : (
+        color_d_gray_in();
+      );
+      (mouse_cap == 1 || mouse_cap == 5) && note_scale && mouse_on_pad() ? (
+        pad_point_x_pre = pad_point_x;
+        pad_point_y_pre = pad_point_y;
+      );
+    ) : (
+      note_scale ? (
+        diez == 0 ? (color_d_gray();) : (color_gray_red(););
+      ) : (
+        color_d_gray_in();
+      );
+    );
+  );
+  gfx_x = pos_x1 + 1;
+  gfx_y = pos_y1 + 1;
+  gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+
+  (mode_bp == value && (mouse_cap == 1 || mouse_cap == 5)) || (mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2) && mouse_on_pad() ? (
+    note_scale ? (color_d_red()) : (color_m_red_in());
+  ) : (
+    note_scale ? (color_m_red()) : (color_m_red_in());
+  );
+  gfx_setfont(4, "Monospace", 10);
+  gfx_measurestr(oct, strw, strh);
+  gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+  gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+  gfx_drawstr(oct);
+);
+
+function button_pad_pitch(mode* , active* , value, note_char, oct_num, diez, pos_x1, pos_x2, pos_y1, pos_y2)(
+  mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2 || send_on ? (
+    pad_point_y = pos_y1 + ((pos_y2 - pos_y1) / 2);
+    pad_point_x = pos_x1 + ((pos_x2 - pos_x1) / 2);
+  );
+  oct = #;
+  strcpy(oct, note_char);
+  strcat(oct, sprintf(#, "%i", oct_num - 1););
+  color_d_red();
+  gfx_x = pos_x1;
+  gfx_y = pos_y1;
+  gfx_rectto(pos_x2, pos_y2);
+  (mode == value || main_note == value) && (mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) && send_on ? (
+    color_red();
+  ) : (
+    (mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2) && active ? (
+      (mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2) && !send_on ? (
+        color_red();
+      ) : (
+        diez == 0 ? (color_d_gray()) : (color_gray_red());
+      );
+      !(mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) ? (
+        mode = value;
+        pad_point_x_pre = pad_point_x;
+        pad_point_y_pre = pad_point_y;
+      );
+    ) : (
+      diez == 0 ? (color_d_gray()) : (color_gray_red());
+    );
+  );
+  gfx_x = pos_x1 + 1;
+  gfx_y = pos_y1 + 1;
+  gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+  mode == value && mouse_on_pad() ? (color_d_red();) : (color_m_red(););
+  gfx_setfont(4, "Monospace", 10);
+  gfx_measurestr(oct, strw, strh);
+  gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+  gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+  gfx_drawstr(oct);
+);
+
+function button_octave_start_end_gfx(octave_start, octave_end, active, value, name, pos_x1, pos_x2, pos_y1, pos_y2)(
+  active ? (color_d_red();) : (color_d_red_in(););
+  gfx_x = pos_x1;
+  gfx_y = pos_y1;
+  gfx_rectto(pos_x2, pos_y2);
+  gfx_setfont(1, "Monospace", 10);
+  octave_start == value || octave_end == value ? (
+    mouse_x > pos_x1 && mouse_x < pos_x2 && mouse_y > pos_y1 && mouse_y < pos_y2 && active && in_proccess == 0 ? (
+      color_l_red();
+      gfx_x = pos_x1 + 1;
+      gfx_y = pos_y1 + 1;
+      gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+      color_d_gray();
+      gfx_measurestr(name, strw, strh);
+      gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+      gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+      gfx_drawstr(name);
+    ) : (
+      active ? (color_red();) : (color_red_in(););
+      gfx_x = pos_x1 + 1;
+      gfx_y = pos_y1 + 1;
+      gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+      active ? (color_d_gray();) : (color_d_gray_in(););
+      gfx_measurestr(name, strw, strh);
+      gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+      gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+      gfx_drawstr(name);
+    );
+  ) : (
+    active ? (color_d_gray();) : (color_black(););
+    gfx_x = pos_x1 + 1;
+    gfx_y = pos_y1 + 1;
+    gfx_rectto(pos_x2 - 1, pos_y2 - 1);
+    active ? (color_red();) : (color_red_in(););
+    gfx_measurestr(name, strw, strh);
+    gfx_x = num_round((pos_x1 + pos_x2 - strw) / 2);
+    gfx_y = num_round((pos_y1 + pos_y2 - strh) / 2);
+    gfx_drawstr(name);
+  );
+  gfx_x = pos_x2;
+  gfx_y = pos_y2;
+);
+
+function button_octave_start_end(octave_start* , octave_end* , active, x, y)(
+  or_k = 0;
+  or_i = 0;
+  or_x = x;
+  or_y = y;
+  mouse_cap != 1 ? octave_start_trg = octave_end_trg = octave_pre = octave_init_trg = 0;
+  !in_proccess && mouse_cap == 1 && active ? (
+    (mouse_x >= x && mouse_x < x + 190) && ((mouse_y >= y && mouse_y < y + 20)) ? octave_pre = max(0, ceil((mouse_x - x) / 19) - 1);
+    octave_pre == octave_start && octave_end_trg == 0 ? (
+      octave_start_trg = 1;
+      octave_end_trg = 0;
+      octave_init_trg = 1;
+    );
+    octave_pre == octave_end - 1 && octave_start_trg == 0 ? (
+      octave_end_trg = 1;
+      octave_start_trg = 0;
+      octave_init_trg = 1;
+    );
+    octave_start_trg == 1 && (octave_start < octave_end - 1 || octave_pre < octave_start) ? (
+      octave_start = octave_pre;
+    ) : (
+      octave_init_trg ? (
+        octave_end_trg = 1;
+        octave_start_trg = 0;
+      );
+    );
+    octave_end_trg == 1 && (octave_start < octave_end - 1 || octave_pre > octave_start) ? (
+      octave_end = octave_pre + 1;
+    ) : (
+      octave_init_trg ? (
+        octave_end_trg = 0;
+        octave_start_trg = 1;
+      );
+    );
+  );
+  loop(10, (
+    button_octave_start_end_gfx(octave_start, octave_end - 1, active_rng_sel, or_i, sprintf(#, "%i", or_i - 1), or_x + or_k, or_x + 20 + or_k, or_y, or_y + 20);
+    or_i += 1;
+    or_k += 19;
+  ));
+  gfx_x = x + 190;
+  gfx_y = or_y + 20;
+);
+
+function wheel(on_off, x, y, w, h, value* , name)(
+  x1 = x;
+  x2 = x + w;
+  y1 = y;
+  y2 = y + h;
+  (mouse_x >= x1 && mouse_x <= x2 && mouse_y >= y1 && mouse_y <= y2) && name != "PW" && !in_proccess ? (
+    hvr = 1;
+  ) : (
+    hvr = 0;
+  );
+  on_off || hvr ? (
+    color_red();
+  ) : (
+    name != "PW" ? (
+      color_red_in_wheel();
+    ) : (
+      color_red_in();
+    );
+  );
+  gfx_setfont(4, "Monospace", 8);
+  gfx_measurestr(name, strnw, strnh);
+  gfx_x = ((x1 + x2) / 2 - (strnw / 2));
+  gfx_y = y1;
+  gfx_drawstr(name);
+  y1_wheel = y1 + strnh + 2;
+  y2_wheel = y2 - strnh + 1;
+  on_off || hvr ? (
+    color_d_gray();
+  ) : (
+    name != "PW" ? (
+      color_d_gray_in_wheel();
+    ) : (
+      color_d_gray_in();
+    );
+  );
+  gfx_x = x1;
+  gfx_y = y1_wheel;
+  gfx_rectto(x2, y2_wheel);
+  on_off || hvr ? (
+    color_d_red();
+  ) : (
+    name != "PW" ? (
+      color_d_red_in_wheel();
+    ) : (
+      color_d_red_in();
+    );
+  );
+  draw_box(x1, y1_wheel, x2, y2_wheel);
+  wheel_h = y2_wheel - y1_wheel;
+  wheel_center_h = wheel_h / 10;
+  !on_off && mouse_cap == 1 && name != "PW" && (mouse_x >= x1 && mouse_x <= x2 && mouse_y >= y1_wheel + 1 && mouse_y <= y2_wheel - 1) && !in_proccess ? (
+    value = 127 - ceil(max(0, min(127, (mouse_y - y1_wheel - 1 - wheel_center_h / 2) / ((wheel_h - 2 - wheel_center_h) / 127))));
+  );
+  hd2 = wheel_h * 0.5;
+  steps = ceil(wheel_h / 8);
+  i = 0;
+  on_off || hvr ? (
+    color_d_red();
+  ) : (
+    name != "PW" ? (
+      color_d_red_in_wheel();
+    ) : (
+      color_d_red_in();
+    );
+  );
+  loop(steps * 2, (
+    i += 1;
+    a = (i - steps) * 0.5 * $pi / steps;
+    line_y = y1_wheel + (1 + sin(a)) * hd2;
+    gfx_line(x1, line_y, x2 - 1, line_y);
+  ));
+  on_off || hvr ? (
+    color_red();
+  ) : (
+    name != "PW" ? (
+      color_red_in_wheel();
+    ) : (
+      color_red_in();
+    );
+  );
+  rh_r = (wheel_h - wheel_center_h) / 127 * value;
+  gfx_x = x1 + 1;
+  gfx_y = y1_wheel + (wheel_h - (wheel_center_h - 1)) - rh_r;
+  gfx_rectto(x2 - 1, y2_wheel - rh_r);
+  valstr = #;
+  strcpy(valstr, value);
+  strcat(valstr, sprintf(#, "%i", value););
+  gfx_measurestr(valstr, strVw, strVh);
+  gfx_x = num_round((x1 + x2 - strVw) / 2);
+  gfx_y = y2_wheel + 3;
+  gfx_drawstr(valstr);
+  gfx_x = x + w;
+  gfx_y = y + h;
+);
+
+function wheel_pitch(x, y, w, h, value, value2, name)(
+  x1 = x;
+  x2 = x + w;
+  y1 = y;
+  y2 = y + h;
+  color_red();
+  gfx_setfont(4, "Monospace", 8);
+  gfx_measurestr(name, strnw, strnh);
+  gfx_x = ((x1 + x2) / 2 - (strnw / 2));
+  gfx_y = y1;
+  gfx_drawstr(name);
+  y1_wheel = y1 + strnh + 2;
+  y2_wheel = y2 - strnh + 1;
+  color_d_gray();
+  gfx_x = x1;
+  gfx_y = y1_wheel;
+  gfx_rectto(x2, y2_wheel);
+  color_d_red();
+  draw_box(x1, y1_wheel, x2, y2_wheel);
+  wheel_h = y2_wheel - y1_wheel;
+  hd2 = wheel_h * 0.5;
+  steps = ceil(wheel_h / 8);
+  i = 0;
+  color_d_red();
+  loop(steps * 2, (
+    i += 1;
+    a = (i - steps) * 0.5 * $pi / steps;
+    line_y = y1_wheel + (1 + sin(a)) * hd2;
+    gfx_line(x1, line_y, x2 - 1, line_y);
+  ));
+  color_m_red();
+  rh = (wheel_h - wheel_h / 10) / 127 * value;
+  gfx_x = x1 + 1;
+  gfx_y = y1_wheel + (wheel_h - (wheel_h / 10 - 1)) - rh;
+  gfx_rectto(x2 - 1, y2_wheel - rh);
+  color_red();
+  rh = (wheel_h - wheel_h / 10) / 127 * value2;
+  gfx_x = x1 + 1;
+  gfx_y = y1_wheel + (wheel_h - (wheel_h / 10 - 1)) - rh;
+  gfx_rectto(x2 - 1, y2_wheel - rh);
+  valstr = #;
+  strcpy(valstr, value);
+  strcat(valstr, sprintf(#, "%i", value););
+  gfx_measurestr(valstr, strVw, strVh);
+  gfx_x = num_round((x1 + x2 - strVw) / 2);
+  gfx_y = y2_wheel + 3;
+  gfx_drawstr(valstr);
+  gfx_x = x + w;
+  gfx_y = y + h;
+);
+
+function one_note_array()(
+  i = k = 0;
+  loop(132, (
+    note_scale[i % 12] == 1 ? (
+      ns_on_notes[k] = i;
+      k += 1;
+    );
+    i += 1;
+  ));
+);
+
+@serialize
+file_var(0, mode);
+file_var(0, note_scale);
+file_var(0, ns_cst[-1]);
+file_var(0, ns_cst[0]);
+file_var(0, ns_cst[1]);
+file_var(0, ns_cst[2]);
+file_var(0, ns_cst[3]);
+file_var(0, ns_cst[4]);
+file_var(0, ns_cst[5]);
+file_var(0, ns_cst[6]);
+file_var(0, ns_cst[7]);
+file_var(0, ns_cst[8]);
+file_var(0, ns_cst[9]);
+file_var(0, ns_cst[10]);
+file_var(0, ns_cst[11]);
+file_var(0, pr_start_note);
+file_var(0, main_note);
+file_var(0, one_note_scale);
+file_var(0, grid_view);
+file_var(0, grid_pitch_quan);
+file_var(0, fltr_value_mw_on);
+file_var(0, fltr_value_cc74_on);
+file_var(0, fltr_value_mw);
+file_var(0, fltr_value_cc74);
+file_var(0, fltr_reverse);
+file_var(0, octave_pw);
+file_var(0, octave_start);
+file_var(0, octave_end);
+file_var(0, pitch_dimension);
+file_var(0, theme_color);
+file_var(0, wm_delay_mode);
+file_var(0, wm_return);
+file_var(0, wm_delay_pre);
+file_var(0, mouse_wheel_step);
+file_var(0, sl_delay_mode);
+file_var(0, sl_delay_pre);
+
+@gfx 964 540
+gfx_getchar();
+
+gfx_footer_height = 90;
+padd_top = padd_bottom = padd_left = padd_right = padd_left_middle = padd_right_middle = 20;
+padd_bottom_footer = 25;
+left_block_width = 246;
+right_block_width = 250;
+pad_min_height = 385;
+pad_min_width = 388;
+gfx_h_pad_resize = gfx_h - pad_min_height - padd_top - padd_bottom - padd_bottom_footer - gfx_footer_height;
+gfx_w_pad_resize = gfx_w - pad_min_width - padd_left - padd_right - padd_left_middle - padd_right_middle - right_block_width - left_block_width;
+gfx_h_mrgn = 30;
+gfx_w_mrgn = 20;
+
+// resize
+pad.h = max(pad_min_height, pad_min_height + gfx_h_pad_resize);
+pad.y2 = pad.y + pad.h;
+pad.w = max(pad_min_width, pad_min_width + gfx_w_pad_resize);
+
+mode != 2 ? (
+  grid_tile_x = num_round(pad.w / 12);
+  pad.w_corr = 0;
+) : (
+  grid_tile_x = num_round(pad.w / (grid_view ? (note_scale[-1]) : (12);));
+  grid_view ? (pad.w_corr = num_round((grid_tile_x * (grid_view ? (note_scale[-1]) : (12);) - pad.w) / 2);) : (pad.w_corr = 0;);
+);
+pad.x1 = pad.x - pad.w_corr;
+pad.x2 = pad.x + pad.w;
+
+//draw modes
+button_mode(mode, fake_active, 0, "Pitch Wheel", 20, 98, 20, 40);
+button_mode(mode, fake_active, 1, "One Note", 97, 158, 20, 40);
+button_mode(mode, fake_active, 2, "Grid", 157, 195, 20, 40);
+button_mode(mode, fake_active, 3, "Grid Pitch", 194, 266, 20, 40);
+show_char_name(fake_active, "Mode", 20, gfx_y + 2);
+
+// draw piano roll
+function piano_roll_mode_1()(!one_note_scale && (note_scale == ns_cst || !mouse_on_piano_roll()) || (in_proccess && !one_note_scale));
+function piano_roll_mode_2()(note_scale == ns_cst || !mouse_on_piano_roll() || in_proccess);
+
+mode == 0 || mode == 1 || mode == 2 || (mode == 0 || mode == 1 && note_scale != ns_cst) ? (active_pr = 1;) : (active_pr = 0;);
+mode == 0 || (mode == 1 && !piano_roll_mode_1()) || (mode == 2 && !piano_roll_mode_2()) || (note_scale == ns_cst && mode != 3) ? (color_d_red()) : (color_d_red_in());
+pr_x = 20;
+pr_w = 183;
+pr_y = gfx_y_tmp = gfx_y + gfx_h_mrgn;
+pr_h = pr_w / 3.55;
+gfx_x = pr_x;
+gfx_y = pr_y;
+gfx_rectto(pr_x + pr_w, pr_y + pr_h);
+gpr_x = pr_x + 1;
+gpr_y = pr_y + 1;
+gpr_x_stp = pr_w / 10.75;
+gpr_x_stp2 = gpr_x_stp * 1.47;
+gpr_x2 = gpr_x + gpr_x_stp;
+gpr_x3 = gpr_x;
+gpr_x4 = gpr_x + gpr_x_stp2;
+gpr_y2 = gpr_y + pr_h / 1.75;
+gpr_y3 = gpr_y2 + pr_h / 2.5;
+
+mode == 0 || (mode == 1 && !piano_roll_mode_1()) || mode == 3 || (mode == 2 && !piano_roll_mode_2()) ? (
+  // Button C
+  button_pr(pr_start_note, active_pr, 0, "C", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  gpr_x3 = gpr_x4 + 1;
+  gpr_x4 = gpr_x3 + gpr_x_stp2;
+  // Button C#
+  button_pr(pr_start_note, active_pr, 1, "C#", 1, gpr_x, gpr_x2, gpr_y, gpr_y2, 0, 0, 0, 0);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp / 2 + 1;
+  // Button D
+  button_pr(pr_start_note, active_pr, 2, "D", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  gpr_x3 = gpr_x4 + 1;
+  gpr_x4 = gpr_x3 + gpr_x_stp2;
+  // Button D#
+  button_pr(pr_start_note, active_pr, 3, "D#", 1, gpr_x, gpr_x2, gpr_y, gpr_y2, 0, 0, 0, 0);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  // Button E
+  button_pr(pr_start_note, active_pr, 4, "E", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+  gpr_x = gpr_x2 + 1;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  gpr_x3 = gpr_x4 + 1;
+  gpr_x4 = gpr_x3 + gpr_x_stp2;
+  // Button F
+  button_pr(pr_start_note, active_pr, 5, "F", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  gpr_x3 = gpr_x4 + 1;
+  gpr_x4 = gpr_x3 + gpr_x_stp2;
+  // Button F#
+  button_pr(pr_start_note, active_pr, 6, "F#", 1, gpr_x, gpr_x2, gpr_y, gpr_y2, 0, 0, 0, 0);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + ceil(gpr_x_stp / 2);
+  // Button G
+  button_pr(pr_start_note, active_pr, 7, "G", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  gpr_x3 = gpr_x4 + 1;
+  gpr_x4 = gpr_x3 + gpr_x_stp2;
+  // Button G#
+  button_pr(pr_start_note, active_pr, 8, "G#", 1, gpr_x, gpr_x2, gpr_y, gpr_y2, 0, 0, 0, 0);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + ceil(gpr_x_stp / 2);
+  // Button A
+  button_pr(pr_start_note, active_pr, 9, "A", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  gpr_x3 = gpr_x4 + 1;
+  gpr_x4 = gpr_x3 + gpr_x_stp2;
+  // Button A#
+  button_pr(pr_start_note, active_pr, 10, "A#", 1, gpr_x, gpr_x2, gpr_y, gpr_y2, 0, 0, 0, 0);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  // Button B
+  button_pr(pr_start_note, active_pr, 11, "B", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+);
+
+//draw piano roll in Grid mode
+(mode == 1 && piano_roll_mode_1()) || (mode == 2 && piano_roll_mode_2()) ? (
+  // Button C
+  button_pr_cst(note_scale, fake_active, 0, "C", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  gpr_x3 = gpr_x4 + 1;
+  gpr_x4 = gpr_x3 + gpr_x_stp2;
+  // Button C#
+  button_pr_cst(note_scale, fake_active, 1, "C#", 1, gpr_x, gpr_x2, gpr_y, gpr_y2, 0, 0, 0, 0);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp / 2 + 1;
+  // Button D
+  button_pr_cst(note_scale, fake_active, 2, "D", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  gpr_x3 = gpr_x4 + 1;
+  gpr_x4 = gpr_x3 + gpr_x_stp2;
+  // Button D#
+  button_pr_cst(note_scale, fake_active, 3, "D#", 1, gpr_x, gpr_x2, gpr_y, gpr_y2, 0, 0, 0, 0);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  // Button E
+  button_pr_cst(note_scale, fake_active, 4, "E", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+  gpr_x = gpr_x2 + 1;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  gpr_x3 = gpr_x4 + 1;
+  gpr_x4 = gpr_x3 + gpr_x_stp2;
+  // Button F
+  button_pr_cst(note_scale, fake_active, 5, "F", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  gpr_x3 = gpr_x4 + 1;
+  gpr_x4 = gpr_x3 + gpr_x_stp2;
+  // Button F#
+  button_pr_cst(note_scale, fake_active, 6, "F#", 1, gpr_x, gpr_x2, gpr_y, gpr_y2, 0, 0, 0, 0);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + ceil(gpr_x_stp / 2);
+  // Button G
+  button_pr_cst(note_scale, fake_active, 7, "G", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  gpr_x3 = gpr_x4 + 1;
+  gpr_x4 = gpr_x3 + gpr_x_stp2;
+  // Button G#
+  button_pr_cst(note_scale, fake_active, 8, "G#", 1, gpr_x, gpr_x2, gpr_y, gpr_y2, 0, 0, 0, 0);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + ceil(gpr_x_stp / 2);
+  // Button A
+  button_pr_cst(note_scale, fake_active, 9, "A", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  gpr_x3 = gpr_x4 + 1;
+  gpr_x4 = gpr_x3 + gpr_x_stp2;
+  // Button A#
+  button_pr_cst(note_scale, fake_active, 10, "A#", 1, gpr_x, gpr_x2, gpr_y, gpr_y2, 0, 0, 0, 0);
+  gpr_x = gpr_x2;
+  gpr_x2 = gpr_x + gpr_x_stp;
+  // Button B
+  button_pr_cst(note_scale, fake_active, 11, "B", 0, gpr_x, gpr_x2, gpr_y, gpr_y2, gpr_x3, gpr_x4, gpr_y2, gpr_y3);
+);
+
+note_scale != ns_cst ? (
+  mode == 2 ? (scale_note_start = pr_start_note);
+  (mode == 1 || mode == 0) ? (main_note = pr_start_note);
+) : (
+  mode == 2 ? (scale_note_start = 0);
+  (mode == 1 || mode == 0) ? (main_note = pr_start_note);
+);
+gfx_x_tmp = gfx_x + 10;
+show_char_name(active_pr, "Main Note Selection", 20, gfx_y + 2);
+
+//draw note info
+show_char_info(msg2_gfx, gfx_x_tmp, gfx_x_tmp + 54, gfx_y_tmp, gfx_y_tmp + 51);
+gfx_y_tmp = gfx_y + gfx_h_mrgn;
+show_char_name(fake_active, "Note", gfx_x_tmp, gfx_y + 2);
+
+//draw key scale modes
+(mode == 1 && !one_note_scale) || mode == 2 ? (active_scl_sel = 1;) : (active_scl_sel = 0;);
+button(note_scale, active_scl_sel, ns_full, "Chromatic", 20, 146, gfx_y_tmp, gfx_y_tmp + 20);
+button(note_scale, active_scl_sel, ns_cst, "Custom", 20, 146, gfx_y - 1, gfx_y + 20);
+button(note_scale, active_scl_sel, ns_maj, "Major", 20, 146, gfx_y - 1, gfx_y + 20);
+button(note_scale, active_scl_sel, ns_n_min, "Natural Minor", 20, 146, gfx_y - 1, gfx_y + 20);
+button(note_scale, active_scl_sel, ns_m_min, "Melodic Minor", 20, 146, gfx_y - 1, gfx_y + 20);
+button(note_scale, active_scl_sel, ns_h_min, "Harmonic Minor", 20, 146, gfx_y - 1, gfx_y + 20);
+button(note_scale, active_scl_sel, ns_pen, "Pentatonic", 20, 146, gfx_y - 1, gfx_y + 20);
+button(note_scale, active_scl_sel, ns_blu, "Blues", 20, 146, gfx_y - 1, gfx_y + 20);
+
+button(note_scale, active_scl_sel, ns_maj_tr, "Major Triad", 145, 266, gfx_y_tmp, gfx_y_tmp + 20);
+button(note_scale, active_scl_sel, ns_min_tr, "Minor Triad", 145, 266, gfx_y - 1, gfx_y + 20);
+button(note_scale, active_scl_sel, ns_maj_7th, "Major 7th", 145, 266, gfx_y - 1, gfx_y + 20);
+button(note_scale, active_scl_sel, ns_min_7th, "Minor 7th", 145, 266, gfx_y - 1, gfx_y + 20);
+button(note_scale, active_scl_sel, ns_dom_7th, "Dominant 7th", 145, 266, gfx_y - 1, gfx_y + 20);
+button(note_scale, active_scl_sel, ns_dim_tr, "Diminished Triad", 145, 266, gfx_y - 1, gfx_y + 20);
+button(note_scale, active_scl_sel, ns_dim_7th, "Diminished 7th", 145, 266, gfx_y - 1, gfx_y + 20);
+button(note_scale, active_scl_sel, ns_aug, "Augmented 5th", 145, 266, gfx_y - 1, gfx_y + 20);
+show_char_name(active_scl_sel, "Note Key Scales", 20, gfx_y + 2);
+
+//draw only scaled button and one note button
+gfx_y_tmp = gfx_y + gfx_h_mrgn;
+mode == 2 && note_scale != ns_full ? (active_sl_sel = 1;) : (active_sl_sel = 0;);
+button_on_off(grid_view, active_sl_sel, "Only Scaled", 20, 133, gfx_y_tmp, gfx_y_tmp + 20);
+mode == 1 ? (active_one_sel = 1;) : (active_one_sel = 0;);
+button_on_off(one_note_scale, active_one_sel, "Single Note", 153, 266, gfx_y_tmp, gfx_y_tmp + 20);
+
+//draw pitch quantize button and theme buttons
+gfx_y_tmp = gfx_y + gfx_h_mrgn;
+mode == 0 || mode == 3 ? (active_pq_sel = 1;) : (active_pq_sel = 0;);
+button_on_off(grid_pitch_quan, active_pq_sel, "Pitch Quantize", 20, 133, gfx_y_tmp - 10, gfx_y_tmp + 10);
+
+// draw pad
+show_char_name(fake_active, "Pad", pad.x1, pad.y2 + 2);
+mode == 0 || mode == 1 ? (
+  color_d_gray();
+  gfx_x = pad.x1;
+  gfx_y = pad.y1;
+  gfx_rectto(pad.x2, pad.y2);
+  color_d_red();
+  draw_box(pad.x1, pad.y1, pad.x2, pad.y2);
+
+  // draw middle lines
+  pad.line_y = pad.w / 2 - pad_marker_size * 3;
+  pad.line_x = pad.h / 2 - pad_marker_size * 3;
+  pad.Ax = pad.x1 + pad.w / 2;
+  pad.Ay = pad.y1 + 12;
+  pad.Bx = pad.x1 + pad.w / 2;
+  pad.By = pad.y2 - 12;
+  pad.Cx = pad.x1 + 12;
+  pad.Cy = pad.y1 + pad.h / 2;
+  pad.Dx = pad.x2 - 12;
+  pad.Dy = pad.y2 - pad.h / 2;
+
+  // draw  vertical lines
+  color_l_gray();
+  gfx_line(pad.Ax, pad.Ay, pad.Ax, pad.Ay + pad.line_x);
+  gfx_line(pad.Bx, pad.By - 1, pad.Bx, pad.By - pad.line_x);
+  mode == 0 ? (
+    gfx_line(pad.Cx, pad.Cy, pad.Cx + pad.line_y, pad.Cy);
+    gfx_line(pad.Dx - 1, pad.Dy, pad.Dx - pad.line_y - 1, pad.Dy);
+  );
+  mode == 1 ? (
+    mode_one_note_line_height = pad.y + pad.h / 11;
+    color_gray();
+    loop(10, (
+      gfx_line(pad.Cx, mode_one_note_line_height, pad.Cx + pad.line_y, mode_one_note_line_height);
+      gfx_line(pad.Dx - 1, mode_one_note_line_height, pad.Dx - pad.line_y, mode_one_note_line_height);
+      mode_one_note_line_height += pad.h / 11;
+    ));
+  );
+);
+
+// draw center dot
+mode != 2 && mode != 3 ? (
+  gfx_x = pad.Ax;
+  gfx_y = pad.Cy;
+  gfx_setpixel(0.3, 0.3, 0.3);
+);
+
+//draw grid
+octave_start = min(9, max(0, octave_start));
+octave_end = min(10, max(1, octave_end));
+octave_start == octave_end && octave_end >= 2 ? (octave_end -= 1;);
+octave_start > octave_end ? (
+  octave_start_bck = octave_start;
+  octave_start = octave_end;
+  octave_end = octave_start_bck;
+);
+octave_range = max(1, abs(octave_end - octave_start));
+
+// mode grid
+mode == 2 ? (
+
+  grid_tile_x = num_round(pad.w / (grid_view ? (note_scale[-1]) : (12);));
+  grid_tile_y = num_round(pad.h / octave_range);
+  grid_tile_correction_y = pad.h - (grid_tile_y * octave_range);
+  gty_1 = pad.y2 - grid_tile_y;
+  gty_2 = pad.y2 + 1;
+
+  i = octave_start * 12;
+  y = 0;
+  loop_cnt = 0;
+  loop(octave_range, (
+    loop_cnt == (octave_range - 1) ? (gty_1 -= grid_tile_correction_y;);
+    nn = 0;
+    gtmm = 0;
+    loop(12, (
+      grid_view ? (
+        note_scale[nn - scale_note_start < 0 ? (nn - scale_note_start + 12) : (nn - scale_note_start);] ? (
+          button_pad(
+            msg2,
+            mode,
+            i + nn,
+            note_names[nn],
+            (i / 12),
+            diez_draw[nn],
+            note_scale[nn - scale_note_start < 0 ? (nn - scale_note_start + 12) : (nn - scale_note_start);],
+            pad.x1 + (grid_tile_x * gtmm),
+            pad.x1 + (grid_tile_x * (gtmm + 1)) + 1,
+            gty_1 - y,
+            gty_2 - y
+          );
+          gtmm += 1;
+        );
+      ) : (
+        button_pad(
+          msg2,
+          mode,
+          i + nn,
+          note_names[nn],
+          (i / 12),
+          diez_draw[nn],
+          note_scale[nn - scale_note_start < 0 ? (nn - scale_note_start + 12) : (nn - scale_note_start);],
+          pad.x1 + (grid_tile_x * gtmm),
+          pad.x1 + (grid_tile_x * (gtmm + 1)) + 1,
+          gty_1 - y,
+          gty_2 - y
+        );
+        gtmm += 1;
+      );
+      nn += 1;
+    ));
+    i += 12;
+    y += grid_tile_y;
+    loop_cnt += 1;
+  ));
+);
+
+//mode grid pitch
+mode == 3 ? (
+  grid_tile_x = num_round(pad.w / 12);
+  grid_tile_y = num_round(pad.h / octave_range);
+  grid_tile_correction_y = pad.h - (grid_tile_y * octave_range);
+  gty_1 = pad.y2 - grid_tile_y;
+  gty_2 = pad.y2 + 1;
+
+  i = octave_start * 12;
+  y = 0;
+  loop_cnt = 0;
+  loop(octave_range, (
+    loop_cnt == (octave_range - 1) ? (gty_1 -= grid_tile_correction_y;);
+    nn = 0;
+    gtmm = 0;
+    loop(12, (
+      button_pad_pitch(
+        msg2, mode,
+        i + nn, note_names[nn],
+        (i / 12), diez_draw[nn],
+        pad.x1 + (grid_tile_x * gtmm),
+        pad.x1 + (grid_tile_x * (gtmm + 1)) + 1, gty_1 - y, gty_2 - y
+      );
+      gtmm += 1;
+      nn += 1;
+    ));
+    i += 12;
+    y += grid_tile_y;
+    loop_cnt += 1;
+  ));
+);
+
+// draw ghost marker
+mode == 0 || mode == 1 ? (
+  color_gray();
+  gfx_x = pad.x2 + pad.x1 + pad_marker_size / 2 - cur_mousex - 1;
+  gfx_y = pad.y2 + pad.y1 + pad_marker_size / 2 - cur_mousey - 1;
+  gfx_rectto(pad.x2 + pad.x1 + pad_marker_size / 2 - cur_mousex - pad_marker_size + 1, pad.y2 + pad.y + pad_marker_size / 2 - cur_mousey - pad_marker_size + 1);
+
+  // draw marker
+  color_l_red();
+  gfx_x = cur_mousex - pad_marker_size / 2 + 1;
+  gfx_y = cur_mousey - pad_marker_size / 2 + 1;
+  gfx_rectto(cur_mousex + pad_marker_size / 2 - 1, cur_mousey + pad_marker_size / 2 - 1);
+
+  // draw text marker
+  marker_text_y = ceil((yvalue * 200) / 127) - 100;
+  color_red();
+  gfx_setfont(4, "Monospace", 10);
+  gfx_x = pad.x1 + 18;
+  gfx_y = pad.y1 + 3;
+  marker_text_x_m = max(min(ceil(((floor(mouse_x - pad.x1 - pad_marker_size / 2) / pad_q.x) * 200) / 127) - 100, 100), -100);
+  marker_text_y_m = max(min(ceil(((127 - floor(mouse_y - pad.y1 - pad_marker_size / 2) / pad_q.y) * 200) / 127) - 100, 100), -100);
+  gfx_x = pad.x2 - 71;
+  gfx_drawstr("X");
+  gfx_x = pad.x2 - 64;
+  mouse_on_pad() ? (
+    gfx_drawnumber(marker_text_x_m, 0);
+  ) : (
+    gfx_drawnumber(mw_p, 0);
+  );
+  gfx_x = pad.x2 - 36;
+  gfx_drawstr("Y");
+  gfx_x = pad.x2 - 29;
+  mouse_on_pad() ? (
+    gfx_drawnumber(marker_text_y_m, 0);
+  ) : (
+    gfx_drawnumber(marker_text_y, 0);
+  );
+  gfx_y = pad.y2 - 16;
+  color_l_gray();
+  gfx_x = pad.x2 - 71;
+  gfx_drawstr("X");
+  gfx_x = pad.x2 - 64;
+  mouse_on_pad() ? (
+    gfx_drawnumber(-marker_text_x_m, 0);
+  ) : (
+    gfx_drawnumber(-mw_p, 0);
+  );
+  gfx_x = pad.x2 - 36;
+  gfx_drawstr("Y");
+  gfx_x = pad.x2 - 29;
+  mouse_on_pad() ? (
+    gfx_drawnumber(-marker_text_y_m, 0);
+  ) : (
+    gfx_drawnumber(-marker_text_y, 0);
+  );
+
+  //draw note info pad
+  show_char_info_pad(msg2_gfx, pad.x1, pad.x2, pad.y1, pad.y2);
+);
+
+//draw pitch wheel, mod wheel, cc74
+gfx_y_tmp = pad.y2 + 25;
+mode == 1 ? (
+  pw_on = 0;
+  pitch_value_128 = pitch_value;
+) : (
+  pw_on = 1;
+  pitch_value_128 = pitch_value / 128;
+);
+mode != 2 ? (
+  wheel(pw_on, 20, gfx_y_tmp - 2, 15, 90, pitch_value_128, "PW");
+  fltr_value_mw_on_post = fltr_value_mw_on;
+  fltr_value_cc74_on_post = fltr_value_cc74_on;
+) : (
+  wheel_pitch(20, gfx_y_tmp - 2, 15, 90, pitch_value, wm_pitch_value, "PW");
+  fltr_value_mw_on_post = fltr_value_cc74_on_post = 0;
+);
+
+wheel(fltr_value_mw_on_post, 45, gfx_y_tmp - 2, 15, 90, fltr_value_mw, "MW");
+wheel(fltr_value_cc74_on_post, 70, gfx_y_tmp - 2, 15, 90, fltr_value_cc74, "CUT");
+
+//draw modulation buttons
+mode != 2 ? (active_MC_sel = 1;) : (active_MC_sel = 0;);
+gfx_x_tmp = gfx_x_tmp_bpr = gfx_x + gfx_w_mrgn;
+button_on_off(fltr_value_mw_on, active_MC_sel, "Mod Wheel", gfx_x_tmp, gfx_x_tmp + 85, gfx_y_tmp, gfx_y_tmp + 20);
+button_on_off(fltr_value_cc74_on, active_MC_sel, "CC74 Cutoff", gfx_x + 5, gfx_x + 105, gfx_y_tmp, gfx_y_tmp + 20);
+button_on_off(fltr_reverse, active_MC_sel, "Reverse", gfx_x + 5, gfx_x + 55, gfx_y_tmp, gfx_y_tmp + 20);
+gfx_x1_tmp = gfx_x + gfx_w_mrgn;
+show_char_name(active_MC_sel, "Modwheel and Cutoff", gfx_x_tmp, gfx_y + 2);
+
+// draw octave selection in pitch wheel mode
+mode == 0 ? (active_oct_sel = 1;) : (active_oct_sel = 0;);
+o_pw_k = 0;
+o_pw_i = 0;
+o_pw_x = gfx_x1_tmp;
+o_pw_y = gfx_y_tmp;
+
+loop(10, (
+  button(octave_pw, active_oct_sel, o_pw_i, sprintf(#, "%i", o_pw_i - 1), o_pw_x + o_pw_k, o_pw_x + 20 + o_pw_k, o_pw_y, o_pw_y + 20);
+  o_pw_i += 1;
+  o_pw_k += 19;
+));
+gfx_x_tmp = gfx_x + gfx_w_mrgn;
+show_char_name(active_oct_sel, "Octave Selection", gfx_x1_tmp, gfx_y + 2);
+
+// draw octave start and octave end
+mode != 0 ? (active_rng_sel = 1;) : (active_rng_sel = 0;);
+button_octave_start_end(octave_start, octave_end, active_rng_sel, gfx_x_tmp, gfx_y_tmp);
+gfx_x1_tmp = gfx_x + gfx_w_mrgn;
+show_char_name(active_rng_sel, "Octave Range", gfx_x_tmp, gfx_y + 2);
+
+//draw pitch bend dimension
+mode == 0 || mode == 3 ? (active_pbd_sel = 1;) : (active_pbd_sel = 0;);
+i = 1;
+pb_x = gfx_x1_tmp;
+pb_x2 = 20;
+pb_y = gfx_y_tmp;
+loop(8, (
+  button(pitch_dimension, active_pbd_sel, i, sprintf(#, "%i", 12 * i), pb_x, pb_x + pb_x2, pb_y, pb_y + 20);
+  pb_x = pb_x + pb_x2 - 1;
+  i += 1;
+));
+gfx_x_tmp = gfx_x + gfx_w_mrgn;
+show_char_name(active_pbd_sel, "Pitch Dimension +/-", gfx_x1_tmp, gfx_y + 2);
+
+//draw big piano roll
+one_note_scale == 0 &&
+  (main_note >= 1 &&
+    (note_scale == ns_full ||
+      note_scale == ns_maj ||
+      note_scale == ns_m_min ||
+      note_scale == ns_h_min ||
+      note_scale == ns_maj_7th)) ||
+  (main_note >= 2 &&
+    (note_scale == ns_n_min ||
+      note_scale == ns_blu ||
+      note_scale == ns_min_7th ||
+      note_scale == ns_dom_7th)) ||
+  (main_note >= 3 &&
+    (note_scale == ns_pen ||
+      note_scale == ns_dim_7th)) ||
+  (main_note >= 4 &&
+    note_scale == ns_aug) ||
+  (main_note >= 5 &&
+    (note_scale == ns_maj_tr ||
+      note_scale == ns_min_tr)) ||
+  (main_note >= 6 &&
+    note_scale == ns_dim_tr) ?
+  (bpr_mode_1_correction = 1;) : (bpr_mode_1_correction = 0;);
+
+
+function bpr_color(diez, msg2, cnt, oct)(
+  (msg2 == cnt && send_on && sl_midi_pend == 0) || (main_note == cnt && send_on == 0 && sl_midi_pend != 0) ? (
+    mode == 2 || mode == 3 && (oct + 1 < octave_start || oct + 2 > octave_end) ? (
+      diez == 0 ? (color_d_gray_in();) : (color_d_gray(););
+    ) : (
+      color_red();
+    );
+  ) : (
+    (mode == 2 || mode == 3 && (oct + 1 < octave_start || oct + 2 > octave_end)) || (mode == 1 && (oct + 1 < octave_start || oct + 2 - bpr_mode_1_correction > octave_end)) ? (
+      diez == 0 ? (
+        color_d_gray_in();
+      ) : (
+        color_d_red_in();
+      );
+    ) : (
+      diez == 0 ? (
+        color_d_gray();
+      ) : (
+        color_d_red();
+      );
+    );
+  );
+);
+
+function bpr_rectto(x1, x2, y1, y2)(
+  gfx_x = x1;
+  gfx_y = y1;
+  gfx_rectto(x2, y2);
+);
+
+gfx_y_tmp = gfx_y + 20;
+i = gfx_x_tmp_bpr;
+cnt = 0;
+oct = -1;
+bpr_w = max(834, gfx_w - i - 20);
+bpr_h = 36;
+bpr_c = bpr_w - 570;
+bpr_c_17_1 = max(0, floor(bpr_c / (17 * 11)));
+bpr_c_17_1 < 1 ? (
+  bpr_c_4 = min(2, max(0, floor(bpr_c / (4 * 11))));
+  bpr_c_3 = max(0, floor((bpr_c - bpr_c_4 * 11 * 4) / (3 * 11)));
+  bpr_c_17_2 = bpr_c_17_3 = 0;
+) : (
+  bpr_c_17_2 = bpr_c_17_1 * 2;
+  bpr_c_17_3 = bpr_c_17_1 * 3;
+  bpr_ca = bpr_c - bpr_c_17_1 * 11 * 17;
+  bpr_c_4 = min(2, max(0, floor(bpr_ca / (4 * 11))));
+  bpr_c_3 = max(0, floor((bpr_ca - bpr_c_4 * 11 * 4) / (3 * 11)));
+);
+bpr_comp = max(2, 2 + floor((bpr_c - bpr_c_4 * 11 * 4 - bpr_c_3 * 11 * 3 - bpr_c_17_1 * 11 * 17) / 10));
+bpr_oct_w = max(50, 50 + bpr_c_4 * 4 + bpr_c_3 * 3 + bpr_c_17_1 * 17);
+bpr_oct_h_2 = num_round(bpr_h * 0.66);
+bpr_w_2 = 2;
+bpr_w_4 = 4;
+bpr_w_5 = 5;
+bpr_w_6 = 6;
+loop(11, (
+  (mode == 2 || mode == 3 && (oct + 1 < octave_start || oct + 2 > octave_end)) || (mode == 1 && (oct + 1 < octave_start || oct + 2 - bpr_mode_1_correction > octave_end)) ? (
+    color_d_gray();
+  ) : (
+    color_d_red();
+  );
+  bpr_rectto(i, i + bpr_oct_w, gfx_y_tmp, gfx_y_tmp + bpr_h + 2);
+  gfx_setfont(1, "Monospace", 8);
+  gfx_x = i + 1;
+  gfx_y += 2;
+  gfx_drawnumber(oct, 0);
+
+  // draw keys
+  // row 1
+  //C
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(i + 1, i + 1 + bpr_w_4 + bpr_c_4 + bpr_c_17_1, gfx_y_tmp + 1, gfx_y_tmp + bpr_oct_h_2);
+  cnt += 1;
+  //C#
+  bpr_color(1, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_5 + bpr_c_17_2, gfx_y_tmp + 1, gfx_y_tmp + bpr_oct_h_2);
+  cnt += 1;
+  //D
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_2 + bpr_c_3 + bpr_c_17_1, gfx_y_tmp + 1, gfx_y_tmp + bpr_oct_h_2);
+  cnt += 1;
+  //D#
+  bpr_color(1, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_5 + bpr_c_17_2, gfx_y_tmp + 1, gfx_y_tmp + bpr_oct_h_2);
+  cnt += 1;
+  //E
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_4 + bpr_c_4 + bpr_c_17_1, gfx_y_tmp + 1, gfx_y_tmp + bpr_oct_h_2);
+  cnt += 1;
+  //F
+  gfx_x += 1;
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_4 + bpr_c_4 + bpr_c_17_1, gfx_y_tmp + 1, gfx_y_tmp + bpr_oct_h_2);
+  cnt += 1;
+  //F#
+  bpr_color(1, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_5 + bpr_c_17_2, gfx_y_tmp + 1, gfx_y_tmp + bpr_oct_h_2);
+  cnt += 1;
+    //G
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_2 + bpr_c_3 + bpr_c_17_1, gfx_y_tmp + 1, gfx_y_tmp + bpr_oct_h_2);
+  cnt += 1;
+  //G#
+  bpr_color(1, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_5 + bpr_c_17_2, gfx_y_tmp + 1, gfx_y_tmp + bpr_oct_h_2);
+  cnt += 1;
+  //A
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_2 + bpr_c_3 + bpr_c_17_1, gfx_y_tmp + 1, gfx_y_tmp + bpr_oct_h_2);
+  cnt += 1;
+  //A#
+  bpr_color(1, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_5 + bpr_c_17_2, gfx_y_tmp + 1, gfx_y_tmp + bpr_oct_h_2);
+  cnt += 1;
+  //B
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_4 + bpr_c_4 + bpr_c_17_1, gfx_y_tmp + 1, gfx_y_tmp + bpr_oct_h_2);
+  cnt -= 11;
+
+  // row 2
+  //C
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(i + 1, i + 1 + bpr_w_6 + bpr_c_4 + bpr_c_17_2, gfx_y_tmp + bpr_oct_h_2, gfx_y_tmp + bpr_h + 1);
+  cnt += 2;
+  //D
+  gfx_x += 1;
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_6 + bpr_c_3 + bpr_c_17_3, gfx_y_tmp + bpr_oct_h_2, gfx_y_tmp + bpr_h + 1);
+  cnt += 2;
+  //E
+  gfx_x += 1;
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_6 + bpr_c_4 + bpr_c_17_2, gfx_y_tmp + bpr_oct_h_2, gfx_y_tmp + bpr_h + 1);
+  cnt += 1;
+  //F
+  gfx_x += 1;
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_6 + bpr_c_4 + bpr_c_17_2, gfx_y_tmp + bpr_oct_h_2, gfx_y_tmp + bpr_h + 1);
+  cnt += 2;
+  //G
+  gfx_x += 1;
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_6 + bpr_c_3 + bpr_c_17_3, gfx_y_tmp + bpr_oct_h_2, gfx_y_tmp + bpr_h + 1);
+  cnt += 2;
+  //A
+  gfx_x += 1;
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_6 + bpr_c_3 + bpr_c_17_3, gfx_y_tmp + bpr_oct_h_2, gfx_y_tmp + bpr_h + 1);
+  cnt += 2;
+  //B
+  gfx_x += 1;
+  bpr_color(0, msg2, cnt, oct);
+  bpr_rectto(gfx_x, gfx_x + bpr_w_6 + bpr_c_4 + bpr_c_17_2, gfx_y_tmp + bpr_oct_h_2, gfx_y_tmp + bpr_h + 1);
+  cnt += 1;
+  oct += 1;
+  i += bpr_oct_w + bpr_comp;
+));
+
+mode == 2 || (mode == 3 && !grid_view) ? ( // get start x position for right block
+  grid_view ? (
+    gfx_x_tmp = pad.x1 + grid_tile_x * note_scale[-1] + 20;
+  ) : (
+    gfx_x_tmp = pad.x1 + grid_tile_x * 12 + 20;
+  );
+) : (
+  gfx_x_tmp = pad.x2 + 20;
+);
+
+//draw panic button
+button_pnc(pnc, fake_active, 0, 1, "Panic", gfx_x_tmp, gfx_x_tmp + 117, pad.y1, pad.y1 + 50);
+
+//draw theme buttons
+gfx_y_tmp = gfx_y + gfx_h_mrgn;
+button(theme_color, fake_active, 0, "Red", gfx_x + 20, gfx_x + 77, pad.y1, pad.y1 + 20);
+button(theme_color, fake_active, 1, "Gray", gfx_x - 1, gfx_x + 56, pad.y1, pad.y1 + 20);
+show_char_name(fake_active, "Theme Color", gfx_x - 113, gfx_y + 2);
+
+// draw info
+show_char_name(fake_active, "Info", gfx_x_tmp, gfx_y_tmp - 10);
+gfx_setfont(1, "Monospace", 11);
+color_gray();
+gfx_x = gfx_x_tmp;
+gfx_y += 15;
+gfx_drawstr("Play - left click on pad");
+mode == 0 ? (
+  gfx_x = gfx_x_tmp;
+  gfx_y += 15;
+  gfx_drawstr("X-axis change mod wheel and cutof");
+  gfx_x = gfx_x_tmp;
+  gfx_y += 15;
+  gfx_drawstr("Y-axis change pitch");
+);
+
+mode == 1 ? (
+  gfx_x = gfx_x_tmp;
+  gfx_y += 15;
+  gfx_drawstr("X-axis change mod wheel and cutof");
+  gfx_x = gfx_x_tmp;
+  gfx_y += 15;
+  gfx_drawstr("Y-axis change note");
+);
+
+mode == 2 ? (
+  gfx_x = gfx_x_tmp;
+  gfx_y += 15;
+  gfx_drawstr("Hold left click and move mouse");
+  gfx_x = gfx_x_tmp;
+  gfx_y += 15;
+  gfx_drawstr("Scroll wheel mouse to change pitch");
+  gfx_x = gfx_x_tmp;
+  gfx_y += 15;
+  gfx_drawstr("Freeze note - left click + ctrl ");
+);
+
+mode == 3 ? (
+  gfx_x = gfx_x_tmp;
+  gfx_y += 15;
+  gfx_drawstr("X-axis change pitch");
+  gfx_x = gfx_x_tmp;
+  gfx_y += 15;
+  gfx_drawstr("Y-axis change mod wheel and cutoff");
+);
+
+mode != 2 ? (
+  gfx_x = gfx_x_tmp;
+  gfx_y += 15;
+  gfx_drawstr("X-axis only - left click + ctrl");
+  gfx_x = gfx_x_tmp;
+  gfx_y += 15;
+  gfx_drawstr("Y-axis only - left click + shift");
+);
+gfx_y_tmp += gfx_h_mrgn + 65;
+
+//draw Pitch Wheel Mouse and return buttons
+mode == 2 ? (active_pwm_sel = active_pwm_sel_pre = 1;) : (active_pwm_sel = active_pwm_sel_pre = 0;);
+wm_delay_mode != 0 && mode == 2 ? (active_pwm_sel = 1;) : (active_pwm_sel = 0;);
+button(wm_delay_mode, active_pwm_sel_pre, 1, "Each", gfx_x_tmp, gfx_x_tmp + 30, gfx_y_tmp, gfx_y_tmp + 20);
+button(wm_delay_mode, active_pwm_sel_pre, 2, "Divide", gfx_x - 1, gfx_x + 45, gfx_y_tmp, gfx_y_tmp + 20);
+button(wm_delay_mode, active_pwm_sel_pre, 0, "OFF", gfx_x - 1, gfx_x + 24, gfx_y_tmp, gfx_y_tmp + 20);
+button_on_off(wm_return, active_pwm_sel, "Return", gfx_x + 10, gfx_x + 55, gfx_y_tmp, gfx_y_tmp + 20);
+show_char_name(active_pwm_sel_pre, "Pitch Wheel Mouse", gfx_x_tmp, gfx_y + 2);
+
+//draw Pitch Wheel Mouse Delay
+gfx_y_tmp = gfx_y + 20;
+button(wm_delay_pre, active_pwm_sel, 5, "5", gfx_x_tmp, gfx_x_tmp + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(wm_delay_pre, active_pwm_sel, 10, "10", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(wm_delay_pre, active_pwm_sel, 20, "20", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(wm_delay_pre, active_pwm_sel, 30, "30", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(wm_delay_pre, active_pwm_sel, 50, "50", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(wm_delay_pre, active_pwm_sel, 100, "100", gfx_x - 1, gfx_x + 25, gfx_y_tmp, gfx_y_tmp + 20);
+button(wm_delay_pre, active_pwm_sel, 250, "250", gfx_x - 1, gfx_x + 25, gfx_y_tmp, gfx_y_tmp + 20);
+button(wm_delay_pre, active_pwm_sel, 500, "500", gfx_x - 1, gfx_x + 25, gfx_y_tmp, gfx_y_tmp + 20);
+show_char_name(active_pwm_sel, "Delay", gfx_x_tmp, gfx_y + 2);
+
+// Draw Pitch Wheel Mouse Steps
+gfx_y_tmp = gfx_y + 20;
+button(mouse_wheel_step, active_pwm_sel_pre, 1, "1", gfx_x_tmp, gfx_x_tmp + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(mouse_wheel_step, active_pwm_sel_pre, 1 / 2, "2", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(mouse_wheel_step, active_pwm_sel_pre, 1 / 4, "4", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(mouse_wheel_step, active_pwm_sel_pre, 1 / 6, "6", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(mouse_wheel_step, active_pwm_sel_pre, 1 / 12, "12", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(mouse_wheel_step, active_pwm_sel_pre, 1 / 24, "24", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(mouse_wheel_step, active_pwm_sel_pre, 1 / 48, "48", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(mouse_wheel_step, active_pwm_sel_pre, 1 / 96, "96", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(mouse_wheel_step, active_pwm_sel_pre, 1 / 127.5, "Full", gfx_x - 1, gfx_x + 30, gfx_y_tmp, gfx_y_tmp + 20);
+show_char_name(active_pwm_sel, "Steps", gfx_x_tmp, gfx_y + 2);
+
+//draw Slide Delay buttons
+gfx_y_tmp = gfx_y + gfx_h_mrgn;
+mode == 2 ? (active_sl_sel = active_sl_sel_pre = 1;) : (active_sl_sel = active_sl_sel_pre = 0;);
+sl_delay_mode != 0 && mode == 2 ? (active_sl_sel = 1;) : (active_sl_sel = 0;);
+button(sl_delay_mode, active_sl_sel_pre, 1, "Each", gfx_x_tmp, gfx_x_tmp + 30, gfx_y_tmp, gfx_y_tmp + 20);
+button(sl_delay_mode, active_sl_sel_pre, 2, "Divide", gfx_x - 1, gfx_x + 45, gfx_y_tmp, gfx_y_tmp + 20);
+button(sl_delay_mode, active_sl_sel_pre, 0, "OFF", gfx_x - 1, gfx_x + 24, gfx_y_tmp, gfx_y_tmp + 20);
+show_char_name(active_sl_sel_pre, "Slide Delay Options", gfx_x_tmp, gfx_y + 2);
+
+//draw Pitch Wheel Mouse delay
+gfx_y_tmp = gfx_y + 20;
+button(sl_delay_pre, active_sl_sel, 5, "5", gfx_x_tmp, gfx_x_tmp + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(sl_delay_pre, active_sl_sel, 10, "10", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(sl_delay_pre, active_sl_sel, 20, "20", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(sl_delay_pre, active_sl_sel, 30, "30", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(sl_delay_pre, active_sl_sel, 50, "50", gfx_x - 1, gfx_x + 20, gfx_y_tmp, gfx_y_tmp + 20);
+button(sl_delay_pre, active_sl_sel, 100, "100", gfx_x - 1, gfx_x + 25, gfx_y_tmp, gfx_y_tmp + 20);
+button(sl_delay_pre, active_sl_sel, 250, "250", gfx_x - 1, gfx_x + 25, gfx_y_tmp, gfx_y_tmp + 20);
+button(sl_delay_pre, active_sl_sel, 500, "500", gfx_x - 1, gfx_x + 25, gfx_y_tmp, gfx_y_tmp + 20);
+show_char_name(active_sl_sel, "Delay", gfx_x_tmp, gfx_y + 2);
+
+mode != 0 ? (
+  pitch_range = 127;
+  pad_q.y = (pad.h - pad_marker_size) / 127;
+) : (
+  octave_range == 10 ? (
+    pitch_range = 127;
+    pad_q.y = (pad.h - pad_marker_size) / 127) : (pitch_range = (octave_start + octave_range) * 12;
+    pad_q.y = (pad.h - pad_marker_size) / (octave_range * 12);
+  );
+);
+pad_q.x = (pad.w - pad_marker_size) / 127;
+mouse_on_pad() || in_proccess ? (
+  (mouse_cap == 1 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) ? (
+    cur_mousex = mouse_x;
+    cur_mousey = mouse_y;
+    cur_mousex = max(min(cur_mousex, pad.x2 - pad_marker_size / 2), pad.x1 + pad_marker_size / 2);
+    cur_mousey = max(min(cur_mousey, pad.y2 - pad_marker_size / 2), pad.y1 + pad_marker_size / 2);
+    yvalue = pitch_range - floor((cur_mousey - (pad.y1 + pad_marker_size / 2)) / pad_q.y);
+    xvalue = floor((cur_mousex - (pad.x1 + pad_marker_size / 2)) / pad_q.x);
+    click_onx = 1;
+    click_ony = 1;
+  );
+  (mouse_cap == 2) ? (
+    init_pad();
+    cur_mousex = max(min(cur_mousex, pad.x2 - pad_marker_size / 2), pad.x1 + pad_marker_size / 2);
+    cur_mousey = max(min(cur_mousey, pad.y2 - pad_marker_size / 2), pad.y1 + pad_marker_size / 2);
+    yvalue = 127 - floor((cur_mousey - (pad.y1 + pad_marker_size / 2)) / pad_q.y);
+    xvalue = floor((cur_mousex - (pad.x1 + pad_marker_size / 2)) / pad_q.x);
+    click_onx = 1;
+    click_ony = 1;
+  );
+  (mouse_cap == 5) ? (
+    cur_mousex = mouse_x;
+    cur_mousex = max(min(cur_mousex, pad.x2 - pad_marker_size / 2), pad.x1 + pad_marker_size / 2);
+    xvalue = floor((cur_mousex - (pad.x1 + pad_marker_size / 2)) / pad_q.x);
+    click_onx = 1;
+    click_ony = 0;
+  );
+  (mouse_cap == 9) ? (
+    cur_mousey = mouse_y;
+    cur_mousey = max(min(cur_mousey, pad.y2 - pad_marker_size / 2), pad.y1 + pad_marker_size / 2);
+    yvalue = 127 - floor((cur_mousey - (pad.y1 + pad_marker_size / 2)) / pad_q.y);
+    click_onx = 0;
+    click_ony = 1;
+  );
+);
+!(mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) ? (
+  click_onx = 0;
+  click_ony = 0;
+  init_pad();
+);
+
+// draw line marker
+mode == 2 ? (
+  color_l_red();
+  (!(mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) && !send_on) ? (
+    lin_mousex = pad_point_x;
+    lin_mousey = mouse_y;
+  );
+  ((mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) && mode == 2 && (send_on || sl_midi_pend)) ? (
+    lin_mousex_step = pad_point_x;
+    lin_mousey_step = pad_point_y;
+    gfx_line(lin_mousex, lin_mousey, lin_mousex_step, lin_mousey_step);
+    gfx_circle(lin_mousex, lin_mousey, 3, 1);
+    gfx_circle(lin_mousex_step, lin_mousey_step, 2, 1);
+  );
+);
+
+mode == 3 ? (
+  color_l_red();
+  (mouse_cap != 1 && !send_on) ? (
+    lin_mousex = pad_point_x;
+    lin_mousey = pad_point_y;
+  );
+  pad.h_x = grid_tile_y * octave_range;
+  pad.w_x = grid_tile_x * 12;
+  pad.x2_x = pad.x1 + pad.w_x + 1;
+  !send_on ? mouse_y_lin = pad_point_y;
+  ((mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) && send_on) ? (
+    gfx_circle(lin_mousex, lin_mousey, 3, 1);
+    // draw line pitch
+    lin_a = 0;
+    lin_b = 0;
+    //get gfx value
+    pitch_value_gfx = ceil(((pitch_value * pitch_dimension) / (8192 / pad.w_x)) - (pad.w_x * pitch_dimension) + lin_mousex);
+    // get quantity of lines
+    pitch_value_gfx > pad.x1 ? (
+      lin_quan_min = min(ceil((lin_mousey - pad.y1) / grid_tile_y), pitch_dimension + 1);
+      lin_quan = min(lin_quan_min, ceil((abs(pitch_value_gfx) - pad.x1) / pad.w_x));
+    ) : (
+      lin_quan_min = min(ceil((pad.y2 - lin_mousey) / grid_tile_y), pitch_dimension + 1);
+      lin_quan = min(lin_quan_min, floor(abs((pitch_value_gfx - pad.w_x) - pad.x1) / pad.w_x) + 1);
+    );
+    loop(lin_quan, ( // work with loop cause we need more than one line
+      // get center of line start
+      lin_a < grid_tile_y ? (lin_c = lin_mousex;) : (pitch_value_gfx > pad.x1 ? (lin_c = pad.x1 + 1) : (lin_c = pad.x2_x - 1););
+      pitch_value_gfx > pad.x1 ? ( // if pitch goes up
+        lin_mousex_step_post = max(min(pitch_value_gfx - lin_b, pad.x2_x - 2), pad.x1 + 1);
+        gfx_line(lin_c, lin_mousey - lin_a, lin_mousex_step_post, lin_mousey - lin_a);
+      ) : ( // if pitch goes down
+        lin_mousex_step_post = max(min(pitch_value_gfx + lin_b, pad.x2_x - 2), pad.x1 + 1);
+        gfx_line(lin_c, lin_mousey + lin_a, lin_mousex_step_post, lin_mousey + lin_a);
+      );
+      lin_a += grid_tile_y; // increasing the height of the line
+      lin_b += pad.w_x; // increasing the length of the line
+    ));
+    // draw dot
+    pitch_value_gfx < pad.x1 + 1 ? (
+      gfx_circle(lin_mousex_step_post, lin_mousey + lin_a - grid_tile_y, 2, 1);
+    ) : (
+      gfx_circle(lin_mousex_step_post, lin_mousey - lin_a + grid_tile_y, 2, 1);
+    );
+    // draw line cc74
+    lin_a = 0;
+    lin_b = 0;
+    mouse_cap != 9 && mouse_cap != 13 ? mouse_y_lin = mouse_y; // stop move line (mouse_cap 9 --- shift + left click) or (mouse_cap 13 --- ctrl + shift + left click)
+    // get quantity of lines
+    mouse_y_lin > pad.y1 ? (
+      lin_quan2 = min(2, ceil((abs(mouse_y_lin) - pad.y1) / pad.h_x));
+    ) : (
+      lin_quan2 = min(2, floor(abs((mouse_y_lin - pad.h_x) - pad.y1) / pad.h_x) + 1);
+    );
+    octave_range == 1 ? (
+      grid_tile_y_g_fix = ceil(grid_tile_y / 2);
+      lin_quan2 = 1;
+    ) : (
+      grid_tile_y_g_fix = grid_tile_y;
+    );
+    loop(lin_quan2, (
+      lin_b < pad.h_x ? (
+        lin_c = lin_mousey;
+      ) : (
+        mouse_y_lin > pad.y1 ? (
+          lin_c = pad.y1 + 1
+        ) : (
+          lin_c = pad.y2 - 1);
+        );
+        mouse_y_lin >= pad.y1 + grid_tile_y_g_fix / 2 ? (
+          lin_mousey_step_post = max(min(mouse_y_lin - lin_b, pad.y2 - 1), pad.y1 + 1);
+          lin_mousey_step_post + lin_b - lin_mousey > pad.h_x - grid_tile_y_g_fix ? (
+            floor(lin_mousey) <= pad.y1 + grid_tile_y_g_fix && octave_range != 1 ? (
+            lin_mousey_step_post = pad.y2 - grid_tile_y_g_fix / 2;
+            lin_c = lin_mousey;
+          ) : (
+            lin_mousey_step_post = lin_mousey - grid_tile_y_g_fix;
+          );
+        );
+        gfx_line(lin_mousex, lin_c, lin_mousex, lin_mousey_step_post);
+      ) : (
+        lin_mousey_step_post = max(min(mouse_y_lin + lin_b, pad.y2 - 1), pad.y1 + 1);
+        -(lin_mousey_step_post - lin_b - lin_mousey) > pad.h_x - grid_tile_y_g_fix ? (
+          floor(lin_mousey) >= pad.y2 - grid_tile_y_g_fix && octave_range != 1 ? (
+            lin_mousey_step_post = pad.y1 + grid_tile_y_g_fix / 2;
+            lin_c = lin_mousey;
+          ) : (
+            lin_mousey_step_post = lin_mousey + grid_tile_y_g_fix;
+          );
+        );
+        gfx_line(lin_mousex, lin_c, lin_mousex, lin_mousey_step_post);
+      );
+      lin_b += pad.h_x; // increasing the length of the line
+    ));
+    gfx_circle(lin_mousex, lin_mousey_step_post, 2, 1);
+  );
+);
+
+
+wm_tail == wm_buf_start ? (wm_pitch_value = wm_pitch_value_check;);
+wm_no_move != pitch_value || (wm_no_move == pitch_value && mouse_wheel != 0) && wm_catch == 0 && (mode == 1 || mode == 2) && wm_pitch_value != 0 && wm_pitch_value != 127 ? (
+  wm_pitch_value_check = wm_pitch_value;
+  wm_head = wm_ptr = wm_tail = wm_buf_start;
+  wm_timestamp = wm_pend = 0;
+  wm_catch = 1;
+  wm_return_stop = 1;
+);
+
+@block
+
+//mouse wheel pitch
+!(mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) ? (
+  mouse_wheel = 0;
+  mouse_wheel_pitch = 0.5;
+  //center pitch if note isnt playing
+  mode == 3 || mode == 0 ? (
+    pitch_value = pitch_value_check = 8192;
+  ) : (
+    pitch_value = pitch_value_check = 64;
+  );
+);
+
+((mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) && mode == 2) ? (
+  mouse_wheel_pitch += ((mouse_wheel) / 120.0) * mouse_wheel_step; mouse_wheel = 0;
+  mouse_wheel_pitch < 0 ? (
+    mouse_wheel_pitch = 0
+  ) : (
+    mouse_wheel_pitch > 1 ? (
+      mouse_wheel_pitch = 1;
+    );
+  );
+  pitch_value = floor(mouse_wheel_pitch * 127 + 0.5);
+  wm_catch == 1 ? (
+    wm_no_move = pitch_value;
+    wm_catch = 0;
+  );
+);
+
+// create array for one note scales only if note_scale is change or if custom scale change
+ns_check != note_scale || ns_check_cst != note_scale[-1] ? (
+  one_note_array();
+  ns_check = note_scale;
+  ns_check_cst = note_scale[-1];
+);
+
+function wm_delay_sm(wpitch_value, delay3, wtail* )(
+  wm_pend == 0 ? (
+    // save first midi message params in buffer array with delay 0
+    wtail[0] = 0;
+    wtail[1] = wpitch_value; // midi pitch number
+    wtail += 2; // up the number for save next midi params
+    wm_pend += 1;
+  ) : (
+    // save midi message params in buffer array
+    wtail[0] = (wtail - 2)[0] + delay3;
+    wtail[1] = wpitch_value; // midi pitch number
+    wtail += 2; // up the number for save next midi params
+    wm_pend += 1;
+  );
+);
+//--------------------------------
+// part of wm_delay function
+//--------------------------------
+// if delay more than sampleblock
+while (
+  wm_head < wm_tail ? (
+    wm_timestamp = wm_head[0];
+    // if offset + delay2 smaller than samplesblock send midi message
+    wm_timestamp < samplesblock ? (
+      wm_pitch_value = wm_head[1]; // midi pitch number
+      mode == 3 || mode == 0 ? (
+        midisend(0, $xE0, wm_pitch_value % 128, wm_pitch_value / 128); // otpravliaem znacenie pitcha
+        wm_pitch_value > pitch_value ? ( // esli novii picth bolishe starogo
+          msb_quan += 1; // pribavleaem edenitsu c compensatoru 4tobi uravneati pitch
+          pitch_value_check += 1; // uravnivaem pitch_value_check
+        ) : (
+          msb_quan -= 1; // otnimaem edenitsu c compensatoru 4tobi uravneati pitch
+          pitch_value_check -= 1; // uravnivaem pitch_value_check
+        );
+      );
+
+      mode == 1 || mode == 2 ? (midisend(0, $xE0, 0, wm_pitch_value););
+      wm_head += 2; // increase the number of wm_head to stop compare offset and samplesblock
+      wm_head[0] -= wm_timestamp;
+      wm_pend -= 1;
+    );
+  );
+);
+// clean
+wm_ptr = wm_head; // get independent variable with value of wm_head
+// if wm_head value smaller than wm_tail value
+while (
+  wm_ptr < wm_tail ? (
+    wm_timestamp = wm_ptr[0]; // get offset value
+    wm_timestamp -= samplesblock; // reduse value of offset
+    wm_ptr[0] = wm_timestamp; // put new offset value
+    wm_ptr += 2; // increase the number to stop compare wm_head and tile
+  );
+);
+// if wm_head more than a buffer and wm_head more than wm_tail, wm_head and wm_tail equals buffer
+wm_head > wm_buf_start && !(wm_head < wm_tail) ? (
+  wm_head = wm_ptr = wm_tail = wm_buf_start;
+  wm_return == 1 ? mouse_wheel_pitch = 0.5; // need for reset pitch wheel to center value 64
+);
+//--------------------------------
+
+function slide_delay_sm(note, delay2, trgr, sl_tail* )(
+  // get midi message
+  trgr != 0 ? (
+    sl_midi_pend == 0 ? (midisend(0, 144, note, 127); //send midi message with note on
+      // save midi message params in buffer array
+      sl_tail[0] = delay2; sl_tail[1] = 128; // note off number
+      sl_tail[2] = note; // note number
+      sl_tail += 3; // up the number for save next midi params
+      sl_midi_pend += 1; // + pendding message
+    ) : (
+      // if midi pendding save message params in buffer array with note on
+      sl_tail[0] = (sl_tail - 4)[0]; sl_tail[1] = 144; // note on number
+      sl_tail[2] = note; // note number
+      sl_tail += 3; // up the number for save next midi params
+      sl_midi_pend += 1; // + pendding message
+      // and same  message but with delay and note off param
+      sl_tail[0] = (sl_tail - 4)[0] + delay2; sl_tail[1] = 128; // note off number
+      sl_tail[2] = note; // note number
+      sl_tail += 3; // up the number for save next midi params
+      sl_midi_pend += 1; // + pendding message
+    );
+  );
+);
+//--------------------------------
+// part of slide_delay function
+//--------------------------------
+// if delay more than sampleblock
+while (
+  sl_head < sl_tail ? (
+    sl_note != note_check ? // remove doubled notes
+    (sl_timestamp = sl_head[0];); // offset + delay2
+    // if offset + delay2 smaller than samplesblock send midi message with note off
+    sl_timestamp < samplesblock ? (
+      sl_on_off = sl_head[1]; // note off number
+      sl_note = sl_head[2]; // note number
+      midisend(0, sl_on_off, sl_note, 127);
+      main_note = sl_note;
+      sl_head += 3; // increase the number to stop compare offset and samplesblock
+      sl_head[0] -= sl_timestamp; sl_midi_pend -= 1; // pendding message minus 1
+    );
+  );
+);
+// clean
+sl_ptr = sl_head; // get independent variable with value of sl_head
+// if sl_head value smaller than sl_tail value
+while (
+  sl_ptr < sl_tail ? (
+    sl_timestamp = sl_ptr[0]; // get offset value
+    sl_timestamp -= samplesblock; // reduse value of offset
+    sl_ptr[0] = sl_timestamp; // put new offset value
+    sl_ptr += 3; // increase the number to stop compare sl_head and tile
+  );
+);
+// if sl_head more than a buffer and sl_head more than sl_tail, sl_head and sl_tail equals buffer
+sl_head > sl_buf_start && !(sl_head < sl_tail) ? sl_head = sl_tail = sl_buf_start;
+//--------------------------------
+//TIMER
+//--------------------------------
+lsb_send_timer > samplesblock ? lsb_send_timer -= samplesblock;
+//--------------------------------
+//VIEW VALUE MULTIPLER
+mw_p = ceil((xvalue * 200) / 127) - 100;
+//NOTE MULTIPLER CORRECTION
+mode == 0 ? (
+  msg2 = main_note + (octave_pw * 12);
+);
+mode == 1 ? (
+  yvo_min = octave_start * 12;
+  yvo_max = 119 - (10 - octave_end) * 12;
+  yvo_scale = (yvalue) / 127;
+  yvalue_octaved = num_round(yvo_min + (yvo_scale * (yvo_max - yvo_min)));
+  one_note_scale ? (
+    yvalue_note = floor(yvalue_octaved / 12);
+    main_note > 7 ? (
+      msg2 = main_note + (12 * min(yvalue_note, 9));
+    ) : (
+      msg2 = main_note + (12 * yvalue_note);
+    );
+  ) : (
+    yvalue_note = floor(yvalue_octaved / 12 * note_scale[-1]);
+    note_scale == ns_cst ? (
+      msg2_pre = ns_on_notes[yvalue_note];
+    ) : (
+      msg2_pre = main_note + ns_on_notes[yvalue_note];
+    );
+    k = 0;
+    while (msg2_pre > 127)(
+      msg2_pre = main_note + ns_on_notes[yvalue_note - k];
+      k += 1;
+    );
+    msg2 = msg2_pre;
+  );
+);
+mouse_on_pad() && (mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) ? (mop = 0;) : (mop = 1;);
+sl_trgr = 1;
+buf_send = 0;
+// buffer limit
+sl_tail > sl_buf_end ? (
+  sl_head = sl_ptr = sl_tail = sl_buf_start;
+  sl_midi_pend = sl_timestamp = 0;
+  pnc = 1;
+);
+wm_tail > wm_buf_end ? (
+  wm_head = wm_ptr = wm_tail = wm_buf_start;
+  wm_pend = wm_timestamp = 0;
+  pnc = 1;
+);
+
+!(mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) && buf_send == 0 && init_mode_grid == 1 ? ( // reset buffer and values
+  sl_tail == sl_buf_start && init_mode_grid == 1 ? (pnc = 1;);
+  sl_head = sl_ptr = sl_tail = sl_buf_start;
+  sl_midi_pend = sl_timestamp = grid_first_tap = 0;
+  init_mode_grid = 0;
+);
+// mouse pitch slide delay ------------------
+!(mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) && mode != 0 ? ( // reset buffer and values
+  wm_tail > wm_buf_start || wm_pitch_center == 0 && wm_delay_mode == 0 ? midisend(0, $xE0, 0, 64);
+   mode == 3 || mode == 0 ? (
+     wm_pitch_value_check = wm_pitch_value = pitch_value = 8192;
+   ) : (
+     wm_pitch_value_check = wm_pitch_value = pitch_value = 64;
+   );
+   wm_head = wm_ptr = wm_tail = wm_buf_start;
+   wm_timestamp = wm_pend = 0;
+   wm_pitch_center = 1;
+);
+//-------------------------
+in_proccess = 0;
+fltr_value_check_mw != fltr_value_mw ? (
+  midisend(0, mw, 1, fltr_value_mw);
+  fltr_value_check_mw = fltr_value_mw;
+);
+fltr_value_check_cc74 != fltr_value_cc74 ? (
+  midisend(0, mw, 74, fltr_value_cc74);
+  fltr_value_check_cc74 = fltr_value_cc74;
+);
+// MAGIC
+(mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17 && mouse_on_pad() == 1) || change_note == 1 || mop == 0 ? (
+  in_proccess = 1;
+  send_on == 0 && mode == 1 ? (
+    midisend(0, noteon, msg2, vel);
+    note_check = msg2; send_on = 1;
+  );
+  mode == 3 || mode == 0 ? (
+    send_on == 0 ? (
+      midisend(0, noteon, msg2, vel);
+      mode == 3 ? (
+        main_note = note_check = msg2;
+        mouse_x_grid_pitch = pad_point_x_pre;
+        mouse_y_grid_pitch = pad_point_y_pre;
+      ) : (
+        note_check = msg2;
+        mouse_x_grid_pitch = pad_point_x_pre;
+        mouse_y_grid_pitch = pad_point_y_pre;
+      );
+      send_on = 1;
+      msb_quan = 0;
+    );
+    send_on != 0 ? (
+      mode == 3 ? (
+        mouse_cap != 5 && mouse_cap != 13 ? pitch_value = floor(max(min(16383, 8192 + (mouse_x - mouse_x_grid_pitch) * ((8192 / pad.w) / pitch_dimension) + msb_quan), 0));
+      ) : (
+        pitch_value = floor(max(min(16383, 8192 + ((pad.h - pad_marker_size) / 2 - (max(min(cur_mousey, pad.y2 - pad_marker_size/2), pad.y1 + pad_marker_size/2) - (pad.y1 + pad_marker_size/2))) * (8192 /((pad.h - pad_marker_size)/2)) + msb_quan), 0));
+      );
+      pitch_value_coof_x100 = floor((8192 * 100) / (pitch_dimension * 12));
+      pitch_value_lsb_send = floor((pitch_value * 100) % pitch_value_coof_x100);
+      pitch_value_cmpr_lsb = floor(((((pitch_value) * 100) + pitch_value_coof_x100 / 2) / pitch_value_coof_x100));
+      pitch_value_cmpr_msb = floor(((((pitch_value - msb_quan) * 100) + pitch_value_coof_x100 / 2) / pitch_value_coof_x100));
+      pitch_value_cmpr_msb != pitch_value_cmpr_lsb && grid_pitch_quan && wm_tail == wm_buf_start ? (
+        pitch_value_cmpr_trgr = 1;
+      );
+    );
+    pitch_value_check != pitch_value ? (
+      lsb_send_timer = floor(50 / 1000 * srate + 0.5);
+      pitch_value_check = pitch_value;
+    );
+    grid_pitch_quan && lsb_send_timer < samplesblock ? (
+      lsb_buf_send_triger = 1;
+    ) : (
+      wm_head = wm_ptr = wm_tail = wm_buf_start;
+      midisend(0, 224, pitch_value % 128, pitch_value / 128);
+    );
+
+    lsb_buf_send_triger == 1 && wm_tail == wm_buf_start ? (
+      qw = 1;
+      gp_delay = floor(2.5*pitch_dimension / 1000 * srate + 0.5);
+      pitch_value_cmpr_trgr == 0 ? (
+        pitch_value_lsb_send > pitch_value_coof_x100 / 2 ? (
+          wm_dif = floor((pitch_value_coof_x100 - pitch_value_lsb_send) / 100);
+          loop(wm_dif, (
+            wm_delay_sm(pitch_value + qw, gp_delay, wm_tail);
+            qw += 1;
+          ));
+        ) : (
+          wm_dif = floor(pitch_value_lsb_send / 100);
+          loop(wm_dif, (
+            wm_delay_sm(pitch_value - qw, gp_delay, wm_tail);
+            qw += 1;
+          ));
+        );
+      ) : (
+        pitch_value_lsb_send > pitch_value_coof_x100 / 2 ? (
+          wm_dif = floor((pitch_value_coof_x100 - pitch_value_lsb_send) / 100);
+          loop(wm_dif, (
+            wm_delay_sm(pitch_value - qw, gp_delay, wm_tail);
+            qw += 1;
+          ));
+        ) : (
+          wm_dif = floor(pitch_value_lsb_send / 100);
+          loop(wm_dif, (
+            wm_delay_sm(pitch_value + qw, gp_delay, wm_tail);
+            qw += 1;
+          ));
+        );
+        pitch_value_cmpr_trgr = 0;
+      );
+      lsb_buf_send_triger = 0;
+    );
+  );
+  mode != 2 && mouse_cap != 9 && mouse_cap != 13 ? (
+    mode == 3 ? (
+      octave_range == 1 ?(grid_tile_y_fix = grid_tile_y/2) : (grid_tile_y_fix = grid_tile_y);
+      fltr_value_mw_on ? fltr_value_mw = floor(max(min(127, 64 + (mouse_y - mouse_y_grid_pitch) * (64 / (pad.h - grid_tile_y_fix ))), 0));
+      fltr_value_cc74_on ? fltr_value_cc74 = 127 - floor(max(min(127, 64 + (mouse_y - mouse_y_grid_pitch) * (64 / (pad.h - grid_tile_y_fix))), 0));
+    ) : (
+      fltr_value_mw_on ? fltr_value_mw = 127-xvalue;
+      fltr_value_cc74_on ? fltr_value_cc74 = xvalue;
+    );
+    !fltr_reverse ? (
+      fltr_value_mw_on ? fltr_value_mw = 127 - fltr_value_mw;
+      fltr_value_cc74_on ? fltr_value_cc74 = 127 - fltr_value_cc74;
+    );
+  );
+  send_on == 0 && mode == 2 ? (
+    sl_delay_mode != 0 ? (
+      init_mode_grid = 1;
+      grid_first_tap == 0 ? (note_check = msg2; grid_first_tap = 1;);
+      sl_delay = floor(sl_delay_pre / 1000 * srate + 0.5);
+      q = 1;
+      note_check != msg2 ? (
+        dif = abs(note_check - msg2);
+        sl_delay_mode == 2 ? (sl_delay_post = floor(sl_delay / dif);
+      ) : (
+        sl_delay_post = sl_delay;
+      );
+      msg2 < note_check ? (
+        loop(dif, (
+          ltr = 0;
+          loop(12, (
+            note_scale[ltr] && (ltr == (note_check - q) % 12) ? (
+              slide_delay_sm(note_check - q, sl_delay_post, sl_trgr, sl_tail);
+            );
+            ltr += 1;
+          )); q += 1;
+        ));
+      ) : (
+        loop(dif, (
+          ltr = 0;
+          loop(12, (
+            note_scale[ltr] && (ltr == (note_check + q) % 12) ? (
+              slide_delay_sm(note_check + q, sl_delay_post, sl_trgr, sl_tail);
+            );
+            ltr += 1;
+          ));
+          q += 1;
+        ));
+      );
+      sl_trgr = 0; buf_send = 1;
+    );
+    note_check = msg2;
+    sl_midi_pend == 0 ? (
+        main_note = msg2;
+        lin_mousex = pad_point_x;
+        lin_mousey = pad_point_y;
+      );
+      sl_tail == sl_buf_start ? (
+        midisend(0, noteon, msg2, vel);
+        send_on = 1;
+      ) : (
+        sl_midi_pend == 0 ? (midisend(0, noteoff, msg2, 0););
+        send_on = 0;
+      );
+    ) : (
+      midisend(0, noteon, msg2, vel);
+      main_note = note_check = msg2;
+      send_on = 1;
+      lin_mousex = pad_point_x;
+      lin_mousey = pad_point_y;
+    );
+  );
+  mode == 2 && wm_pitch_value_check != pitch_value && wm_return_stop != 0 ? (
+   wm_delay_mode != 0 ? (
+     qw = 1;
+     wm_delay = floor(wm_delay_pre / 1000 * srate + 0.5);
+     wm_dif = abs(wm_pitch_value_check - pitch_value);
+     wm_delay_mode == 2 ? (
+       wm_delay_post = floor(wm_delay / wm_dif);
+     ) : (
+       wm_delay_post = wm_delay;
+     );
+     pitch_value < wm_pitch_value_check && mouse_wheel_step != 1 / 127 ? (
+       loop(wm_dif, (
+         wm_delay_sm(wm_pitch_value_check - qw, wm_delay_post, wm_tail);
+         qw += 1;
+       ));
+     ) : (
+       loop(wm_dif, (
+         wm_delay_sm(wm_pitch_value_check + qw, wm_delay_post, wm_tail);
+         qw += 1;
+       ));
+     );
+     wm_pitch_center = 0;
+     wm_pitch_value_check = pitch_value;
+     wm_return == 1 ? (
+       qw = 1;
+       wm_delay = floor(wm_delay_pre / 1000 * srate + 0.5);
+       wm_dif = abs(wm_pitch_value_check - 64);
+       64 < wm_pitch_value_check ? (
+         loop(wm_dif, (
+           wm_delay_sm(wm_pitch_value_check - qw, wm_delay_post, wm_tail);
+           qw += 1;
+         ));
+       ) : (
+         loop(wm_dif, (
+           wm_delay_sm(wm_pitch_value_check + qw, wm_delay_post, wm_tail);
+           qw += 1;
+         ));
+       );
+       wm_pitch_value_check = 64;
+       wm_return_stop = 0;
+     );
+   ) : (
+     midisend(0, $xE0, 0, pitch_value);
+     wm_pitch_value_check = pitch_value;
+   );
+ );
+ change_note = 1;
+ note_check != msg2 ? (
+   midisend(0, noteoff, note_check, vel);
+   send_on = 0;
+ );
+);
+!(mouse_cap == 1 || mouse_cap == 5 || mouse_cap == 9 || mouse_cap == 21 || mouse_cap == 13 || mouse_cap == 17) && send_on ? (
+  midisend(0, noteoff, msg2, vel);
+  midisend(0, $xE0, 0, 64);
+  send_on = 0; change_note = 0;
+);
+pnc == 1 ? (
+  i = 16;
+  mw_loop = mw + i;
+  loop(i, (
+    midisend(0, mw_loop - i, 120, 0);
+    midisend(0, mw_loop - i, 123, 0);
+    i -= 1;
+  ));
+  pnc = 0;
+);
