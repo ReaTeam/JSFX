@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="05b16d02b387b543890d1c0f008dc128c409435c">
+<index version="1" name="ReaTeam JSFX" commit="6e2171d695532b06e976f55cad73ab9a3d527e64">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -43,11 +43,11 @@ Minor code cleanup]]></changelog>
       <version name="1.2" author="Samuele Pizzi" time="2021-10-09T00:13:19Z">
         <changelog><![CDATA[Changed waveshaping function with the updated version from the folks at Cockos Forums, super accurate
 Minor optimizations]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/Loudener.jsfx</source>
-        <source file="Loudener_gfx/bg.png">https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/Loudener_gfx/bg.png</source>
-        <source file="Loudener_gfx/handle.png">https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/Loudener_gfx/handle.png</source>
-        <source file="Loudener_gfx/button_off.png">https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/Loudener_gfx/button_off.png</source>
-        <source file="Loudener_gfx/button_on.png">https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/Loudener_gfx/button_on.png</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Distortion/Loudener.jsfx</source>
+        <source file="Loudener_gfx/bg.png">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Distortion/Loudener_gfx/bg.png</source>
+        <source file="Loudener_gfx/handle.png">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Distortion/Loudener_gfx/handle.png</source>
+        <source file="Loudener_gfx/button_off.png">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Distortion/Loudener_gfx/button_off.png</source>
+        <source file="Loudener_gfx/button_on.png">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Distortion/Loudener_gfx/button_on.png</source>
       </version>
     </reapack>
     <reapack name="RCInflator2_Ideal.jsfx" type="effect" desc="RCInflator 2 (Ideal Edition)">
@@ -62,7 +62,7 @@ Minor optimizations]]></changelog>
 ]]></description>
       </metadata>
       <version name="1.0" author="lewloiwc" time="2022-09-07T08:49:28Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/RCInflator2_Ideal.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Distortion/RCInflator2_Ideal.jsfx</source>
       </version>
     </reapack>
     <reapack name="RCInflator2_Oxford.jsfx" type="effect" desc="RCInflator 2 (Oxford Edition)">
@@ -77,7 +77,7 @@ Minor optimizations]]></changelog>
 ]]></description>
       </metadata>
       <version name="1.0" author="lewloiwc" time="2022-09-07T08:49:28Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/RCInflator2_Oxford.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Distortion/RCInflator2_Oxford.jsfx</source>
       </version>
     </reapack>
     <reapack name="rcjach_RCInflator.jsfx" type="effect" desc="RCInflator (Oxford Edition)">
@@ -92,7 +92,7 @@ Minor optimizations]]></changelog>
 ]]></description>
       </metadata>
       <version name="1.0" author="RCJacH" time="2021-09-21T19:54:58Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/rcjach_RCInflator.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Distortion/rcjach_RCInflator.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
@@ -138,7 +138,7 @@ screenshot
         <changelog><![CDATA[Add gain smoothness parameter.
 Increased internal frame rate to 1500 for finer peak resolution.
 Performance optimization.]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/ab7cc219407c03b318b8b1924d0d8fcee61aaa9e/Dynamic/ersh_Transient%20Controller%202.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Dynamic/ersh_Transient%20Controller%202.jsfx</source>
       </version>
     </reapack>
     <reapack name="sinefabula_Hard Clipper.jsfx" type="effect" desc="Hard Clipper">
@@ -167,7 +167,7 @@ Performance optimization.]]></changelog>
         <link rel="screenshot">https://i.imgur.com/nJDwzYq.png</link>
       </metadata>
       <version name="0.1" author="sinefabula" time="2023-01-20T16:55:44Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/4fc0cd87b046cbee6c7a5d916fb8207b276cb01f/Dynamic/sinefabula_Hard%20Clipper.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Dynamic/sinefabula_Hard%20Clipper.jsfx</source>
       </version>
     </reapack>
   </category>
@@ -205,7 +205,7 @@ Performance optimization.]]></changelog>
       <version name="0.95" author="Belles Ondes" time="2022-11-16T14:16:23Z">
         <changelog><![CDATA[- Improved modeling of HPF and Low Shelf filter responses
 - 10Hz parameter smoothing on Low, Mid and High frequency gain parameters for automation-safe operation]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/a4f947bacae231a01ff6229fb1df3411fdfeef5f/Filter/bellesondes_eq1979.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Filter/bellesondes_eq1979.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_Lattice Filter.jsfx" type="effect" desc="Lattice Filter">
@@ -240,7 +240,7 @@ Performance optimization.]]></changelog>
     </reapack>
     <reapack name="bor-T_MIDI_XY_Pad_Controller.jsfx" type="effect" desc="MIDI XY Pad Controller (bor-T)">
       <version name="0.1" author="bor-T" time="2023-01-31T12:00:50Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/64569a74fcd2806342a8d8eaaa6c26569f00ce89/MIDI/bor-T_MIDI_XY_Pad_Controller.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/bor-T_MIDI_XY_Pad_Controller.jsfx</source>
       </version>
     </reapack>
     <reapack name="boreg_MIDI routing matrix.jsfx" type="effect" desc="MIDI routing matrix">
@@ -260,7 +260,7 @@ Performance optimization.]]></changelog>
         <link rel="website" href="https://forum.cockos.com/showthread.php?t=67115">Forum thread</link>
       </metadata>
       <version name="1.0" author="boreg" time="2022-02-11T03:04:39Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/761437a19ffb621af3404658151efd16ade63173/MIDI/boreg_MIDI%20routing%20matrix.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/boreg_MIDI%20routing%20matrix.jsfx</source>
       </version>
     </reapack>
     <reapack name="cfillion_MIDI note length control.jsfx" type="effect" desc="MIDI note length control">
@@ -352,7 +352,7 @@ Fix note off events always being sent to channel 1]]></changelog>
 ]]></description>
       </metadata>
       <version name="1" author="ee33" time="2021-04-18T16:54:58Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/5cdadb30d3dc33d8401313a217ec3c0c4dd8ac19/MIDI/ee33_Triggered%20Random%20Modal%20Riffer.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/ee33_Triggered%20Random%20Modal%20Riffer.jsfx</source>
       </version>
     </reapack>
     <reapack name="erantalmor_MIDI Rhythm Trainer.jsfx" type="effect" desc="MIDI Rhythm Trainer">
@@ -436,7 +436,7 @@ Easier setting of mask by right mouse button drag over grid lines.]]></changelog
       </version>
       <version name="1.15" author="Eran Talmor" time="2021-07-25T23:24:52Z">
         <changelog><![CDATA[Fixed bug masking / unmasking the 32nd division]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/b58605d9295dccc5269b41e8c34603f1b6a62cbd/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
       </version>
     </reapack>
     <reapack name="juan_r_Keyboard MirrorInvert (Juan_R).jsfx" type="effect" desc="Keyboard Mirror/Invert">
@@ -452,7 +452,7 @@ Easier setting of mask by right mouse button drag over grid lines.]]></changelog
       </metadata>
       <version name="1.0" author="Juan_R" time="2022-05-14T18:33:16Z">
         <changelog><![CDATA[Initial release]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/5f69f81737210bd2057467274b56efa068dc7ff0/MIDI/juan_r_Keyboard%20MirrorInvert%20(Juan_R).jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/juan_r_Keyboard%20MirrorInvert%20(Juan_R).jsfx</source>
       </version>
     </reapack>
     <reapack name="juan_r_MIDI Floating Split.jsfx" type="effect" desc="MIDI Floating Split">
@@ -472,7 +472,7 @@ Easier setting of mask by right mouse button drag over grid lines.]]></changelog
       </metadata>
       <version name="0.02a" author="Juan_R" time="2022-05-19T01:57:28Z">
         <changelog><![CDATA[it works but still needs some knowing it.]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/9b15e7d94c275f6d89c8098edc09ac3bd4e8d4e4/MIDI/juan_r_MIDI%20Floating%20Split.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/juan_r_MIDI%20Floating%20Split.jsfx</source>
       </version>
     </reapack>
     <reapack name="juan_r_MIDI Fret and Pick.jsfx" type="effect" desc="MIDI Fret and Pick">
@@ -494,7 +494,7 @@ Easier setting of mask by right mouse button drag over grid lines.]]></changelog
       </version>
       <version name="1.03" author="Juan_R" time="2022-05-19T03:59:49Z">
         <changelog><![CDATA[added options to make fretting notes play immediately]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/b4dc208414e2a944ca55f7aba7edb761f9ce2620/MIDI/juan_r_MIDI%20Fret%20and%20Pick.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/juan_r_MIDI%20Fret%20and%20Pick.jsfx</source>
       </version>
     </reapack>
     <reapack name="mathphreak_Learningbaby.jsfx" type="effect" desc="Learningbaby">
@@ -571,7 +571,7 @@ here
       </metadata>
       <version name="1.0" author="mabian" time="2022-01-08T04:14:55Z">
         <changelog><![CDATA[First official ReaPack release]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/bd309de2616e145e29ba583b3964f829b8613047/MIDI/MB_ReautoMate.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/MB_ReautoMate.jsfx</source>
       </version>
     </reapack>
     <reapack name="mbncp_Legato Control.jsfx" type="effect" desc="Legato control">
@@ -796,7 +796,7 @@ The "Factor" slider can be moved in steps of one between 1 and 16, but of course
       </version>
       <version name="1.4" author="mschnell" time="2023-01-04T13:13:17Z">
         <changelog><![CDATA[improve documentation]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/420b50bd897bb66957604932f9ff49dcdb6fd669/MIDI/mschnell_MIDI%20route%20via%20GMEM.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/mschnell_MIDI%20route%20via%20GMEM.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI Slider and MIDI CC.jsfx" type="effect" desc="Slider and MIDI CC">
@@ -833,7 +833,7 @@ bugfix]]></changelog>
       </version>
       <version name="1.4" author="Michael Schnell (mschnell@bschnell.de)" time="2020-06-30T19:00:55Z">
         <changelog><![CDATA[bugfix]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/dd1b433e61f10919d9c9d897a63415f417ba75a0/MIDI/mschnell_MIDI%20Slider%20and%20MIDI%20CC.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/mschnell_MIDI%20Slider%20and%20MIDI%20CC.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Note On under X velocity to Note Off and send All Notes Off.jsfx" type="effect" desc="Note On under X velocity to Note Off and send All Notes Off">
@@ -912,7 +912,7 @@ Moreover DAW-Parameters (hidden sliders) "x" and "Y" are provided for being dire
       </version>
       <version name="2.0" author="mschnell" time="2020-07-08T20:41:03Z">
         <changelog><![CDATA[add x and y hidden gader]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/3d9293eb094edaa11ce24e125dc9832f3e1fac2d/MIDI/mschnell_XY%20Pad.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/mschnell_XY%20Pad.jsfx</source>
       </version>
     </reapack>
     <reapack name="polgo_MIDI Envelocity.jsfx" type="effect" desc="MIDI Envelocity">
@@ -989,7 +989,7 @@ Moreover DAW-Parameters (hidden sliders) "x" and "Y" are provided for being dire
 ]]></description>
       </metadata>
       <version name="1.0" author="reks effeks" time="2020-12-15T16:46:37Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/ba80e945ecd5f56437d19092e2dd7b743234a305/MIDI/rekseffeks_MIDI%20CC%20to%20pitchbend.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/rekseffeks_MIDI%20CC%20to%20pitchbend.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI CC Bistate Button.jsfx" type="effect" desc="MIDI CC Bistate Button">
@@ -1010,7 +1010,7 @@ Moreover DAW-Parameters (hidden sliders) "x" and "Y" are provided for being dire
       </metadata>
       <version name="1.0" author="Ben 'Talagan' Babut" time="2020-06-23T10:08:42Z">
         <changelog><![CDATA[- Initial version]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/5658bba94a67a0ead7c7d3b3ea749037310f095d/MIDI/talagan_MIDI%20CC%20Bistate%20Button.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Bistate%20Button.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI CC Mapper X.jsfx" type="effect" desc="MIDI CC Mapper X">
@@ -1824,80 +1824,80 @@ And a bit of source code cleaning.]]></changelog>
       <version name="5.2" author="Ben 'Talagan' Babut" time="2022-12-13T07:15:27Z">
         <changelog><![CDATA[- Feature : Added conditional filtering/routing for velocity.
 - Feature : Added "follow Note ON" option for Poly AT conditional filtering/routing.]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X.jsfx</source>
-        <source main="main" type="script" file="talagan_MIDI CC Mapper X/MIDI CC Mapper X - Dump Current Function.lua">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/MIDI%20CC%20Mapper%20X%20-%20Dump%20Current%20Function.lua</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/README.md">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/README.md</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/lib.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/lib.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/_tools/make_curves.rb">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/_tools/make_curves.rb</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/LIB_FILES_GO_HERE.md">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/LIB_FILES_GO_HERE.md</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_m_gate.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_m_gate.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_r.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_r.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_rm.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_rm.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_rm_gate.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_rm_gate.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_gate.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_gate.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_m_gate.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_m_gate.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_r.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_r.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_rm.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_rm.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/exp2_classic.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/exp2_classic.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/exp_classic.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/exp_classic.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/lin_clamp_hi.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/lin_clamp_hi.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/lin_clamp_lo.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/lin_clamp_lo.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/lin_classic.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/lin_classic.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_m_gate.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_m_gate.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_r.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_r.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_rm.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_rm.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_rm_gate.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_rm_gate.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_r.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_r.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_rm.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_rm.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_step.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_step.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_step_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_step_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_step_r.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_step_r.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_step_rm.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_step_rm.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_gate.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_gate.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_m_gate.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_m_gate.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_r.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_r.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_rm.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_rm.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s0.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s0.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s0_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s0_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s1.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s1.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s10.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s10.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s10_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s10_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s11.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s11.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s11_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s11_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s12.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s12.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s12_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s12_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s13.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s13.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s13_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s13_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s14.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s14.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s14_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s14_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s1_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s1_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s2.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s2.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s2_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s2_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s3.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s3.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s3_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s3_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s4.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s4.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s4_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s4_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s5.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s5.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s5_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s5_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s6.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s6.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s6_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s6_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s7.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s7.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s7_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s7_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s8.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s8.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s8_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s8_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s9.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s9.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s9_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s9_m.txt</source>
-        <source type="data" file="talagan_MIDI CC Mapper X/func/user_lib/USER_LIB_FILES_GO_HERE.md">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/user_lib/USER_LIB_FILES_GO_HERE.md</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X.jsfx</source>
+        <source main="main" type="script" file="talagan_MIDI CC Mapper X/MIDI CC Mapper X - Dump Current Function.lua">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/MIDI%20CC%20Mapper%20X%20-%20Dump%20Current%20Function.lua</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/README.md">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/README.md</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/lib.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/lib.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/_tools/make_curves.rb">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/_tools/make_curves.rb</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/LIB_FILES_GO_HERE.md">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/LIB_FILES_GO_HERE.md</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_m_gate.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_m_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_r.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_r.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_rm.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_rm.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/classic_rm_gate.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/classic_rm_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_gate.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_m_gate.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_m_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_r.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_r.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/circ/step_rm.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/circ/step_rm.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/exp2_classic.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/exp2_classic.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/exp_classic.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/exp_classic.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/lin_clamp_hi.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/lin_clamp_hi.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/lin_clamp_lo.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/lin_clamp_lo.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/kawaik4/lin_classic.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/kawaik4/lin_classic.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_m_gate.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_m_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_r.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_r.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_rm.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_rm.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/classic_rm_gate.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/classic_rm_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_r.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_r.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_rm.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_rm.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_step.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_step.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_step_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_step_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_step_r.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_step_r.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/inverse_step_rm.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/inverse_step_rm.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_gate.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_m_gate.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_m_gate.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_r.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_r.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sin/step_rm.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sin/step_rm.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s0.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s0.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s0_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s0_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s1.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s1.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s10.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s10.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s10_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s10_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s11.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s11.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s11_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s11_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s12.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s12.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s12_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s12_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s13.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s13.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s13_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s13_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s14.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s14.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s14_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s14_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s1_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s1_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s2.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s2.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s2_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s2_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s3.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s3.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s3_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s3_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s4.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s4.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s4_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s4_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s5.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s5.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s5_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s5_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s6.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s6.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s6_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s6_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s7.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s7.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s7_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s7_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s8.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s8.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s8_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s8_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s9.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s9.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s9_m.txt">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s9_m.txt</source>
+        <source type="data" file="talagan_MIDI CC Mapper X/func/user_lib/USER_LIB_FILES_GO_HERE.md">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/user_lib/USER_LIB_FILES_GO_HERE.md</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI note-banked CC multiplier.jsfx" type="effect" desc="MIDI note-banked CC multiplier">
@@ -2020,7 +2020,7 @@ And a bit of source code cleaning.]]></changelog>
       </version>
       <version name="0.6.4" author="Kevin Morrison (ThrashJazzAssassin)" time="2022-02-18T03:50:15Z">
         <changelog><![CDATA[- allow duplicate PC messages]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/22fc25d5c2045166f7335f445a765321f9acf809/MIDI/TJA_MIDI%20Performer2.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/TJA_MIDI%20Performer2.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
@@ -2051,7 +2051,7 @@ And a bit of source code cleaning.]]></changelog>
       </metadata>
       <version name="2.0" author="Will Develop" time="2022-10-21T13:54:15Z">
         <changelog><![CDATA[Fix Bugs]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/030b9a53dd1ac3d03c524e7000aeee8c45ecc066/MIDI/willdevelop_every_note_the_same.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/willdevelop_every_note_the_same.jsfx</source>
       </version>
     </reapack>
     <reapack name="willdevelop_MIDI every note the same.jsfx" type="effect" desc="MIDI every note the same">
@@ -2063,7 +2063,7 @@ And a bit of source code cleaning.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/900b9f750753d98decc94d4ecf2f13eed2763065/MIDI/willdevelop_MIDI%20every%20note%20the%20same.jsfx</source>
       </version>
       <version name="2.0" author="Will Develop" time="2021-05-13T09:47:55Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/7f0aa65f665d0a5a1d124366df622dd1ebb571b9/MIDI/willdevelop_MIDI%20every%20note%20the%20same.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/willdevelop_MIDI%20every%20note%20the%20same.jsfx</source>
       </version>
     </reapack>
     <reapack name="willdevelop_MIDI Note Repeater [Default Key Map B1 - A4].jsfx" type="effect" desc="MIDI Note Repeater [Default Key Map B1 - A4]">
@@ -2112,7 +2112,7 @@ And a bit of source code cleaning.]]></changelog>
         <link rel="screenshot" href="https://will-records.tk/site/img/site_projekte_will_develop/MIDI_Note_Repeater_interface.png">MIDI_Note_Repeater_interface.png</link>
       </metadata>
       <version name="2.0" author="Will Develop" time="2020-02-18T16:53:48Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/8d8f6e2023f4efde85b745015d2e7c1e52a50bbd/MIDI/willdevelop_MIDI%20Note%20Repeater%20%5BDefault%20Key%20Map%20B1%20-%20A4%5D.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/willdevelop_MIDI%20Note%20Repeater%20%5BDefault%20Key%20Map%20B1%20-%20A4%5D.jsfx</source>
       </version>
     </reapack>
     <reapack name="willdevelop_MIDI Velocity Filter.jsfx" type="effect" desc="MIDI Velocity Filter">
@@ -2128,7 +2128,7 @@ And a bit of source code cleaning.]]></changelog>
         <link rel="website" href="https://forum.cockos.com/showthread.php?p=2297585#post2297585">Forum</link>
       </metadata>
       <version name="1.0" author="Will-Develop" time="2020-06-06T02:39:33Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/92ca2e5987db31f53f951fc625b3642f9f28d1fb/MIDI/willdevelop_MIDI%20Velocity%20Filter.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/MIDI/willdevelop_MIDI%20Velocity%20Filter.jsfx</source>
       </version>
     </reapack>
     <reapack name="XQ_Drum Converter.jsfx" type="effect" desc="Drum Converter">
@@ -2344,7 +2344,7 @@ And a bit of source code cleaning.]]></changelog>
 - Allow manipulation of Slice Start/End while pattern is playing and terminate pattern mode immediately
 - Added GUI indicator to show if plugin is in QUANTIZE mode
 - Improved behavior when length transitions are set to "At Next Beat"]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/141dcf5fa0ba569b6e6e540355ed0ef3a845ffc4/Misc/brumbear_LiveBeatRepeater.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Misc/brumbear_LiveBeatRepeater.jsfx</source>
       </version>
     </reapack>
     <reapack name="brumbear_LiveScrubberDucky.jsfx" type="effect" desc="LiveScrubberDucky">
@@ -2368,7 +2368,7 @@ E.g. at 44.1/48kHz audio interface sample rate the recommended buffer size is <=
       <version name="0.7" author="brumbear" time="2020-06-21T10:21:43Z">
         <changelog><![CDATA[- Improved X-fade algorithm (less crackle)
 - Fix bug when switching to "Off": Do not reset scrub start position, instead allow restarting scrubbing from any position]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/5191a2e9953caaccb7f2b9710ddf7d03170528d0/Misc/brumbear_LiveScrubberDucky.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Misc/brumbear_LiveScrubberDucky.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_PM_Resynth.jsfx" type="effect" desc="MIDI PM Resynth">
@@ -2581,7 +2581,7 @@ E.g. at 44.1/48kHz audio interface sample rate the recommended buffer size is <=
       </metadata>
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2021-07-06T21:00:38Z">
         <changelog><![CDATA[initial release]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/7e4703d941aac30c3c8c30e6d7da063ac8fd1148/Routing/mschnell_Midi_Route_Note_On.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Routing/mschnell_Midi_Route_Note_On.jsfx</source>
       </version>
     </reapack>
   </category>
@@ -3228,26 +3228,26 @@ channel).]]></changelog>
       </version>
       <version name="2.3.7" author="Malcolm Smith" time="2021-10-15T06:09:12Z">
         <changelog><![CDATA[Updated the LFO and the Additive Oscillator]]></changelog>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Amplifier.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Amplifier.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Audio-MIDI.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Audio-MIDI.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 EnvGen.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20EnvGen.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 EnvMultiTool.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20EnvMultiTool.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Filter.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Filter.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 FilterMoog24db.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20FilterMoog24db.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 KSDelay.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20KSDelay.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 KeyFollower.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20KeyFollower.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 LFO.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20LFO.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 MIDImixer.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20MIDImixer.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Nonlinearizer.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Nonlinearizer.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 NoteFilter.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20NoteFilter.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 NoteScope.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20NoteScope.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Oscillator-Additive.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Oscillator-Additive.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Oscillator-Noise.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Oscillator-Noise.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Oscillator-Trapezoidal.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Oscillator-Trapezoidal.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Oscillator-TwinSaw.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Oscillator-TwinSaw.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 PolySplitter.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20PolySplitter.jsfx</source>
-        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Trigger.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Trigger.jsfx</source>
-        <source file="ReaRack Modular Synth/Timewaster_ReaRack2 SampleAndHold.jsfx">https://github.com/ReaTeam/JSFX/raw/e756fa6451dce831cf544d13bd1bb2f393d2b9ac/Synth/ReaRack%20Modular%20Synth/Timewaster_ReaRack2%20SampleAndHold.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Amplifier.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Amplifier.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Audio-MIDI.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Audio-MIDI.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 EnvGen.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20EnvGen.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 EnvMultiTool.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20EnvMultiTool.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Filter.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Filter.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 FilterMoog24db.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20FilterMoog24db.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 KSDelay.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20KSDelay.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 KeyFollower.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20KeyFollower.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 LFO.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20LFO.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 MIDImixer.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20MIDImixer.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Nonlinearizer.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Nonlinearizer.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 NoteFilter.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20NoteFilter.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 NoteScope.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20NoteScope.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Oscillator-Additive.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Oscillator-Additive.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Oscillator-Noise.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Oscillator-Noise.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Oscillator-Trapezoidal.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Oscillator-Trapezoidal.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Oscillator-TwinSaw.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Oscillator-TwinSaw.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 PolySplitter.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20PolySplitter.jsfx</source>
+        <source file="ReaRack Modular Synth/TimeWaster_ReaRack2 Trigger.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/TimeWaster_ReaRack2%20Trigger.jsfx</source>
+        <source file="ReaRack Modular Synth/Timewaster_ReaRack2 SampleAndHold.jsfx">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Synth/ReaRack%20Modular%20Synth/Timewaster_ReaRack2%20SampleAndHold.jsfx</source>
       </version>
     </reapack>
   </category>
@@ -3265,7 +3265,7 @@ channel).]]></changelog>
 ]]></description>
       </metadata>
       <version name="1.0" author="AZ" time="2022-10-21T13:52:59Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/8bb5f6225c7655b2697d89abbd1009460ece30c1/Utility/az_Automute.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/az_Automute.jsfx</source>
       </version>
     </reapack>
     <reapack name="belovw_Goniometer.jsfx" type="effect" desc="Goniometer">
@@ -3279,6 +3279,10 @@ channel).]]></changelog>
       <version name="0.18alpha" author="Vladimir Belov" time="2020-05-25T18:22:53Z">
         <changelog><![CDATA[New goniometer visualization mode.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/9cb5b4314d06a3061d9dc7c3cb84498eaf63f399/Utility/belovw_Goniometer.jsfx</source>
+      </version>
+      <version name="1.00" author="Vladimir Belov" time="2023-07-19T18:32:14Z">
+        <changelog><![CDATA[New goniometer visualization mode.]]></changelog>
+        <source>https://github.com/belovw/JSFX-1/raw/36ec231d9f4583e5646917d2b92990a3c3dee11f/Utility/belovw_Goniometer.jsfx</source>
       </version>
     </reapack>
     <reapack name="CoreyScogin_AutoMixer.jsfx" type="effect" desc="AutoMixer">
@@ -3320,7 +3324,7 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       </version>
       <version name="1.3.1" author="Corey Scogin" time="2020-11-03T23:08:28Z">
         <changelog><![CDATA[Fix subtle bug in multichannel tracks: If the channels have destructive interference the Automixer no longer thinks they’re silent.]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/23b9648e8f498de7e42ba353a22086a211369b5a/Utility/CoreyScogin_AutoMixer.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/CoreyScogin_AutoMixer.jsfx</source>
       </version>
     </reapack>
     <reapack name="CoreyScogin_TimeDelayByDistance.jsfx" type="effect" desc="Time Delay by Distance">
@@ -3360,7 +3364,7 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
 ]]></description>
       </metadata>
       <version name="1.0" author="Dylan Madigan" time="2020-12-02T16:57:13Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/caf74fef8fd11678b8d5cf22644827278f714790/Utility/dylanmadigan_Automatic%20Gain%20Stager.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/dylanmadigan_Automatic%20Gain%20Stager.jsfx</source>
       </version>
     </reapack>
     <reapack name="jcgurango_MIDI Arranged Looper.jsfx" type="effect" desc="Pre-Arranged MIDI Looper">
@@ -3384,7 +3388,7 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
 ]]></description>
       </metadata>
       <version name="0.1" author="JC Gurango" time="2023-03-14T20:34:34Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/81ced97f1ff0c3b584ee4c28cba5b93e28dfc74a/Utility/jcgurango_MIDI%20Arranged%20Looper.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/jcgurango_MIDI%20Arranged%20Looper.jsfx</source>
       </version>
     </reapack>
     <reapack name="jcgurango_Pre-Arranged Looper.jsfx" type="effect" desc="Pre-Arranged Looper">
@@ -3407,7 +3411,7 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
 ]]></description>
       </metadata>
       <version name="0.1" author="JC Gurango" time="2023-03-14T20:34:44Z">
-        <source>https://github.com/ReaTeam/JSFX/raw/f2b75f841d580fbe5e4e5b88aa73e588f6d3b1ae/Utility/jcgurango_Pre-Arranged%20Looper.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/jcgurango_Pre-Arranged%20Looper.jsfx</source>
       </version>
     </reapack>
     <reapack name="jsh_Inline Input Viewer (MCP embedded).jsfx" type="effect" desc="Inline Input Viewer (MCP embedded)">
@@ -3488,7 +3492,7 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       </version>
       <version name="2.1" author="Michael Schnell (mschnell@bschnell.de)" time="2022-03-20T13:45:18Z">
         <changelog><![CDATA[Fix: Loading the plugin with Dual mode resulted in equal delay for both channels due to some weird way Reaper calls @slider multiple times]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/a966971f4f6a8b56fe0d357acdfc604ff9d6f567/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/mschnell_Dual%20Time%20adjustment.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Inter Track Parameter Modulation.jsfx" type="effect" desc="Inter Track Parameter Modulation">
@@ -3515,7 +3519,7 @@ As the sliders of course also can be controlled by parameters of other plugins i
       </version>
       <version name="2.0" author="mschnell" time="2023-02-09T23:04:40Z">
         <changelog><![CDATA[Convert to using the JSFX Preprocessor]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/9b2820a423fe83332ae91b04639f8faf4f329ea0/Utility/mschnell_Inter%20Track%20Parameter%20Modulation.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/mschnell_Inter%20Track%20Parameter%20Modulation.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Midi Auto Engage.jsfx" type="effect" desc="Midi Auto Engage">
@@ -3587,7 +3591,7 @@ As the sliders of course also can be controlled by parameters of other plugins i
       </version>
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2020-09-10T02:45:00Z">
         <changelog><![CDATA[Fix typos in description]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/4928d1e2adb0fb24fce568a758f82f2f9dafa4f2/Utility/mschnell_Midi%20CC%20Table.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/mschnell_Midi%20CC%20Table.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI CC2SYSEX.jsfx" type="effect" desc="MIDI CC to SysEx">
@@ -3755,7 +3759,7 @@ Bug fixes]]></changelog>
       </version>
       <version name="2.3" author="Michael Schnell (mschnell@bschnell.de)" time="2022-02-09T21:52:49Z">
         <changelog><![CDATA[Fix initialization problems better]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/a2d203eadfb492cf1f26750aad65cf06c19993ed/Utility/mschnell_MIDI%20Fade.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/mschnell_MIDI%20Fade.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_MIDI Trigger CC.jsfx" type="effect" desc="MIDI Trigger CC">
@@ -3816,7 +3820,7 @@ add "Time Asymmetry" slider, bugfixes.]]></changelog>
       </version>
       <version name="3.1" author="Michael Schnell (mschnell@bschnell.de)" time="2021-07-01T20:52:57Z">
         <changelog><![CDATA[fix description bugs]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/1a78f2ada3038f1ef21c6b959ae95c10ddcee196/Utility/mschnell_MIDI%20Volume%20Control.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/mschnell_MIDI%20Volume%20Control.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Multi_Sin_Generator.jsfx" type="effect" desc="Multi Sine Generator">
@@ -3867,7 +3871,7 @@ add "Time Asymmetry" slider, bugfixes.]]></changelog>
       </metadata>
       <version name="1.0" author="mschnell" time="2023-01-04T13:14:31Z">
         <changelog><![CDATA[initial commit]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/14645c70e2070ee75184cdfa4f8c0f20ed9ac8e2/Utility/mschnell_Mute%20monitor%20when%20recording.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/mschnell_Mute%20monitor%20when%20recording.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Slider to Midi PS.jsfx" type="effect" desc="Slider to Midi PS">
@@ -3961,7 +3965,7 @@ add "Time Asymmetry" slider, bugfixes.]]></changelog>
       </version>
       <version name="1.0.1" author="REAPER Blog" time="2020-09-22T00:56:19Z">
         <changelog><![CDATA[fix slider 12 assigned to the wrong channels]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/97f175123242999015f31214326b8d5d6d488352/Utility/ReaperBlog_Multichannel%20Volume%20Trim.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/ReaperBlog_Multichannel%20Volume%20Trim.jsfx</source>
       </version>
     </reapack>
     <reapack name="TimeWaster MIDI-Mouse.jsfx" type="effect" desc="MIDI Mouse">
@@ -3976,7 +3980,7 @@ add "Time Asymmetry" slider, bugfixes.]]></changelog>
       </metadata>
       <version name="0.1.0" author="Malcolm Smith" time="2020-10-22T18:24:55Z">
         <changelog><![CDATA[Initial beta release.]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/4f4eac539c384e374d2d434f9fe712789c01a73e/Utility/TimeWaster%20MIDI-Mouse.jsfx</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/TimeWaster%20MIDI-Mouse.jsfx</source>
       </version>
     </reapack>
     <reapack name="zenomod_VU Meter (ZenoMOD) - UserThemes.jsfx" type="effect" desc="VU Meter (ZenoMOD) - UserThemes">
@@ -3991,8 +3995,8 @@ add "Time Asymmetry" slider, bugfixes.]]></changelog>
 ]]></description>
       </metadata>
       <version name="1.0" author="ZenoMOD" time="2023-05-21T21:15:46Z">
-        <source file="zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/2c70d2746cde6dd6c054a4c3c4c36a00078408f8/Utility/zenomod_VU%20Meter%20(ZenoMOD)%20-%20UserThemes/User%20Theme%2001.jsfx-inc</source>
-        <source file="zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 02.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/2c70d2746cde6dd6c054a4c3c4c36a00078408f8/Utility/zenomod_VU%20Meter%20(ZenoMOD)%20-%20UserThemes/User%20Theme%2002.jsfx-inc</source>
+        <source file="zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 01.jsfx-inc">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/zenomod_VU%20Meter%20(ZenoMOD)%20-%20UserThemes/User%20Theme%2001.jsfx-inc</source>
+        <source file="zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 02.jsfx-inc">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/zenomod_VU%20Meter%20(ZenoMOD)%20-%20UserThemes/User%20Theme%2002.jsfx-inc</source>
       </version>
     </reapack>
     <reapack name="zenomod_VU Meter (ZenoMOD).jsfx" type="effect" desc="VU Meter (ZenoMOD)">
@@ -4154,8 +4158,8 @@ fix: Channel mode labels are no longer grayed out when mouse cursor is in trigge
       <version name="1.7.7" author="ZenoMOD" time="2023-06-17T17:18:20Z">
         <changelog><![CDATA[- Revised double-click speed for parameter reset [p=2683566]
 - Fix idle bug. The meter now correctly detects if audio is present at the left input when the input signal is panned hard left [p=2683919]]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/05b16d02b387b543890d1c0f008dc128c409435c/Utility/zenomod_VU%20Meter%20(ZenoMOD).jsfx</source>
-        <source file="zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/05b16d02b387b543890d1c0f008dc128c409435c/Utility/zenomod_VU%20Meter%20(ZenoMOD)/Index.jsfx-inc</source>
+        <source>https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/zenomod_VU%20Meter%20(ZenoMOD).jsfx</source>
+        <source file="zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc">https://github.com/belovw/JSFX-1/raw/6e2171d695532b06e976f55cad73ab9a3d527e64/Utility/zenomod_VU%20Meter%20(ZenoMOD)/Index.jsfx-inc</source>
       </version>
     </reapack>
   </category>
