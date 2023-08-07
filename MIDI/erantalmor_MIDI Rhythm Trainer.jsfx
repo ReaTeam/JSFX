@@ -1,10 +1,15 @@
 desc: MIDI Rhythm Trainer
 author: Eran Talmor
-version: 1.15
-changelog: Fixed bug masking / unmasking the 32nd division
+version: 1.21
+changelog:
+  * Adjustable latency compensation for working with upstream audio-to-midi plugins (e.g. guitar / drums).
+  * Error bound is set in absolute time (ms) instead of relative time, promoting better tracking across different tempos and divisions.
+  * Current beat is highlighted, shrinking towards next beat.
+  * Fixed minor memory overwrite.
 link:
   Youtube tutorial https://youtu.be/cifj6eh_LF0
   Forum Thread https://forum.cockos.com/showthread.php?t=250891
+screenshot: Midi Rhythm Trainer 1.21 https://photos.google.com/photo/AF1QipMCKfXG4JCuU2bt23I9HGz_MkyCp8Uay48voM5P
 about:
   # MIDI Rhythm Trainer
 
@@ -26,23 +31,12 @@ about:
   * "Swing" and "Phase" parameters.
   * See you progress on a "10 minute training graph"
 
-/*******************************************************************************
-*  Copyright 2021, Eran Talmor                                                 *
-*  This program is free software: you can redistribute it and/or modify        *
-*  it under the terms of the GNU General Public License as published by        *
-*  the Free Software Foundation, either version 3 of the License, or           *
-*  (at your option) any later version.                                         *
-*                                                                              *
-*  This program is distributed in the hope that it will be useful,             *
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                *
-*  GNU General Public License (http://www.gnu.org/licenses/)for more details.  *
-*******************************************************************************/
-
 slider1:4<1,32,1>Beats
 slider2:0<0,3,1{1,2,3,4}>Lanes
-slider3:50<1,100,0.1>Error Bound (%)
+// update error_bound_scale to have the same range as slider 3
+slider3:100<1,250,1>Error Bound (ms)
 slider4:0<0,1,1{Off,On}>Auto Shrink Error Bound
+slider5:0<-200,200>Latency Compensation (ms)
 
 // Hidden sliders per lane
 slider13:8<1,32,1>-Divisions1
@@ -95,6 +89,8 @@ slider62:127<0,127,1>-InputMaxNote4
 
 @init
 note_on = $x90;
+
+error_bound_scale = 250;
 
 sliders_per_lane = 13;
 first_lane_slider = 13;
@@ -202,6 +198,11 @@ v_normal_dist[30] = 0.4987;
 
 v_normal_mask = malloc(histogram_size);
 
+function modOne(x)
+(
+  x - floor(x);
+);
+
 function normal_dist(x)
 (
   abs_idx = min(30, floor(abs(x)*10));
@@ -217,13 +218,15 @@ function normal_slice(x, w)
   normal_dist(x+w/2) - normal_dist(x-w/2);
 );
 
-function setNormalMask(h)
+function setNormalMask(h) local(i, y)
 (
   memset(v_normal_mask, 0, histogram_size);
+  
   i = 0;
-  while (i<=histogram_buckets/2) (
-    v_normal_mask[i*2] = normal_slice(h*(i/histogram_buckets),0.1)/5;
-    v_normal_mask[histogram_size-i*2] = v_normal_mask[i*2];
+  while (i<histogram_buckets/2) (
+    y = normal_slice(h*(i/histogram_buckets),0.1)/5;
+    v_normal_mask[i*2] = y;
+    v_normal_mask[histogram_size-i*2-2] = y;
     i += 1;
   );
   fft(v_normal_mask, histogram_buckets);
@@ -244,26 +247,26 @@ function isPlaying()
 );
 
 // Relative time to the beats
-function getRelTime(offset) local(p)
+function getRelTime(sample_offset) local(p)
 (
-  p = (beat_position + (offset * (tempo / 60) / srate))/beats;
+  p = (beat_position + (sample_offset * (tempo / 60) / srate))/beats;
   p - floor(p);
 );
 
 // Getters and Setters
-function getSliderIdx(lane, offset)
+function getSliderIdx(lane, slider_offset)
 (
-   first_lane_slider + sliders_per_lane*lane + offset;
+   first_lane_slider + sliders_per_lane*lane + slider_offset;
 );
 
-function getSlider(lane, offset) local(idx)
+function getSlider(lane, slider_offset) local(idx)
 ( 
-  slider(getSliderIdx(lane, offset))
+  slider(getSliderIdx(lane, slider_offset))
 );
 
-function setSlider(lane, offset, value, min_val, max_val, reset_play) local(idx)
+function setSlider(lane, slider_offset, value, min_val, max_val, reset_play) local(idx)
 ( 
-  idx = getSliderIdx(lane, offset);
+  idx = getSliderIdx(lane, slider_offset);
   slider(idx) = min(max_val, max(min_val, value));
   slider_automate(2 ^ idx);
   reset_play ? resetPlay();
@@ -419,19 +422,20 @@ function getGrid(lane, divs, i) local(r)
   (i<0) ? r-1 : (i>=divs) ? r+floor(i/divs) : r;
 );
 
+// Return ratio of green window per division. 1.0 == entire pattern.
 function getErrorRange()
 (
-  error_bound/max_divs;
+  error_bound * error_bound_scale * tempo / 60000 / beats;
 );
 
 function getEarly(lane, divs, i)
 (
-  max(0, getGrid(lane, divs, i) - getErrorRange()/2);
+  max(0, getGrid(lane, divs, i) - getErrorRange());
 );
 
 function getLate(lane, divs, i)
 (
-  min(1, getGrid(lane, divs, i) + getErrorRange()/2);
+  min(1, getGrid(lane, divs, i) + getErrorRange());
 );
 
 function getMidiMonitorAge(lane)
@@ -444,7 +448,7 @@ function adjustErrorBound(hit_rate) local(level)
   (hit_rate > 0.9) ? 
     (level = (error_bound < 0.2 ? 0.001 : error_bound <= 0.3 ? 0.002 : error_bound <= 0.4 ?  0.005 : 0.01);
     (error_bound = max(0, error_bound - level)));
-  slider3 = error_bound*100;
+  slider3 = error_bound*error_bound_scale;
 );
 
 // returns: 0 == hit, -1 == early, 1 == late
@@ -476,9 +480,11 @@ function controlId(lane, control)
 
 beats = slider1;
 num_lanes = slider2+1;
-error_bound = slider3/100;
+error_bound = slider3/error_bound_scale;
 auto_shrink = slider4;
-
+// compensation converted to number of samples
+latency_compensation = slider5*srate/1000;
+rel_latency_compensation = tempo*slider5/(1000*60*beats);
 updateMaxDivs();
 resetPlay();
 
@@ -583,7 +589,7 @@ function learnNote(note) local(i)
     : listen_note_control == controlId(i, control_button_in_max_note) ? 
       (setInputMaxNote(i, note); listen_note_control = 0);     
 
-    i += 1;
+    i += 1; 
   );
   listen_note_control = 0;
 );
@@ -609,7 +615,7 @@ isPlaying() ? (
 );
 
 while (midirecv(offset,msg1,msg2,msg3)) ( // REAPER 4.59+ syntax w while()
-   noteStatus = msg1 & $xF0;
+   noteStatus = msg1 & 0xF0;
    channel = msg1 & 0x0F;
    is_note_on = noteStatus==note_on && msg3!=0;
    
@@ -627,8 +633,7 @@ while (midirecv(offset,msg1,msg2,msg3)) ( // REAPER 4.59+ syntax w while()
        midisend(offset, msg1, msg2, msg3)
      : (
        reltime = getRelTime(offset);
-       
-       hit = isHit(reltime, lane);
+       hit = isHit(modOne(reltime + rel_latency_compensation), lane);
        hit == 0 ? midisend(offset,msg1,note,msg3);
        decayHistogram(lane);
        recordHistory(reltime, hit, lane, note);
@@ -985,7 +990,7 @@ function drawHistogram(lane, l, t, w, h) local (value, x, y, normalized)
   prev_max_value = v_histogram_max_value[lane];
   while(i < w) (
     x = l+i;
-    value = v_histogram_tmp[2*floor(i/w*histogram_buckets)];
+    value = v_histogram_tmp[2*floor(modOne(-rel_latency_compensation + i/w)*histogram_buckets)];
     max_value = max(value, max_value);
     normalized = value / (prev_max_value ? prev_max_value : 1); 
     y = max(t, t+h*(1-normalized/2));
@@ -1085,7 +1090,7 @@ function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high
         age = min(max_age, now - birth);
         (hit == 0) ? rgb(0,1,0) : 
           (hit == 1) ? rgb(1,0,0) : rgb(0,0,1);
-        x = w * v_history_rel_time[i];
+        x = w * modOne(v_history_rel_time[i] + rel_latency_compensation);
         y = age*20;
         gfx_a = 1 - sqrt(y/h);
         y < h ? (drawEvent(l+x,t+y, v_history_notes[i], age));
@@ -1093,11 +1098,16 @@ function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high
       );
       i += 1;
     );
-    gfx_a = 1;
     
-    // Draw vertical time line 
+    // Draw vertical time line and highlight current beat
+    curr_beat = beat_position % beats;
     rgb(1,1,0);
-    x = l + w * getRelTime();
+    x = l + w * getRelTime(0);
+    gfx_a = 0.15;
+    current_rel_beat = (curr_beat + 1) / beats;
+    delta_x = ceil(l+w*current_rel_beat)-x;
+    gfx_rect(x, t, delta_x, h);
+    gfx_a = 1;
     gfx_line(x, t, x, t+h);
   );  
   
@@ -1122,7 +1132,7 @@ function clearTrainingGraph()
   hit_rate = 0;
 );
 
-function drawTrainingGraphTitle(left, top) local(errorMs)
+function drawTrainingGraphTitle(left, top) local(error_bound_percent)
 (
   gfx_a = 1;
   gfx_x = left;
@@ -1135,8 +1145,9 @@ function drawTrainingGraphTitle(left, top) local(errorMs)
   rgb(1,1,1);
   gfx_printf(", ");
   rgb(0,1,1);
-  errorMs = floor(0.5 + error_bound * beats * 30000 / tempo / max_divs);
-  gfx_printf("Error Bound: %0.0f%% = \xB1%dms", error_bound*100, errorMs);
+  
+  error_bound_percent = getErrorRange()*100 * 2*max_divs;
+  gfx_printf("Error Bound: \xB1%dms (%d%%)", error_bound*error_bound_scale, error_bound_percent);
   rgb(1,1,1);
   gfx_printf(")");
   
