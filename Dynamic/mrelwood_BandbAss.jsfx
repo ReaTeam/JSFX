@@ -1,0 +1,1001 @@
+desc: BandbAss
+author: mrelwood
+version: 0.02
+screenshot: https://static.wixstatic.com/media/0bf8fa_44c32be7a70441ecb74bd731451d8bfd~mv2.png/v1/fill/w_970,h_736,al_c,q_90,usm_0.66_1.00_0.01,enc_auto/0bf8fa_44c32be7a70441ecb74bd731451d8bfd~mv2.png
+about:
+  BandbAss - Sidechain low end compressor.
+
+  An early but functional preview version of a sidechain bass compressor, which is a great tool for reducing low frequency build-up in a stereo mix.​
+
+  Insert to a bass guitar track, and insert kick drum in the sidechain. The compressor will compress the lowest frequencies of the bass guitar through a shelving low-pass filter whenever the kick drum hits. The frequencies above the crossover frequency remain untouched.
+
+  Without sidechain input it functions as a stand-alone LP shelving compressor.
+
+desc: BandbAss 0.02  [mrelwood]
+
+slider1:200<100,500,10>-Crossover Frequency
+slider2:-20<-40,0,1>-Threshold (Kick)
+slider3:-20<-40,0,1>-Threshold (Bass)
+//slider4:.265<0,1,.01>Release Time
+slider4:0<0,50,.1>-Attack
+slider5:0<0,100,.1>-Hold
+slider6:30<10,300,1>-Release Time
+slider7:100<0,200,1>-Depth
+
+slider9:0<0,1,1{Mono,Stereo}>Stereo
+slider10:0<-1,1,2{Disable,Enable}>-Ch.4
+slider11:1<0,1,1{Separate,Link}>-Link Thresholds
+
+@init
+
+
+flatt = srate/1000 *1;
+flhold1 = srate/1000 * (1);
+//flhold2 = srate/1000 * (20);
+flhold2 = srate/1000 * (100);
+flrel = srate/1000 * 100;
+attmin = 0;
+attmax = 50;
+holdmin = 0;
+holdmax = 100;
+relmin = 5;
+relmax = 300;
+
+// BUFFERS
+slimin = 1;
+slimax = 20;
+slizero = 40;
+
+slimin[2] = slimin[3] = -40;
+slimax[2] = slimax[3] = 0;
+
+slizero[1] = 200;
+slizero[2] = -20;
+slizero[3] = -20;
+slizero[4] = 8;
+slizero[5] = 3;
+//slizero[6] = .265;
+slizero[6] = 68;
+slizero[7] = 100;
+
+/*
+slimin[1] = 60;
+slimin[4] = slimin[5] = slimin[9] = slimin[11] = 0;
+slimin[10] = -1;
+
+slimax[1] = 500;
+slimax[4] = slimax[5] = 100;
+slimax[9] = slimax[10] = slimax[11] = 1;
+*/
+
+function lppole(in)
+  instance(out_1 mem_11 mem_12 mem_13 mem_14)(
+  out_1 = a0_lp*in+a1_lp*mem_11+a2_lp*mem_12-b1_lp*mem_13-b2_lp*mem_14;
+  mem_12 = mem_11;
+  mem_11 = in;
+  mem_14 = mem_13;
+  mem_13 = out_1;
+  out = out_1;
+);
+function hppole(in)
+  instance(out_1 mem_11 mem_12 mem_13 mem_14)(
+  out_1 = a0_hp*in+a1_hp*mem_11+a2_hp*mem_12-b1_hp*mem_13-b2_hp*mem_14;
+  mem_12 = mem_11;
+  mem_11 = in;
+  mem_14 = mem_13;
+  mem_13 = out_1;
+  out = out_1;
+);
+
+function lp(in)(
+  out_lp = this.pole1.lppole(in);
+  out_lp = this.pole2.lppole(out_lp);
+  out_lp = this.pole3.lppole(out_lp);
+  out_lp = this.pole4.lppole(out_lp);
+  out_lp = this.pole5.lppole(out_lp);
+);
+function hp(in)(
+  out_hp = this.pole1.hppole(in);
+  out_hp = this.pole2.hppole(out_hp);
+  out_hp = this.pole3.hppole(out_hp);
+  out_hp = this.pole4.hppole(out_hp);
+  out_hp = this.pole5.hppole(out_hp);
+);
+
+function float_orig(in spd)
+  instance(ina inaold indir indirold mul inpk inpk_ fltdir flt cnt holding)(
+  hold = flhold1;
+  inaold = ina;
+  ina = abs(in);
+  indirold = indir;
+  indir = ina-inaold;
+
+  indir > 0 ? (
+//    fltdir < 0 ? fltdir += (1-(ina/flt))^4 * max(0,indir) *.07;
+    indirold < 0 ? inpk_ = 0;
+    inpk_ = max(inpk_,ina);
+  ):(
+    inpk = inpk_
+  );
+
+//  inpk < flt && indir < 0 ? mul = 1.1 : mul = 1;
+  
+  ina > flt ? (
+//    fltdir += (ina-flt) *.005;  // Turn up
+    fltdir += (ina-flt) * (1+fltdir)^2 *.005 *(spd/2+.5) *spd;  // Turn up
+    cnt = - srate/1000 * 1;
+  ):(
+    cnt < srate/100 ? cnt += 1;
+//    fltdir -= (flt-ina)^2 *.0001 * mul ;
+    fltdir -= (flt-ina)^2 * max(0,flt-inpk)^2 *.04 * mul ; // Turn down
+//    flt /= (flt-inpk) * .02  +1 ;
+//    fltdir -= max(0,flt-inpk)^3 * max(0,-indir) *1;      // Turn down
+    fltdir -= max(0,flt-inpk)^2 *.02 *spd;      // Turn down
+//    fltdir -= max(0,flt-ina) * .0001 / spd;    // Turn down
+//    fltdir -= max(0,flt-ina)^2 * .02 * max(0,cnt/100)^2;    // Turn down
+    flt -= max(0,flt-ina)^2 * (1-ina^2) * .0007 * max(0,cnt/100)^2;    // Turn down
+
+
+    fltdir > 0 ? (                                // GOING UP:
+      p=0;
+      fltdir *= 1- min(1,abs(flt/inpk-1))^.5 *.001 ; // Level out near inpk
+//      fltdir -= max(0,flt-inpk)^3 * max(0,-indir) *.3;      // Turn down
+//      fltdir -= max(0,flt/inpk-1)^3 * max(0,-indir) *.1;      // Turn down
+    ):(                                                     // COMING DOWN
+      p=0;      
+//      fltdir -= max(0,flt-inpk)^2 * max(1,-indir+1) * .005; // Turn down
+      fltdir *= 1- min(1,abs(flt/inpk-1))^.5 *.03 ;   // Level out near inpk
+    );
+
+    indir < 0 ? (                             // INDIR GOING DOWN?
+//      flt /= max(0,flt-inpk)^3 * .05  +1 ;    // Move down
+//      fltdir -= max(0,flt-inpk)^2 * flt^2 * .002 ;
+      fltdir -= max(0,flt-inpk)^3 * .003 *0;    // Turn down
+    );
+//flt = 0;
+/*
+    mul > 1 ? (
+  //    fltdir -= .000103 ;
+    );
+*/
+//    fltdir > 0 ? fltdir *= 1-(fltspd*.01);
+
+  );
+  
+//  fltdir *= min(1,fltdir);
+  
+//  fltspd = .01;
+//  flt += fltdir *fltspd;
+  fltdir < 0 ? fltdir *= spd * max(0,cnt/200);
+  flt += fltdir * .05 *1;
+  fltdir > 0 ? (
+//    fltdir *= 1-(fltspd*.9);
+    fltdir *= .99;
+    inpk > flt ? fltdir += max(0,indir) *.03;
+  );
+// rel1? dir *= 0.96
+/*
+  ina > flt ? (
+//    flt += (ina-flt) * max(0,dir)^.5 ;
+  ):(
+    flt -= .0001;
+//    flt -= max(0,1-(ina/flt)^4) * flt;
+  );
+*/
+
+
+/*
+  ina > flt ? (
+//    flt += (ina-flt) * fltspd / flatt ;
+    cnt = 0;
+  ):(
+    cnt += 1;
+    cnt -= ((ina/flt)^10) *.1 * cnt ;
+//    cnt -= ((flt-ina)/flt);
+    (cnt) > hold && flt > 10 ? (
+//      flt -= ( cos( max(0,1-max(0,cnt-hold)/flrel)* $pi/2)) * (.001+flt^3) * (flt-ina) *fltspd^.5;
+//      cnt *= 1-((flt-ina)/flt)^4 *.01;
+      flt -= ( cos( max(0,1-max(0,cnt-hold)/flrel)* $pi/2))^2 * (.001+flt^.5) * (flt-ina) *fltspd^1;
+
+//    ):(
+//      flt -=  (1/srate) / (hold/2000 +1);
+    );
+    flt -=  (cnt/srate/1000 * 30 +.00003) * (1-(ina/flt)^4);
+  );
+*/
+  flt;
+);
+
+function float_0v01(in spd)
+  instance(ina inaold indir indirold mul inpk inpk_ inapk fltdir fltold flt cnt holding)(
+  hold = flhold1;
+  inaold = ina;
+  ina = abs(in);
+  indirold = indir;
+  indir = ina-inaold;
+
+  indir > 0 ? (
+//    fltdir < 0 ? fltdir += (1-(ina/flt))^4 * max(0,indir) *.07;
+    indirold < 0 ? inpk_ = 0;
+    inpk_ = max(inpk_,ina);
+  ):(
+    inpk = inpk_
+  );
+  inapk = max(ina,inpk);
+
+//flt = 0;
+  
+  ina > flt ? (
+    cnt = - srate/1000 * 2;
+//    flt += (ina-flt)^2 * .1;
+//    fltdir += 1/srate ;
+//    fltdir *= flt^.25 *.05+.95;
+    flt += ((inapk)-flt) * .001;
+    fltdir < 0 ? (
+      fltdir /= (1-flt)^2 * .1 +1;
+    );
+  ):(
+    fltdir > 0 ? fltdir /= (flt-inapk)^2 * .1 +1;
+    fltdir /= (flt/inapk-1) * .2 +1;
+    (cnt += 1) > holds+atts ? (
+    
+      flt -= (flt-inapk)^2 * .01;
+//    fltdir /= max(0,1-abs(flt/ina-1)) * .01 +1;
+//    flt -= (flt-ina) * .01 * cnt/srate;
+      fltdir < 0 ? (
+        fltdir /= 1.1;
+      );
+    );
+  );
+
+//fltdir = 0;
+/*
+//  inpk < flt && indir < 0 ? mul = 1.1 : mul = 1;
+  
+  ina > flt ? (
+//    fltdir += (ina-flt) *.005;  // Turn up
+    fltdir += (ina-flt) * (1+fltdir)^2 *.005 *(spd/2+.5) *spd;  // Turn up
+    fltdir += (ina-flt) * max(0,indir) * (1-flt)^4 * 10;   // Turn up low
+    cnt = - srate/1000 * 1;
+  ):(
+    cnt < srate/100 ? cnt += 1;
+//    fltdir -= (flt-ina)^2 *.0001 * mul ;
+    fltdir -= (flt-ina)^2 * max(0,flt-inpk)^2 *.04 * mul ; // Turn down
+//    flt /= (flt-inpk) * .02  +1 ;
+//    fltdir -= max(0,flt-inpk)^3 * max(0,-indir) *1;      // Turn down
+    fltdir -= max(0,flt-inpk)^2 *.02 *spd;      // Turn down
+//    fltdir -= max(0,flt-ina) * .0001 / spd;    // Turn down
+//    fltdir -= max(0,flt-ina)^2 * .02 * max(0,cnt/100)^2;    // Turn down
+    flt -= max(0,flt-ina)^2 * (1-ina^2) * .0007 * max(0,cnt/100)^2;    // Turn down
+
+
+    fltdir > 0 ? (                                // GOING UP:
+      p=0;
+//      fltdir /= max(0,flt/inpk-1)^2 *.2 +1;
+      flt /= max(0,flt/inpk-1)^2 *.02 +1;
+      fltdir *= 1- min(1,abs(flt/inpk-1))^.5 *.001 ; // Level out near inpk
+//      fltdir -= max(0,flt-inpk)^3 * max(0,-indir) *.3;      // Turn down
+//      fltdir -= max(0,flt/inpk-1)^3 * max(0,-indir) *.1;      // Turn down
+    ):(                                                     // COMING DOWN
+      p=0;      
+//      fltdir -= max(0,flt-inpk)^2 * max(1,-indir+1) * .005; // Turn down
+      fltdir *= 1- min(1,abs(flt/inpk-1))^.5 *.03 ;   // Level out near inpk
+    );
+
+    indir < 0 ? (                             // INDIR GOING DOWN?
+//      flt /= max(0,flt-inpk)^3 * .05  +1 ;    // Move down
+//      fltdir -= max(0,flt-inpk)^2 * flt^2 * .002 ;
+      fltdir -= max(0,flt-inpk)^3 * .003 *0;    // Turn down
+    );
+
+  );
+*/  
+//  fltdir < 0 ? fltdir *= spd * max(0,cnt/200);
+  flt += fltdir  ;
+  fltdir = flt-fltold;
+  fltold = flt;
+  
+  flt;
+);
+
+
+
+function float(in spd)
+  instance(ina pk pkc flt fc)(
+  
+  ina = abs(in);
+  
+  ina > pk ? (
+    pk = ina;
+//    pkc = -(srate*.01);
+    pkc = -(srate*.001);
+    pkc = 0;
+  ):(
+/*
+//    (pkc += 1) > 0 ? pk -= (pk-ina) * .001 * min(1, pkc/(srate*.002))^2;
+//    (pkc += 1) > 0 ? pk -= (1- (max(0, ina/pk-.5)/.5)^3) * .0001 * min(1, pkc/(srate*.002))^2;
+//    (pkc += 1);
+    pkc < (srate*.02) ? pkc += pk-ina;
+    pkc > 0 ? pk -= .01 *(ina/pk) * min(1, pkc/(srate*.02))^2;
+//    pkc *= (1- .02*(max(0, ina/pk-.5)/.5)^1);
+//    pkc *= (1- .1*(max(0, ina/pk-.5)/.5)^2);
+//    pkc *= 1- .1* (1- min(1, max(0, pk-ina)/.03)^2);
+    pkc = min(pkc, (1- (max(0, ina/pk-.8)/.2)^2) *srate*.02 );
+*/    
+    pkrels = srate*(.04-.02*spd );
+    pkc < pkrels ? pkc += 1;
+//    pk -= (pk + (pk-ina)) *.001 * min(1, pkc/(srate*.02)); // fast
+    pk -= (pk + (pk-ina)) *.001 * (.1+.9*spd) * min(1, pkc/pkrels); // fast
+    pkc /= 1+ .2* min(1, max(0, ina/pk -.8)/.2);
+
+  );
+  
+  pk > flt ? (
+    flt = pk;
+    fc = -holds -atts;
+  ):(
+//    (fc += 1) > 0 ? flt -= (flt-pk) * .0006 * min(1, fc/rels)^1;
+    (fc += 1) > 0 ? flt -= (flt-pk) * .003 * min(1, fc/rels) / (1+(holds+atts)*.001);
+  );
+  
+  flt;
+    
+);
+  
+
+function comp(inaflt thr)
+  instance(fltg compg_ compg rc)(
+  
+  compg_ = min(1,thr/inaflt);
+
+//  (fltg = inaflt*compg) > thr ? (
+//  (fltg = inaflt*compg) > thr ? (
+  compg_ < compg ? (
+//    attcnt < 50 ? attcnt += 1;
+//    compg /= (fltg - thr) * .1 +1;
+//    compg /= (fltg - thr) * (1-.99*rel1)^2 +1;
+//    compg /= (fltg - thr)/atts +1;
+    compg -= ( compg - compg_) /atts;
+//    rc = -rels;
+    rc = 0;
+
+  ):(
+
+//  (fltg = inaflt*compg) < thr ? (
+    rc < rels ? rc += 1;
+//    attcnt = 0;
+//    compg += (1-compg) * (thr-fltg) * 1 * (1-rel1 *.9);
+//    compg += (1-compg^2) * (thr-fltg) * 1 / (srate/1000 *.1 * (rel1*70) +1);
+
+//    compg += (1-compg) / (srate/1000 * (rel1^.75 *100 +1) );
+//    compg += (1-compg) /(rels*.4) * max(0, rc/rels);
+    compg += (compg_-compg) /(rels*.4) * max(0, rc/rels);
+  );
+
+  compg; 
+);
+
+
+function upsliders()(
+  thr = 2^(slider2/6);
+  thr2 = 2^(slider3/6);
+  att = ((slider4-attmin)/(attmax-attmin));
+  att1 = (att * .5 + .5 * att^2) ;
+  attms = att1 *(attmax-attmin);
+  atts = srate*(attms*.001) +1;
+  hold = ((slider5-holdmin)/(holdmax-holdmin));
+  hold1 = (hold * .5 + .5 * hold^2) ;
+  holdms = hold1 *(holdmax-holdmin);
+  holds = srate*(holdms*.001) +1;
+  rel = ((slider6-relmin)/(relmax-relmin));
+  rel1 = (rel * .25 + .75 * rel^2) ;
+  
+//  rel1 = (( log10(slider6)-log10(relmin) )/( log10(relmax)-log10(relmin) ));
+//  slider4 = slider4_g^2;
+  relms = relmin + rel1 *(relmax-relmin);
+  rels = srate*(relms*.001) +1;
+//  fltspd = 1/(33*slider4^3 +1);
+  fltspd = 1/( (relms-relmin) +1);
+  //rel1 == 1 ? flhold = flhold2 : flhold = flhold1;
+  hold1 == 0 ? flhold =  srate/1000 * (1+99*rel1) : 
+    flhold =  srate/1000 * holdms;
+//  flslo = 1/(33*rel1^3 +1);
+//  fltspd = 1-.99*slider4;
+  //flslo = 1;
+  depth1 = min(1,slider7/100);
+  depth2 = max(1,slider7/100);
+  stereo = slider9;
+  secmode = slider10;
+  link = slider11;
+  
+  cx = slider1;
+  cx_lp = cx * 1.2;
+  cx_hp = cx * .8;
+  
+  cutoff_lp = 2*cx_lp/srate;
+  res_lp = 10^(0.05*(5.2/5+1.5));
+  
+  k_lp = 0.5*res_lp*sin($pi*cutoff_lp);
+  c1_lp = 0.5*(1-k_lp)/(1+k_lp);
+  c2_lp = (0.5+c1_lp)*cos($pi*cutoff_lp);
+  c3_lp = (0.5+c1_lp-c2_lp)*0.25;
+  
+  a0_lp = 2*c3_lp;
+  a1_lp = 4*c3_lp;
+  a2_lp = 2*c3_lp;
+  b1_lp = -2*c2_lp;
+  b2_lp = 2*c1_lp;
+  
+  cutoff_hp = 2*cx_hp/srate;
+  res_hp = 10^(0.05*(5.2/5+1.5));
+  
+  k_hp = 0.5*res_hp*sin($pi*cutoff_hp);
+  c1_hp = 0.5*(1-k_hp)/(1+k_hp);
+  c2_hp = (0.5+c1_hp)*cos($pi*cutoff_hp);
+  c3_hp = (0.5+c1_hp+c2_hp)*0.25;
+  
+  a0_hp = 2*c3_hp;
+  a1_hp = -4*c3_hp;
+  a2_hp = 2*c3_hp;
+  b1_hp = -2*c2_hp;
+  b2_hp = 2*c1_hp;
+);
+
+@slider
+
+upsliders();
+
+@block
+
+thirds > 100 && secmode == 0 ? (secmode = 1; upsliders(); );
+
+
+
+@sample
+
+
+spl0 == 0 && spl1 == 0 ? (
+  (sleepc += 1) > srate *5 ? sleep = 1;
+):(
+  sleepc = sleep = 0;
+);
+
+
+kicklp = kicklp.lp(spl2);
+kickflt = kickfl.float(kicklp,1);
+kickg = (kick.comp(kickflt,thr));
+//kickg = (kick.comp(kicklp,thr));
+
+//rawo = spl2;
+
+sleep == 0 ? (
+  /*
+  spl4 = spl0;
+  spl5 = spl2;
+  */
+  maina = abs(spl0);
+  
+  stereo == 1 ? (
+    mainlp = mainlp.lp(spl0);
+    mainhp = mainhp.hp(spl0);
+    mainlp2 = mainlp2.lp(spl1);
+    mainhp2 = mainhp2.hp(spl1);
+    mainflt2 = mainfl2.float(mainlp2,.1);
+  ):(
+    mainlp = mainlp.lp((spl0+spl1)/2);
+    mainhp = mainhp.hp((spl0+spl1)/2);
+  );
+  mainflt = mainfl.float(mainlp,.1);
+  
+  
+  //kickcomp = kick.comp(kickflt);
+  
+  secmode == 0 ? (
+    secg = 1;
+    spl3 != 0 ? (
+      thirds += 1;
+    ):(
+      thirds > 0 ? thirds -= 1;
+    );
+  );
+  
+  secmode == 1 ? (
+    seclp = seclp.lp(spl3);
+    secflt = secfl.float(seclp,.3);
+    secg = (sec.comp(secflt,thr2));
+    maing = (1- (1-main.comp(mainflt,thr)) * (1-(kickg*secg)^1) * depth1)^depth2;
+  //  maing = (main.comp((mainflt/2 +kickflt+secflt)/3))^3;
+  ):(
+  //  main.comp((kickflt+mainflt)/2);
+  //  maing = (main.comp((mainflt/2 + kickflt)/2))^2;
+//    maing = (1- (1-main.comp(mainflt,thr*kickg)) * (1-kickg^4) * depth1)^depth2;
+    maing = (1- (1-main.comp(mainflt,thr)) * (1-kickg^4) * depth1)^depth2;
+  );
+  
+  
+  spl0 = spl1 = mainlp * maing + mainhp;
+  
+  stereo == 1 ? (
+    spl1 = mainlp2 * maing + mainhp2;
+  );
+  
+  /*
+  spl5 = -kickflt;
+  spl4 = abs(mainlp);
+  spl5 = -abs(kicklp);
+  */
+  
+  
+  mainfltmtr = max(mainflt,mainfltmtr);
+  stereo ? mainflt2mtr = max(mainflt2,mainflt2mtr);
+  kickfltmtr = max(kickflt,kickfltmtr);
+  maingmtr = min(maing,maingmtr);
+  kickgmtr = min(kickg,kickgmtr);
+  secmode == 1 ? (
+    secfltmtr = max(secflt,secfltmtr);
+    secgmtr = min(secg,secgmtr);
+  /*
+  ):(
+    secfltmtr > 0 ? secfltmtr = 0;
+    secgmtr = 1;
+  */
+  );
+);
+
+
+//spl2 = spl3 = 0;
+//spl4 = spl5 = 0;
+
+//spl2 = spl3 = spl2;
+
+/*
+spl4 = spl0;
+spl5 = (secfl.ina);
+spl4 = (secflt);
+//spl5 = secg;
+*/  
+
+
+//spl2 = kick.compg;
+//spl3 = kickfl.flt;
+/*
+spl2 = mainfl.pk;
+spl3 = mainfl.flt;
+spl3 = kickfl.pk;
+spl2 = kickfl.flt;
+*/
+
+
+@gfx 480 235
+
+
+// GFX FUNCTIONS
+
+mouse_cap > 0 ? (
+  mous = (mouse_x-mouse_xold)+(mouse_yold-mouse_y);
+):(
+  mous = 0;
+);
+
+function xy(x y)(
+  gfx_x = x;
+  gfx_y = y;
+);
+function mou(x1 y1 x2 y2 spd id)
+  instance()(
+  drag == 0 && mouse_cap > 0 && mouse_x > x1 && mouse_x < x2
+    && mouse_y > y1 && mouse_y < y2 ? (drag = id;   mouspd = spd; );
+
+);
+
+function meter(in in2 in_redu label label_ch bri)
+  instance(gr ypos1 ypos2 ypos3 ypos4)(
+  ypos1 = gfx_y + (mtrh-1)*(1-in^.5);
+  in2 != 0 ? ypos1b = gfx_y + (mtrh-1)*(1-in2^.5) ;// : ypos1b = gfx_y + (mtrh);
+  ypos2 = gfx_y + mtrh -0;
+  ypos3 = gfx_y + 1;
+  ypos4 = gfx_y + (mtrh-1)*(1-in_redu^.5);
+/*
+  ypos3 = ypos1;
+  ypos4 = ypos1 + (1-in_redu^.5) * (ypos2-ypos1);
+*/
+
+  xtmp = gfx_x;
+  ytmp = gfx_y;
+  gr = .4;
+  gfx_set(gr,gr,gr,bri);
+  gfx_rect(gfx_x,gfx_y,mtrw,mtrh,0);
+  gfx_set(gr,.9,gr,1 ,bri);
+  in2 != 0 ? (
+    gfx_rect(gfx_x+1,ypos1,(mtrw-2)/2,ypos2-ypos1);
+    gfx_rect(gfx_x+1+(mtrw-2)/2,ypos1b,(mtrw-2)/2,ypos2-ypos1b);
+  ):(
+    gfx_rect(gfx_x+1,ypos1,mtrw-2,ypos2-ypos1);
+  );
+//  gfx_set(.4,.4,1,.7);
+  gfx_set(1,.6,.0,.8*bri);
+  gfx_rect(gfx_x+1,ypos3,mtrw-2,ypos4-ypos3);
+  gfx_gradrect(gfx_x,gfx_y,mtrw,mtrh , 0,0,0,0 , 0,0,-.5/mtrw,.5/mtrw);
+  xy(gfx_x+mtrw/2,gfx_y+mtrh+gfx_texth/2);
+  gr = .8;
+  gfx_set(gr,gr,gr,bri);
+  gfx_setfont(1);
+  gfx_drawstr(label,257,gfx_x,gfx_y);
+  gfx_setfont(2);
+  xy(xtmp+mtrw/2,ytmp-gfx_texth*1);
+  gfx_drawstr(label_ch,261,gfx_x,gfx_y);
+  
+//  lastx = gfx_x +mtrw;
+  gfx_x = xtmp + mtrspac;
+  gfx_y = ytmp;
+);
+
+
+/*
+gr = .8;
+xy(20,10);
+modepad = 30;
+modalo = .5;
+
+gfx_set(gr,gr,gr,1,0);
+gfx_drawstr("Mode:");
+gfx_x += modepad;
+x1a = gfx_x; y1 = gfx_y;
+secmode == -1 ? moda = 1 : moda = modalo;
+gfx_set(gr,gr,gr,moda,0);
+gfx_drawstr("Bass");
+x1b = gfx_x;
+gfx_x += modepad;
+x2a = gfx_x;
+secmode == 1 ? moda = 1 : moda = modalo;
+gfx_set(gr,gr,gr,moda,0);
+gfx_drawstr("Guitar/Keyb");
+x2b = gfx_x;
+
+mou(x1a,y1,x1b,y2 , 1);
+mou(x2a,y1,x2b,y2 , 2);
+
+drag == 1 ? slider10 = -1:
+drag == 2 ? slider10 = 1:
+*/
+
+
+// GFX INIT
+
+gfx_setfont(1,"Verdana",16);
+gfx_setfont(2,"Verdana",12);
+mtrw = 20;
+mtr1x = 30;
+mtry = 25+(gfx_h-20)/15;
+mtrspac = 80;
+gfx_setfont(1);
+mtrh = gfx_h - gfx_texth*2 - mtry;
+
+sl1y = 10;
+
+
+// PANEL
+
+gfx_w != gfx_wold || gfx_h != gfx_hold ? (
+  gfx_dest = 2;
+  gfx_setimgdim(2,-1,-1); gfx_setimgdim(2,gfx_w,gfx_h); 
+  gfx_gradrect(0,0,w=gfx_w,gfx_h , 0,0,0,.5 , .2/w,.1/w,1/w,-.5/w);
+  gfx_gradrect(0,0,w=gfx_w,gfx_h , 0,0,0,1 , 0,0,0,0, .2/w,.1/w,.5/w,-1/w);
+  gfx_dest = -1;
+);
+gfx_wold = gfx_w;
+gfx_hold = gfx_h;
+gfx_set(1,1,1,1,0);
+xy(0,0);
+gfx_blit(2,1,0);
+
+
+
+// METERS
+
+xy(mtr1x,mtry);
+stereo == 0 ? mainflt2mtr = mainfltmtr;
+meter(mainfltmtr,mainflt2mtr,maingmtr,"Main","Ch.1-2",1);
+//meter(maingmtr,"Maing",1);
+meter(kickfltmtr,0,kickgmtr,"Kick","Ch.3",1);
+gfx_set(1,.1,.1,.3);
+gfx_rect(x1=gfx_x-mtrspac-2-mtrw/2,y1=gfx_y-mtrw/2 +(1-thr^.5)*mtrh,w=mtrw*2+4,h=mtrw);
+thr1.mou(x1-5,mtry,x1+w+10,mtrh , .1 ,2);
+gfx_set(1,.1,.1,.9);
+gfx_rect(gfx_x-mtrspac-mtrw/2,gfx_y +(1-thr^.5)*mtrh-1,mtrw*2,3);
+lockx = gfx_x-mtrspac/2 -1;
+mtr3x = gfx_x;
+//meter(kickgmtr,"Kickg",1);
+meter(secfltmtr,0,secgmtr,"Bass","Ch.4",.3+.7*secmode);
+sl1x = gfx_x ;
+
+gfx_set(.5+.5*secmode,.1,.1,.3);
+gfx_rect(x1=gfx_x-mtrspac-2-mtrw/2,y1=gfx_y-mtrw/2 +(1-thr2^.5)*mtrh,w=mtrw*2+4,h=mtrw);
+thr2.mou(x1-5,mtry,x1+w+10,mtrh , .1 /thr2,3);
+gfx_set(.5+.5*secmode,.1,.1,.3+.6*secmode);
+gfx_rect(gfx_x-mtrspac-mtrw/2,gfx_y +(1-thr2^.5)*mtrh-1,mtrw*2,3);
+
+
+// STEREO
+
+gr = .4 + .5*stereo;
+gfx_set(gr,gr,gr,1);
+r = 0;
+h1 = max(300,gfx_h)/100;
+h2 = max(300,gfx_h)/30;
+h3 = max(300,gfx_h)/70;
+loop(3,
+  gfx_circle(mtr1x+9-h1,h2 , h3-r,0);
+  gfx_circle(mtr1x+mtrw-9+h1,h2 , h3-r,0);
+  r += 1;
+);
+str.mou(mtr1x-5,3,mtr1x+mtrw+5,25 , 1,9);
+
+// LOCK
+
+locky = mtry*1.5 ;
+
+lockw = mtrspac/3.5;
+lockh = gfx_h / 15;
+lobarx = lockx +2;
+lobary = locky + lockh/2;
+lobarh = (lockh/2);
+lobarw = (lockw-2)/2;
+lockc = lockx+lockw/2;
+lobart = lockw /6;
+lockopen = lockw/3 * (1-link);
+locka = .4+.5*link;
+gfx_set(1,1,1,locka);
+gfx_rect(lockx,lobary+(1-link)*lockopen,lockw+1,lockh/2 ,1);
+xy(lobarx,lobary-1);
+link.mou(lockx,locky,lockx+lockw,locky+lockh+lockopen , 1,11);
+
+function line(curve len w)(
+  ang = 0;
+  loop(len,
+    gfx_line(gfx_x,gfx_y,gfx_x+w,gfx_y);
+//    gfx_line(gfx_x+((lobarc-gfx_x)*2-lobart),gfx_y,gfx_x+w,gfx_y);
+    link == 1 || gfx_y < lobary ? 
+      gfx_line(tmpx=gfx_x+((lockc-gfx_x)*2),gfx_y,tmpx-w,gfx_y);
+    gfx_x += 1-cos(ang);
+    gfx_y -= 1;
+    ang += curve;
+    w *= ang/5 +1;
+    w = min(w,lockc-gfx_x-.5);
+  );
+);
+link == 0 ? (
+  gfx_y += lockopen;
+);
+line(0,5+lockopen,lobart);
+//line(0,5,lobart);
+line(0.4,9,lobart);
+
+
+// ENABLE CH.4
+
+secmode == 1 ? (
+  gr = .2;
+  gfx_set(gr,.6,gr/2,1);
+):(
+  gr = .25;
+  gfx_set(gr,gr,gr,1);
+);
+gfx_circle(mtr3x,10,5 ,1);
+gfx_circle(mtr3x+mtrw,10,5 ,1);
+gfx_rect(mtr3x,5,mtrw,11);
+/*
+secmode == 1 ? (
+  gr = .9;
+  gfx_set(gr,gr,gr,1);
+  gfx_circle(mtr3x+mtrw-1,10,4 ,1);
+  gr = .1;
+  gfx_set(gr,gr,gr,1);
+  gfx_circle(mtr3x+mtrw-1,10,2.5 ,1);
+*/
+secmode == 1 ? (
+  gr = .8;
+  gfx_set(gr,gr,gr,1);
+  gfx_circle(mtr3x+mtrw,10,5 ,1);
+  gr = .2;
+  gfx_set(gr,gr,gr,1);
+  gfx_circle(mtr3x+mtrw,10,6 ,0);
+  gr = .1;
+  gfx_set(gr,gr,gr,1);
+  gfx_circle(mtr3x+mtrw,10,2.5 ,1);
+):(
+  gr = .6;
+  gfx_set(gr,gr,gr,1);
+  gfx_circle(mtr3x+1,10,4 ,1);
+  gr = .1;
+  gfx_set(gr,gr,gr,1);
+  gfx_circle(mtr3x+1,10,3 ,1);
+);
+
+ch4.mou(mtr3x-5,4,mtr3x+mtrw+5,16 , 1,10);
+
+// METER DECAY
+
+decay = .2;
+decay2 = decay;
+mainfltmtr /= 1+decay;
+stereo ? mainflt2mtr /= 1+decay;
+kickfltmtr /= 1+decay;
+secfltmtr /= 1+decay;
+/*
+maingmtr < 1 ? maingmtr += decay2 : maingmtr = 1;
+kickgmtr < 1 ? kickgmtr += decay2 : kickgmtr = 1;
+*/
+maingmtr = 1- (1-maingmtr) / (1+decay);
+kickgmtr = 1- (1-kickgmtr) / (1+decay);
+secgmtr = 1- (1-secgmtr) / (1+decay);
+
+
+// SLIDERS
+
+sl1w = (gfx_w-sl1x) *.8;
+sl1y = mtry;
+sl1h = mtrw;
+
+function slidr(label val pos mini maxi id)
+  instance(tmpx tmpy curval xpos)(
+  tmpx = gfx_x;
+  tmpy = gfx_y;
+  gfx_y -= gfx_texth *1.5;
+  gfx_set(1,1,1,.8);
+  gfx_drawstr(label);
+  xy(tmpx,tmpy);
+  gr = .4;
+  gfx_set(gr,gr,gr,1);
+  gfx_rect(gfx_x,tmpy=gfx_y,sl1w,mtrw ,0);
+  gfx_gradrect(gfx_x,tmpy,sl1w,sl1h , 0,0,0,0 ,0,0,0,0, 0,0,-.5/mtrw,.4/mtrw);
+    
+  // Knob
+/*
+  gfx_set(1,.1,.1,.3);
+  gfx_rect((xpos=tmpx+((param-mini)/(maxi-mini))*sl1w)-sl1h/2,y=tmpy-gfx_texth/2.4,sl1h,sl1h+gfx_texth/1.1);
+
+  mouse_cap > 0 && mouse_x > sl1x && mouse_y > tmpy-gfx_texth/2
+    && mouse_x < sl1x+sl1w && mouse_y < tmpy+sl1h+gfx_texth ? drag = id;
+  gfx_set(1,.1,.1,.9);
+  gfx_rect(xpos-1,sl1y-gfx_texth/4,3,sl1h+gfx_texth/2);
+*/
+
+  xpos = tmpx+knw/2+((pos-mini)/(maxi-mini))*(sl1w-knw);
+  knw = sl1h*2;
+  gr = .6;
+  gfx_set(gr,gr,gr,1);
+  gfx_rect(xpos-knw/2,tmpy-3,knw,sl1h+6);
+  gr = .3;
+  gfx_set(gr,gr,gr,1);
+  gfx_rect(xpos-knw/2+4,tmpy+1,knw-8,sl1h-3);
+
+  slimin[id] = mini;
+  slimax[id] = maxi;
+  this.mou(sl1x,tmpy,sl1x+sl1w,tmpy + sl1h*2 , (maxi-mini)/sl1w,id);
+  
+  // Labels
+  gr = .8;
+  gfx_set(gr,gr,gr,1);
+//  xy(tmpx,tmpy2=tmpy+sl1h+2);
+  xy(tmpx,tmpy2=tmpy);
+  sprintf(minlbl,"%d ",mini);
+  gfx_drawstr(minlbl,258,gfx_x,gfx_y);
+  sprintf(maxlbl," %d",maxi);
+  xy(tmpx+sl1w,tmpy2);
+  gfx_drawstr(maxlbl,256,gfx_x,gfx_y);
+
+  sprintf(curval,"%d",val);
+  xy(xpos,tmpy);
+  gfx_drawstr(curval,257,gfx_x,gfx_y);
+  
+  
+  
+);
+slispa = 60;
+xy(sl1x,sl1y);  
+xovr.slidr("X-Over Frequency",cx,cx,minf=60,maxf=500,1);
+xy(sl1x,gfx_y += slispa);
+att.slidr("Attack Time",attms,slider4,attmin,attmax,4);
+xy(sl1x,gfx_y += slispa);
+hold.slidr("Hold Time",holdms,slider5,holdmin,holdmax,5);
+xy(sl1x,gfx_y += slispa);
+rel.slidr("Release Time",relms,slider6,relmin,relmax,6);
+xy(sl1x,gfx_y += slispa);
+dpth.slidr("Cut Depth",slider7,slider7,0,200,7);
+
+maxx = slimax[1];
+
+
+// MOUSE DOUBLECLICKS, DBLCLKS
+
+drag > 0 ? (
+  dblstage == 0 ? dblstage = 1;
+  dblstage == 2 ? dblstage = 3;
+):(
+  dblstage == 1 ? dblstage = 2;
+  dblstage == 0 ? dblcnt = dblclk = 0;
+);
+dblstage > 0 ? (
+  (dblcnt += 1) > 8 ? dblstage = dblclk = 0;
+  dblstage == 3 ? (
+    dblclk = drag;
+    drag = dblstage = 0;
+  );
+);
+
+dblclk > 0 && dblclk <= 7 ? (
+  slider(dblclk) = slizero[dblclk];
+  dblclk = drag = 0;
+  upsliders();
+):(
+  dblclk = 0;
+);
+  
+
+
+// MOUSE DRAGS
+
+drag > 0 ? (
+  drag == 9 || drag == 10 || drag == 11 ? (
+    (slider(drag) == 1) ? slider(drag) = 0 : slider(drag) = 1;
+    
+    drag == 11 && slider2 == 1 ? slider3 = slider2;
+
+    drag = -1;
+
+/*
+  ):
+  drag == 4 ? (
+    slider4 += (mouse_yold-mouse_y)*mouspd;
+    slider4 += (mouse_x-mouse_xold)*mouspd;
+    slider4 > maxf ? slider4 = maxf;
+    slider4 < minf ? slider4 = minf;
+//    relms = 
+//    slider4 = relmin + slider4_1^2  * (relmax-relmin);
+*/
+    
+/*
+  drag == 1 ? (
+    slider1 += mous/sl1w * (maxf-minf);
+//    cx = slider1;
+*/
+  ):(
+//  mouspd = 1;
+    slider(drag) += (mouse_yold-mouse_y)*mouspd;
+    slider(drag) += (mouse_x-mouse_xold)*mouspd;
+    slider(drag) > slimax[drag] ? slider(drag) = slimax[drag];
+    slider(drag) < slimin[drag] ? slider(drag) = slimin[drag];
+  );
+  link == 1 ? (
+    drag == 2 ? slider3 = slider2;
+    drag == 3 ? slider2 = slider3;
+  );
+
+/*
+  drag == 2 || drag == 3 ? (
+    slider(drag) > 0 ? slider(drag) = 0;
+  ):(
+    slider(drag) > 1 ? slider(drag) = 1;
+  );
+*/
+  upsliders();
+);
+
+mouse_cap == 0 ? drag = 0;
+
+mouse_yold = mouse_y;
+mouse_xold = mouse_x;
+
+//slider3 = thr2 = 1;
+
+
+
+
+
+
+
+
+
+
+
