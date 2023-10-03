@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="9507e2b86c3617f9aacf5af437e77817e11e9557">
+<index version="1" name="ReaTeam JSFX" commit="0bfd56000b352869f3c541270adcc53b3014869c">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -139,6 +139,24 @@ screenshot
 Increased internal frame rate to 1500 for finer peak resolution.
 Performance optimization.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/ab7cc219407c03b318b8b1924d0d8fcee61aaa9e/Dynamic/ersh_Transient%20Controller%202.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mrelwood_BandbAss.jsfx" type="effect" desc="BandbAss">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 BandbAss - Sidechain low end compressor.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 An early but functional preview version of a sidechain bass compressor, which is a great tool for reducing low frequency build-up in a stereo mix.\u8203?\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Insert to a bass guitar track, and insert kick drum in the sidechain. The compressor will compress the lowest frequencies of the bass guitar through a shelving low-pass filter whenever the kick drum hits. The frequencies above the crossover frequency remain untouched.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Without sidechain input it functions as a stand-alone LP shelving compressor.\par}
+}
+]]></description>
+        <link rel="screenshot">https://static.wixstatic.com/media/0bf8fa_44c32be7a70441ecb74bd731451d8bfd~mv2.png/v1/fill/w_970,h_736,al_c,q_90,usm_0.66_1.00_0.01,enc_auto/0bf8fa_44c32be7a70441ecb74bd731451d8bfd~mv2.png</link>
+      </metadata>
+      <version name="0.02" author="mrelwood" time="2023-10-03T17:54:05Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/4b3c36d9e2ec19f04a9029c01266a9c5700d5a1f/Dynamic/mrelwood_BandbAss.jsfx</source>
       </version>
     </reapack>
     <reapack name="sinefabula_Hard Clipper.jsfx" type="effect" desc="Hard Clipper">
@@ -2574,6 +2592,24 @@ E.g. at 44.1/48kHz audio interface sample rate the recommended buffer size is <=
         <source>https://github.com/ReaTeam/JSFX/raw/f68071f3067f41a55c6400965b171e64a5d1f7d2/Routing/MDF_Quad%20to%20DMS.jsfx</source>
       </version>
     </reapack>
+    <reapack name="mrelwood_Routter.jsfx" type="effect" desc="Routter">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Routter is a inter-track multichannel routing/mixing tool. A stereo track contains two channels, but REAPER supports up to 64 channels per track. Routter can route and blend the first 16 of them in many ways.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Copy, move, merge, replace, blend volume, mono/stereo, etc.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 INSTRUCTIONS:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Input Channels - Choose the channels you want to process. Click the title for channels 9-16. Set the volume for the processed channels with the slider next to the Input Channel selector. Stereo/Mono - Switches between selecting mono or stereo channels. Copy or Move - Chooses whether the original channels will be muted or not. To Channels - Chooses which channels the selected channels will be moved/blended to. Click the title for channels 9-16. Merge or Replace - Chooses whether the chosen channels will be blended or if they'll replace the To Channels. Original Volume - Sets the volume for the original To Channels (only in Blend mode).\par}
+}
+]]></description>
+        <link rel="screenshot" href="https://static.wixstatic.com/media/0bf8fa_71d5fbaf71aa402f867521265174c319~mv2.png/v1/crop/x_17,y_0,w_1025,h_604/fill/w_1023,h_604,al_c,q_90,enc_auto/Routter%201v15%20mono.png">Mono mode</link>
+      </metadata>
+      <version name="1.19" author="mrelwood" time="2023-10-03T17:54:19Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/85495584464f4fed2f4d3b7010de4e4feb7c06ee/Routing/mrelwood_Routter.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="mschnell_Midi_Route_Note_On.jsfx" type="effect" desc="Route Note On">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
@@ -3453,6 +3489,22 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       <version name="1.1" author="jwhiting" time="2020-04-26T18:36:22Z">
         <changelog><![CDATA[Increase time window]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/71f572fac33bb78f8a156d8544d630eaf6d7d746/Utility/jw_gfxscope-beat-retrigger.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mrelwood_Blipper.jsfx" type="effect" desc="Blipper">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Blipper - Tone generator, blip generator, periodic passthrough plugin.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Blipper is created for testing purposes. You can generate tuned sine tones from a wide range of frequencies/keys, and adjust them to be periodicly cut with or without a fade. Or instead of the tone you can pass through whatever is playing on the track already. You can also set a full passthrough volume to skip the blipping altogether.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The plugin was created to test and measure compressor and reverb times and responses.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.3" author="mrelwood" time="2023-10-03T17:54:31Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/0bfd56000b352869f3c541270adcc53b3014869c/Utility/mrelwood_Blipper.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Dual Time adjustment.jsfx" type="effect" desc="Dual Time adjustment +/- Delay">
