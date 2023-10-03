@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="05b16d02b387b543890d1c0f008dc128c409435c">
+<index version="1" name="ReaTeam JSFX" commit="9507e2b86c3617f9aacf5af437e77817e11e9557">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -381,6 +381,7 @@ Fix note off events always being sent to channel 1]]></changelog>
 ]]></description>
         <link rel="website" href="https://youtu.be/cifj6eh_LF0">Youtube tutorial</link>
         <link rel="website" href="https://forum.cockos.com/showthread.php?t=250891">Forum Thread</link>
+        <link rel="screenshot" href="https://photos.google.com/photo/AF1QipMCKfXG4JCuU2bt23I9HGz_MkyCp8Uay48voM5P">Midi Rhythm Trainer 1.21</link>
       </metadata>
       <version name="1.01" author="Eran Talmor" time="2021-03-16T14:08:03Z">
         <source>https://github.com/ReaTeam/JSFX/raw/da21627cf6f3bb421417fbb68bfd7f8c23489340/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
@@ -437,6 +438,13 @@ Easier setting of mask by right mouse button drag over grid lines.]]></changelog
       <version name="1.15" author="Eran Talmor" time="2021-07-25T23:24:52Z">
         <changelog><![CDATA[Fixed bug masking / unmasking the 32nd division]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/b58605d9295dccc5269b41e8c34603f1b6a62cbd/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
+      </version>
+      <version name="1.21" author="Eran Talmor" time="2023-10-03T17:36:33Z">
+        <changelog><![CDATA[* Adjustable latency compensation for working with upstream audio-to-midi plugins (e.g. guitar / drums).
+* Error bound is set in absolute time (ms) instead of relative time, promoting better tracking across different tempos and divisions.
+* Current beat is highlighted, shrinking towards next beat.
+* Fixed minor memory overwrite.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/9507e2b86c3617f9aacf5af437e77817e11e9557/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
       </version>
     </reapack>
     <reapack name="juan_r_Keyboard MirrorInvert (Juan_R).jsfx" type="effect" desc="Keyboard Mirror/Invert">
