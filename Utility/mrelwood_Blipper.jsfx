@@ -1,5 +1,5 @@
 desc: Blipper
-author: mrelwood_plugins
+author: mrelwood
 version: 1.3
 about:
   Blipper - Tone generator, blip generator, periodic passthrough plugin.
