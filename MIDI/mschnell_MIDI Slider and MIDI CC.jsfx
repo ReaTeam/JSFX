@@ -1,7 +1,7 @@
 desc: Slider and MIDI CC
 author: Michael Schnell (mschnell@bschnell.de)
-version: 1.4
-changelog: bugfix
+version: 1.5
+changelog: bugfix: pass through events with erroneous offset
 about:
   ## Description
 
@@ -14,7 +14,6 @@ about:
   Slider 1 can be used to read or write track envelopes. 
 
   "Resolution" selects normal or high resolution CC messages as well for receiving as for sending. The low significant CC# is 32 steps higher than the normal (most significant) CC#.
-
 
 slider1:0<0,1,0.0001>Value 0..1
 slider2:1<0,127,1>Value MSB
@@ -149,7 +148,7 @@ function calc () (
          slider_automate(slider1);
        );
      );
-     midisend(0, msg1, msg2, msg3);  // pass throug everything
+     midisend(offset, msg1, msg2, msg3);  // pass through everything
    );        
  );
 
