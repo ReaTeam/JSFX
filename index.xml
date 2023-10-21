@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="0bfd56000b352869f3c541270adcc53b3014869c">
+<index version="1" name="ReaTeam JSFX" commit="cc98d2a8c03ced5d6263449bb495aba0f74f2f6f">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -860,6 +860,10 @@ bugfix]]></changelog>
       <version name="1.4" author="Michael Schnell (mschnell@bschnell.de)" time="2020-06-30T19:00:55Z">
         <changelog><![CDATA[bugfix]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/dd1b433e61f10919d9c9d897a63415f417ba75a0/MIDI/mschnell_MIDI%20Slider%20and%20MIDI%20CC.jsfx</source>
+      </version>
+      <version name="1.5" author="Michael Schnell (mschnell@bschnell.de)" time="2023-10-21T23:11:58Z">
+        <changelog><![CDATA[bugfix: pass through events with erroneous offset]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/cd154af80f9e7e1458bb5f1745ff76fbb6379d4c/MIDI/mschnell_MIDI%20Slider%20and%20MIDI%20CC.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Note On under X velocity to Note Off and send All Notes Off.jsfx" type="effect" desc="Note On under X velocity to Note Off and send All Notes Off">
@@ -1924,6 +1928,22 @@ And a bit of source code cleaning.]]></changelog>
         <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s9.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s9.txt</source>
         <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s9_m.txt">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s9_m.txt</source>
         <source type="data" file="talagan_MIDI CC Mapper X/func/user_lib/USER_LIB_FILES_GO_HERE.md">https://github.com/ReaTeam/JSFX/raw/57f2c7dc2b063982d9f9c0daa2f579e0a9610c11/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/user_lib/USER_LIB_FILES_GO_HERE.md</source>
+      </version>
+    </reapack>
+    <reapack name="tilr_Notes to CC.jsfx" type="effect" desc="Notes to CC">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Notes to CC\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Sends CC events on midi notes, note pitch is mapped to CC value, useful to create keyboard param modulations or keytracking.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Includes controls for CC param, note min, note max and param range values.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="tilr" time="2023-10-21T23:13:25Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/cc98d2a8c03ced5d6263449bb495aba0f74f2f6f/MIDI/tilr_Notes%20to%20CC.jsfx</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI note-banked CC multiplier.jsfx" type="effect" desc="MIDI note-banked CC multiplier">
@@ -3323,6 +3343,10 @@ channel).]]></changelog>
       <version name="0.18alpha" author="Vladimir Belov" time="2020-05-25T18:22:53Z">
         <changelog><![CDATA[New goniometer visualization mode.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/9cb5b4314d06a3061d9dc7c3cb84498eaf63f399/Utility/belovw_Goniometer.jsfx</source>
+      </version>
+      <version name="1.00" author="Vladimir Belov" time="2023-10-21T23:12:50Z">
+        <changelog><![CDATA[New goniometer visualization mode.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/37ee270c3c7612cd505bf6db0921d5f884139c34/Utility/belovw_Goniometer.jsfx</source>
       </version>
     </reapack>
     <reapack name="CoreyScogin_AutoMixer.jsfx" type="effect" desc="AutoMixer">
