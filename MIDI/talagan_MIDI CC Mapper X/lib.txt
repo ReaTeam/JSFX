@@ -15,6 +15,7 @@
 # See README.md for the documentation of this feature.
 
 addpset|linear
+addpset|circn
 addpset|expnx
 addpset|xn
 
@@ -40,19 +41,20 @@ addfunc|sin|5|2|lib/sin/classic_rm_gate
 addfunc|sin|5|3|lib/sin/step_gate
 addfunc|sin|5|4|lib/sin/step_m_gate
 
-addset|circ|Circ|An extended set based on circles.
-addfunc|circ|1|1|lib/circ/classic
-addfunc|circ|1|2|lib/circ/classic_m
-addfunc|circ|2|1|lib/circ/classic_rm
-addfunc|circ|2|2|lib/circ/classic_r
-addfunc|circ|3|1|lib/circ/step
-addfunc|circ|3|2|lib/circ/step_m
-addfunc|circ|4|1|lib/circ/step_rm
-addfunc|circ|4|2|lib/circ/step_r
-addfunc|circ|5|1|lib/circ/classic_m_gate
-addfunc|circ|5|2|lib/circ/classic_rm_gate
-addfunc|circ|5|3|lib/circ/step_gate
-addfunc|circ|5|4|lib/circ/step_m_gate
+# The next set is now parametric with varying R
+# addset|circ|Circ|An extended set based on circles.
+# addfunc|circ|1|1|lib/circ/classic
+# addfunc|circ|1|2|lib/circ/classic_m
+# addfunc|circ|2|1|lib/circ/classic_rm
+# addfunc|circ|2|2|lib/circ/classic_r
+# addfunc|circ|3|1|lib/circ/step
+# addfunc|circ|3|2|lib/circ/step_m
+# addfunc|circ|4|1|lib/circ/step_rm
+# addfunc|circ|4|2|lib/circ/step_r
+# addfunc|circ|5|1|lib/circ/classic_m_gate
+# addfunc|circ|5|2|lib/circ/classic_rm_gate
+# addfunc|circ|5|3|lib/circ/step_gate
+# addfunc|circ|5|4|lib/circ/step_m_gate
 
 addset|sstep|Smooth|Smooth steps, from order 0 to 14.
 addfunc|sstep|1|1|lib/sstep/s0
