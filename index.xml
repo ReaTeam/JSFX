@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="cc98d2a8c03ced5d6263449bb495aba0f74f2f6f">
+<index version="1" name="ReaTeam JSFX" commit="99510175e9fa087eac446df3b66dedb5e264d4fa">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -3584,10 +3584,11 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Description\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \f1 Like "Macro Controller" you can install "Inter Track Parameter Modulation" anywhere in a track and use Reaper's "Parameter Modulation" functionality in the [Param] button menu to control any parameter of any other plugin in that track via a linear function with settable offset and gradient from one of the ten "Macro" sliders. Of course one slider can control as many parameters, as you like.\line
 \line
-Additionally, when instances of "Inter Track Parameter Modulation" are installed in multiple tracks, those who feature the same "Transfer Bus" setting, are automatically synced, With that it's rather easy to link Parameters of plugins in multiple tracks.\line
+Additionally, when instances of "Inter Track Parameter Modulation" are installed in multiple tracks, those who feature the same "Transfer Bus" setting, are automatically synced. With that it's rather easy to link Parameters of plugins in multiple tracks.\line
 \line
-As the sliders of course also can be controlled by parameters of other plugins in the same way, a rather direct link between plugins in multiple tracks can be done. \par}
-{\pard \ql \f0 \sa180 \li0 \fi0 As the JSFX Preprocessor is used, it is easy to change the count of Macro sliders: just modify the number in " Macro_Sliders = 10 " according to your needs.\par}
+As the sliders of course also can be controlled by parameters of other plugins in the same way, a rather direct link between plugins in multiple tracks can be done. \line
+\line
+As the JSFX Preprocessor is used, it is easy to change the count of Macro sliders using the Reaper v7   Compile-time user-configurable JSFX settings [+] -> Macros\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \b \fs28 Thanks:\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \f1 Based on "Macro Controller" by Reaper Blog\par}
 }
@@ -3600,6 +3601,10 @@ As the sliders of course also can be controlled by parameters of other plugins i
       <version name="2.0" author="mschnell" time="2023-02-09T23:04:40Z">
         <changelog><![CDATA[Convert to using the JSFX Preprocessor]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/9b2820a423fe83332ae91b04639f8faf4f329ea0/Utility/mschnell_Inter%20Track%20Parameter%20Modulation.jsfx</source>
+      </version>
+      <version name="3.1" author="mschnell" time="2023-10-29T03:26:04Z">
+        <changelog><![CDATA[use the Reaper v7   Compile-time user-configurable JSFX settings]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/99510175e9fa087eac446df3b66dedb5e264d4fa/Utility/mschnell_Inter%20Track%20Parameter%20Modulation.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Midi Auto Engage.jsfx" type="effect" desc="Midi Auto Engage">
