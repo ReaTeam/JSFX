@@ -1,9 +1,15 @@
 desc: MIDI CC Mapper X
 author: Ben 'Talagan' Babut
-version: 5.2
+version: 5.3
 changelog:
-  - Feature : Added conditional filtering/routing for velocity.
-  - Feature : Added "follow Note ON" option for Poly AT conditional filtering/routing.
+  - Bug Fix : Note OFF velocities are not forced to zero anymore, but left intact
+  - Feature : Made the circ family parametric, with varying radius
+  - Feature : Added channel info on the keyboard indicator when playing MIDI notes
+  - Feature : Added x,y position when free hand drawing
+  - Feature : Added xmirror, ymirror curve buttons
+  - Cosmetics : Reworked drawing toolbar buttons with xpm icons (pen, smooth, copy, paste)
+  - Cosmetics : Added tooltips on drawing toolbar buttons
+  - Cosmetics : Added pen mouse cursor when free hand drawing
 screenshot:
   Dark Theme https://stash.reaper.fm/45504/MIDICCMapperX-5-0-Dark.png
   Light Theme https://stash.reaper.fm/45505/MIDICCMapperX-5-0-Light.png
@@ -270,6 +276,7 @@ function instanceGlobalVarInit()
 
   // Attribute cc 128 for channel pressure
   CHANNEL_PRESSURE_FAKE_CC_NUM = 128;
+  TOOLTIP_DELAY = 0.7;
 );
 
 
@@ -291,6 +298,7 @@ function gmemGlobalVarInit()
   FSET_PARAMETRIC_LINEAR_ID = 40;
   FSET_PARAMETRIC_XN_ID     = 41;
   FSET_PARAMETRIC_EXPNX_ID  = 42;
+  FSET_PARAMETRIC_CIRCN_ID  = 43;
 );
 
 /////////////////////////////////////////////////////////////
@@ -485,6 +493,11 @@ function instanceMemoryMapInit()
   // This gives f(in_chan,note) --> out_chan
   VELOCITY_ACTIVITY_PER_CHANNEL = malloc(128 * 16);
   KB_RANGE_AT_FOLLOWS_VELOCITY  = malloc(KB_RANGE_COUNT);
+
+
+  // Added 5.3
+  // Display pressed key channel on the keyboard
+  KEY_CHANNELS = malloc(128);
 
   freeUnusedMem();
 );
@@ -1207,6 +1220,7 @@ function getParametricFSetParameterName(pid)
   (pid == FSET_PARAMETRIC_LINEAR_ID)?(param_label = "Cut");
   (pid == FSET_PARAMETRIC_EXPNX_ID)?(param_label = "N");
   (pid == FSET_PARAMETRIC_XN_ID)?(param_label = "N");
+  (pid == FSET_PARAMETRIC_CIRCN_ID)?(param_label = "R");
 
   param_label;
 );
@@ -1219,6 +1233,7 @@ function getParametricFSetParameterMin(pid)
   (pid == FSET_PARAMETRIC_LINEAR_ID)?(mv = 0);
   (pid == FSET_PARAMETRIC_EXPNX_ID)?(mv = 1);
   (pid == FSET_PARAMETRIC_XN_ID)?(mv = 1);
+  (pid == FSET_PARAMETRIC_CIRCN_ID)?(mv = 0);
 
   mv;
 );
@@ -1231,6 +1246,7 @@ function getParametricFSetParameterMax(pid)
   (pid == FSET_PARAMETRIC_LINEAR_ID)?(mv = 1);
   (pid == FSET_PARAMETRIC_EXPNX_ID)?(mv = 10);
   (pid == FSET_PARAMETRIC_XN_ID)?(mv = 10);
+  (pid == FSET_PARAMETRIC_CIRCN_ID)?(mv = 1);
 
   mv;
 );
@@ -1244,7 +1260,6 @@ function isBlankChar(char)
 (
   (char == 0x20 || char == 0x0A || char == 0x0D || char == 0x09);
 );
-
 
 // Call on a ctx
 function FSCTX_EatBlank()
@@ -1420,6 +1435,13 @@ function expnx(x01,n) (
 function iexpnx(x01, n) (
   log( x01 * (exp(n) - 1) + 1)/n;
 );
+function circr(x01,r)
+  local(alpha)
+(
+  alpha   = 0.5 * (1 - sqrt(2*r*r - 1));
+  (1 - alpha) - sqrt(r*r - (x01-alpha)*(x01-alpha));
+);
+
 
 function xf(pid, x01, n) (
   (pid == FSET_PARAMETRIC_XN_ID)?(xn(x01,n)):(expnx(x01,n));
@@ -1465,6 +1487,26 @@ function xfStepTL(pid, x01, n) (
     1 - ixf(pid, 2 * (1 - x01), n)/2;
   );
 );
+
+function circStepBL(x01, n) (
+  (x01 <= 0.5)?(
+    x01 = 2 * x01;
+    circr(x01 , n)/2;
+  ):(
+    x01 = 2 * (1 - x01);
+    1 - circr(x01, n)/2;
+  );
+);
+function circStepTR(x01, n) (
+  (x01 <= 0.5)?(
+    x01 = 2 * x01;
+    (1 - circr(1 - x01, n))/2;
+  ):(
+    x01 = 2 * (1 - x01);
+    1 - (1 - circr(1 - x01, n))/2;
+  );
+);
+
 
 function xnExpnxFamilyVal(pid, row_num, col_num, x01, n, point_count)
   local(ret)
@@ -1576,6 +1618,109 @@ function xnExpnxFamilyVal(pid, row_num, col_num, x01, n, point_count)
   ret;
 );
 
+
+function circFamilyVal(pid, row_num, col_num, x01, n, point_count)
+  local(r, d, ret)
+(
+  // Convert the parameter to a radius
+
+  // The equation that gives the relation between the circle radius
+  // And the distance from the circle to f(x) = 1 - x is
+  //
+  // (d*d + 0.5)/2d
+  //
+  // - The max distance possible is (sqrt(2)-1)/sqrt(2) = 0.29289321881345254 and
+  //   is obtained for the unit circle
+  // - The min distance possible is 0 but is obtained for r = +infinity
+  //   so we'll stop at d = 0.001
+  //
+  // We thus map our parameter scale like this :
+  //
+  // n = 0 ----> d = 0.29289321881345254
+  // n = 1 ----> d = 0.001
+
+  d = n * (0.29289321881345254 - 0.001) + 0.001;
+  r = (d*d + 0.5)/(2*d);
+
+  ret = -1;
+  (row_num == 0)?(
+    (col_num == 0)?(
+      ret = circr(x01, r);
+    );
+    (col_num == 1)?(
+      x01 = 1 - x01;
+      ret = circr(x01, r);
+    );
+  );
+  (row_num == 1)?(
+    (col_num == 0)?(
+      x01 = 1 - x01;
+      ret = 1 - circr(x01, r);
+    );
+    (col_num == 1)?(
+      ret = 1 - circr(x01, r);
+    );
+  );
+  (row_num == 2)?(
+    (col_num == 0)?(
+      ret = circStepBL(x01, r);
+    );
+    (col_num == 1)?(
+      x01 = 1 - x01;
+      ret = circStepBL(x01, r);
+    );
+  );
+  (row_num == 3)?(
+    (col_num == 0)?(
+      ret = circStepTR(x01, r);
+    );
+    (col_num == 1)?(
+      x01 = 1 - x01;
+      ret = circStepTR(x01, r);
+    );
+  );
+  (row_num == 4)?(
+    (col_num == 0)?(
+      ret = (x01 <= 0.5)?(
+        x01 = 2 * x01;
+        circr(1 - x01, r);
+      ):(
+        x01 = 2 * (1 - x01);
+        circr(1 - x01, r);
+      );
+    );
+    (col_num == 1)?(
+      ret = (x01 <= 0.5)?(
+        x01 = 2 * x01;
+        1 - circr(1 - x01, r);
+      ):(
+        x01 = 2 * (1 - x01);
+        1 - circr(1 - x01, r);
+      );
+    );
+    (col_num == 2)?(
+      ret = (x01 <= 0.5)?(
+        x01 = 2 * x01;
+        circStepBL(x01, r);
+      ):(
+        x01 = 2 * (1 - x01);
+        circStepBL(x01, r);
+      );
+    );
+    (col_num == 3)?(
+      ret = (x01 <= 0.5)?(
+        x01 = 2 * x01;
+        1 - circStepBL(x01, r);
+      ):(
+        x01 = 2 * (1 - x01);
+        1 - circStepBL(x01, r);
+      );
+    );
+  );
+  ret;
+);
+
+
 function linFamilyVal(row_num, col_num, x01, cut, point_count)
   local(ret, granu)
 (
@@ -1629,7 +1774,7 @@ function linFamilyVal(row_num, col_num, x01, cut, point_count)
     );
     (col_num == 3)?(
       (cut > 0.5)?(cut = 1 - cut);
-      ret = ( (x01<cut || x01>(1-cut) )?(0):(1));
+      ret = ( (x01<cut-0.00001) || (x01>(1-cut) )?(0):(1));
     );
     (col_num == 4)?(
       (cut > 0.5)?(cut = 1 - cut);
@@ -1653,7 +1798,7 @@ function linFamilyVal(row_num, col_num, x01, cut, point_count)
     );
     (col_num == 3)?(
       (cut > 0.5)?(cut = 1 - cut);
-      ret = ((x01<cut || x01>(1-cut))?(1):(0));
+      ret = ((x01<cut-0.00001 || x01>(1-cut))?(1):(0));
     );
     (col_num == 4)?(
       (cut > 0.5)?(cut = 1 - cut);
@@ -1713,6 +1858,8 @@ function linFamilyVal(row_num, col_num, x01, cut, point_count)
 function parametricSetVal(pid, row_num, col_num, x01, n, point_count) (
   (pid == FSET_PARAMETRIC_XN_ID || pid == FSET_PARAMETRIC_EXPNX_ID)?(
     xnExpnxFamilyVal(pid, row_num, col_num, x01, n, point_count);
+  ):(pid == FSET_PARAMETRIC_CIRCN_ID)?(
+    circFamilyVal(pid, row_num, col_num, x01, n, point_count);
   ):(
     linFamilyVal(row_num, col_num, x01, n, point_count);
   );
@@ -1797,6 +1944,17 @@ function createXNParametricFset()
   precalcParametricSet(set_num);
 );
 
+function createCircNParametricFset()
+  local(set_num)
+(
+  set_num = createFSet("|circn|", "Circle",  "A set of functions based on circles.");
+  setFSetIsParametric(set_num,1);
+  setFSetParametricID(set_num, FSET_PARAMETRIC_CIRCN_ID);
+  setFSetParameter(set_num, 1);
+  precalcParametricSet(set_num);
+);
+
+
 // Reads functions library from file file 'file_name'
 function readLibFile(lib_name)
   local(handle, lc, str, fset_num, p1, p2, p3, p4, p5, p6, row_num, col_num, file_ok)
@@ -1833,6 +1991,7 @@ function readLibFile(lib_name)
         (strcmp(p2,"linear")  == 0)?( createLinearParametricFSet() );
         (strcmp(p2,"expnx")   == 0)?( createExpNXParametricFSet() );
         (strcmp(p2,"xn")      == 0)?( createXNParametricFset() );
+        (strcmp(p2,"circn")   == 0)?( createCircNParametricFset() );
       );
 
       // Non parametric set command
@@ -3106,7 +3265,7 @@ backupOrRestore();
 //===========================================//
 //===============     GFX     ===============//
 //===========================================//
-@gfx 970 700
+@gfx 970 705
 
 //////////////////////////
 // GENERIC UI FUNCTIONS //
@@ -3121,6 +3280,162 @@ function gfx_rgb(hex_col) (
 function gfx_xy(x,y) (
   gfx_x = x;
   gfx_y = y;
+);
+function pr(x,y) (
+  gfx_x = x;
+  gfx_y = y;
+);
+function px(v) (
+  (!v)?(gfx_setpixel(gfx_r,gfx_g,gfx_b));
+  gfx_x += 1;
+);
+function drawIconCopy(x,y) (
+  pr(x,y+0);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+1);  px(1);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(1);px(1);px(1);px(1);
+  pr(x,y+2);  px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);
+  pr(x,y+3);  px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);
+  pr(x,y+4);  px(1);px(0);px(1);px(1);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(1);
+  pr(x,y+5);  px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+6);  px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(0);px(1);
+  pr(x,y+7);  px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(0);px(1);
+  pr(x,y+8);  px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+9);  px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+10); px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+11); px(1);px(0);px(1);px(1);px(0);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+12); px(1);px(0);px(0);px(0);px(0);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+13); px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+14); px(1);px(1);px(1);px(1);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(1);
+  pr(x,y+15); px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+);
+function drawIconPen(x,y) (
+  pr(x,y+0);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);
+  pr(x,y+1);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(0);px(1);px(1);px(1);
+  pr(x,y+2);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(0);px(1);px(1);
+  pr(x,y+3);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(0);px(0);px(1);px(1);
+  pr(x,y+4);  px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);
+  pr(x,y+5);  px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);
+  pr(x,y+6);  px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+7);  px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+8);  px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+9);  px(1);px(0);px(0);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+10); px(1);px(0);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+11); px(1);px(0);px(0);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+12); px(1);px(0);px(0);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+13); px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+14); px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+15); px(1);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);
+);
+function drawIconSmooth(x,y) (
+  pr(x,y+0);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+1);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+2);  px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+3);  px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+4);  px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+5);  px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+6);  px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);
+  pr(x,y+7);  px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);
+  pr(x,y+8);  px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);
+  pr(x,y+9);  px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);
+  pr(x,y+10); px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);
+  pr(x,y+11); px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);
+  pr(x,y+12); px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(0);px(1);px(1);px(1);
+  pr(x,y+13); px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(0);px(1);px(1);px(1);
+  pr(x,y+14); px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);
+  pr(x,y+15); px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(0);px(0);px(0);px(0);px(1);px(1);px(1);px(1);px(1);
+);
+function drawIconPaste(x,y) (
+  pr(x,y+0);  px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(0);px(0);px(0);px(0);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+1);  px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+2);  px(1);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(1);
+  pr(x,y+3);  px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+4);  px(1);px(0);px(1);px(1);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(1);
+  pr(x,y+5);  px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+6);  px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(0);px(1);
+  pr(x,y+7);  px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(0);px(1);
+  pr(x,y+8);  px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+9);  px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+10); px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+11); px(1);px(0);px(1);px(1);px(0);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+12); px(1);px(0);px(1);px(1);px(0);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+13); px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+14); px(1);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(1);
+  pr(x,y+15); px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+);
+function drawIconVsym(x,y) (
+  pr(x,y+0);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+1);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+2);  px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+3);  px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+4);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+5);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+6);  px(1);px(1);px(1);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(1);
+  pr(x,y+7);  px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+8);  px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);
+  pr(x,y+9);  px(1);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(1);px(1);px(1);
+  pr(x,y+10); px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+11); px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+12); px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+13); px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+14); px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+15); px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+);
+function drawIconHsym(x,y) (
+  pr(x,y+0);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+1);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+2);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+3);  px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+4);  px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+5);  px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);
+  pr(x,y+6);  px(1);px(1);px(0);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(0);px(1);px(1);
+  pr(x,y+7);  px(1);px(0);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+8);  px(1);px(0);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(0);px(1);
+  pr(x,y+9);  px(1);px(1);px(0);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(0);px(1);px(1);
+  pr(x,y+10); px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);
+  pr(x,y+11); px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+12); px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+13); px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+14); px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+15); px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+);
+function drawIconMembuf(x,y) (
+  pr(x,y+0);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+1);  px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+2);  px(1);px(1);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(1);px(1);
+  pr(x,y+3);  px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);
+  pr(x,y+4);  px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(0);px(1);px(1);
+  pr(x,y+5);  px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(0);px(1);px(1);
+  pr(x,y+6);  px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(0);px(1);px(1);
+  pr(x,y+7);  px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(0);px(1);px(1);
+  pr(x,y+8);  px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(0);px(1);px(1);
+  pr(x,y+9);  px(1);px(1);px(0);px(1);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);
+  pr(x,y+10); px(1);px(1);px(0);px(1);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);
+  pr(x,y+11); px(1);px(1);px(0);px(1);px(0);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);
+  pr(x,y+12); px(1);px(1);px(0);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(0);px(1);px(1);
+  pr(x,y+13); px(1);px(1);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(0);px(1);px(1);
+  pr(x,y+14); px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+  pr(x,y+15); px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);px(1);
+);
+function editingCurveColor() (
+  (isMorphingEnabledForControl(g_selected_control))?(
+    (isMorphCurveSelectedForControl(g_selected_control))?(
+      TH.CURVE_MORPH_SEL;
+    ):(
+      TH.CURVE_BASE_SEL;
+    )
+  ):(
+    TH.CURVE;
+  );
+);
+function tooltip(text,x,y)
+  local(w,h,padding)
+(
+  padding = 4;
+  gfx_rgb(0xFFFFAA);
+  gfx_measurestr(text,w,h);
+  gfx_rect(x-padding,y-padding,w+padding*2,h+padding*2);
+  gfx_xy(x,y);
+  gfx_rgb(0xAA7700);
+  gfx_drawstr(text);
 );
 
 function gfx_rgb_control_high(control_num) (
@@ -3549,7 +3864,7 @@ function drawInputLine(input_id, bl, bt, br, bb, str)
 /////////////////////
 
 function mousePenCallback(gzone)
-   local(curve,in_rect,px,py,x1,x2,y1,y2,alpha,i,min_bound,max_bound)
+   local(curve,in_rect,px,py,x1,x2,y1,y2,alpha,i,min_bound,max_bound,str,strw,strh)
 (
   curve = selectedControlEditedCurveAddress();
 
@@ -3560,8 +3875,15 @@ function mousePenCallback(gzone)
     mouse_capturator = "curvezone";
   );
 
+  (in_rect && g_pen_is_active)?(
+    gfx_setcursor(185);
+  ):(
+    gfx_setcursor(0);
+  );
+
+
   // Only handle events if we have click focus
-  mouse_cap == 1 && mouse_capturator == "curvezone" && g_pen_is_active ? (
+  g_pen_is_active ? (
     // Drawing callback
     in_rect ?
     (
@@ -3579,37 +3901,52 @@ function mousePenCallback(gzone)
       px = roundi(px);
       py = roundi(py);
 
-      (g_last_pen_modified_x == -1 || g_last_pen_modified_x == px) ? (
-        curve[px]     = py;
-        g_last_pen_modified_x = px;
-      ):
-      (
-        // Perform some interpolation since mouse positions are not continuous
-        x1=x2=y1=y2=0;
+      gfx_setcursor(185);
+      gfx_rgb(editingCurveColor());
+      str = #;
+      sprintf(str, "X: %.01f Y: %.01f", px, py);
+      gfx_measurestr(str,strw,strh);
+      gfx_xy(gzone.ir - strw, gzone.ib + 6);
+      gfx_drawstr(str);
 
-        (px <= g_last_pen_modified_x)?(
-          x1 = px;
-          x2 = g_last_pen_modified_x;
-          y1 = py;
-          y2 = curve[g_last_pen_modified_x];
-        ):(
-          x1 = g_last_pen_modified_x;
-          x2 = px;
-          y1 = curve[g_last_pen_modified_x];
-          y2 = py;
-        );
+      (mouse_cap == 1 && mouse_capturator == "curvezone")?(
+        // Clicking
+        (g_last_pen_modified_x == -1 || g_last_pen_modified_x == px) ? (
+          // Was not clicking yet, or was clicking but did not move
+          curve[px]     = py;
+          g_last_pen_modified_x = px;
+        ):
+        (
+          // Was already clicking, and now moving
+          // Perform some interpolation since mouse positions are not continuous
+          // Try to fill the gap with a linear interpolation
+          x1=x2=y1=y2=0;
 
-        i = x1;
-        while(i <= x2) (
-          alpha  = (i-x1)/(x2-x1);
-          curve[i] = y1 + alpha * (y2-y1);
-          i += 1;
-        );
-        g_last_pen_modified_x = px;
-      )
-    )
-  ):(
-    g_last_pen_modified_x = -1
+          (px <= g_last_pen_modified_x)?(
+            x1 = px;
+            x2 = g_last_pen_modified_x;
+            y1 = py;
+            y2 = curve[g_last_pen_modified_x];
+          ):(
+            x1 = g_last_pen_modified_x;
+            x2 = px;
+            y1 = curve[g_last_pen_modified_x];
+            y2 = py;
+          );
+
+          i = x1;
+          while(i <= x2) (
+            alpha  = (i-x1)/(x2-x1);
+            curve[i] = y1 + alpha * (y2-y1);
+            i += 1;
+          );
+          g_last_pen_modified_x = px;
+        )
+      ):(
+        // Not clicking, reset interpolator reference
+        g_last_pen_modified_x = -1
+      );
+    );
   );
 );
 
@@ -3640,12 +3977,13 @@ function smoothButtonCallback()
 
 
 function drawMousePenButton(gzone)
-  local(in_rect,bl,bt,br,bb)
+  local(in_rect,bl,bt,br,bb, xs)
 (
-  bl = gzone.l+10;
+  xs = 26;
+  bl = gzone.l+xs;
   bt = gzone.b;
-  br = bl + 44;
-  bb = bt + 20;
+  br = bl + 22;
+  bb = bt + 22;
 
   in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
 
@@ -3659,77 +3997,195 @@ function drawMousePenButton(gzone)
 
   in_rect ?
   (
-    gfx_rgb( (g_pen_is_active)?(TH.CC_LEARN_ON_H):(TH.MONO_B_H) );
+   (g_mouse_stall > TOOLTIP_DELAY)?(tooltip("Toggle free hand drawing mode",bl+10,bt-20););
+    gfx_rgb( (g_pen_is_active)?(TH.CC_LEARN_ON_H):(TH.CURVE_B_H) );
   ):(
-    gfx_rgb( (g_pen_is_active)?(TH.CC_LEARN_ON):(TH.MONO_B) );
+    gfx_rgb( (g_pen_is_active)?(TH.CC_LEARN_ON):(TH.CURVE_B) );
   );
   gfx_x   = bl;
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
 
 
-  gfx_rgb( (g_pen_is_active)?(TH.CC_LEARN_ON_TEXT):(TH.MONO_B_TEXT) );
-  gfx_x   = bl + 10;
-  gfx_y   = bt+7;
-  gfx_drawstr("Pen");
+  gfx_rgb( (g_pen_is_active)?(TH.CC_LEARN_ON_TEXT):(editingCurveColor()) );
+
+  drawIconPen(bl+3, bt+3);
 );
 
 
 // Smooth button
 function drawSmoothButton(gzone)
-  local(bl,bt,br,bb, in_rect)
+  local(bl,bt,br,bb, in_rect, xs)
 (
-  bl = gzone.l+58;
+  xs = 50;
+  bl = gzone.l+xs;
   bt = gzone.b;
-  br = bl + 68;
-  bb = bt + 20;
+  br = bl + 22;
+  bb = bt + 22;
 
   in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
   in_rect ?
   (
-   gfx_rgb(TH.MONO_B_H);
+   (g_mouse_stall > TOOLTIP_DELAY)?(tooltip("Smooth current curve",bl+10,bt-20));
+   gfx_rgb(TH.CURVE_B_H);
 
    mouse_click == 1 ? ( mouse_capturator = "smoothbutton" );
 
    mouse_cap == 1 && mouse_capturator == "smoothbutton" ? (
      smoothButtonCallback();
    );
-  ):(gfx_rgb(TH.MONO_B));
+  ):(gfx_rgb(TH.CURVE_B));
 
   gfx_x   = bl;
   gfx_y   = bt;
   gfx_rect(bl,bt,br-bl,bb-bt);
   gfx_x   = bl+10;
   gfx_y   = bt+7;
-  gfx_rgb(TH.MONO_B_TEXT);
-  gfx_drawstr("Smooth");
+  gfx_rgb(editingCurveColor());
+  drawIconSmooth(bl+3, bt+3);
+);
+function drawVsymButton(gzone)
+  local(bl,bt,br,bb, xs, tooltip_text, in_rect, i, curve, min_bound, max_bound, oc01)
+(
+  tooltip_text = "Symmetrize vertically";
+  xs = 84;
+  bl = gzone.l+xs;
+  bt = gzone.b;
+  br = bl + 22;
+  bb = bt + 22;
+  curve       = selectedControlEditedCurveAddress();
+  min_bound   = controlCurrentMinDrawingBound01(g_selected_control);
+  max_bound   = controlCurrentMaxDrawingBound01(g_selected_control);
+  in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
+  in_rect ?
+  (
+    (g_mouse_stall > TOOLTIP_DELAY)?( tooltip(tooltip_text,bl+10,bt-20) );
+    gfx_rgb( TH.CURVE_B_H );
+    (mouse_click == 1)?(
+      i=0;
+      while(i<CURVESIZE) (
+        oc01      = (max_bound == min_bound)?(0):((curve[i]/(CURVESIZE-1) - min_bound)/(max_bound - min_bound));
+        oc01      = 1 - oc01;
+        curve[i]  = (CURVESIZE-1) * (min_bound + oc01 * (max_bound - min_bound));
+        i+=1
+      );
+    );
+  ):(
+    gfx_rgb(TH.CURVE_B);
+  );
+  gfx_x   = bl;
+  gfx_y   = bt;
+  gfx_rect(bl,bt,br-bl,bb-bt);
+  gfx_rgb( editingCurveColor() );
+  drawIconVsym(bl+3,bt+3);
+);
+function drawHsymButton(gzone)
+  local(bl,bt,br,bb, xs, tooltip_text, in_rect, i, curve, min_bound, max_bound)
+(
+  tooltip_text = "Symmetrize horizontally";
+  xs = 108;
+  bl = gzone.l+xs;
+  bt = gzone.b;
+  br = bl + 22;
+  bb = bt + 22;
+  curve       = selectedControlEditedCurveAddress();
+  min_bound   = controlCurrentMinDrawingBound01(g_selected_control);
+  max_bound   = controlCurrentMaxDrawingBound01(g_selected_control);
+  in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
+  in_rect ?
+  (
+    (g_mouse_stall > TOOLTIP_DELAY)?( tooltip(tooltip_text,bl+10,bt-20) );
+    gfx_rgb( TH.CURVE_B_H );
+    (mouse_click == 1)?(
+      // First bufferize
+      i=0;
+      while(i<CURVESIZE) (
+        SCURVE[i] = CURVE[i];
+        i+= 1
+      );
+      // Then apply
+      i=0;
+      while(i<CURVESIZE) (
+        CURVE[i] = SCURVE[CURVESIZE-1-i];
+        i+= 1
+      );
+    );
+  ):(
+    gfx_rgb(TH.CURVE_B);
+  );
+  gfx_x   = bl;
+  gfx_y   = bt;
+  gfx_rect(bl,bt,br-bl,bb-bt);
+  gfx_rgb( editingCurveColor() );
+  drawIconHsym(bl+3,bt+3);
 );
 
-function drawCopyCurveButton(gzone)
-  local(bl,bt,br,bb, in_rect, cad,i,copied_timer,recently_copied)
+/*
+function drawOperationButton(gzone, xs, text, tooltip_text, opnum)
+  local(bl,bt,br,bb, in_rect)
 (
-  bl = gzone.l+196;
+  bl = gzone.l+xs;
   bt = gzone.b;
-  br = bl + 42;
-  bb = bt + 20;
+  br = bl + 22;
+  bb = bt + 22;
+  in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
+  in_rect ?
+  (
+    (g_mouse_stall > TOOLTIP_DELAY)?( tooltip(tooltip_text,bl+10,bt-20) );
+    gfx_rgb( (g_operation_mode ==  opnum)?(TH.CC_LEARN_ON_H):(TH.CURVE_B_H) );
+    (mouse_click == 1)?(
+      g_operation_mode = (g_operation_mode != opnum) ? (opnum) : (0);
+    );
+  ):(
+    gfx_rgb( (g_operation_mode == opnum)?(TH.CC_LEARN_ON):(TH.CURVE_B) );
+  );
+  gfx_x   = bl;
+  gfx_y   = bt;
+  gfx_rect(bl,bt,br-bl,bb-bt);
+  gfx_x   = bl+7;
+  gfx_y   = bt+8;
+  gfx_rgb( (g_operation_mode == opnum)?(TH.CC_LEARN_ON_TEXT):(editingCurveColor()) );
+  gfx_drawstr(text);
+);
+
+// Smooth button
+function drawPlusButton(gzone) (
+  drawOperationButton(gzone, 118, "+", "Toggle addition mode", 1);
+);
+function drawMinusButton(gzone) (
+  drawOperationButton(gzone, 142, "-", "Toggle substraction mode", 2);
+);
+function drawMultButton(gzone) (
+  drawOperationButton(gzone, 166, "x", "Toggle multiplication mode", 3);
+);
+*/
+function drawCopyCurveButton(gzone)
+  local(bl,bt,br,bb,xs, in_rect, cad,i,copied_timer,recently_copied)
+(
+  xs = 222;
+  bl = gzone.l+xs;
+  bt = gzone.b;
+  br = bl + 22;
+  bb = bt + 22;
 
   in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
 
+  (in_rect && g_mouse_stall > TOOLTIP_DELAY)?( tooltip("Copy current curve",bl+10,bt-20) );
   recently_copied = (time_precise() - copied_timer < 0.2);
   (recently_copied)?(
     gfx_rgb(in_rect ? TH.KEY_BLACK_COLOR_0 : TH.KEY_BLACK_COLOR_0_D);
   ):(
-    gfx_rgb(in_rect ? TH.MONO_B_H : TH.MONO_B);
+    gfx_rgb(in_rect ? TH.CURVE_B_H : TH.CURVE_B);
   );
   gfx_rect(bl,bt,br-bl,bb-bt);
 
   (recently_copied)?(
     gfx_rgb(TH.KEY_COLOR_RANGE_TEXT);
   ):(
-    gfx_rgb(TH.MONO_B_TEXT);
+    gfx_rgb(editingCurveColor());
   );
   gfx_xy(bl+10,bt+7);
-  gfx_drawstr("Cpy");
+  drawIconCopy(bl+3, bt+3);
 
   cad = selectedControlEditedCurveAddress();
   (in_rect && mouse_click == 1) ? (
@@ -3742,68 +4198,129 @@ function drawCopyCurveButton(gzone)
 );
 
 function drawPasteCurveButton(gzone)
-  local(bl,bt,br,bb,in_rect,cad,i,in_validation,validation_timer)
+  local(bl,bt,br,bb,xs,in_rect,cad,i,recently_pasted,paste_timer)
 (
-  bl = gzone.l+242;
+  xs = 246;
+  bl = gzone.l+xs;
   bt = gzone.b;
-  br = bl + 42;
-  bb = bt + 20;
+  br = bl + 22;
+  bb = bt + 22;
 
   in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
 
-  (in_validation == 1)?(
+  (in_rect && g_mouse_stall > TOOLTIP_DELAY)?( tooltip("Paste copied curve",bl+10,bt-20) );
+  recently_pasted = (time_precise() - paste_timer < 0.2);
+  (recently_pasted)?(
     gfx_rgb(in_rect ? TH.KEY_BLACK_COLOR_1 : TH.KEY_BLACK_COLOR_1_D);
   ):(
-    gfx_rgb(in_rect ? TH.MONO_B_H : TH.MONO_B);
+    gfx_rgb(in_rect ? TH.CURVE_B_H : TH.CURVE_B);
   );
   gfx_rect(bl,bt,br-bl,bb-bt);
 
-  gfx_xy(bl+10,bt+7);
 
-  (in_validation == 1)?(
+  (recently_pasted)?(
     gfx_rgb(TH.KEY_COLOR_RANGE_TEXT);
-    gfx_drawstr("Ok?");
   ):(
-    gfx_rgb(TH.MONO_B_TEXT);
-    gfx_drawstr("Pst");
+    gfx_rgb(editingCurveColor());
   );
-
-  (time_precise() - validation_timer > 2.0) ? (
-    in_validation = 0;
-  );
+  gfx_xy(bl+10,bt+7);
+  drawIconPaste(bl+3,bt+3);
 
   cad = selectedControlEditedCurveAddress();
 
   (in_rect && mouse_click == 1) ? (
-    (in_validation == 1)?(
       i=0;while(i<CURVESIZE) (
         cad[i] = gmem[GMEM_DUMP_CURVE_BUF+i];
         i+=1;
       );
-      in_validation = 0;
-    ):(
-      in_validation = 1;
-      validation_timer = time_precise();
-    );
+    paste_timer = time_precise();
   );
 );
+
+
+function operateButtonCallback(curve, curve_addr, should_normalize)
+   local(i,min_bound,max_bound,oc01,nc01)
+(
+  min_bound   = controlCurrentMinDrawingBound01(g_selected_control);
+  max_bound   = controlCurrentMaxDrawingBound01(g_selected_control);
+  i = 0;
+  while(i<CURVESIZE) (
+    nc01 = gmem[curve_addr+i];
+    (should_normalize)?(
+      nc01 /= (CURVESIZE-1);
+    );
+
+    /*
+    (g_operation_mode != 0)?(
+      // Put back the current curve in 0-1 and rescale using the current bounds
+      oc01  = (max_bound == min_bound)?(0):((curve[i]/(CURVESIZE-1) - min_bound)/(max_bound - min_bound));
+      (g_operation_mode == 1)?(
+        nc01 = oc01 + nc01;
+      );
+      (g_operation_mode == 2)?(
+        nc01 = oc01 - nc01;
+      );
+      (g_operation_mode == 3)?(
+        nc01 = oc01 * nc01;
+      );
+    );
+    */
+
+    nc01 = (min_bound + (max_bound-min_bound) * nc01);
+    (nc01 < min_bound)?(nc01 = min_bound);
+    (nc01 > max_bound)?(nc01 = max_bound);
+    // First bufferize
+    SCURVE[i] = (CURVESIZE-1) * nc01;
+    i+=1;
+  );
+  i=0;
+  while(i<CURVESIZE) (
+    curve[i] = SCURVE[i];
+    i+=1;
+  );
+  // g_operation_mode = 0;
+);
+
 
 // Gets the curve in GMEM cooresponding to button
 // And builds a curve for the user.
 function fsetCurveButtonCallback(set_num, row_num, col_num)
-  local(i,curve,curve_addr,min_bound,max_bound)
+  local(i,curve,curve_addr,min_bound,max_bound,oc01,nc01)
 (
   curve       = selectedControlEditedCurveAddress();
   curve_addr  = getFsetFunctionCurveAddress(set_num, row_num, col_num);
 
-  min_bound   = controlCurrentMinDrawingBound01(g_selected_control);
-  max_bound   = controlCurrentMaxDrawingBound01(g_selected_control);
+  operateButtonCallback(curve, curve_addr, 0);
+);
 
-  i = 0;
-  while(i<CURVESIZE) (
-    curve[i] = (CURVESIZE-1) * (min_bound + (max_bound-min_bound) * gmem[curve_addr+i]);
-    i+=1;
+function drawOperateWithCopyButton(gzone)
+  local(bl,bt,br,bb,xs, in_rect,  curve, curve_addr)
+(
+  xs = 194;
+  bl = gzone.l+xs;
+  bt = gzone.b;
+  br = bl + 22;
+  bb = bt + 22;
+  in_rect = mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt;
+  in_rect ?
+  (
+    (g_mouse_stall > TOOLTIP_DELAY)?( tooltip("Use copied curve for selected operation",bl+10,bt-20) );
+    gfx_rgb( TH.CURVE_B_H );
+    (mouse_click == 1)?(
+      curve       = selectedControlEditedCurveAddress();
+      curve_addr  = GMEM_DUMP_CURVE_BUF;
+      operateButtonCallback(curve, curve_addr, 1);
+    );
+  ):(
+    gfx_rgb( TH.CURVE_B );
   );
+  gfx_x   = bl;
+  gfx_y   = bt;
+  gfx_rect(bl,bt,br-bl,bb-bt);
+  gfx_x   = bl+7;
+  gfx_y   = bt+8;
+  gfx_rgb( editingCurveColor() );
+  drawIconMembuf(bl+3,bt+3);
 );
 
 function drawFsetCurveButton(bzone, voffset, set_num, row_num, col_num)
@@ -3834,16 +4351,7 @@ function drawFsetCurveButton(bzone, voffset, set_num, row_num, col_num)
   gfx_rect(bl,bt,br-bl,bb-bt);
 
   // Draw the button points
-
-  (isMorphingEnabledForControl(g_selected_control))?(
-    (isMorphCurveSelectedForControl(g_selected_control))?(
-      gfx_rgb(TH.CURVE_MORPH_SEL);
-    ):(
-      gfx_rgb(TH.CURVE_BASE_SEL);
-    )
-  ):(
-    gfx_rgb(TH.CURVE);
-  );
+  gfx_rgb(editingCurveColor());
 
   gfx_x = bl; gfx_y = bb -31*gmem[preview_address+0] - 0.5;
 
@@ -4223,7 +4731,7 @@ function drawCurvezone()
   gridstep, gzone, bzone,
   i, t1,t2,t3,t4,
   en_inf,en_sup,inf,sup,inf01,sup01,
-  alpha, inter)
+  alpha, inter, str)
 (
    // Curve zone
     curve_panel_top = GUI_CONTROL_PARAMS_TOP+100;
@@ -4389,12 +4897,21 @@ function drawCurvezone()
     drawMousePenButton(bzone);
     drawSmoothButton(bzone);
 
+    drawVsymButton(bzone);
+    drawHsymButton(bzone);
+    // drawPlusButton(bzone);
+    // drawMinusButton(bzone);
+    // drawMultButton(bzone);
     (isMorphingEnabledForControl(g_selected_control))?(
-      drawbistateButton(CONTROL_MORPH_SELECTED,g_selected_control,gzone.b+3,162,"E","S",TH.CURVE_MORPH_SEL,TH.CURVE_BASE_SEL,TH.CURVE_MORPH_UNS,TH.CURVE_BASE_UNS,0,0);
+      drawbistateButton(CONTROL_MORPH_SELECTED,g_selected_control,gzone.b+3,180,"E","S",TH.CURVE_MORPH_SEL,TH.CURVE_BASE_SEL,TH.CURVE_MORPH_UNS,TH.CURVE_BASE_UNS,0,0);
     );
 
+    // (g_operation_mode == 0)?(
     drawCopyCurveButton(bzone);
     drawPasteCurveButton(bzone);
+    // ):(
+    //  drawOperateWithCopyButton(bzone);
+    // );
 
     drawBoundariesPanel();
 );
@@ -5300,14 +5817,6 @@ function keyboardKeyColor(k)
   col;
 );
 
-function drawKeyboardKeyMarker(x,y)
-(
-  gfx_rgb(TH.KEY_MARKER_BG);
-  gfx_circle(x,y,3.5,1,0);
-  gfx_rgb(TH.KEY_MARKER_BORDER);
-  gfx_circle(x,y,3.5,0,0);
-);
-
 function drawKBRangeTransposeRow(cr,col,off,name8Va,nameSt)
   local(hoff)
 (
@@ -5427,7 +5936,45 @@ function keyboardKeyClickEvent(i) (
 );
 
 
-function drawKeyboardPanel()
+function drawKeyboardKeyMarker(bk,chan,x,y)
+  local(str,w,h,xs,ys)
+(
+  x = ceil(x);
+  y = (bk)?(y+2):(y - 2);
+
+
+  str = #;
+  sprintf(str, "%d", chan);
+  gfx_measurestr(str,w,h);
+
+  xs = x-floor(w/2);
+  ys = y - 14;
+
+  // Draw the chan text
+  // (small Technique to add a border to the text, use an offset and repeat)
+  gfx_rgb(TH.KEY_MARKER_BORDER);
+  gfx_xy(xs-2,ys);
+  gfx_drawstr(str);
+  gfx_xy(xs+2,ys);
+  gfx_drawstr(str);
+  gfx_xy(xs,ys-2);
+  gfx_drawstr(str);
+  gfx_xy(xs,ys+2);
+  gfx_drawstr(str);
+  gfx_rgb(TH.KEY_MARKER_BG);
+  gfx_xy(xs,ys);
+  gfx_drawstr(str);
+
+  // Draw the circle with border
+  gfx_rgb(TH.KEY_MARKER_BG);
+  gfx_circle(x,y,3.5,1,0);
+  gfx_rgb(TH.KEY_MARKER_BORDER);
+  gfx_circle(x,y,3.5,0,0);
+);
+
+// This is a reduncant version of the keyboard drawing function below
+// To draw just the overlay of events (round note marker & text popup)
+function drawKeyboardKeyOverlay()
    local(kf_enabled, loff, left, top, white_key_width, key_height_top, key_height_bottom, key_height_full,
          bk, fk, key_top, key_offset, key_width, oct, in_oct_pos, in_rect, i, imax,
          normalized_key_offset, normalized_key_width, str,
@@ -5435,18 +5982,90 @@ function drawKeyboardPanel()
 (
   kf_enabled = isKeyboardFilteringEnabled();
 
-  // Header Background
-  gfx_rgb(TH.HEADER);
-  gfx_rect(0,KEYBOARD_FILTERING_TOP,KEYBOARD_PANEL_WIDTH,20);
+  // 88 keys keyboard
+  // A0 : midi note 21
+  // C8 : midi note 108
 
-  // Enable/Disable
-  drawEnableDisableButton(KEYBOARD_FILTERING_ENABLED,0,KEYBOARD_FILTERING_TOP + 3,10);
+  loff              = 20;
+  white_key_width   = 9;
+  key_height_top    = 35;
+  key_height_bottom = 25;
+  key_height_full   = key_height_top + key_height_bottom;
 
-  // Header text
-  gfx_rgb(TH.HEADER_TEXT);
-  gfx_x = 90; gfx_y = KEYBOARD_FILTERING_TOP+7;
+  key_top           = KEYBOARD_FILTERING_TOP + 30; // Header skip
 
-  gfx_drawstr((kf_enabled)?("Keyboard splitting"):("Keyboard splitting (All keys are green)"));
+  // Top part of the keyboard
+  i      = 0;
+  imax   = i + (12 * 11); (imax > 128)?(imax = 128);
+
+  while(i<imax) (
+    bk = keyIsBlack(i);
+
+    oct         = floor(i / 12);
+    in_oct_pos  = i%12;
+
+    normalized_key_offset = OCTAVE_TOP_KEY_OFFSETS[in_oct_pos];
+    normalized_key_width  = OCTAVE_TOP_KEY_WIDTHS[in_oct_pos];
+
+    // G9
+    (i == 127)?(normalized_key_width = 0.5);
+
+    key_offset = loff + (normalized_key_offset + oct * 7) * white_key_width;
+    key_width  = normalized_key_width * white_key_width;
+
+    (key_width != 0)?(
+
+      // Key should appear at the top part of the keyboard
+      left = key_offset;
+      top  = key_top;
+
+      (bk)?(
+        // Key press marker
+        (KEY_VELOCITIES[i] > 0)?(
+          drawKeyboardKeyMarker(bk, KEY_CHANNELS[i], left + floor(key_width/2)-1, top + floor(key_height_top/2));
+        );
+      );
+    );
+    i += 1;
+  );
+
+  // Bottom part of the keyboard
+  wkcount = 0;
+  i       = 0;
+  imax    = i + (12 * 11); (imax > 128)?(imax = 128);
+
+  while(i<imax) (
+
+    oct = floor(i / 12);
+    bk  = keyIsBlack(i);
+
+    (!bk)?(
+      left = loff+wkcount*white_key_width;
+      top  = key_top + key_height_top;
+
+      // Key press marker
+      (KEY_VELOCITIES[i] > 0)?(
+        drawKeyboardKeyMarker(bk, KEY_CHANNELS[i], left + floor(white_key_width/2),top + floor(key_height_bottom/2.1));
+      );
+
+      // Increment white key counter
+      wkcount += 1;
+    );
+
+    // Next key
+    i += 1;
+  );
+);
+
+
+
+function drawKeyboardKeys()
+   local(kf_enabled, loff, left, top, white_key_width, key_height_top, key_height_bottom, key_height_full,
+         bk, fk, key_top, key_offset, key_width, oct, in_oct_pos, in_rect, i, imax,
+         normalized_key_offset, normalized_key_width, str,
+         wkcount)
+(
+  kf_enabled = isKeyboardFilteringEnabled();
 
   // 88 keys keyboard
   // A0 : midi note 21
@@ -5498,7 +6117,6 @@ function drawKeyboardPanel()
 
         in_rect = (mouse_x >= left && mouse_y >= top && mouse_x <= (left+key_width) && mouse_y <= (top+key_height_top));
         (in_rect)?(
-
           keyboardKeyClickEvent(i);
         );
 
@@ -5515,11 +6133,12 @@ function drawKeyboardPanel()
       (bk)?(
         gfx_line(left,top+key_height_top-1,left+key_width-1,top+key_height_top-1);
         gfx_line(left,top,left+key_width-1,top);
-
+  /*
         // Key press marker
         (KEY_VELOCITIES[i] > 0)?(
           drawKeyboardKeyMarker(left + floor(key_width/2)-1,top+floor(key_height_top/2));
         );
+  */
       );
     );
     fk = 0;
@@ -5564,12 +6183,13 @@ function drawKeyboardPanel()
       (fk)?(
         gfx_line(left-1,top,left-1,top+key_height_bottom-1);
       );
-
+  /*
       // Key press marker
       (KEY_VELOCITIES[i] > 0)?(
         drawKeyboardKeyMarker(left + floor(white_key_width/2),top+floor(key_height_bottom/2.1));
       );
-
+  */
+      // Octava number
       (i%12 == 0)?(
         gfx_rgb(TH.KEY_OCTAVA_NUMBER);
         gfx_xy(left+1,top+13);
@@ -5593,7 +6213,29 @@ function drawKeyboardPanel()
     i += 1;
     fk = 0;
   );
+);
 
+
+function drawKeyboardPanel()
+   local(kf_enabled)
+(
+  kf_enabled = isKeyboardFilteringEnabled();
+
+  // Header Background
+  gfx_rgb(TH.HEADER);
+  gfx_rect(0,KEYBOARD_FILTERING_TOP,KEYBOARD_PANEL_WIDTH,20);
+
+  // Enable/Disable
+  drawEnableDisableButton(KEYBOARD_FILTERING_ENABLED,0,KEYBOARD_FILTERING_TOP + 3,10);
+
+  // Header text
+  gfx_rgb(TH.HEADER_TEXT);
+  gfx_x = 90; gfx_y = KEYBOARD_FILTERING_TOP+7;
+
+  gfx_drawstr((kf_enabled)?("Keyboard splitting"):("Keyboard splitting (All keys are green)"));
+
+  drawKeyboardKeys();
+  drawKeyboardKeyOverlay();
   drawKeyboardChannelsPanel();
   drawTransposePanel();
 );
@@ -5607,7 +6249,7 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("Midi CC Mapper X (5.2) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai");
+  gfx_drawstr("Midi CC Mapper X (5.3) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai");
 
   drawSwitchButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin");
 );
@@ -5730,13 +6372,13 @@ function drawGui()
 (
   updateTheme();
   gfx_clear = (TH.BACKGROUND & 0xFF) << 16 + (TH.BACKGROUND & 0x00FF00) + (TH.BACKGROUND >> 16) ;
+  drawBottomBanner();
   (GUI_MODE[0] == 1)?(
     drawKeyboardPanel();
     drawControlPanel();
   ):(
     drawGlobalSettingsPanel();
   );
-  drawBottomBanner();
 );
 
 // Handles communication with lua scripts
@@ -5806,6 +6448,14 @@ function mouseWheelAddon()
   mouse_wheel = 0;
 );
 
+function mouseStallAddon() (
+  (mouse_x != g_last_mouse_x || mouse_y != g_last_mouse_y || mouse_cap != 0)?(
+    g_last_mouse_x      = mouse_x;
+    g_last_mouse_y      = mouse_y;
+    g_last_mouse_change = time_precise();
+  );
+  g_mouse_stall = time_precise() - g_last_mouse_change;
+);
 //////////////
 // UI MAIN  //
 //////////////
@@ -5814,6 +6464,7 @@ function ui_main() (
   // Main Routine
   mouseClickAddon();
   mouseWheelAddon();
+  mouseStallAddon();
   drawGui();
   listenToGmemCommands();
 );
@@ -6105,14 +6756,26 @@ function processNoteMessage(evt)
     src_chan, dst_chan, src_chan_matches, dst_status,
     should_keep_note,
     velocity_control_num,
-    has_velocity, in_velocity_01, out_velocity_01,
+    has_velocity, is_note_on,
+    in_velocity_01, out_velocity_01,
     velocity_tgt, lsb_cc_msg)
 (
-  // For safety. I don't know if it's useful.
-  (evt.type == MSG_NOTE_OFF)?(evt.velocity=0);
+  // CAUTION 1 : Note OFF can be either (MSG_NOTE_OFF) or (MSG_NOTE_ON + velocity ZERO), thus :
+  // Note ON + Velocity 0 should not be changed to something else due to the curve applying.
+
+  // CAUTION 2 : Note Off messages may have velocities.
+  // Atm, we don't manage them, so we'll apply routing but not the curve
+  // And leave them untouched
+
+  // Set velocity to zero for note off messages
+  // (evt.type == MSG_NOTE_OFF)?(evt.velocity = 0);
+
+  has_velocity    = (evt.velocity != 0);
+  is_note_on      = (evt.type == MSG_NOTE_ON);
 
   // Save the source velocity, this is for UI feedback (small dots on keys)
   KEY_VELOCITIES[evt.key] = evt.velocity;
+  KEY_CHANNELS[evt.key]   = evt.chan;
 
   key_range_resolved    = keyKBRangeResolved(evt.key);
   velocity_control_num  = velocityControlForKBRange(key_range_resolved);
@@ -6138,13 +6801,7 @@ function processNoteMessage(evt)
     // Transposition should not be outside midi range
     (new_key >= 0 && new_key <= 127)?(
 
-      // Caution : Note OFF can be either (MSG_NOTE_OFF) or (MSG_NOTE_ON + velocity zero)
-      // Thus, the following code should be tolerant :
-      // Velocity 0 should not be changed to something else.
-
-      // has_velocity   : tells if it's a note off/on
       // in_velocity_01 : gives the velocity for note on events
-      has_velocity    = (evt.velocity != 0);
       in_velocity_01  = evt.velocity/127.0;
       out_velocity_01 = 0;
 
@@ -6152,7 +6809,7 @@ function processNoteMessage(evt)
 
         // CALCULATE INPUT VALUE HI/LOW RES
         (isHighResMidiInputEnabledForControl(velocity_control_num))?(
-          (has_velocity)?(
+          (is_note_on && has_velocity)?(
             // Seems to me we have to sub 1 to the velocity (MSB)
             // To be continuous starting from 0
             // (First non-null HR velocity starts at 0x0080, MSB is non null)
@@ -6166,7 +6823,7 @@ function processNoteMessage(evt)
           );
         );
 
-        (has_velocity)?(
+        (is_note_on && has_velocity)?(
           // NOTE ON
           // Apply velocity curve and conditionally reroute/filter if needed
 
@@ -6191,41 +6848,45 @@ function processNoteMessage(evt)
           // Remember the routing we've just decided for this NOTE ON event.
           setVelocityActivityDstChan(evt.chan, new_key, dst_chan);
         ):(
-          // NOTE OFF
+          // (NOTE OFF) or (NOTE ON + velocity ZERO)
+
           (isConditionalFilteringOperationalForControl(velocity_control_num))?(
             // The event should follow the last choice made for the corresponding NOTE ON event
             dst_chan = getVelocityActivityDstChan(evt.chan, new_key);
           );
+
+          // Leave velocity untouched (for Note Off or Note On vel ZERO)
+          out_velocity_01 = in_velocity_01;
         )
       ):(
         out_velocity_01 = in_velocity_01;
       ); // <-- isControlEnabled
 
 
-      // Now output final result
+      // Final Result Sending
       (dst_chan != DROP)?(
+
         // Create out status, remap chan to to 0-15
         dst_status = (evt.type << 4) | (dst_chan-1);
 
-        // SEND THE FINAL RESULT HI/LOW RES
-        (isControlEnabled(velocity_control_num) && isHighResMidiOutputEnabledForControl(velocity_control_num))?(
+        (is_note_on && isControlEnabled(velocity_control_num) && isHighResMidiOutputEnabledForControl(velocity_control_num))?(
+          // High-Res Note ON case
+
           lsb_cc_msg = ((MSG_CC << 4) | evt.chan);
 
-          (has_velocity)?(
-            // Send modified velocity
-            midiVelocityHresF012I(out_velocity_01);
+          // Send modified velocity
+          // If Note On + vel ZERO, out_velocity_01 is already forced to zero
+          midiVelocityHresF012I(out_velocity_01);
 
-            // Note : if pen drawn
-            // g_hres_l will always be = 127 due to the drawing resolution
-            midisend(evt.mpos, lsb_cc_msg, 88, g_hres_l);
-            midisend(evt.mpos, dst_status, keyToMidiNote(new_key), g_hres_h);
-          ):(
-            // Send 0-velocity note.
-            midisend(evt.mpos, lsb_cc_msg, 88, 0);
-            midisend(evt.mpos, dst_status, keyToMidiNote(new_key), 0);
-          );
+          // Note : if pen drawn
+          // g_hres_l will always be = 127 due to the drawing resolution
+          midisend(evt.mpos, lsb_cc_msg, 88, g_hres_l);
+          midisend(evt.mpos, dst_status, keyToMidiNote(new_key), g_hres_h);
+
         ):(
-          // This is compatible with zero-velocity (has_velocity true or false both work)
+          // Other cases :
+          // - Note ON with low res (Zero or non-zero vel)
+          // - Note OFF (Zero or non-zero vel)
           midisend(evt.mpos, dst_status, keyToMidiNote(new_key), roundi(out_velocity_01 * 127) );
         );
       ); // <- dst chan is not drop
@@ -6669,7 +7330,6 @@ function handleSliderEvents()
     g_slider_activity_this_block = 0;
   );
 );
-
 function mainLoop() (
   handleMidiEvents();
   handleSliderEvents();
