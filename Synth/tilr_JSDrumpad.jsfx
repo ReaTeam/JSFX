@@ -2,7 +2,7 @@ desc: JSDrumpad
 author: tilr
 version: 1.0
 provides:
-  jsdrumpad.jsfx.rpl
+  tilr_JSDrumpad.jsfx.rpl
   tilr_JSDrumpad/dp.envlib.jsfx-inc
   tilr_JSDrumpad/dp.gfxlib.jsfx-inc
   tilr_JSDrumpad/dp.mouselib.jsfx-inc
