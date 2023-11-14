@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="3b6b28970e88c053cca6ed743c812b5aae3f7927">
+<index version="1" name="ReaTeam JSFX" commit="e7f97d773b11ec6cd1dd4c667d4bae732d735556">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2922,6 +2922,34 @@ version 1.02
 + phase modulation synthesis (3 operators per note) 
 + Per note index limitation (anti aliasing)]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/b9dc7ab99b783fe5366863def0a9ef6798e67c06/Synth/TiaR_Ze%20Musette%20Organ.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="tilr_JSDrumpad.jsfx" type="effect" desc="JSDrumpad">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 JSDrumpad\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 JSFX drumpad synth inspired by vsts like Microtonic and DSK Synthdrums.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Features:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab 1x OSC (Sine, Triangle, Saw, or Square wave)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab 1x Noise generator (Stereo or mono)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab 3x Envelopes (osc, pitch and noise)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab 2x Filter (Noise color/lp, LowPass, BandPass and HighPass)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab 1x Distortion (Tube)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab 1x Band EQ\sa180\par}
+}
+]]></description>
+        <link rel="screenshot">https://raw.githubusercontent.com/tiagolr/JSDrumpad/master/doc/ss.png</link>
+      </metadata>
+      <version name="1.0" author="tilr" time="2023-11-14T13:59:32Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/e7f97d773b11ec6cd1dd4c667d4bae732d735556/Synth/tilr_JSDrumpad.jsfx</source>
+        <source file="tilr_JSDrumpad.jsfx.rpl">https://github.com/ReaTeam/JSFX/raw/e7f97d773b11ec6cd1dd4c667d4bae732d735556/Synth/tilr_JSDrumpad.jsfx.rpl</source>
+        <source file="tilr_JSDrumpad/dp.envlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/e7f97d773b11ec6cd1dd4c667d4bae732d735556/Synth/tilr_JSDrumpad/dp.envlib.jsfx-inc</source>
+        <source file="tilr_JSDrumpad/dp.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/e7f97d773b11ec6cd1dd4c667d4bae732d735556/Synth/tilr_JSDrumpad/dp.gfxlib.jsfx-inc</source>
+        <source file="tilr_JSDrumpad/dp.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/e7f97d773b11ec6cd1dd4c667d4bae732d735556/Synth/tilr_JSDrumpad/dp.mouselib.jsfx-inc</source>
+        <source file="tilr_JSDrumpad/dp.rbj_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/e7f97d773b11ec6cd1dd4c667d4bae732d735556/Synth/tilr_JSDrumpad/dp.rbj_filter.jsfx-inc</source>
       </version>
     </reapack>
     <reapack name="TimeWaster_ReaRack Modular Synth.jsfx" type="effect" desc="ReaRack Modular Synth">
