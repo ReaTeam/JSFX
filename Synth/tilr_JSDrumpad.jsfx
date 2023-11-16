@@ -1,12 +1,13 @@
 desc: JSDrumpad
 author: tilr
-version: 1.0
+version: 1.1
+changelog: Switch rbj to svf filters for smooth interpolation
 provides:
   tilr_JSDrumpad.jsfx.rpl
   tilr_JSDrumpad/dp.envlib.jsfx-inc
   tilr_JSDrumpad/dp.gfxlib.jsfx-inc
   tilr_JSDrumpad/dp.mouselib.jsfx-inc
-  tilr_JSDrumpad/dp.rbj_filter.jsfx-inc
+  tilr_JSDrumpad/dp.svf_filter.jsfx-inc
 screenshot: https://raw.githubusercontent.com/tiagolr/JSDrumpad/master/doc/ss.png
 about:
   # JSDrumpad
@@ -27,8 +28,8 @@ author: TiagoLr
 
 import dp.envlib.jsfx-inc
 import dp.mouselib.jsfx-inc
-import dp.rbj_filter.jsfx-inc
 import dp.gfxlib.jsfx-inc
+import dp.svf_filter.jsfx-inc
 
 slider1:mix=-1<-1, 1, .01>-Mix (Osc - Noise)
 slider2:vol=-12<-90, 0, .01>-Volume
@@ -55,16 +56,16 @@ slider19:noise_shape=0<-1, 1, 0.01>-Noise shape
 
 slider20:filter_shape=0<0,3,1{Low Pass, Band Pass, High Pass}>-Filter shape
 slider21:filter_freq=22050<20, 22050, 1:log>-Filter frequency
-slider22:filter_q=0.5<0.01, 100, 0.01:log>-Filter Q
+slider22:filter_q=0.70<0.01, 40, 0.01:log>-Filter Q
 slider23:filter_sel=0<1, 0, 1{Noise,Osc,Both}>-Filter target
 
 slider24:eq_freq=440<20, 22050, 1:log>-EQ frequency
 slider25:eq_gain=0<0, -18, 18>-EQ gain
-slider26:eq_q=0.5<0.01, 100, 0.01:log>-EQ Q
+slider26:eq_q=0.70<0.01, 40, 0.01:log>-EQ Q
 
 slider27:vel_vol=0<0, 1, 0.01>-Velocity volume
 
-options:gfx_hz=60;
+options:gfx_hz=60 no_meter
 
 @init
 
@@ -131,23 +132,6 @@ local (shape, att_shape, dec_shape)
   noise_envelope.zen_update(0, noise_att, noise_dec, -90, 0, att_shape, dec_shape, 1, 100, 0, 100);
 );
 
-function on_slider() (
-  tube = db2gain(distortion);
-  gain = db2gain(vol);
-  noise_lowpass.rbj_lp(noise_cutoff, 0.5);
-  filter_shape == 0 ? (
-    noise_filter.rbj_lp(filter_freq, filter_q);
-  );
-  filter_shape == 1 ? (
-    noise_filter.rbj_bp(filter_freq, filter_q);
-  );
-  filter_shape == 2 ? (
-    noise_filter.rbj_hp(filter_freq, filter_q);
-  );
-  eq.rbj_eq(eq_freq, eq_q, db2gain(eq_gain));
-  envelope_refresh();
-);
-
 // Parameter smoothing
 function rc_set(rc)
   instance(a) (
@@ -166,7 +150,7 @@ function smooth()
 tube.rc_set(0.0033);
 tube.smooth = db2gain(distortion);
 vel_mult.rc_set(0.0066);
-vel_mult.smooth = 0;
+vel_mult.smooth = 1;
 
 // Distortion
 function tanh(x) (
@@ -178,6 +162,28 @@ tanh_dc = tanh(dc);
 function amp(x) (
   tanh(this.smooth * x + dc) - tanh_dc;
 );
+
+//
+function on_slider() (
+  tube = db2gain(distortion);
+  gain = db2gain(vol);
+  noise_lowpass.svf_lp(noise_cutoff, 0.70, 12);
+  filter_shape == 0 ? (
+    noise_filter.svf_lp(filter_freq, filter_q, 1);
+  );
+  filter_shape == 1 ? (
+    noise_filter.svf_bp2(filter_freq, filter_q);
+  );
+  filter_shape == 2 ? (
+    noise_filter.svf_hp(filter_freq, filter_q, 1);
+  );
+  eq.svf_eq(eq_freq, eq_q, db2gain(eq_gain));
+  envelope_refresh();
+);
+
+noise_filter.svf_set_sample_rate(srate);
+noise_lowpass.svf_set_sample_rate(srate);
+eq.svf_set_sample_rate(srate);
 
 @slider
 
@@ -204,6 +210,13 @@ while (midirecv(offset, msg1, note, vel)) (
 
 @sample
 
+last_play_state == 0 && play_state ? (
+  eq.svf_single_set_to_target();
+  noise_lowpass.svf_single_set_to_target();
+  noise_filter.svf_single_set_to_target();
+);
+last_play_state = play_state;
+
 note_on ? (
   note_counter += 1 / srate * 1000;
   note_counter > osc_att + osc_dec && note_counter > noise_att + noise_dec ? (
@@ -223,9 +236,11 @@ note_on ? (
   wave_r = wave_l;
   noise_l = make_noise() * noise_envelope.env;
   noise_r = noise_stereo ? make_noise() * noise_envelope.env : noise_l;
+
   noise_cutoff < 22000 ? (
-    noise_l = noise_lowpass.rbj_df1_0(noise_l);
-    noise_r = noise_lowpass.rbj_df1_1(noise_r);
+    noise_lowpass.svf_tick();
+    noise_l = noise_lowpass.svf_svf0(noise_l);
+    noise_r = noise_lowpass.svf_svf1(noise_r);
   );
 
   mix < 0 ? (
@@ -250,18 +265,20 @@ note_on ? (
   (filter_shape == 1) ||
   (filter_shape == 2 && filter_freq > 20) ?
   (
+    noise_filter.svf_tick();
+    mult = filter_shape == 1 ? filter_q : 1;
     filter_sel == 0 ? (
-      noise_l = noise_filter.rbj_df1_0(noise_l);
-      noise_r = noise_filter.rbj_df1_1(noise_r);
+      noise_l = noise_filter.svf_svf0(noise_l) * mult;
+      noise_r = noise_filter.svf_svf1(noise_r) * mult;
       1;
     );
     filter_sel == 1 ? (
-      wave_l = noise_filter.rbj_df1_0(wave_l);
-      wave_r = noise_filter.rbj_df1_1(wave_r);
+      wave_l = noise_filter.svf_svf0(wave_l) * mult;
+      wave_r = noise_filter.svf_svf1(wave_r) * mult;
     );
     filter_sel == 2 ? (
-      outl = noise_filter.rbj_df1_0(wave_l + noise_l);
-      outr = noise_filter.rbj_df1_1(wave_r + noise_r);
+      outl = noise_filter.svf_svf0(wave_l + noise_l) * mult;
+      outr = noise_filter.svf_svf1(wave_r + noise_r) * mult;
       signal_merged = 1;
     );
   );
@@ -271,14 +288,17 @@ note_on ? (
     outr = noise_r + wave_r;
   );
 
-  distortion > 0 ? (
+  distortion ? (
     tube.smooth();
     outl = tube.amp(outl);
     outr = tube.amp(outr);
   );
 
-  outl = eq.rbj_df1_0(outl);
-  outr = eq.rbj_df1_1(outr);
+  eq_gain ? (
+    eq.svf_tick();
+    outl = eq.svf_svf0(outl);
+    outr = eq.svf_svf1(outr);
+  );
 
   vel_mult = min(note_vel + (1 - vel_vol), 1);
   spl0 += outl * gain * vel_mult.smooth();
@@ -353,7 +373,7 @@ gfx_x = 560; gfx_y = 20;
 gfx_drawstr("FILTER");
 
 draw_knob(580, 40, 21, "Freq", 22050, 20, 22050, 1, 0, sprintf(#, "%i Hz", slider(21)));
-draw_knob(640, 40, 22, "Q", 0.5, 0.01, 100, 1, 0, sprintf(#, "%.2f", slider(22)));
+draw_knob(640, 40, 22, "Q", 0.70, 0.01, 40, 1, 0, sprintf(#, "%.2f", slider(22)));
 
 shape_name = filter_shape == 0 ? "LP" : filter_shape == 1 ? "BP" : "HP";
 draw_button(640, 20, 40, shape_name, 0);
@@ -384,7 +404,7 @@ gfx_drawstr("EQ");
 
 draw_knob(160, 200, 24, "Freq", 440, 20, 22050, 1, 0, sprintf(#, "%i Hz", slider(24)));
 draw_knob(220, 200, 25, "Gain", 0, -18, 18, 0, 1, sprintf(#, "%.2f Db", slider(25)));
-draw_knob(280, 200, 26, "Q", 0.5, 0.01, 100, 1, 0, sprintf(#, "%.2f", slider(26)));
+draw_knob(280, 200, 26, "Q", 0.70, 0.01, 40, 1, 0, sprintf(#, "%.2f", slider(26)));
 
 function on_knob_move (nslider, slider_min, slider_max, slider_is_log, factor) (
   factor *= mouse.control ? 0.05 : 1;
