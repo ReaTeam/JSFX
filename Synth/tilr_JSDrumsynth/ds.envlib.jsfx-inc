@@ -1,0 +1,135 @@
+desc: ds.envlib.jsfx-inc
+@init
+
+/*
+Envlib 1.0 by tilr
+modified version of zenvelib.v1 by dwelx
+REAPER v7+ 2023
+-----------------------------------
+Library for triggered Delay-Attack-Decay-Sustain-Release
+envelope with shape, clamp and intensity control.
+*/
+
+// main equation for exponential coefficients and base values
+function zen_calc(_targetB1,_targetB2,_targetC,_rate,_ratio,_mult1,_mult2)
+ instance (b,c) (
+	_ratio > 1 ? (											// slow-start shape
+		//_ratio = _mult1 * (_ratio - 1);
+		_ratio = pow(_ratio - 1, 3);
+		c = exp(log((_targetC + _ratio) / _ratio) / _rate);
+		b = (_targetB1 - _mult2 * _ratio) * (1 - c);
+	) : (																// fast-start shape (inverse exponential)
+		//_ratio = _mult1 * _ratio;
+		_ratio = pow(_ratio, 3);
+		c = exp(-log((_targetC + _ratio) / _ratio) / _rate);
+		b = (_targetB2 + _mult2 * _ratio) * (1 - c);
+	);
+);
+
+// set or update envelope variables
+function zen_update(_delay,_attack,_decay,_sustain,_release,_attackS,_decayS,_releaseS,_intensity,_clampb,_clampt)
+ instance(delay,attack,decay,sustain,release,intensity,clampb,clampt,clamp,mysrate) (
+	// seems that REAPER doesn't care about samplerate when plugin is not record-armed - we care
+	srate ? mysrate = srate : mysrate = 44100;	// assume default if not reported
+
+	// convert ms to samples, dB and % to ratios and normalize values
+	delay = min(max(_delay, 0) * 0.001, 60) * mysrate;
+	attack = min(max(_attack, 1) * 0.001, 60) * mysrate;
+	decay = min(max(_decay, 1) * 0.001, 60) * mysrate;
+	sustain = 10 ^ (min(max(_sustain, -90), 0) / 20);
+	release = min(max(_release, 1) * 0.001, 60) * mysrate;
+
+	// for intensity and clamp
+	intensity = min(max(_intensity, 0) * 0.01, 1);
+	clampb = min(max(_clampb, 0) * 0.01, 1);
+	clampt = min(max(_clampt, 0) * 0.01, 1);
+	clamp = clampt - clampb;
+
+	// for shape ratios
+	attack.s = min(max(_attackS, 0.001), 10000);
+	decay.s = min(max(_decayS, 0.001), 10000);
+	release.s = min(max(_releaseS, 0.001), 10000);
+
+	// calculate envelope shape values
+	attack.env.zen_calc(0,1,1,attack,attack.s, 1, 1);
+	decay.env.zen_calc(1,sustain,1 - sustain,decay,decay.s,1, -1);
+);
+
+
+// (re)trigger envelope
+function zen_trigger(_retrig)
+ instance (state,delay,trig,d1,d2,env) (
+	trig += 1;				// increase trigger count
+	_retrig ? (				// retriggering enabled?
+		!state ? (			// not triggered already?
+			d1 = 0;
+			state = 1;		// activate initial delay countdown
+		) : (				// else
+			d2 = delay + 1;	// activate retrigger
+		);
+	) : (					// retriggering disabled?
+		d1 = 0;
+		env = 0;			// reset envelope
+		state = 1;
+	);
+);
+
+
+// release envelope
+function zen_release()
+ instance (state,trig,d2,sustain,release,env) (
+	!(trig = max(trig - 1, 0)) ? (	// all keys depressed? (also protect from single note off events)
+		d2 = 0;						// reset retrigger counter
+		release.env.zen_calc(max(env, sustain),0,max(env, sustain),release,release.s,1,-1);	// calculate envelope release shape from this point
+		state = 5;					// activate release
+	) : (							// some keys pressed?
+		trig == 1 ? d2 = 0;			// if only one - reset retrigger counter
+	);
+);
+
+// emerge envelope
+function zen_process()
+ instance (delay,attack,decay,sustain,release,intensity,clampb,clamp,state,d1,d2,env) (
+	d2 ? (								// retrigger?
+		(d2 -= 1) < 1 ? (				// activate attack after secondary delay (if any)
+			d2 = 0;	// reset retrigger
+			state = 2;
+		);
+	);
+
+	state == 1 ? (						// initial delay
+		(d1 += 1) >= delay ? (
+			state = 2;
+		);
+	);
+
+	state == 2 ? (						// attack
+		env = attack.env.b + env * attack.env.c;
+		env >= 1 ? (
+			env = 1;
+			state = 3;
+		);
+	);
+
+	state == 3 ? (						// decay
+		env = decay.env.b + env * decay.env.c;
+		env <= sustain ? (
+			env = sustain;
+			state = 4;
+		);
+	);
+
+	state == 4 ? (						// sustain
+		env = sustain;
+	);
+
+	state == 5 ? (						// release
+		env = release.env.b + env * release.env.c;
+		env <= 0 ? (
+			env = 0;
+			state = 0;
+		);
+	);
+
+	clampb + env * intensity * clamp;	// apply intensity and clamp then return function value (volume ratio)
+);
