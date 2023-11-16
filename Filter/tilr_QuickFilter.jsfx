@@ -5,7 +5,7 @@ provides: tilr_QuickFilter/qf.svf_filter.jsfx-inc
 about:
   # QuickFilter
 
-  Simple SVF filter with 9 modes and smooth interpolation.
+  Simple filter with 9 modes and smooth interpolation.
 
 import qf.svf_filter.jsfx-inc
 
