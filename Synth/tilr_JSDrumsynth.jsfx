@@ -26,22 +26,22 @@ import ds.gfxlib.jsfx-inc
 import ds.svf_filter.jsfx-inc
 import ds.pad.jsfx-inc
 
-in_pin:L in;
-in_pin:R in;
-out_pin:L pad1
-out_pin:R pad1
-out_pin:L pad2
-out_pin:R pad2
-out_pin:L pad3
-out_pin:R pad3
-out_pin:L pad4
-out_pin:R pad4
-out_pin:L pad5
-out_pin:R pad5
-out_pin:L pad6
-out_pin:R pad6
-out_pin:L pad7
-out_pin:R pad7
+in_pin:L In
+in_pin:R In
+out_pin:L Pad 1C
+out_pin:R Pad 1C
+out_pin:L Pad 2D
+out_pin:R Pad 2D
+out_pin:L Pad 3E
+out_pin:R Pad 3E
+out_pin:L Pad 4F
+out_pin:R Pad 4F
+out_pin:L Pad 5G
+out_pin:R Pad 5G
+out_pin:L Pad 6A
+out_pin:R Pad 6A
+out_pin:L Pad 7B
+out_pin:R Pad 7B
 
 slider256:multiout=0<0,1,1{No, Yes}>-Multi out
 
