@@ -1,0 +1,357 @@
+desc: JSWavesynth
+author: tilr
+version: 1.0
+provides:
+  tilr_JSWavesynth/ws.adsr.jsfx-inc
+  tilr_JSWavesynth/ws.array.jsfx-inc
+  tilr_JSWavesynth/ws.gfxlib.jsfx-inc
+  tilr_JSWavesynth/ws.mouselib.jsfx-inc
+  tilr_JSWavesynth/ws.svf_filter.jsfx-inc
+  tilr_JSWavesynth/ws.wavetable.jsfx-inc
+  [data] tilr_JSWavesynth/Complex 1.wav
+  [data] tilr_JSWavesynth/Complex 2.wav
+  [data] tilr_JSWavesynth/Complex 3.wav
+  [data] tilr_JSWavesynth/Complex 4.wav
+  [data] tilr_JSWavesynth/Complex 5.wav
+  [data] tilr_JSWavesynth/Organ 1.wav
+  [data] tilr_JSWavesynth/Organ 2.wav
+  [data] tilr_JSWavesynth/Organ 3.wav
+  [data] tilr_JSWavesynth/Organ 4.wav
+  [data] tilr_JSWavesynth/Organ 5.wav
+  [data] tilr_JSWavesynth/Organ 6.wav
+  [data] tilr_JSWavesynth/Organ 7.wav
+  [data] tilr_JSWavesynth/Saw 1.wav
+  [data] tilr_JSWavesynth/Saw 2.wav
+  [data] tilr_JSWavesynth/Saw 3.wav
+  [data] tilr_JSWavesynth/Sine 1.wav
+  [data] tilr_JSWavesynth/Sine 2.wav
+  [data] tilr_JSWavesynth/Sine 3.wav
+  [data] tilr_JSWavesynth/Sine 4.wav
+  [data] tilr_JSWavesynth/Sine 5.wav
+  [data] tilr_JSWavesynth/Spectral.wav
+  [data] tilr_JSWavesynth/Square 1.wav
+  [data] tilr_JSWavesynth/Square 2.wav
+  [data] tilr_JSWavesynth/Stairs.wav
+  [data] tilr_JSWavesynth/Triangle.wav
+screenshot: https://raw.githubusercontent.com/tiagolr/jswavesynth/master/doc/ss.png
+about:
+  # JSWavesynth
+
+  Simple polyphonic synth with a unison engine.
+
+  Features:
+  - Single cycle waveforms read from wav files
+  - 16 polyphonic voices with independent adsr
+  - 8 unison voices with detune and panning controls
+  - Adsr envelope controls
+  - One global filter with 3 modes (LP, BP, HP)
+
+desc: JSWavesynth
+tags: synth, instrument
+
+slider1:/tilr_JSWavesynth:Sine 1.wav:Wave
+slider2:vol=-12<-90, 0, .01>-Volume
+slider3:maxpoly=16<2, 32, 1>-Polyphony
+slider4:uni_voices=1<1, 8, 1>-Unison voices
+slider5:uni_detune=0.15<0, 1, 0.01>-Unison detune
+slider6:uni_pan=0.5<0, 1, 0.01>-Unison panning
+
+slider8:osc_att=1<1, 10000, 1:log>-Attack
+slider9:osc_dec=1<1, 10000, 1:log>-Decay
+slider10:osc_sus=0<-90, 0, .1:log>-Sustain Db
+slider11:osc_rel=500<1, 10000, 1:log>-Release
+
+slider13:flt_shape=0<0,2,1{Low Pass,Band Pass,High Pass}>-Filter shape
+slider14:flt_freq=22000<20, 22000, 1:log>-Filter frequency
+slider15:flt_q=0.70<0.01, 40, 0.01:log>-Filter Q
+
+import ws.wavetable.jsfx-inc
+import ws.array.jsfx-inc
+import ws.adsr.jsfx-inc
+import ws.svf_filter.jsfx-inc
+import ws.gfxlib.jsfx-inc
+import ws.mouselib.jsfx-inc
+
+options:gfx_hz=60 no_meter
+
+@init
+lfile = -1;
+lmaxpoly = -1;
+wavebuf = 100000;
+wavechn = 0;
+wavelen = 0;
+wavesrate = 0;
+osc_free = 1;
+
+poly.array_init(0, 128, 4+8); // [0note, 1velocity, 2freq, 3phase, 4..12 phase_unison]
+envelope = 2000; // 128 * 7 buffer
+remove_ptrs.array_init(5000, 128, 1);
+last_phase = 10000; // 9 buffer for copy pasting note osc phases
+
+function db2gain(db) (10^(db / 20););
+function note2freq(n) ( 440 * pow(2, (n - 69) / 12); );
+
+function normalize_wave(buf, len) (
+  _min = 1;
+  _max = -1;
+  loop(i = 0; len,
+    _min = min(_min, buf[i]);
+    _max = max(_max, buf[i]);
+    i += 1;
+  );
+  loop(i = 0; len,
+    buf[i] = 2 * ((buf[i] - _min) / (_max - _min)) -1;
+    i += 1;
+  );
+);
+
+function stereo_to_mono_wave(buf, len) (
+  i = 0; loop((len / 2) | 0,
+    buf[i] = (buf[i*2] + buf[i*2+1]) * 0.5;
+    i += 1;
+  );
+);
+
+function on_file_change () (
+  lfile = 0;
+  filehandle=file_open(slider1);
+  filehandle > 0 ? (
+    lfile = slider1;
+    file_riff(filehandle, wavechn, wavesrate);
+    wavechn ? (
+      wavelen = file_avail(filehandle);
+      file_mem(filehandle,wavebuf,wavelen);
+    );
+    file_close(filehandle);
+    wavechn == 2 ? (
+      stereo_to_mono_wave(wavebuf, wavelen);
+      wavelen = (wavelen / 2) | 0;
+    );
+    normalize_wave(wavebuf, wavelen);
+    wave = 1;
+    osc.wave_init(wavebuf, wavelen);
+    osc.wave_setf(50);
+  );
+);
+
+function on_slider() (
+  gain = db2gain(vol);
+  lfile != slider1 ? on_file_change();
+  lmaxpoly != maxpoly ? (
+    lmaxpoly = maxpoly;
+    poly.array_clear();
+  );
+  detune_amt = uni_detune * 3 / srate; // 3 hz max detune
+  flt_shape == 0 ? filter.svf_lp(flt_freq, flt_q, 1)
+    : flt_shape == 1 ? filter.svf_bp2(flt_freq, flt_q)
+    : flt_shape == 2 ? filter.svf_hp(flt_freq, flt_q, 1);
+);
+
+filter.svf_set_sample_rate(srate);
+
+@slider
+
+on_slider();
+
+@block
+
+while (midirecv(offset, msg1, note, vel)) (
+  event = msg1 & 0xF0;
+  channel = msg1 & 0x0F;
+
+  // Note on
+  event == 0x90 && vel ? (
+
+    // remove note if it is already playing
+    note_repeat = 0;
+    ptr = poly.array_find(note);
+    ptr >= 0 ? (
+      note_repeat = 1;
+      last_phase[0] = ptr[3];
+      loop(i = 1; 8,
+        last_phase[i] = ptr[3+i];
+        i += 1;
+      );
+      poly.array_remove(ptr);
+    );
+
+    // if polyphony is full and not mono remove first element
+    poly.size == maxpoly && maxpoly != 0 ? (
+      poly.array_remove(poly.array_first());
+    );
+
+    ptr = poly.array_add();
+    ptr[0] = note;
+    ptr[1] = vel / 127;
+    ptr[2] = note2freq(note) / srate;
+    ptr[3] = note_repeat ? last_phase[0] : osc_free ? rand(2) - 1 : 0; // osc start phase
+    loop(i = 4; 8,
+      ptr[i] = note_repeat ? last_phase[i-3] : osc_free ? rand(2) - 1 : 0; // random unison start phase
+      i += 1;
+    );
+
+    env = envelope + note * 7;
+    adsr_seta(osc_att * 0.001, env);
+    adsr_setd(osc_dec * 0.001, env);
+    adsr_sets(exp(log(10)/20 * osc_sus), env);
+    adsr_setr(osc_rel * 0.001, env);
+    adsr_a(vel / 128, env);
+  );
+
+  // Note off
+  event == 0x80 || (event == 0x90 && !vel) ? (
+    ptr = poly.array_find(note);
+    ptr >= 0 ? adsr_r(envelope + note * 7);
+  );
+
+  // All notes off
+  event == 0xB0 && note == 123 ? (
+    poly.array_clear();
+  );
+
+  midisend(offset, msg1, note, vel);
+);
+
+@sample
+
+last_play_state == 0 && play_state ? (
+  filter.svf_single_set_to_target();
+);
+last_play_state = play_state;
+
+lfile >= 0 ? (
+  outl = 0;
+  outr = 0;
+  odd_voices = uni_voices & 1;
+  remove_ptrs.array_clear();
+  ptr = poly.array_first();
+  while(ptr >= 0) ( // for each note/voice
+    envbuf = envelope + ptr[0] * 7;
+    env_state = adsr_process(envbuf);
+    loop(i = 0; uni_voices | 0, // for each unison voice
+      imod2 = i & 1;
+      pos = i == 0 && odd_voices ? 0 : imod2 ? -1 : 1; // center, left or right position
+      detune = !odd_voices
+        ? pos * detune_amt * (i + 1 - imod2) / uni_voices
+        : pos * detune_amt * (i + imod2) / uni_voices;
+      osc.wave_setdt(ptr[2] + detune);
+      osc.wave_sync(ptr[i + 3]);
+      wave = osc.wave_spline3();
+      pan = !odd_voices
+        ? pos * uni_pan * (i + 1 - imod2) / uni_voices
+        : pos * uni_pan * (i + imod2) / uni_voices;
+      outl += wave * (1 + pan) * envbuf[];
+      outr += wave * (1 - pan) * envbuf[];
+      ptr[i + 3] = osc.t; // update osc phase
+      i += 1;
+    );
+
+    // mark note for deletion
+    env_state == 0 ? (
+      p = remove_ptrs.array_add();
+      p[0] = ptr[0];
+    );
+
+    ptr = poly.array_next(ptr);
+  );
+
+  // remove notes that finished adsr
+  ptr = remove_ptrs.array_first();
+  while(ptr >= 0) (
+    p = poly.array_find(ptr[0]);
+    p >= 0 ? poly.array_remove(p);
+    ptr = remove_ptrs.array_next(ptr);
+  );
+
+  remove_ptrs.array_clear();
+
+  (flt_shape == 0 && flt_freq < 22000) ||
+  (flt_shape == 1) ||
+  (flt_shape == 2 && flt_freq > 20) ? (
+    filter.svf_tick();
+    mult = flt_shape == 1 ? flt_q : 1;
+    outl = filter.svf_svf0(outl) * mult;
+    outr = filter.svf_svf1(outr) * mult;
+  );
+
+  spl0 += outl * gain;
+  spl1 += outr * gain;
+);
+
+@gfx 520 180
+
+gfx_clear = COLOR_BG;
+mouse.update_mouse_state();
+
+draw_wave(20, 20, 120, 60, wavebuf, wavelen);
+
+draw_knob(20, 110, 2, "Vol", -12, -90, 0, 0, 0, sprintf(#, "%.1f Db", slider(2)));
+
+set_color(0x666666);
+gfx_x = 160; gfx_y = 20;
+gfx_drawstr("UNISON");
+
+draw_knob(160, 40, 4, "Voices", 1, 1, 8, 0, 0, sprintf(#, "%i", slider(4)));
+draw_knob(220, 40, 5, "Det", 0.15, 0, 1, 0, 0, sprintf(#, "%.2f", slider(5)));
+draw_knob(160, 110, 6, "Pan", 0.5, 0, 1, 0, 0, sprintf(#, "%.2f", slider(6)));
+
+set_color(0x666666);
+gfx_x = 280; gfx_y = 20;
+gfx_drawstr("ADSR");
+
+draw_knob(280, 40, 8, "Att", 1, 1, 10000, 1, 0, sprintf(#, "%i ms", slider(8)));
+draw_knob(340, 40, 9, "Dec", 1, 1, 10000, 1, 0, sprintf(#, "%i ms", slider(9)));
+draw_knob(280, 110, 10, "Sus", 0, -90, 0, 0, 0, sprintf(#, "%.2f Db", slider(10)));
+draw_knob(340, 110, 11, "Rel", 1, 1, 10000, 1, 0, sprintf(#, "%i ms", slider(11)));
+
+set_color(0x666666);
+gfx_x = 400; gfx_y = 20;
+gfx_drawstr("FILTER");
+
+shape_name = flt_shape == 0 ? "LP" : flt_shape == 1 ? "BP" : "HP";
+draw_button(520 - 60, 20, 40, shape_name, 0);
+mouse.left_click && mouse_in_rect(520-60, 20 - 2, 40, 10 + 2) ? (
+  gfx_x = 520 - 60; gfx_y = 30;
+  choice = gfx_showmenu("LP|BP|HP");
+  choice > 0 ? slider(13) = choice - 1;
+  on_slider();
+);
+
+draw_knob(400, 40, 14, "Freq", 22000, 20, 22000, 1, 0, sprintf(#, "%i Hz", slider(14)));
+draw_knob(460, 40, 15, "Q", 0.70, 0.01, 40, 1, 0, sprintf(#, "%.2f", slider(15)));
+
+function on_knob_move (nslider, slider_min, slider_max, slider_is_log, factor) (
+  factor *= mouse.control ? 0.05 : 1;
+  slider_is_log ? (
+    slider(nslider) = slider(nslider) * pow(100, -factor * 0.01);
+  ) : (
+    inc = (slider_max - slider_min) / 100 * -factor;
+    slider(nslider) += inc;
+  );
+
+  slider(nslider) > slider_max ? slider(nslider) = slider_max;
+  slider(nslider) < slider_min ? slider(nslider) = slider_min;
+  on_slider();
+  sliderchange(slider(nslider));
+  slider_automate(slider(nslider));
+);
+
+wheelknob_nslider ? (
+  on_knob_move(wheelknob_nslider, wheelknob_min, wheelknob_max, wheelknob_is_log, mouse.wheel * -7);
+);
+
+selknob_nslider && mouse.left && mouse.dy != 0 ? (
+  on_knob_move(selknob_nslider, selknob_min, selknob_max, selknob_is_log, mouse.dy);
+);
+
+doubleclk_nslider ? (
+  on_slider();
+  sliderchange(slider(doubleclk_nslider));
+  slider_automate(slider(doubleclk_nslider));
+  doubleclk_nslider = 0;
+);
+
+gfx_setcursor(selknob_nslider ? 32511 : 0);
+!mouse.wheel ? wheelknob_nslider = 0;
+!mouse.left ? selknob_nslider = 0;
+
