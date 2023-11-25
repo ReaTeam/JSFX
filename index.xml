@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="16ddf154c512e73aaabacc937942c2c927c664d3">
+<index version="1" name="ReaTeam JSFX" commit="f3170aff73b21e043eb0ea687f568a21fc0114c5">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2975,6 +2975,28 @@ version 1.02
         <source file="tilr_JSDrumpad/dp.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/16ddf154c512e73aaabacc937942c2c927c664d3/Synth/tilr_JSDrumpad/dp.gfxlib.jsfx-inc</source>
         <source file="tilr_JSDrumpad/dp.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/16ddf154c512e73aaabacc937942c2c927c664d3/Synth/tilr_JSDrumpad/dp.mouselib.jsfx-inc</source>
         <source file="tilr_JSDrumpad/dp.svf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/16ddf154c512e73aaabacc937942c2c927c664d3/Synth/tilr_JSDrumpad/dp.svf_filter.jsfx-inc</source>
+      </version>
+    </reapack>
+    <reapack name="tilr_JSDrumsynth.jsfx" type="effect" desc="JSDrumsynth">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 JSDrumsynth\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Lightweight drum machine synth with seven drum pads. Checkout JSDrumpad for a single pad synth.\par}
+}
+]]></description>
+        <link rel="screenshot">https://raw.githubusercontent.com/tiagolr/jsdrumsynth/master/doc/ss.png</link>
+      </metadata>
+      <version name="1.0" author="tilr" time="2023-11-25T18:16:48Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth.jsfx</source>
+        <source file="tilr_JSDrumsynth.jsfx.rpl">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth.jsfx.rpl</source>
+        <source file="tilr_JSDrumsynth/ds.envlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth/ds.envlib.jsfx-inc</source>
+        <source file="tilr_JSDrumsynth/ds.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth/ds.gfxlib.jsfx-inc</source>
+        <source file="tilr_JSDrumsynth/ds.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth/ds.mouselib.jsfx-inc</source>
+        <source file="tilr_JSDrumsynth/ds.pad.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth/ds.pad.jsfx-inc</source>
+        <source file="tilr_JSDrumsynth/ds.svf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth/ds.svf_filter.jsfx-inc</source>
       </version>
     </reapack>
     <reapack name="TimeWaster_ReaRack Modular Synth.jsfx" type="effect" desc="ReaRack Modular Synth">
