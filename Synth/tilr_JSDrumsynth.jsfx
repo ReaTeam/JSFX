@@ -1,0 +1,717 @@
+desc: JSDrumsynth
+author: tilr
+version: 1.0
+provides:
+  tilr_JSDrumsynth.jsfx.rpl
+  tilr_JSDrumsynth/ds.envlib.jsfx-inc
+  tilr_JSDrumsynth/ds.gfxlib.jsfx-inc
+  tilr_JSDrumsynth/ds.mouselib.jsfx-inc
+  tilr_JSDrumsynth/ds.pad.jsfx-inc
+  tilr_JSDrumsynth/ds.svf_filter.jsfx-inc
+screenshot: https://raw.githubusercontent.com/tiagolr/jsdrumsynth/master/doc/ss.png
+about:
+  # JSDrumsynth
+
+  Lightweight drum machine synth with seven drum pads.
+  Checkout JSDrumpad for a single pad synth.
+
+desc:JSDrumsynth
+tags: drum synth instrument
+author: TiagoLr
+options:gfx_hz=60 no_meter gmem=jsdrumsynth
+
+import ds.envlib.jsfx-inc
+import ds.mouselib.jsfx-inc
+import ds.gfxlib.jsfx-inc
+import ds.svf_filter.jsfx-inc
+import ds.pad.jsfx-inc
+
+in_pin:L In
+in_pin:R In
+out_pin:L Pad 1C
+out_pin:R Pad 1C
+out_pin:L Pad 2D
+out_pin:R Pad 2D
+out_pin:L Pad 3E
+out_pin:R Pad 3E
+out_pin:L Pad 4F
+out_pin:R Pad 4F
+out_pin:L Pad 5G
+out_pin:R Pad 5G
+out_pin:L Pad 6A
+out_pin:R Pad 6A
+out_pin:L Pad 7B
+out_pin:R Pad 7B
+
+slider256:multiout=0<0,1,1{No, Yes}>-Multi out
+
+// PAD1
+slider1:mix=-1<-1, 1, .01>-Pad1 Mix (Osc - Noise)
+slider2:vol=-12<-90, 0, .01>-Pad1 Volume
+slider3:pan=0<-1, 1, .01>-Pad1 Pan
+slider4:distortion=0<0, 48, 0.1>-Pad1 Drive Db
+
+slider5:osc_freq=440<20, 10000, 1:log>-Pad1 Frequency (Hz)
+slider6:osc_wave=0<0, 3, 1{Sine,Triangle,Saw,Square}>-Pad1 Wave
+slider7:osc_att=1<1, 5000, 1:log>-Pad1 Attack
+slider8:osc_dec=70<1, 5000, 1:log>-Pad1 Decay
+slider9:osc_shape=0<-1, 1, .01>-Pad1 Shape
+
+slider10:pitch_amt=0<-1, 1, 0.01>-Pad1 Pitch amount
+slider11:pitch_att=1<1, 5000, 1:log>-Pad1 Pitch attack
+slider12:pitch_dec=70<1, 5000, 1:log>-Pad1 Pitch decay
+slider13:pitch_shape=0<-1, 1, 0.01>-Pad1 Pitch shape
+
+slider15:noise_stereo=0<0, 1, 1{No,Yes}>-Pad1 Stereo noise
+slider16:noise_cutoff=22050<20,22050,1:log>-Pad1 Noise color
+slider17:noise_att=1<1,5000, 1:log>-Pad1 Noise attack
+slider18:noise_dec=70<1,5000, 1:log>-Pad1 Noise decay
+slider19:noise_shape=0<-1, 1, 0.01>-Pad1 Noise shape
+
+slider20:filter_shape=0<0,3,1{Low Pass, Band Pass, High Pass}>-Pad1 Filter shape
+slider21:filter_freq=22050<20, 22050, 1:log>-Pad1 Filter frequency
+slider22:filter_q=0.70<0.01, 40, 0.01:log>-Pad1 Filter Q
+slider23:filter_sel=0<1, 0, 1{Noise,Osc,Both}>-Pad1 Filter target
+
+slider24:eq_freq=440<20, 22050, 1:log>-Pad1 EQ frequency
+slider25:eq_gain=0<0, -18, 18>-Pad1 EQ gain
+slider26:eq_q=0.70<0.01, 40, 0.01:log>-Pad1 EQ Q
+slider27:vel_vol=0<0, 1, 0.01>-Pad1 Velocity volume
+
+// PAD2
+slider33:-1<-1, 1, .01>-Pad2 Mix (Osc - Noise)
+slider34:-12<-90, 0, .01>-Pad2 Volume
+slider35:0<-1, 1, .01>-Pad2 Pan
+slider36:0<0, 48, 0.1>-Pad2 Drive Db
+
+slider37:440<20, 10000, 1:log>-Pad2 Frequency (Hz)
+slider38:0<0, 3, 1{Sine,Triangle,Saw,Square}>-Pad2 Wave
+slider39:1<1, 5000, 1:log>-Pad2 Attack
+slider40:70<1, 5000, 1:log>-Pad2 Decay
+slider41:0<-1, 1, .01>-Pad2 Shape
+
+slider42:0<-1, 1, 0.01>-Pad2 Pitch amount
+slider43:1<1, 5000, 1:log>-Pad2 Pitch attack
+slider44:70<1, 5000, 1:log>-Pad2 Pitch decay
+slider45:0<-1, 1, 0.01>-Pad2 Pitch shape
+
+slider47:0<0, 1, 1{No,Yes}>-Pad2 Stereo noise
+slider48:22050<20,22050,1:log>-Pad2 Noise color
+slider49:1<1,5000, 1:log>-Pad2 Noise attack
+slider50:70<1,5000, 1:log>-Pad2 Noise decay
+slider51:0<-1, 1, 0.01>-Pad2 Noise shape
+
+slider52:0<0,3,1{Low Pass, Band Pass, High Pass}>-Pad2 Filter shape
+slider53:22050<20, 22050, 1:log>-Pad2 Filter frequency
+slider54:0.70<0.01, 40, 0.01:log>-Pad2 Filter Q
+slider55:0<1, 0, 1{Noise,Osc,Both}>-Pad2 Filter target
+
+slider56:440<20, 22050, 1:log>-Pad2 EQ frequency
+slider57:0<0, -18, 18>-Pad2 EQ gain
+slider58:0.70<0.01, 40, 0.01:log>-Pad2 EQ Q
+slider59:0<0, 1, 0.01>-Pad2 Velocity volume
+
+// PAD3
+slider65:-1<-1, 1, .01>-Pad3 Mix (Osc - Noise)
+slider66:-12<-90, 0, .01>-Pad3 Volume
+slider67:0<-1, 1, .01>-Pad3 Pan
+slider68:0<0, 48, 0.1>-Pad3 Drive Db
+
+slider69:440<20, 10000, 1:log>-Pad3 Frequency (Hz)
+slider70:0<0, 3, 1{Sine,Triangle,Saw,Square}>-Pad3 Wave
+slider71:1<1, 5000, 1:log>-Pad3 Attack
+slider72:70<1, 5000, 1:log>-Pad3 Decay
+slider73:0<-1, 1, .01>-Pad3 Shape
+
+slider74:0<-1, 1, 0.01>-Pad3 Pitch amount
+slider75:1<1, 5000, 1:log>-Pad3 Pitch attack
+slider76:70<1, 5000, 1:log>-Pad3 Pitch decay
+slider77:0<-1, 1, 0.01>-Pad3 Pitch shape
+
+slider79:0<0, 1, 1{No,Yes}>-Pad3 Stereo noise
+slider80:22050<20,22050,1:log>-Pad3 Noise color
+slider81:1<1,5000, 1:log>-Pad3 Noise attack
+slider82:70<1,5000, 1:log>-Pad3 Noise decay
+slider83:0<-1, 1, 0.01>-Pad3 Noise shape
+
+slider84:0<0,3,1{Low Pass, Band Pass, High Pass}>-Pad3 Filter shape
+slider85:22050<20, 22050, 1:log>-Pad3 Filter frequency
+slider86:0.70<0.01, 40, 0.01:log>-Pad3 Filter Q
+slider87:0<1, 0, 1{Noise,Osc,Both}>-Pad3 Filter target
+
+slider88:440<20, 22050, 1:log>-Pad3 EQ frequency
+slider89:0<0, -18, 18>-Pad3 EQ gain
+slider90:0.70<0.01, 40, 0.01:log>-Pad3 EQ Q
+slider91:0<0, 1, 0.01>-Pad3 Velocity volume
+
+// PAD4
+slider97:-1<-1, 1, .01>-Pad4 Mix (Osc - Noise)
+slider98:-12<-90, 0, .01>-Pad4 Volume
+slider99:0<-1, 1, .01>-Pad4 Pan
+slider100:0<0, 48, 0.1>-Pad4 Drive Db
+
+slider101:440<20, 10000, 1:log>-Pad4 Frequency (Hz)
+slider102:0<0, 3, 1{Sine,Triangle,Saw,Square}>-Pad4 Wave
+slider103:1<1, 5000, 1:log>-Pad4 Attack
+slider104:70<1, 5000, 1:log>-Pad4 Decay
+slider105:0<-1, 1, .01>-Pad4 Shape
+
+slider106:0<-1, 1, 0.01>-Pad4 Pitch amount
+slider107:1<1, 5000, 1:log>-Pad4 Pitch attack
+slider108:70<1, 5000, 1:log>-Pad4 Pitch decay
+slider109:0<-1, 1, 0.01>-Pad4 Pitch shape
+
+slider111:0<0, 1, 1{No,Yes}>-Pad4 Stereo noise
+slider112:22050<20,22050,1:log>-Pad4 Noise color
+slider113:1<1,5000, 1:log>-Pad4 Noise attack
+slider114:70<1,5000, 1:log>-Pad4 Noise decay
+slider115:0<-1, 1, 0.01>-Pad4 Noise shape
+
+slider116:0<0,3,1{Low Pass, Band Pass, High Pass}>-Pad4 Filter shape
+slider117:22050<20, 22050, 1:log>-Pad4 Filter frequency
+slider118:0.70<0.01, 40, 0.01:log>-Pad4 Filter Q
+slider119:0<1, 0, 1{Noise,Osc,Both}>-Pad4 Filter target
+
+slider120:440<20, 22050, 1:log>-Pad4 EQ frequency
+slider121:0<0, -18, 18>-Pad4 EQ gain
+slider122:0.70<0.01, 40, 0.01:log>-Pad4 EQ Q
+slider123:0<0, 1, 0.01>-Pad4 Velocity volume
+
+// PAD5
+slider129:-1<-1, 1, .01>-Pad5 Mix (Osc - Noise)
+slider130:-12<-90, 0, .01>-Pad5 Volume
+slider131:0<-1, 1, .01>-Pad5 Pan
+slider132:0<0, 48, 0.1>-Pad5 Drive Db
+
+slider133:440<20, 10000, 1:log>-Pad5 Frequency (Hz)
+slider134:0<0, 3, 1{Sine,Triangle,Saw,Square}>-Pad5 Wave
+slider135:1<1, 5000, 1:log>-Pad5 Attack
+slider136:70<1, 5000, 1:log>-Pad5 Decay
+slider137:0<-1, 1, .01>-Pad5 Shape
+
+slider138:0<-1, 1, 0.01>-Pad5 Pitch amount
+slider139:1<1, 5000, 1:log>-Pad5 Pitch attack
+slider140:70<1, 5000, 1:log>-Pad5 Pitch decay
+slider141:0<-1, 1, 0.01>-Pad5 Pitch shape
+
+slider143:0<0, 1, 1{No,Yes}>-Pad5 Stereo noise
+slider144:22050<20,22050,1:log>-Pad5 Noise color
+slider145:1<1,5000, 1:log>-Pad5 Noise attack
+slider146:70<1,5000, 1:log>-Pad5 Noise decay
+slider147:0<-1, 1, 0.01>-Pad5 Noise shape
+
+slider148:0<0,3,1{Low Pass, Band Pass, High Pass}>-Pad5 Filter shape
+slider149:22050<20, 22050, 1:log>-Pad5 Filter frequency
+slider150:0.70<0.01, 40, 0.01:log>-Pad5 Filter Q
+slider151:0<1, 0, 1{Noise,Osc,Both}>-Pad5 Filter target
+
+slider152:440<20, 22050, 1:log>-Pad5 EQ frequency
+slider153:0<0, -18, 18>-Pad5 EQ gain
+slider154:0.70<0.01, 40, 0.01:log>-Pad5 EQ Q
+slider155:0<0, 1, 0.01>-Pad5 Velocity volume
+
+// PAD6
+slider161:-1<-1, 1, .01>-Pad6 Mix (Osc - Noise)
+slider162:-12<-90, 0, .01>-Pad6 Volume
+slider163:0<-1, 1, .01>-Pad6 Pan
+slider164:0<0, 48, 0.1>-Pad6 Drive Db
+
+slider165:440<20, 10000, 1:log>-Pad6 Frequency (Hz)
+slider166:0<0, 3, 1{Sine,Triangle,Saw,Square}>-Pad6 Wave
+slider167:1<1, 5000, 1:log>-Pad6 Attack
+slider168:70<1, 5000, 1:log>-Pad6 Decay
+slider169:0<-1, 1, .01>-Pad6 Shape
+
+slider170:0<-1, 1, 0.01>-Pad6 Pitch amount
+slider171:1<1, 5000, 1:log>-Pad6 Pitch attack
+slider172:70<1, 5000, 1:log>-Pad6 Pitch decay
+slider173:0<-1, 1, 0.01>-Pad6 Pitch shape
+
+slider175:0<0, 1, 1{No,Yes}>-Pad6 Stereo noise
+slider176:22050<20,22050,1:log>-Pad6 Noise color
+slider177:1<1,5000, 1:log>-Pad6 Noise attack
+slider178:70<1,5000, 1:log>-Pad6 Noise decay
+slider179:0<-1, 1, 0.01>-Pad6 Noise shape
+
+slider180:0<0,3,1{Low Pass, Band Pass, High Pass}>-Pad6 Filter shape
+slider181:22050<20, 22050, 1:log>-Pad6 Filter frequency
+slider182:0.70<0.01, 40, 0.01:log>-Pad6 Filter Q
+slider183:0<1, 0, 1{Noise,Osc,Both}>-Pad6 Filter target
+
+slider184:440<20, 22050, 1:log>-Pad6 EQ frequency
+slider185:0<0, -18, 18>-Pad6 EQ gain
+slider186:0.70<0.01, 40, 0.01:log>-Pad6 EQ Q
+slider187:0<0, 1, 0.01>-Pad6 Velocity volume
+
+// PAD7
+slider193:-1<-1, 1, .01>-Pad6 Mix (Osc - Noise)
+slider194:-12<-90, 0, .01>-Pad6 Volume
+slider195:0<-1, 1, .01>-Pad6 Pan
+slider196:0<0, 48, 0.1>-Pad6 Drive Db
+
+slider197:440<20, 10000, 1:log>-Pad6 Frequency (Hz)
+slider198:0<0, 3, 1{Sine,Triangle,Saw,Square}>-Pad6 Wave
+slider199:1<1, 5000, 1:log>-Pad6 Attack
+slider200:70<1, 5000, 1:log>-Pad6 Decay
+slider201:0<-1, 1, .01>-Pad6 Shape
+
+slider202:0<-1, 1, 0.01>-Pad6 Pitch amount
+slider203:1<1, 5000, 1:log>-Pad6 Pitch attack
+slider204:70<1, 5000, 1:log>-Pad6 Pitch decay
+slider205:0<-1, 1, 0.01>-Pad6 Pitch shape
+
+slider207:0<0, 1, 1{No,Yes}>-Pad6 Stereo noise
+slider208:22050<20,22050,1:log>-Pad6 Noise color
+slider209:1<1,5000, 1:log>-Pad6 Noise attack
+slider210:70<1,5000, 1:log>-Pad6 Noise decay
+slider211:0<-1, 1, 0.01>-Pad6 Noise shape
+
+slider212:0<0,3,1{Low Pass, Band Pass, High Pass}>-Pad6 Filter shape
+slider213:22050<20, 22050, 1:log>-Pad6 Filter frequency
+slider214:0.70<0.01, 40, 0.01:log>-Pad6 Filter Q
+slider215:0<1, 0, 1{Noise,Osc,Both}>-Pad6 Filter target
+
+slider216:440<20, 22050, 1:log>-Pad6 EQ frequency
+slider217:0<0, -18, 18>-Pad6 EQ gain
+slider218:0.70<0.01, 40, 0.01:log>-Pad6 EQ Q
+slider219:0<0, 1, 0.01>-Pad6 Velocity volume
+
+@serialize
+
+1; // empty @serialize prevents pad reset on playback
+
+@init
+
+// pad = 0; -- global var init as zero
+notes = 0;
+notes[0]="C";notes[1]="C#";notes[2]="D";notes[3]="D#";
+notes[4]="E";notes[5]="F";notes[6]="F#";notes[7]="G";
+notes[8]="G#";notes[9]="A";notes[10]="A#";notes[11]="B";
+
+function db2gain(db) (10^(db / 20););
+function round(in) (floor(in + 0.5 * sign(in)););
+function freq2note(f) ( round(12*(log(f/440)/log(2))+69); );
+function getslider(n) (
+  slider(n + 32 * pad);
+);
+function setslider(n, val) (
+  slider(n + 32 * pad) = val
+);
+
+function get_note_name() (
+  note = freq2note(getslider(5));
+  sprintf(#, "%s%i", notes[note % 12], floor(note / 12) - 1);
+);
+
+function on_slider () (
+  pad == 0 ? pad1.pad_on_slider():
+  pad == 1 ? pad2.pad_on_slider():
+  pad == 2 ? pad3.pad_on_slider():
+  pad == 3 ? pad4.pad_on_slider():
+  pad == 4 ? pad5.pad_on_slider():
+  pad == 5 ? pad6.pad_on_slider():
+  pad7.pad_on_slider();
+);
+
+function copy_pad (pad) (
+  offset = pad * 32;
+  gmem[1 ] = slider(1 + offset);
+  gmem[2 ] = slider(2 + offset);
+  gmem[3 ] = slider(3 + offset);
+  gmem[4 ] = slider(4 + offset);
+  gmem[5 ] = slider(5 + offset);
+  gmem[6 ] = slider(6 + offset);
+  gmem[7 ] = slider(7 + offset);
+  gmem[8 ] = slider(8 + offset);
+  gmem[9 ] = slider(9 + offset);
+  gmem[10] = slider(10+ offset);
+  gmem[11] = slider(11+ offset);
+  gmem[12] = slider(12+ offset);
+  gmem[13] = slider(13+ offset);
+  gmem[14] = slider(14+ offset);
+  gmem[15] = slider(15+ offset);
+  gmem[16] = slider(16+ offset);
+  gmem[17] = slider(17+ offset);
+  gmem[18] = slider(18+ offset);
+  gmem[19] = slider(19+ offset);
+  gmem[20] = slider(20+ offset);
+  gmem[21] = slider(21+ offset);
+  gmem[22] = slider(22+ offset);
+  gmem[23] = slider(23+ offset);
+  gmem[24] = slider(24+ offset);
+  gmem[25] = slider(25+ offset);
+  gmem[26] = slider(26+ offset);
+  gmem[27] = slider(27+ offset);
+  gmem[28] = slider(28+ offset);
+  gmem[29] = slider(29+ offset);
+  gmem[30] = slider(30+ offset);
+  gmem[31] = slider(31+ offset);
+  gmem[32] = slider(32+ offset);
+);
+
+function paste_pad (pad) (
+  offset = pad * 32;
+  slider(1 + offset) = gmem[1 ];
+  slider(2 + offset) = gmem[2 ];
+  slider(3 + offset) = gmem[3 ];
+  slider(4 + offset) = gmem[4 ];
+  slider(5 + offset) = gmem[5 ];
+  slider(6 + offset) = gmem[6 ];
+  slider(7 + offset) = gmem[7 ];
+  slider(8 + offset) = gmem[8 ];
+  slider(9 + offset) = gmem[9 ];
+  slider(10+ offset) = gmem[10];
+  slider(11+ offset) = gmem[11];
+  slider(12+ offset) = gmem[12];
+  slider(13+ offset) = gmem[13];
+  slider(14+ offset) = gmem[14];
+  slider(15+ offset) = gmem[15];
+  slider(16+ offset) = gmem[16];
+  slider(17+ offset) = gmem[17];
+  slider(18+ offset) = gmem[18];
+  slider(19+ offset) = gmem[19];
+  slider(20+ offset) = gmem[20];
+  slider(21+ offset) = gmem[21];
+  slider(22+ offset) = gmem[22];
+  slider(23+ offset) = gmem[23];
+  slider(24+ offset) = gmem[24];
+  slider(25+ offset) = gmem[25];
+  slider(26+ offset) = gmem[26];
+  slider(27+ offset) = gmem[27];
+  slider(28+ offset) = gmem[28];
+  slider(29+ offset) = gmem[29];
+  slider(30+ offset) = gmem[30];
+  slider(31+ offset) = gmem[31];
+  slider(32+ offset) = gmem[32];
+  pad1.pad_on_slider();
+  pad2.pad_on_slider();
+  pad3.pad_on_slider();
+  pad4.pad_on_slider();
+  pad5.pad_on_slider();
+  pad6.pad_on_slider();
+  pad7.pad_on_slider();
+);
+
+pad1.pad_init(0);
+pad2.pad_init(1);
+pad3.pad_init(2);
+pad4.pad_init(3);
+pad5.pad_init(4);
+pad6.pad_init(5);
+pad7.pad_init(6);
+
+@slider
+
+pad1.pad_on_slider();
+pad2.pad_on_slider();
+pad3.pad_on_slider();
+pad4.pad_on_slider();
+pad5.pad_on_slider();
+pad6.pad_on_slider();
+pad7.pad_on_slider();
+
+@block
+
+while (midirecv(offset, msg1, note, vel)) (
+  event = msg1 & 0xF0;
+  channel = msg1 & 0x0F;
+
+  event == 0x90 && vel > 0 ? (
+    note % 12 == 0 ? pad1.pad_on_note(vel);
+    note % 12 == 2 ? pad2.pad_on_note(vel);
+    note % 12 == 4 ? pad3.pad_on_note(vel);
+    note % 12 == 5 ? pad4.pad_on_note(vel);
+    note % 12 == 7 ? pad5.pad_on_note(vel);
+    note % 12 == 9 ? pad6.pad_on_note(vel);
+    note % 12 == 11 ? pad7.pad_on_note(vel);
+  );
+  midisend(offset, msg1, note, vel);
+);
+
+@sample
+
+last_play_state == 0 && play_state ? (
+  pad1.reset_filters();
+	pad2.reset_filters();
+	pad3.reset_filters();
+	pad4.reset_filters();
+	pad5.reset_filters();
+	pad6.reset_filters();
+	pad7.reset_filters();
+);
+last_play_state = play_state;
+
+pad1.pad_process();
+pad2.pad_process();
+pad3.pad_process();
+pad4.pad_process();
+pad5.pad_process();
+pad6.pad_process();
+pad7.pad_process();
+
+multiout ? (
+  spl0 += pad1.out_l;
+  spl1 += pad1.out_r;
+  spl2 += pad2.out_l;
+  spl3 += pad2.out_r;
+  spl4 += pad3.out_l;
+  spl5 += pad3.out_r;
+  spl6 += pad4.out_l;
+  spl7 += pad4.out_r;
+  spl8 += pad5.out_l;
+  spl9 += pad5.out_r;
+  spl10 += pad6.out_l;
+  spl11 += pad6.out_r;
+  spl12 += pad7.out_l;
+  spl13 += pad7.out_r;
+) : (
+  spl0 += pad1.out_l + pad2.out_l + pad3.out_l + pad4.out_l + pad5.out_l + pad6.out_l + pad7.out_l;
+  spl1 += pad1.out_r + pad2.out_r + pad3.out_r + pad4.out_r + pad5.out_r + pad6.out_r + pad7.out_r;
+);
+
+@gfx 700 315
+
+gfx_clear = 0x141618;
+mouse.update_mouse_state();
+
+btnw = (700 - 40) / 7;
+draw_grey_button(700 - 40 - 20 - 20, 6, 40, multiout ? "7Out" : "1Out");
+mouse.left_click && mouse_in_rect(700 - 40 - 20 - 20, 0, 40, 16) ? (
+  gfx_x = mouse_x; gfx_y = mouse_y;
+  choice = gfx_showmenu("1 Output|7 Outputs");
+  choice == 1 ? multiout = 0;
+  choice == 2 ? multiout = 1;
+);
+
+mouse.left_click && draw_help ? (
+  draw_help = 0;
+);
+draw_grey_button(700 - 35, 6, 15, "?");
+mouse.left_click && mouse_in_rect(700 - 35, 0, 15, 16) ? (
+  draw_help = 1;
+);
+
+draw_pad_button(20, 20, btnw, 20, "Pad 1C", pad == 0, pad1.note_on);
+mouse_in_rect(20, 20, btnw, 20) ? (
+  mouse.left_click ? (
+    pad = 0;
+    pad1.pad_on_note(127);
+  );
+  mouse.right_click ? (
+    gfx_x = mouse.x; gfx_y = mouse.y;
+    choice = gfx_showmenu("Copy|Paste");
+    choice == 1 ? copy_pad(0);
+    choice == 2 ? paste_pad(0);
+  );
+);
+draw_pad_button(20 + btnw * 1, 20, btnw, 20, "Pad 2D", pad == 1, pad2.note_on);
+mouse_in_rect(20 + btnw * 1, 20, btnw, 20) ? (
+  mouse.left_click ? (
+    pad = 1;
+    pad2.pad_on_note(127);
+  );
+  mouse.right_click ? (
+    gfx_x = mouse.x; gfx_y = mouse.y;
+    choice = gfx_showmenu("Copy|Paste");
+    choice == 1 ? copy_pad(1);
+    choice == 2 ? paste_pad(1);
+  );
+);
+draw_pad_button(20 + btnw * 2, 20, btnw, 20, "Pad 3E", pad == 2, pad3.note_on);
+mouse_in_rect(20 + btnw * 2, 20, btnw, 20) ? (
+  mouse.left_click ? (
+    pad = 2;
+    pad3.pad_on_note(127);
+  );
+  mouse.right_click ? (
+    gfx_x = mouse.x; gfx_y = mouse.y;
+    choice = gfx_showmenu("Copy|Paste");
+    choice == 1 ? copy_pad(2);
+    choice == 2 ? paste_pad(2);
+  );
+);
+draw_pad_button(20 + btnw * 3, 20, btnw, 20, "Pad 4F", pad == 3, pad4.note_on);
+mouse_in_rect(20 + btnw * 3, 20, btnw, 20) ? (
+  mouse.left_click ? (
+    pad = 3;
+    pad4.pad_on_note(127);
+  );
+  mouse.right_click ? (
+    gfx_x = mouse.x; gfx_y = mouse.y;
+    choice = gfx_showmenu("Copy|Paste");
+    choice == 1 ? copy_pad(3);
+    choice == 2 ? paste_pad(3);
+  );
+);
+draw_pad_button(20 + btnw * 4, 20, btnw, 20, "Pad 5G", pad == 4, pad5.note_on);
+mouse_in_rect(20 + btnw * 4, 20, btnw, 20) ? (
+  mouse.left_click ? (
+    pad = 4;
+    pad5.pad_on_note(127);
+  );
+  mouse.right_click ? (
+    gfx_x = mouse.x; gfx_y = mouse.y;
+    choice = gfx_showmenu("Copy|Paste");
+    choice == 1 ? copy_pad(4);
+    choice == 2 ? paste_pad(4);
+  );
+);
+draw_pad_button(20 + btnw * 5, 20, btnw, 20, "Pad 6A", pad == 5, pad6.note_on);
+mouse_in_rect(20 + btnw * 5, 20, btnw, 20) ? (
+  mouse.left_click ? (
+    pad = 5;
+    pad6.pad_on_note(127);
+  );
+  mouse.right_click ? (
+    gfx_x = mouse.x; gfx_y = mouse.y;
+    choice = gfx_showmenu("Copy|Paste");
+    choice == 1 ? copy_pad(5);
+    choice == 2 ? paste_pad(5);
+  );
+);
+draw_pad_button(20 + btnw * 6, 20, btnw, 20, "Pad 7B", pad == 6, pad7.note_on);
+mouse_in_rect(20 + btnw * 6, 20, btnw, 20) ? (
+  mouse.left_click ? (
+    pad = 6;
+    pad7.pad_on_note(127);
+  );
+  mouse.right_click ? (
+    gfx_x = mouse.x; gfx_y = mouse.y;
+    choice = gfx_showmenu("Copy|Paste");
+    choice == 1 ? copy_pad(6);
+    choice == 2 ? paste_pad(6);
+  );
+);
+
+set_color(0x666666);
+gfx_x = 20; gfx_y = 20+40;
+gfx_drawstr("MIX");
+
+draw_knob(20, 40+40, 1+32*pad, "Mix", 0, -1, 1, 0, 1, sprintf(#, "%.2f", getslider(1)));
+draw_knob(80, 40+40, 2+32*pad, "Vol", -12, -90, 0, 0, 0, sprintf(#, "%.1f Db", getslider(2)));
+draw_knob(20, 110+40, 3+32*pad, "Pan", 0, -1, 1, 0, 1, sprintf(#, "%.2f", getslider(3)));
+draw_knob(80, 110+40, 4+32*pad, "Drive", 0, 0, 48, 0, 0, sprintf(#, "%.1f Db", getslider(4)));
+
+set_color(0x666666);
+gfx_line(140, 40+40, 140, 170+40);
+gfx_x = 140; gfx_y = 20+40;
+gfx_drawstr(sprintf(#, "OSC %s", get_note_name()));
+
+draw_knob(160, 40+40, 5+32*pad, "Freq", 440, 20, 10000, 1, 0, sprintf(#, "%i Hz", getslider(5)));
+draw_knob(220, 40+40, 7+32*pad, "Att", 1, 1, 5000, 1, 0, sprintf(#, "%i ms", getslider(7)));
+draw_knob(160, 110+40, 8+32*pad, "Dec", 70, 1, 5000, 1, 0, sprintf(#, "%i ms", getslider(8)));
+draw_knob(220, 110+40, 9+32*pad, "Shape", 0, -1, 1, 0, 1, sprintf(#, "%.2f", getslider(9)));
+
+oscwave = getslider(6);
+shape_name = oscwave == 0 ? "Sin" : oscwave == 1 ? "Tri" : oscwave == 2 ? "Saw" : "Sqr";
+draw_button(220, 20+40, 40, shape_name, 0);
+mouse.left_click && mouse_in_rect(220, 20 - 2 +40, 40, 10 + 2) ? (
+  gfx_x = 220; gfx_y = 30+40;
+  choice = gfx_showmenu("Sine|Triangle|Saw|Square");
+  choice > 0 ? setslider(6, choice - 1);
+  on_slider();
+);
+
+set_color(0x666666);
+gfx_line(280, 40+40, 280, 170+40);
+gfx_x = 280; gfx_y = 20+40;
+gfx_drawstr("PITCH");
+
+draw_knob(300, 40+40, 10+32*pad, "Amt", 0, -1, 1, 0, 1, sprintf(#, "%.2f", getslider(10)));
+draw_knob(360, 40+40, 11+32*pad, "Att", 1, 1, 5000, 1, 0, sprintf(#, "%i ms", getslider(11)));
+draw_knob(300, 110+40, 12+32*pad, "Dec", 70, 1, 5000, 1, 0, sprintf(#, "%i ms", getslider(12)));
+draw_knob(360, 110+40, 13+32*pad, "Shape", 0, -1, 1, 0, 1, sprintf(#, "%.2f", getslider(13)));
+
+set_color(0x666666);
+gfx_line(420, 40+40, 420, 170+40);
+gfx_x = 420; gfx_y = 20+40;
+gfx_drawstr("NOISE");
+
+draw_knob(440, 40+40, 16+32*pad, "Color", 22050, 20, 22050, 1, 0, sprintf(#, "%i Hz", getslider(16)));
+draw_knob(500, 40+40, 17+32*pad, "Att", 1, 1, 5000, 1, 0, sprintf(#, "%i ms", getslider(17)));
+draw_knob(440, 110+40, 18+32*pad, "Dec", 70, 1, 5000, 1, 0, sprintf(#, "%i ms", getslider(18)));
+draw_knob(500, 110+40, 19+32*pad, "Shape", 0, -1, 1, 0, 1, sprintf(#, "%.2f", getslider(19)));
+
+draw_button(480, 20+40, 60, getslider(15) ? "Stereo" : "Mono", getslider(15));
+mouse.left_click && mouse_in_rect(480, 20 - 2 +40, 60, 10 + 2) ? (
+  setslider(15, !getslider(15));
+  on_slider();
+);
+
+set_color(0x666666);
+gfx_line(560, 40+40, 560, 170+40);
+gfx_x = 560; gfx_y = 20+40;
+gfx_drawstr("FILTER");
+
+draw_knob(580, 40+40, 21+32*pad, "Freq", 22050, 20, 22050, 1, 0, sprintf(#, "%i Hz", getslider(21)));
+draw_knob(640, 40+40, 22+32*pad, "Q", 0.70, 0.01, 40, 1, 0, sprintf(#, "%.2f", getslider(22)));
+
+shape_name = getslider(20) == 0 ? "LP" : getslider(20) == 1 ? "BP" : "HP";
+draw_button(640, 20+40, 40, shape_name, 0);
+mouse.left_click && mouse_in_rect(640, 20 - 2+40, 40, 10 + 2) ? (
+  gfx_x = 640; gfx_y = 30+40;
+  choice = gfx_showmenu("LP|BP|HP");
+  choice > 0 ? setslider(20, choice - 1);
+  on_slider();
+);
+
+filter_name = getslider(23) == 0 ? "Noise" : getslider(23) == 1 ? "Osc" : "Both";
+draw_button(630, 110+40, 50, filter_name, 0);
+mouse.left_click && mouse_in_rect(630, 110+40, 50, 10+2) ? (
+  gfx_x = 630; gfx_y = 120+40;
+  choice = gfx_showmenu("Filter noise|Filter osc|Filter both");
+  choice > 0 ? setslider(23, choice - 1);
+);
+
+set_color(0x666666);
+gfx_x = 20; gfx_y = 180+40;
+gfx_drawstr("VELOCITY");
+
+draw_knob(20, 200+40, 27+32*pad, "Vol", 1, 0, 1, 0, 0, sprintf(#, "%.2f", getslider(27)));
+
+set_color(0x666666);
+gfx_x = 140; gfx_y = 180+40;
+gfx_drawstr("EQ");
+
+draw_knob(160, 200+40, 24+32*pad, "Freq", 440, 20, 22050, 1, 0, sprintf(#, "%i Hz", getslider(24)));
+draw_knob(220, 200+40, 25+32*pad, "Gain", 0, -18, 18, 0, 1, sprintf(#, "%.2f Db", getslider(25)));
+draw_knob(280, 200+40, 26+32*pad, "Q", 0.70, 0.01, 40, 1, 0, sprintf(#, "%.2f", getslider(26)));
+
+function on_knob_move (nslider, slider_min, slider_max, slider_is_log, factor) (
+  factor *= mouse.control ? 0.05 : 1;
+  slider_is_log ? (
+    slider(nslider) = slider(nslider) * pow(100, -factor * 0.01);
+  ) : (
+    inc = (slider_max - slider_min) / 100 * -factor;
+    slider(nslider) += inc;
+  );
+
+  slider(nslider) > slider_max ? slider(nslider) = slider_max;
+  slider(nslider) < slider_min ? slider(nslider) = slider_min;
+  on_slider();
+  sliderchange(slider(nslider));
+  slider_automate(slider(nslider));
+);
+
+draw_help ? (
+  gfx_draw_help();
+);
+
+wheelknob_nslider ? (
+  on_knob_move(wheelknob_nslider, wheelknob_min, wheelknob_max, wheelknob_is_log, mouse.wheel * -7);
+);
+
+selknob_nslider && mouse.left && mouse.dy != 0 ? (
+  on_knob_move(selknob_nslider, selknob_min, selknob_max, selknob_is_log, mouse.dy);
+);
+
+doubleclk_nslider ? (
+  on_slider();
+  sliderchange(slider(doubleclk_nslider));
+  slider_automate(slider(doubleclk_nslider));
+  doubleclk_nslider = 0;
+);
+
+gfx_setcursor(selknob_nslider ? 32511 : 0);
+!mouse.wheel ? wheelknob_nslider = 0;
+!mouse.left ? selknob_nslider = 0;
