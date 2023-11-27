@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="e7f97d773b11ec6cd1dd4c667d4bae732d735556">
+<index version="1" name="ReaTeam JSFX" commit="a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -231,6 +231,22 @@ Performance optimization.]]></changelog>
         <changelog><![CDATA[Initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/4a33bbe6110bf1c5f37430bf245bbd058512148e/Filter/TiaR_Lattice%20Filter.jsfx</source>
         <source file="TiaR_Lattice Filter/TiaR_LFX_01.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/4a33bbe6110bf1c5f37430bf245bbd058512148e/Filter/TiaR_Lattice%20Filter/TiaR_LFX_01.jsfx-inc</source>
+      </version>
+    </reapack>
+    <reapack name="tilr_QuickFilter.jsfx" type="effect" desc="QuickFilter">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 QuickFilter\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Simple filter with 9 modes and smooth interpolation.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="tilr" time="2023-11-25T18:12:09Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/72270f4963a7ba07cbce46f012eb68a837ce0f5d/Filter/tilr_QuickFilter.jsfx</source>
+        <source file="tilr_QuickFilter/qf.svf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/72270f4963a7ba07cbce46f012eb68a837ce0f5d/Filter/tilr_QuickFilter/qf.svf_filter.jsfx-inc</source>
       </version>
     </reapack>
   </category>
@@ -2924,6 +2940,32 @@ version 1.02
         <source>https://github.com/ReaTeam/JSFX/raw/b9dc7ab99b783fe5366863def0a9ef6798e67c06/Synth/TiaR_Ze%20Musette%20Organ.jsfx</source>
       </version>
     </reapack>
+    <reapack name="tilr_JS3Osc.jsfx" type="effect" desc="JS3Osc">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 JS3Osc\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Polyphonic synth based of IL 3xOsc.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Features:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Polyphonic voicing\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Filter, pitch and amplitude envelopes per voice\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Three oscillators with 6 wave types\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Oscillator phase stereo detuning and offset\sa180\par}
+}
+]]></description>
+        <link rel="screenshot">https://raw.githubusercontent.com/tiagolr/js3osc/master/doc/ss.png</link>
+      </metadata>
+      <version name="1.0" author="tilr" time="2023-11-27T01:15:57Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc.jsfx</source>
+        <source file="tilr_JS3Osc/3o.adsr.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc/3o.adsr.jsfx-inc</source>
+        <source file="tilr_JS3Osc/3o.array.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc/3o.array.jsfx-inc</source>
+        <source file="tilr_JS3Osc/3o.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc/3o.gfxlib.jsfx-inc</source>
+        <source file="tilr_JS3Osc/3o.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc/3o.mouselib.jsfx-inc</source>
+        <source file="tilr_JS3Osc/3o.zdf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc/3o.zdf_filter.jsfx-inc</source>
+      </version>
+    </reapack>
     <reapack name="tilr_JSDrumpad.jsfx" type="effect" desc="JSDrumpad">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
@@ -2950,6 +2992,37 @@ version 1.02
         <source file="tilr_JSDrumpad/dp.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/e7f97d773b11ec6cd1dd4c667d4bae732d735556/Synth/tilr_JSDrumpad/dp.gfxlib.jsfx-inc</source>
         <source file="tilr_JSDrumpad/dp.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/e7f97d773b11ec6cd1dd4c667d4bae732d735556/Synth/tilr_JSDrumpad/dp.mouselib.jsfx-inc</source>
         <source file="tilr_JSDrumpad/dp.rbj_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/e7f97d773b11ec6cd1dd4c667d4bae732d735556/Synth/tilr_JSDrumpad/dp.rbj_filter.jsfx-inc</source>
+      </version>
+      <version name="1.1" author="tilr" time="2023-11-25T18:12:40Z">
+        <changelog><![CDATA[Change rbj filters to svf for smooth interpolation]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/16ddf154c512e73aaabacc937942c2c927c664d3/Synth/tilr_JSDrumpad.jsfx</source>
+        <source file="tilr_JSDrumpad.jsfx.rpl">https://github.com/ReaTeam/JSFX/raw/16ddf154c512e73aaabacc937942c2c927c664d3/Synth/tilr_JSDrumpad.jsfx.rpl</source>
+        <source file="tilr_JSDrumpad/dp.envlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/16ddf154c512e73aaabacc937942c2c927c664d3/Synth/tilr_JSDrumpad/dp.envlib.jsfx-inc</source>
+        <source file="tilr_JSDrumpad/dp.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/16ddf154c512e73aaabacc937942c2c927c664d3/Synth/tilr_JSDrumpad/dp.gfxlib.jsfx-inc</source>
+        <source file="tilr_JSDrumpad/dp.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/16ddf154c512e73aaabacc937942c2c927c664d3/Synth/tilr_JSDrumpad/dp.mouselib.jsfx-inc</source>
+        <source file="tilr_JSDrumpad/dp.svf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/16ddf154c512e73aaabacc937942c2c927c664d3/Synth/tilr_JSDrumpad/dp.svf_filter.jsfx-inc</source>
+      </version>
+    </reapack>
+    <reapack name="tilr_JSDrumsynth.jsfx" type="effect" desc="JSDrumsynth">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 JSDrumsynth\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Lightweight drum machine synth with seven drum pads. Checkout JSDrumpad for a single pad synth.\par}
+}
+]]></description>
+        <link rel="screenshot">https://raw.githubusercontent.com/tiagolr/jsdrumsynth/master/doc/ss.png</link>
+      </metadata>
+      <version name="1.0" author="tilr" time="2023-11-25T18:16:48Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth.jsfx</source>
+        <source file="tilr_JSDrumsynth.jsfx.rpl">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth.jsfx.rpl</source>
+        <source file="tilr_JSDrumsynth/ds.envlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth/ds.envlib.jsfx-inc</source>
+        <source file="tilr_JSDrumsynth/ds.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth/ds.gfxlib.jsfx-inc</source>
+        <source file="tilr_JSDrumsynth/ds.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth/ds.mouselib.jsfx-inc</source>
+        <source file="tilr_JSDrumsynth/ds.pad.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth/ds.pad.jsfx-inc</source>
+        <source file="tilr_JSDrumsynth/ds.svf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth/ds.svf_filter.jsfx-inc</source>
       </version>
     </reapack>
     <reapack name="TimeWaster_ReaRack Modular Synth.jsfx" type="effect" desc="ReaRack Modular Synth">

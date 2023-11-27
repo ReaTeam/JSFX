@@ -1,0 +1,267 @@
+desc:ds.pad.jsfx-inc
+
+@init
+
+
+function get_slider(n)
+instance(npad)
+(
+  slider(n + 32 * npad);
+);
+
+function db2gain(db) (10^(db / 20););
+function wrap(number) (number <= 1 ? number : number - 1;);
+function sine_wave(cycle) (sin(cycle * 2 * $pi););
+function tri_wave(cycle) ((cycle > 0.5 ? 4 * cycle - 2 : -4 * cycle + 2) - 1;);
+function saw_wave(cycle) (cycle * -2 + 1;);
+function square_wave(cycle) (cycle < 0.5 ? -1 : 1;);
+function make_noise(cycle) (rand(2) - 1;);
+function note2freq(n) (440 * pow(2, (n - 69) / 12););
+
+function make_wave(cycle, osc_wave) (
+  osc_wave == 0 ? sine_wave(cycle)
+    : osc_wave == 1 ? tri_wave(cycle)
+    : osc_wave == 2 ? saw_wave(cycle)
+      : square_wave(cycle)
+);
+
+// Parameter smoothing
+function rc_set(rc)
+  instance(a) (
+    a = 1 / (rc * srate + 1);
+);
+function rc_lp(sample)
+  instance(lp, a) (
+    lp += a * (sample - lp);
+);
+function smooth()
+  instance (lp, smooth) (
+    lp = smooth;
+    smooth = this.rc_lp(this);
+);
+
+// Distortion
+function tanh(x) (
+  x = exp(2*x);
+  (x - 1) / (x + 1);
+);
+dc = 0.05;
+tanh_dc = tanh(dc);
+function amp(x) (
+  tanh(this.smooth * x + dc) - tanh_dc;
+);
+
+
+function pad_init(npad)
+(
+  this.npad = npad;
+  this.osc_cycle = 0.25;
+  this.note_on = 0;
+  this.note_counter = 0;
+  this.note_vel = 0;
+
+  this.noise_filter.svf_set_sample_rate(srate);
+  this.noise_lowpass.svf_set_sample_rate(srate);
+  this.eq.svf_set_sample_rate(srate);
+
+  this.tube.rc_set(0.0033);
+  this.tube.smooth = db2gain(0);
+  this.vel_mult.rc_set(0.0066);
+  this.vel_mult.smooth = 1;
+);
+
+function pad_on_note(vel)
+(
+  this.note_on = 1;
+  this.note_vel = vel / 127;
+  this.note_counter = 0;
+  this.envelope.zen_trigger(1);
+  this.pitch_envelope.zen_trigger(1);
+  this.noise_envelope.zen_trigger(1);
+);
+
+function envelope_refresh()
+local (shape, att_shape, dec_shape)
+(
+  shape = this.osc_shape + 1;
+  att_shape = shape > 1 ? 3.001 - shape : shape;
+  dec_shape = shape > 1 ? 2 - shape : 1.001 + shape;
+  this.envelope.zen_update(
+    0, // delay
+    this.osc_att, // attack
+    this.osc_dec, // decay
+    -90, // sustain
+    0, // release
+    att_shape, // attack shape
+    dec_shape, // decay shape
+    1, // release shape
+    100, // mix
+    0, // min
+    100 // max
+  );
+
+  shape = this.pitch_shape + 1;
+  att_shape = shape > 1 ? 3.001 - shape : shape;
+  dec_shape = shape > 1 ? 2 - shape : 1.001 + shape;
+  this.pitch_envelope.zen_update(0, this.pitch_att, this.pitch_dec, -90, 0, att_shape, dec_shape, 1, 100, 0, 100);
+
+  shape = this.noise_shape + 1;
+  att_shape = shape > 1 ? 3.001 - shape : shape;
+  dec_shape = shape > 1 ? 2 - shape: 1.001 + shape;
+  this.noise_envelope.zen_update(0, this.noise_att, this.noise_dec, -90, 0, att_shape, dec_shape, 1, 100, 0, 100);
+);
+
+function pad_on_slider()
+(
+  this.mix = this.get_slider(1);
+  this.vol = this.get_slider(2);
+  this.pan = this.get_slider(3);
+  this.distortion = this.get_slider(4);
+
+  this.osc_freq = this.get_slider(5);
+  this.osc_wave = this.get_slider(6);
+  this.osc_att = this.get_slider(7);
+  this.osc_dec = this.get_slider(8);
+  this.osc_shape = this.get_slider(9);
+
+  this.pitch_amt = this.get_slider(10);
+  this.pitch_att = this.get_slider(11);
+  this.pitch_dec = this.get_slider(12);
+  this.pitch_shape = this.get_slider(13);
+
+  this.noise_stereo = this.get_slider(15);
+  this.noise_cutoff = this.get_slider(16);
+  this.noise_att = this.get_slider(17);
+  this.noise_dec = this.get_slider(18);
+  this.noise_shape = this.get_slider(19);
+
+  this.filter_shape = this.get_slider(20);
+  this.filter_freq = this.get_slider(21);
+  this.filter_q = this.get_slider(22);
+  this.filter_sel = this.get_slider(23);
+
+  this.eq_freq = this.get_slider(24);
+  this.eq_gain = this.get_slider(25);
+  this.eq_q = this.get_slider(26);
+
+  this.vel_vol = this.get_slider(27);
+
+  this.tube = db2gain(this.distortion);
+  this.gain = db2gain(this.vol);
+  this.noise_lowpass.svf_lp(this.noise_cutoff, 0.70, 12);
+  this.filter_shape == 0 ? (
+    this.noise_filter.svf_lp(this.filter_freq, this.filter_q, 1);
+  );
+  this.filter_shape == 1 ? (
+    this.noise_filter.svf_bp2(this.filter_freq, this.filter_q);
+  );
+  this.filter_shape == 2 ? (
+    this.noise_filter.svf_hp(this.filter_freq, this.filter_q, 1);
+  );
+  this.eq.svf_eq(this.eq_freq, this.eq_q, db2gain(this.eq_gain));
+  this.envelope_refresh();
+);
+
+function reset_filters() 
+instance(eq, noise_filter, noise_lowpass) 
+(
+  eq.svf_single_set_to_target();
+  noise_lowpass.svf_single_set_to_target();
+  noise_filter.svf_single_set_to_target();
+);
+
+function pad_process()
+instance(npad, out_r, out_l, note_on, note_vel, note_counter, osc_cycle, osc_freq, osc_wave,
+        osc_att, osc_dec, noise_att, noise_dec, envelope, pitch_envelope, noise_envelope,
+        pitch_amt, noise_lowpass, noise_cutoff, noise_filter, filter_freq, filter_q, filter_shape,
+        filter_sel, mix, pan, eq, eq_gain, vel_vol, gain, vel_mult, distortion, tube, noise_stereo)
+local (wave_l, wave_r, noise_l, noise_r, signal_merged, mult)
+(
+  note_on ? (
+    note_counter += 1 / srate * 1000;
+    note_counter > osc_att + osc_dec && note_counter > noise_att + noise_dec ? (
+      note_on = 0;
+      envelope.zen_release();
+      pitch_envelope.zen_release();
+      noise_envelope.zen_release();
+    );
+
+    envelope.zen_process();
+    pitch_envelope.zen_process();
+    noise_envelope.zen_process();
+
+    osc_cycle = wrap(osc_cycle + osc_freq / srate * pow(16, pitch_amt * pitch_envelope.env));
+    wave_l = make_wave(osc_cycle, osc_wave) * envelope.env;
+    wave_r = wave_l;
+    noise_l = make_noise() * noise_envelope.env;
+    noise_r = noise_stereo ? make_noise() * noise_envelope.env : noise_l;
+
+    noise_cutoff < 22000 ? (
+      noise_lowpass.svf_tick();
+      noise_l = noise_lowpass.svf_svf0(noise_l);
+      noise_r = noise_lowpass.svf_svf1(noise_r);
+    );
+
+    mix < 0 ? (
+      noise_l *= 1 + mix;
+      noise_r *= 1 + mix;
+    );
+    mix > 0 ? (
+      wave_l *= 1 - mix;
+      wave_r *= 1 - mix;
+    );
+    pan < 0 ? (
+      noise_r *= 1 + pan;
+      wave_r *= 1 + pan;
+    );
+    pan > 0 ? (
+      noise_l *= 1 - pan;
+      wave_l *= 1 - pan;
+    );
+
+    signal_merged = 0;
+
+    (filter_shape == 0 && filter_freq < 22000) ||
+    (filter_shape == 1) ||
+    (filter_shape == 2 && filter_freq > 20) ?
+    (
+      noise_filter.svf_tick();
+      mult = filter_shape == 1 ? filter_q : 1;
+      filter_sel == 0 ? (
+        noise_l = noise_filter.svf_svf0(noise_l) * mult;
+        noise_r = noise_filter.svf_svf1(noise_r) * mult;
+        1;
+      );
+      filter_sel == 1 ? (
+        wave_l = noise_filter.svf_svf0(wave_l) * mult;
+        wave_r = noise_filter.svf_svf1(wave_r) * mult;
+      );
+      filter_sel == 2 ? (
+        out_l = noise_filter.svf_svf0(wave_l + noise_l) * mult;
+        out_r = noise_filter.svf_svf1(wave_r + noise_r) * mult;
+        signal_merged = 1;
+      );
+    );
+
+    !signal_merged ? (
+      out_l = noise_l + wave_l;
+      out_r = noise_r + wave_r;
+    );
+    
+    distortion ? (
+      tube.smooth();
+      out_l = tube.amp(out_l);
+      out_r = tube.amp(out_r);
+    );
+
+    eq_gain ? (
+      eq.svf_tick();
+      out_l = eq.svf_svf0(out_l);
+      out_r = eq.svf_svf1(out_r);
+    );
+
+    vel_mult = min(note_vel + (1 - vel_vol), 1);
+    out_l *= gain * vel_mult.smooth();
+    out_r *= gain * vel_mult.smooth();
+  );
+);
