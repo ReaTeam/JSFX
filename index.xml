@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="87afd84cf52eae9b22396be59d71f8fe3148dd57">
+<index version="1" name="ReaTeam JSFX" commit="64d0d6d1e499037de172f816a83009957040259b">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2044,6 +2044,11 @@ And a bit of source code cleaning.]]></changelog>
       </metadata>
       <version name="1.0" author="tilr" time="2023-10-21T23:13:25Z">
         <source>https://github.com/ReaTeam/JSFX/raw/cc98d2a8c03ced5d6263449bb495aba0f74f2f6f/MIDI/tilr_Notes%20to%20CC.jsfx</source>
+      </version>
+      <version name="1.1" author="tilr" time="2023-11-27T20:39:11Z">
+        <changelog><![CDATA[Add off notes support
+Add value slider]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/64d0d6d1e499037de172f816a83009957040259b/MIDI/tilr_Notes%20to%20CC.jsfx</source>
       </version>
     </reapack>
     <reapack name="TJA_MIDI note-banked CC multiplier.jsfx" type="effect" desc="MIDI note-banked CC multiplier">
