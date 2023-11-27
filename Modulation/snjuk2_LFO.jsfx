@@ -51,7 +51,7 @@ slider47:0<0,127,1>-CC Out
 slider48:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>-Out Ch 
 slider50:0<0,127,1>-Mod to CC_Val
 
-slider51:0<0,1>-freqX
+slider51:freq=0<0,1>-freqX
 
 options:no_meter
 
@@ -103,8 +103,6 @@ function step(freq)     ( _N = step;
   
   
 @block
-
-slider51 = freq;
 
 step = floor(st);
 
