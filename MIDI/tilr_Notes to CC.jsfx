@@ -2,7 +2,6 @@ desc: Notes to CC
 author: tilr
 version: 1.1
 changelog:
-  [1.1]
   Add off notes support
   Add value slider
 about:
@@ -15,8 +14,6 @@ about:
 /**
  * Maps midi notes to CC automation
  */
-
-desc:Notes to CC
 
 in_pin:none
 out_pin:none
