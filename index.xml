@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1">
+<index version="1" name="ReaTeam JSFX" commit="87afd84cf52eae9b22396be59d71f8fe3148dd57">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2566,6 +2566,12 @@ E.g. at 44.1/48kHz audio interface sample rate the recommended buffer size is <=
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2017-12-20T23:54:09Z">
         <changelog><![CDATA[bug fixes, added graphics for fun and to start to gain compatibility with ReaRack]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/292c9214c8891815c5abfd50b51580226f8886f8/Modulation/mschnell_Delay_Modulator.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="snjuk2_LFO.jsfx" type="effect" desc="LFO">
+      <version name="1.1" author="Snjuk2" time="2023-11-27T19:35:21Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/87afd84cf52eae9b22396be59d71f8fe3148dd57/Modulation/snjuk2_LFO.jsfx</source>
+        <source file="snjuk2_LFO/gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/87afd84cf52eae9b22396be59d71f8fe3148dd57/Modulation/snjuk2_LFO/gfxlib.jsfx-inc</source>
       </version>
     </reapack>
     <reapack name="TiaR_ChopChop.jsfx" type="effect" desc="Stereo Chop chop">
