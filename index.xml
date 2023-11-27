@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f3170aff73b21e043eb0ea687f568a21fc0114c5">
+<index version="1" name="ReaTeam JSFX" commit="a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2938,6 +2938,32 @@ version 1.02
 + phase modulation synthesis (3 operators per note) 
 + Per note index limitation (anti aliasing)]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/b9dc7ab99b783fe5366863def0a9ef6798e67c06/Synth/TiaR_Ze%20Musette%20Organ.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="tilr_JS3Osc.jsfx" type="effect" desc="JS3Osc">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 JS3Osc\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Polyphonic synth based of IL 3xOsc.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Features:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Polyphonic voicing\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Filter, pitch and amplitude envelopes per voice\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Three oscillators with 6 wave types\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Oscillator phase stereo detuning and offset\sa180\par}
+}
+]]></description>
+        <link rel="screenshot">https://raw.githubusercontent.com/tiagolr/js3osc/master/doc/ss.png</link>
+      </metadata>
+      <version name="1.0" author="tilr" time="2023-11-27T01:15:57Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc.jsfx</source>
+        <source file="tilr_JS3Osc/3o.adsr.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc/3o.adsr.jsfx-inc</source>
+        <source file="tilr_JS3Osc/3o.array.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc/3o.array.jsfx-inc</source>
+        <source file="tilr_JS3Osc/3o.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc/3o.gfxlib.jsfx-inc</source>
+        <source file="tilr_JS3Osc/3o.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc/3o.mouselib.jsfx-inc</source>
+        <source file="tilr_JS3Osc/3o.zdf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc/3o.zdf_filter.jsfx-inc</source>
       </version>
     </reapack>
     <reapack name="tilr_JSDrumpad.jsfx" type="effect" desc="JSDrumpad">
