@@ -1,0 +1,163 @@
+desc: Btw Pitch_12 Modulator
+author: Snjuk2
+version: 1
+
+desc:Btw Pitch-12 Modulator
+
+/**
+ * JSFX : Btw Pitch-12 Modulator
+ * Author: Snjuk2
+ * Reaper forum : https://forum.cockos.com/showthread.php?t=277484
+ * Licence: GPL v3
+ * REAPER: 7.0
+ * Version: 1.1 (2023-12-1)
+ */
+
+slider1:0<0,1,0.01>  -1C    
+slider2:0<0,1,0.01>  -1C# 
+slider3:0<0,1,0.01>  -1D    
+slider4:0<0,1,0.01>  -1D# 
+slider5:0<0,1,0.01>  -1E    
+slider6:0<0,1,0.01>  -1F    
+slider7:0<0,1,0.01> -1F# 
+slider8:0<0,1,0.01> -1G    
+slider9:0<0,1,0.01> -1G# 
+slider10:0<0,1,0.01> -1A    
+slider11:0<0,1,0.01> -1A# 
+slider12:0<0,1,0.01> -1B    
+
+slider21:0<0,1,0.01>  C   Modulator  
+slider22:0<0,1,0.01>  C# Modulator  
+slider23:0<0,1,0.01>  D   Modulator  
+slider24:0<0,1,0.01>  D# Modulator  
+slider25:0<0,1,0.01>  E   Modulator  
+slider26:0<0,1,0.01>  F   Modulator  
+slider27:0<0,1,0.01>  F# Modulator  
+slider28:0<0,1,0.01>  G   Modulator  
+slider29:0<0,1,0.01>  G# Modulator  
+slider30:0<0,1,0.01>  A   Modulator  
+slider31:0<0,1,0.01>  A# Modulator  
+slider32:0<0,1,0.01>  B   Modulator  
+
+slider34:0<0,5000,1>  Smooth (ms)  
+
+slider40:1<0,1,0.01> Amount   (%)  
+
+in_pin:none
+out_pin:none
+
+@init
+
+ext_noinit  =1;
+noteOn  = $x90;
+noteOff = $x80;
+
+function isNoteOn ()(noteStatus == noteOn && msg3);
+function isNoteOff()(noteStatus == noteOff || (noteStatus == noteOn && msg3 == 0));
+
+@slider
+
+  amount = slider40;
+
+  coeff = exp(-1/(slider34/1000*srate));
+  
+@block
+  
+while (midirecv(offset,msg1,msg2,msg3)) (
+      noteStatus = msg1 & $xF0;
+      isNoteOn() ? (
+        note = msg2 % 12;
+         slider(note+1) = min(msg3,1);
+         midisend(offset,noteStatus,max(min(msg2,127),0),max(min(msg3,127),1));
+      ):
+      isNoteOff() ? (
+        note = msg2 % 12;
+        slider(note+1) = 0;
+         midisend(offset,noteStatus,max(min(msg2,127),0),max(min(msg3,127),0));
+      ):midisend(offset,msg1,msg2,msg3);
+    );
+
+@sample
+  
+  output1  = output1  * coeff + input1  * (1 - coeff);
+  output2  = output2  * coeff + input2  * (1 - coeff);
+  output3  = output3  * coeff + input3  * (1 - coeff);
+  output4  = output4  * coeff + input4  * (1 - coeff);
+  output5  = output5  * coeff + input5  * (1 - coeff);
+  output6  = output6  * coeff + input6  * (1 - coeff);
+  output7  = output7  * coeff + input7  * (1 - coeff);
+  output8  = output8  * coeff + input8  * (1 - coeff);
+  output9  = output9  * coeff + input9  * (1 - coeff);
+  output10 = output10 * coeff + input10 * (1 - coeff);
+  output11 = output11 * coeff + input11 * (1 - coeff);
+  output12 = output12 * coeff + input12 * (1 - coeff);
+ 
+  slider21 = slider1  * amount ;
+  slider22 = slider2  * amount ;
+  slider23 = slider3  * amount ;
+  slider24 = slider4  * amount ;
+  slider25 = slider5  * amount ;
+  slider26 = slider6  * amount ;
+  slider27 = slider7  * amount ;
+  slider28 = slider8  * amount ;
+  slider29 = slider9  * amount ;
+  slider30 = slider10 * amount ;
+  slider31 = slider11 * amount ;
+  slider32 = slider12 * amount ;
+  
+  slider34 != 0 ? (
+  input1  = slider1;  slider21 = output1  * amount; 
+  input2  = slider2;  slider22 = output2  * amount;
+  input3  = slider3;  slider23 = output3  * amount;
+  input4  = slider4;  slider24 = output4  * amount;
+  input5  = slider5;  slider25 = output5  * amount; 
+  input6  = slider6;  slider26 = output6  * amount;
+  input7  = slider7;  slider27 = output7  * amount;
+  input8  = slider8;  slider28 = output8  * amount;
+  input9  = slider9;  slider29 = output9  * amount; 
+  input10 = slider10; slider30 = output10 * amount;
+  input11 = slider11; slider31 = output11 * amount;
+  input12 = slider12; slider32 = output12 * amount;
+  );
+  
+@gfx 100 30
+
+gfx_clear = 20+20*256+20*65536;
+
+gfx_set(0.2,0.2,0.2,1);
+gfx_rect(0,0,gfx_w,gfx_h);
+                        
+   function button(x y w h n) (
+   
+     //Button background                                 
+     gfx_set(0.3,0.3,0.3,1);
+     gfx_rect(x,y,w,h);
+     
+     slider(n) != 0 ? Col_A = 1 : Col_A = 0 ;
+   
+     // Button Frame
+     gfx_set(1,1,0,Col_A);
+     gfx_rect(x,y,w,h);
+           
+     );  
+
+ button(30,5,19,24,21);
+ button(50,5,19,24,23);
+ button(70,5,19,24,25);
+ button(90,5,19,24,26);
+ button(110,5,19,24,28);
+ button(130,5,19,24,30);
+ button(150,5,19,24,32);
+ 
+ button(40,30,19,24,22);
+ button(60,30,19,24,24);
+ button(100,30,19,24,27);
+ button(120,30,19,24,29);
+ button(140,30,19,24,31);
+
+    
+    gfx_set(1,1,1,1);
+    gfx_setfont(1,"Arial",15);
+    gfx_x = 250; gfx_y = 10;
+    gfx_drawstr(msg2);
+     
