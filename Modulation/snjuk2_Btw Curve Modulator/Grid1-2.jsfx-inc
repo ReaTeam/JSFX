@@ -1,0 +1,124 @@
+desc:Grid
+
+@init
+
+//**********************************************************
+
+//-- Draw Background ---------------------------------------
+function Draw_BG(x,y,w,h)
+  //instance(x,y,w,h, in_val, out_val)
+(
+  gfx_set(0.15,0.15,0.15,1);
+  gfx_rect(x,y,w+1,h+1,1);
+  gfx_set(0.15,0.15,0.15,1);
+  gfx_rect(x-2,y-2,w+5,h+5,0); 
+);
+
+/*
+//-- Draw_GridVals_norm ------------------------------------
+// n_values = number of values(including the first and last!)
+// current font and r,g,b,a are used(set before function calling)
+function Draw_GridValues_norm(x,y,w,h, n_values)
+  local(lx, ly, step, lval, str, str_w, str_h, i)
+( 
+  //-- origin of coords ------
+  str = "0"; // need "0" or "-inf 0"
+  gfx_set(0.6,0.6,0.6,0.7); // val color
+  gfx_measurestr(str, str_w, str_h);
+  gfx_x = x - str_w - 7; gfx_y = y + h + 5; 
+  gfx_drawstr(str); 
+  //-- grid values -----------
+  step = 1/(n_values-1); // pos in wnd(norm - 0...1)
+  lx = x; ly = y+h;
+  i=1; 
+  loop(n_values-1,
+    lx += w * step ; // vert-line x-coord 
+    ly -= h * step;  // hor-line y-coord
+    lval = i*step;   // norm val
+    //--------------------------
+    str = sprintf(#, "%g", lval);
+    gfx_measurestr(str, str_w, str_h);
+    gfx_x = x - str_w - 7; gfx_y = ly - str_h/2;  
+    gfx_drawstr(str);
+    gfx_x = lx - str_w/2;  gfx_y = y + h + 5;      
+    gfx_drawstr(str);
+    i+=1;
+  );
+);
+*/
+//-- Draw_GridValues ---------------------------------------
+// функции, которые тупо рисуют значения.
+// current font and r,g,b,a are used(set before function calling)
+function Draw_GridValuesX(x,y,w,h, xv0,xv1,xv2,xv3,xv4)
+  local(str_w, str_h)
+(
+  gfx_y = y + h + 5;
+  gfx_measurestr(xv0, str_w, str_h); gfx_x = x - str_w/2;          gfx_drawstr(xv0);
+  gfx_measurestr(xv1, str_w, str_h); gfx_x = x + 0.25*w - str_w/2; gfx_drawstr(xv1);
+  gfx_measurestr(xv2, str_w, str_h); gfx_x = x + 0.5*w - str_w/2;  gfx_drawstr(xv2);
+  gfx_measurestr(xv3, str_w, str_h); gfx_x = x + 0.75*w - str_w/2; gfx_drawstr(xv3);
+  gfx_measurestr(xv4, str_w, str_h); gfx_x = x + w - str_w/2;      gfx_drawstr(xv4);
+);
+//------------------
+function Draw_GridValuesY(x,y,w,h, yv0,yv1,yv2)
+  local(str_w, str_h)
+( 
+  gfx_measurestr(yv0, str_w, str_h); gfx_x = x - str_w - 7; gfx_y = y + h - str_h/2;     gfx_drawstr(yv0);
+  gfx_measurestr(yv1, str_w, str_h); gfx_x = x - str_w - 7; gfx_y = y + 0.5*h - str_h/2; gfx_drawstr(yv1);
+  gfx_measurestr(yv2, str_w, str_h); gfx_x = x - str_w - 7; gfx_y = y - str_h/2;         gfx_drawstr(yv2);
+);
+//------------------
+function Draw_GridValues(x,y,w,h, mode)
+  local(str_w, str_h)
+( 
+  //Draw_GridValuesX(x,y,w,h, "0","0.25","0.5","0.75","1");
+  mode == "Hz"  ? Draw_GridValuesY(x,y,w,h, "25Hz","671Hz","18kHz") :
+  mode == "dB"  ? Draw_GridValuesY(x,y,w,h, "-inf","-6dB","0dB") :
+  mode == "Prc" ? Draw_GridValuesY(x+w+15,y,w,h, "0","","127");
+);
+
+//----------------------------------------------------------
+//-- Draw_Grid ---------------------------------------------
+// n_lines = number of lines(including the first and last!)
+// current r,g,b,a are used for the grid color(set before function calling)
+function Draw_Grid(x,y,w,h, n_lines)
+  local(lpos, lx, ly, i, a1, a2)
+( 
+  a1 = gfx_a; a2 = gfx_a/2;
+  i=0; 
+  loop(n_lines,
+    lpos = i/(n_lines-1);    // line pos in wnd(norm val - 0...1)
+    lx = x + w * lpos ;      // vert-line x-coord 
+    ly = y + h * (1 - lpos); // hor-line y-coord
+    //-- grid lines --------------------
+    //i>0 && i<n_lines-1 ?  // don't draw contour if need 
+    (
+      gfx_a = i%4 ? a2 : a1;   // lines clr alfa
+      gfx_line(lx, y, lx, y+h, 1); // vert-line
+      gfx_line(x, ly, x+w, ly, 1); // hor-line
+    );
+    i+=1;
+  );    
+);
+
+
+@gfx 600 480
+/* Test Example
+//-- Draw bg, grid ----
+gap = 40;
+x = y = gap;
+w = gfx_w - gap*2;
+h = gfx_h - gap*2;
+//----------------------------------------
+Draw_BG(x,y,w,h); // Background - (x,y,w,h)
+gfx_set(0.5,1,0.5, 0.15);  // grid lines color
+Draw_Grid(x,y,w,h, 17);   // args = (x,y,w,h, n_lines)
+gfx_setfont(1,"Calibri", 14); // values font
+gfx_set(0.6,0.6,0.6,0.8); // values color
+
+//-----------
+//Draw_GridValues_norm(x,y,w,h,5); 
+//Draw_GridValues(x,y,w,h, "Hz");
+//Draw_GridValues(x,y,w,h, "dB");
+Draw_GridValues(x,y,w,h, "Prc");
+*/

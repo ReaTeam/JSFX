@@ -1,0 +1,119 @@
+/*// -- don't del it!
+desc:Mouse3Full
+@init  
+//*/ -- don't del it!
+
+/* Reaper( и Jeez тоже) видит импортируемые(.jsfx-inc) файлы в родительских папках.
+   Поэтому при разработке JS можно не таскать их по всем эффектам.
+   Это очень удобный момент. 
+   Но есть какое-то ограничение, то ли на степень вложенности, то ли что-то еще, аккуратно.*/
+
+//=== Get mouse functions ===//
+// Import functions info http://www.reaper.fm/sdk/js/js.php#js_file
+// Example(for jsfx): import mouse3Full.jsfx-inc 
+// With subdirectory(for jsfx): import inc\mouse3Full.jsfx-inc
+
+/***************************************************************************************************
+*** GetMouseState() and SetMouseLastState() functions **********************************************
+***************************************************************************************************/
+/* Global variables: 
+   1) mouse_down, mouse_rdown, mouse_mdown, mouse_up, mouse_rup, mouse_mup, mouse_move, Ctrl, Shift, Alt.
+   2) mouse_last_cap, mouse_last_x, mouse_last_y.   
+   Can be used in code. */
+
+//-- Get current mouse state -----------------------------------------
+function GetMouseState()
+(
+  //-- Mouse btn has been pressed(anywhere) ------
+  mouse_down  = (mouse_cap&1)  && !(mouse_last_cap&1);  // L mouse
+  mouse_rdown = (mouse_cap&2)  && !(mouse_last_cap&2);  // R mouse
+  mouse_mdown = (mouse_cap&64) && !(mouse_last_cap&64); // M mouse
+  //-- Mouse btn has been released(anywhere) -----
+  mouse_up  = (mouse_last_cap&1)  && !(mouse_cap&1);    // L mouse
+  mouse_rup = (mouse_last_cap&2)  && !(mouse_cap&2);    // R mouse
+  mouse_mup = (mouse_last_cap&64) && !(mouse_cap&64);   // M mouse
+  //-- Mouse moved(anywhere) ---------------------
+  mouse_move = (mouse_last_x != mouse_x) || (mouse_last_y != mouse_y);
+  //-- Mouse dbl(used for mouseDblClick) ---------
+  mouse_down ? (
+    mouse_dbl = (mouse_down_x==mouse_x) && (mouse_down_y==mouse_y) && (mouse_captimer<12);
+    mouse_captimer = 0;
+  );
+  
+  //-- mouse press coordinates -------------------
+  mouse_down  ? (mouse_down_x  = mouse_x; mouse_down_y  = mouse_y; );
+  mouse_rdown ? (mouse_rdown_x = mouse_x; mouse_rdown_y = mouse_y; );
+  mouse_mdown ? (mouse_mdown_x = mouse_x; mouse_mdown_y = mouse_y; );
+  
+  //-- modkeys state -----------------------------
+  Ctrl  = mouse_cap&4;  // Ctrl
+  Shift = mouse_cap&8;  // Shift
+  Alt   = mouse_cap&16; // Alt
+);
+
+
+//-- Set(update) last state -------------------------------------------
+function SetMouseLastState()
+( 
+  mouse_last_cap = mouse_cap; // upd last_cap
+  mouse_last_x = mouse_x;     // upd last_x
+  mouse_last_y = mouse_y;     // upd last_y
+  mouse_wheel  = 0;           // reset mouse_wheel
+  mouse_hwheel = 0;           // reset mouse_hwheel
+  //--------------
+  mouse_captimer < 12 ? mouse_captimer+=1; // upd "timer"(frame cnt)
+  mouse_up ? mouse_dbl = 0;   // reset dbl when released 
+);
+
+
+
+/***************************************************************************************************
+*** Get mouse state(with ref to the object) functions **********************************************
+***************************************************************************************************/
+/* pointINrect(), mouseINrect() must be called with arguments.
+   All other functions must be called with "object" prefix.
+   Functions use the object coordinates - MyObj.x, MyObj.y, MyObj.w, MyObj.h. 
+   Example: MyButton.mouseClick() ? SomethingCode; */
+
+//-- if point(p_x, p_y) in rect(x,y,w,h) area ----
+function pointINrect(p_x,p_y, x,y,w,h) ( p_x>=x && p_x<=x+w && p_y>=y && p_y<=y+h; );
+//-- if mouse cursor in rect(x,y,w,h) area -------
+function mouseINrect(x,y,w,h) ( pointINrect(mouse_x, mouse_y, x,y,w,h); );
+//-- if point(p_x, p_y) in object area -----------
+function pointIN(p_x,p_y) instance(x,y,w,h) ( this.pointINrect(p_x,p_y, x,y,w,h) );
+//-- if mouse cursor in object area --------------
+function mouseIN() ( this.pointIN(mouse_x, mouse_y); );
+
+
+//-- Left Mouse Button ---------------------------
+function mouseDown()    ( mouse_down     && this.mouseIN(); );
+function mouseUp()      ( mouse_up       && this.mouseIN(); );
+function mouseClick()   ( this.mouseUp() && this.pointIN(mouse_down_x, mouse_down_y); );
+function mouseDblClick() ( mouse_dbl && this.mouseClick(); );
+//-- Rigth Mouse Button --------------------------
+function mouseRDown()  ( mouse_rdown     && this.mouseIN(); );
+function mouseRUp()    ( mouse_rup       && this.mouseIN(); );
+function mouseRClick() ( this.mouseRUp() && this.pointIN(mouse_rdown_x, mouse_rdown_y); );
+//-- Middle Mouse Button -------------------------
+function mouseMDown()  ( mouse_mdown     && this.mouseIN(); );
+function mouseMUp()    ( mouse_mup       && this.mouseIN(); );
+function mouseMClick() ( this.mouseMUp() && this.pointIN(mouse_mdown_x, mouse_mdown_y); );
+
+//**************************************************************************************************
+
+//-- Simple Example --//
+/*
+//@gfx 480 320
+/*
+function main_draw()
+(
+  GetMouseState();  
+  
+  // Main gfx functions etc;
+  
+  SetMouseLastState();
+);
+
+main_draw();
+*/
+

@@ -1,0 +1,559 @@
+desc: Btw Curve Modulator
+author: Snjuk2
+version: 1
+provides:
+  snjuk2_Btw Curve Modulator/cur_gfxlib.jsfx-inc
+  snjuk2_Btw Curve Modulator/Curve3-2.jsfx-inc
+  snjuk2_Btw Curve Modulator/Grid1-2.jsfx-inc
+  snjuk2_Btw Curve Modulator/Mouse3Full.jsfx-inc
+
+desc:Btw Curve Modulator
+
+/**
+ * JSFX : LFO 
+ * Author: Snjuk2
+ * Reaper forum : https://forum.cockos.com/showthread.php?t=276121
+ * Based on JSFx Curves (VVFilter) :https://forum.cockos.com/showthread.php?t=187996
+ * Licence: GPL v3
+ * REAPER: 7.0
+ * Version: 1.1 (2023-11-27)
+ */
+options:no_meter
+
+import inc\mouse3Full.jsfx-inc 
+import Grid1-2.jsfx-inc
+import Curve3-2.jsfx-inc
+import cur_gfxlib.jsfx-inc 
+
+//----------------------------
+slider1:0<0,3,1>Pattern   
+slider3:5<0,8,1{1/16,1/8,1/4,1/2,3/4,4/4,8/4,16/4,32/4}>Length   
+
+slider5:0<0,1,1> -Reset
+slider9:out=0<0,127,1> -Output
+slider10:amount=100<-100,100,1>-Amount
+
+slider13:HoldX=0<0,1,0.01> Hold X   
+slider14:trig=0<0,2,1> -Trigger 
+
+slider21:N_mi=0<0,127,1> -Note min
+slider22:N_ma=127<0,127,1> -Note min
+
+slider32:0<0,127,1> -Modulator
+slider33:0<0,127,1>-CC Out 
+slider34:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>-Out Ch 
+
+
+
+//----------------------------
+
+@init
+
+offset = 0;
+noteOn  = $x90;
+noteOff = $x80;
+
+function isNoteOn ()(noteStatus == noteOn && msg3);
+
+function isNoteOff()(noteStatus == noteOff || (noteStatus == noteOn && msg3 == 0));
+
+AAI+=1;
+//------------
+ext_noinit = 1;
+//------------
+R = G = B = 50;  // color for test 
+gfx_clear = R + G*256 + B*65536;
+//==============================================================================
+// -- Some default values ---
+crv_max_pnts = 128; // max_n_pnts for all curves
+buf = 0;     // first curve mem offset; each crv requires max_n_pnts*2 mem slots(xx + yy)
+
+
+/*------------------------------------------------------------------------------
+---- Curve Patterns ------------------------------------------------------------
+------------------------------------------------------------------------------*/
+
+function Pattern_Mirror(SrcPtn*, DestPtn*) 
+( 
+  DestPtn.LoopLenQN = SrcPtn.LoopLenQN;
+  DestPtn.ActCurve = SrcPtn.ActCurve;
+ /* // curve A -----------
+  DestPtn.crv_A.Active     = SrcPtn.crv_A.Active;
+  DestPtn.crv_A.max_n_pnts = SrcPtn.crv_A.max_n_pnts;
+  DestPtn.crv_A.n_pnts   = SrcPtn.crv_A.n_pnts;
+  DestPtn.crv_A.snap     = SrcPtn.crv_A.snap;
+  DestPtn.crv_A.cap_pnt  = SrcPtn.crv_A.cap_pnt;*/
+  // curve B -----------
+  DestPtn.crv_B.Active     = SrcPtn.crv_B.Active;
+  DestPtn.crv_B.max_n_pnts = SrcPtn.crv_B.max_n_pnts;
+  DestPtn.crv_B.n_pnts   = SrcPtn.crv_B.n_pnts;
+  DestPtn.crv_B.snap     = SrcPtn.crv_B.snap;
+  DestPtn.crv_B.cap_pnt  = SrcPtn.crv_B.cap_pnt;
+    // curve A wnd x,y,w,h                          Dont touch !!!
+    DestPtn.crv_A.x = SrcPtn.crv_A.x; 
+    DestPtn.crv_A.y = SrcPtn.crv_A.y; 
+    DestPtn.crv_A.w = SrcPtn.crv_A.w; 
+    DestPtn.crv_A.h = SrcPtn.crv_A.h;
+  // curve B wnd x,y,w,h
+  DestPtn.crv_B.x = SrcPtn.crv_B.x;
+  DestPtn.crv_B.y = SrcPtn.crv_B.y; 
+  DestPtn.crv_B.w = SrcPtn.crv_B.w; 
+  DestPtn.crv_B.h = SrcPtn.crv_B.h;
+  // curvebuf ----------------
+  DestPtn.crv_A.curvebuf = SrcPtn.crv_A.curvebuf;  
+  DestPtn.crv_A.xx = SrcPtn.crv_A.xx; // x-coord points mem slots offs
+  DestPtn.crv_A.yy = SrcPtn.crv_A.yy; // y-coord points mem slots offs
+  DestPtn.crv_B.curvebuf = SrcPtn.crv_B.curvebuf;  
+  DestPtn.crv_B.xx = SrcPtn.crv_B.xx; // x-coord points mem slots offs
+  DestPtn.crv_B.yy = SrcPtn.crv_B.yy; // y-coord points mem slots offs
+);
+
+//--------------------------------------------------------------             //paterns
+function UpdateParPtn(Pattern) // CurPtn to Original
+(
+    Pattern == 0 ? Pattern_Mirror(CurPtn, P0) : // update original
+    Pattern == 1 ? Pattern_Mirror(CurPtn, P1) : 
+    Pattern == 2 ? Pattern_Mirror(CurPtn, P2) :
+    Pattern == 3 ? Pattern_Mirror(CurPtn, P3);
+);
+
+function UpdateCurPtn(Pattern) // Original to CurPtn
+(
+    Pattern == 0 ? Pattern_Mirror(P0, CurPtn) : // set current
+    Pattern == 1 ? Pattern_Mirror(P1, CurPtn) : 
+    Pattern == 2 ? Pattern_Mirror(P2, CurPtn) :
+    Pattern == 3 ? Pattern_Mirror(P3, CurPtn);
+);
+
+//--------------------------------------------------------------
+function LoopLenQN_fromSldr()
+  local(str,nm,dnm)
+( 
+  nm = dnm = 0;
+  strcpy_fromslider(str, slider3);
+  match("%d/%d", str , nm, dnm );
+  nm/dnm * 4; // return
+);
+
+//----------------------------
+function LoopLenQN_toSldr(LL)
+( 
+  slider3 = 0; // reset
+  while( LoopLenQN_fromSldr() < LL && slider3 < 10) (slider3+=1); // set slider
+);
+
+/*--------------------------------------------------------------
+---- Pattern Functions -----------------------------------------
+--------------------------------------------------------------*/
+
+function Pattern_Init(x,y,w,h, buf, crv_max_pnts)
+(
+  this.LoopLenQN = 4;  // def LoopLenQN
+  this.ActCurve = 0;     // def act crv
+  this.crv_A.Active = 0;
+  this.crv_B.Active = 1;
+  this.crv_A.Curve_Init(x,y,w,h, buf,                  crv_max_pnts); // 0
+  this.crv_A.Curve_Const(0.8);
+  this.crv_B.Curve_Init(x+12,y,w,h, buf + crv_max_pnts*2, crv_max_pnts);      // 1
+  this.crv_B.Curve_Const(0.5);
+);
+//------------------
+function Pattern_SetActCurve(act_crv)
+( 
+  this.ActCurve = act_crv;
+  this.crv_A.Active = !act_crv; 
+  this.crv_B.Active = act_crv;
+);
+//------------------
+function Pattern_SetLoopLenQN(LoopLenQN)
+( 
+  this.LoopLenQN = LoopLenQN; 
+);
+//------------------
+function Pattern_Draw()
+  local(fa, ra)
+( 
+  fa = ra = 0.8;
+  this.crv_A.Active ? ra = 1 : fa = 0.0;
+  //gfx_set(1,1,0, fa);
+  //this.crv_A.Curve_Draw();
+  gfx_set(0,1,0, ra);
+  this.crv_B.Curve_Draw();
+);
+
+
+//----------------------------
+P0.Pattern_Init(50,20,720,240, buf, crv_max_pnts);
+P1.Pattern_Init(50,20,720,240, buf += crv_max_pnts*4, crv_max_pnts);
+P2.Pattern_Init(50,20,720,240, buf += crv_max_pnts*4, crv_max_pnts);
+P3.Pattern_Init(50,20,720,240, buf += crv_max_pnts*4, crv_max_pnts);
+
+//-------------
+Pattern_Mirror(P0, CurPtn); // def pattern P0
+
+
+@slider
+AASer ? AASldr+=1;
+
+//--------------------------------------
+Pattern != slider1 ? (
+  UpdateParPtn(Pattern);
+  Pattern = slider1; // New Pattern
+  UpdateCurPtn(Pattern);
+  //-----------------
+  LoopLenQN_toSldr(CurPtn.LoopLenQN);
+  AXXX+=1;
+);
+
+//phase = slider13;
+//hold  = slider4;
+//param = slider5;;
+
+//--------------------------------------
+LL = LoopLenQN_fromSldr();
+LL != CurPtn.LoopLenQN ? CurPtn.LoopLenQN = LL;
+CurPtn.Pattern_SetActCurve(1);
+
+
+@serialize
+
+AASer+=1;
+
+UpdateParPtn(Pattern); // before serialize
+//--------------------------------------
+function Pattern_Serialize()
+(     
+   file_var(0, this.LoopLenQN);
+   file_var(0, this.ActCurve);
+   //file_var(0, this.crv_A.n_pnts);
+   file_var(0, this.crv_B.n_pnts);
+
+   //file_mem(0, this.crv_A.curvebuf, this.crv_A.max_n_pnts*2); // curve points
+   file_mem(0, this.crv_B.curvebuf, this.crv_B.max_n_pnts*2); // curve points
+);
+
+//--------------------------------------
+P0.Pattern_Serialize();
+P1.Pattern_Serialize();
+P2.Pattern_Serialize();
+P3.Pattern_Serialize();
+//CurPtn.Pattern_Serialize();
+//--------------------------------------
+UpdateCurPtn(Pattern); // after serialize
+//-------------------
+LoopLenQN_toSldr(CurPtn.LoopLenQN); // upd LL
+
+
+//==========================================================
+@block
+
+//play_state ? beat_pos = beat_position; // beat position on block start(upd when playing only)
+beats_per_spl = tempo/(60 * srate);
+
+
+
+ while (midirecv(offset,msg1,msg2,msg3)) (
+       noteStatus = msg1 & $xF0;
+       Note = msg2;
+       isNoteOn() ? (
+       Note >= floor(N_mi) && Note <= floor(N_ma) ? (
+         midi_on = 1);
+          midisend(offset,msg1,msg2,msg3);
+       ):
+       isNoteOff() ? (
+          midi_on = 0;
+          midisend(offset,msg1,msg2,msg3);
+       ):midisend(offset,msg1,msg2,msg3);
+     );
+
+
+       channel = slider34 + 176;
+       cc = slider33;
+       val = slider32;
+cc != 0 ? midisend(offset,channel,cc,val); 
+
+
+slider5 == 1 ?  beat_pos = 0;    
+slider5 = 0;
+
+
+val = floor(curve*127)*amount/100;
+slider32 = out + val;
+
+slider32 <= 0 ? slider32 = 0;
+slider32 >= 127 ? slider32 = 127;
+
+@sample
+
+play_state != 0 ?         beat_pos += beats_per_spl  : beat_pos = 0;      // accurate beat position
+trig == 2 &&  midi_on == 1 ? noteX += beats_per_spl  :    noteX = 0;
+
+//---------------------------------
+function ApplyCurve()
+( 
+  Xpos = (beat_pos+ samplesblock)/CurPtn.looplenQN  ;
+  Xpos = Xpos - floor(Xpos);   
+  
+  Xpos_m = (noteX + samplesblock)/CurPtn.looplenQN  ;
+  Xpos_m = Xpos_m - floor(Xpos_m);  
+  
+  trig == 0 ? play_state   ? this.Curve_App_to_Val(Xpos)   : this.Curve_App_to_Val(0);
+  trig == 1 ?                this.Curve_App_to_Val(HoldX);
+  trig == 2 ? midi_on == 1 ? this.Curve_App_to_Val(Xpos_m) : this.Curve_App_to_Val(0);
+);
+
+
+CurPtn.crv_B.ApplyCurve();
+
+curve = CurPtn.crv_B.out_val ;
+
+//==========================================================
+@gfx 400 400
+
+  
+function UpdateCoords()
+(
+  CurPtn.crv_A.w = CurPtn.crv_B.w = gfx_w-70;
+  CurPtn.crv_A.h = CurPtn.crv_B.h = gfx_h-40;
+);
+
+//----------------
+function Curve_Grid()
+  local(x,y,w,h, n_lines, mode)
+(  
+  x = CurPtn.crv_A.x +10; y = CurPtn.crv_A.y; 
+  w = CurPtn.crv_A.w; h = CurPtn.crv_A.h;
+  n_lines = 17;
+  //CurPtn.ActCurve ? mode = "Prc" : mode = "Hz";
+  mode = "Prc";
+  Draw_BG(x,y,w,h);             // Background
+  gfx_set(0.5,0.5,0.5, 0.2);     // grid lines color
+  Draw_Grid(x,y,w,h, n_lines);
+  gfx_set(0.6,0.6,0.6,1);     // values color
+  gfx_setfont(1,"Calibri", 14); // values font
+  Draw_GridValues(x,y,w,h, mode)
+);
+
+//-- Draw Controls ---------------------
+function Draw_Controls()
+( 
+  UpdateCoords();
+  Curve_Grid();
+  CurPtn.Pattern_Draw(); 
+);
+
+//--------------------------------------
+GetMouseState(); 
+Draw_Controls();
+SetMouseLastState();
+
+
+//------------------------------------Adition
+
+mouse.update_mouse_state();
+
+  click = (mouse_cap&1) && !(last_cap&1) ? 1 : 0;
+  last_cap = mouse_cap;
+
+  function rad(d) ( d * $pi / 180 );
+       
+  
+  function Round_knobG (_x _y _r) (       //  Draw a knob   m - slider
+  
+   gfx_x = _x; gfx_y = _y;
+  
+  // gfx_rect(_x-_r-7,_y-_r-7,2*_r+14,2*_r+14,0);  // collision area
+   
+  gfx_set(0.5,0.5,0.5,1);                                                      // knob
+  gfx_circle(_x,_y,_r-1,1);
+  
+  start = -140 + out/127*280;
+  end = -140  + (val + out)/127*280;
+  
+  start <= -140 ? start = -140;     end >= 140 ? end = 140;
+  start >= 140 ? start = 140; end <= -140 ? end = -140;
+  
+  a = 2;
+  loop (10,
+  gfx_set(0.8,0.8,0.8,1);                                                    // line
+  gfx_arc(_x,_y,_r-a,rad(start),rad(start+1),1);
+  a += 1;
+  );
+  
+  gfx_set(1,0.49,0.06,1);                                                   // mod
+  gfx_arc(_x,_y,_r+5,rad(start),rad(end));
+  gfx_arc(_x,_y,_r+4,rad(start),rad(end));                           
+    
+  );
+   
+function tips() (
+  gfx_set(0.9,0.9,0.9,1);
+  gfx_x = 60; gfx_y = 5;
+  gfx_setfont(1,"Arial bold",13);
+);
+
+
+ // ------------------------------------------------- X Reset trigger
+   
+ _x = 7 ;
+ _y = 125 ;
+ _w = 48 ; 
+ _h = 18 ;
+ 
+ gfx_set(0.4,0.4,0.4,1); 
+ gfx_x =_x ; gfx_y =_y ;
+ gfx_rect(_x, _y, _w, _h, 0);
+ 
+ trig == 0 ? "Play" : trig == 1 ? "Hold" : "Note";
+ mouse.left_click && mouse_in_rect(_x,_y,_w,_h) ? (
+   gfx_x = _x + _w; gfx_y = _y;
+   choice = gfx_showmenu("Play|Hold|Note");
+   slider(14) = max(choice - 1, 0);
+ );
+ 
+ gfx_setfont(1,"Arial bold fat",13);
+ gfx_x =_x+10 ; gfx_y =_y + 2 ;
+ trig == 0 ? ( gfx_set(0,1,0,1); gfx_drawstr(" Play"));
+ trig == 1 ? ( gfx_set(1,1,1,1); gfx_drawstr(" Hold"));
+ trig == 2 ? ( gfx_set(0,0.8,1,1); gfx_drawstr(" Note"));
+ 
+ mouse_in_rect (_x,_y,_w,_h) ? (
+           tips();
+           trig == 0 ? (gfx_set(0,1,0,1);   gfx_drawstr("Trigger Mode     Transport Play"));
+           trig == 1 ? (gfx_set(1,1,1,1);   gfx_drawstr("Trigger Mode     Hold :   X = HoldX"));
+           trig == 2 ? (gfx_set(0,0.8,1,1); gfx_drawstr("Trigger Mode     Midi Note"));
+           );
+           
+  // -------------------------------------------------Reset X
+   
+ _x = 7 ;
+ _y = 190 ;
+ _w = 48 ; 
+ _h = 18 ;
+ 
+ gfx_set(0.4,0.4,0.4,1); 
+ gfx_x =_x ; gfx_y =_y ;
+ gfx_rect(_x, _y, _w, _h, 0);
+ 
+ gfx_set(1,0.3,0.5,1);
+ gfx_setfont(1,"Arial bold fat",13);
+ gfx_x =_x+7 ; gfx_y =_y + 2 ;
+ gfx_drawstr("X Reset");
+ 
+ mouse_in_rect (_x,_y,_w,_h) ? (
+           tips();
+           gfx_drawstr("Reset X");
+           );
+ 
+                  click  && mouse_in_rect (_x,_y,_w,_h) ? (
+          slider5 == 0 ? slider5 = 1 : slider5 = 0;
+          slider_automate(slider5);
+         );
+
+     
+//--------------------------------------------------
+   
+   gfx_set(0.9,0.9,0.9,1);
+   gfx_x = 13; gfx_y = 64;
+   gfx_drawstr("Val");
+   
+   gfx_set(1,0.49,0.06,1);
+   gfx_x = 33; gfx_y = 65;
+   gfx_drawnumber( slider32 ,0);
+   
+
+   draw_knob_empty_all(10,20,44,44,9,0,0,127);                                             //Output                               
+   draw_knob_empty(32,85,22,13,33,"CC",0,0,127,sprintf(#, "%.f", floor(slider(33))));         //CC
+   draw_knob_empty(32,105,22,13,34,"CH",0,0,15,sprintf(#, "%.f", floor(slider(34)+1)));       //Ch
+   draw_knob_empty(32,170,22,13,10,"Am",100,-100,100,sprintf(#, "%.f", floor(slider(10))));   //Amount
+   
+   trig == 2 ? (
+   draw_knob_empty(8,150,20,13,21,"",0,0,127,sprintf(#, "%.f", floor(slider(21))));     //Note min
+   draw_knob_empty(34,150,20,13,22,"",127,0,127,sprintf(#, "%.f", floor(slider(22))));   //Note max
+   mouse_in_rect (8,150,20,13) ? ( tips(); gfx_drawstr("Midi filter : Note min"));
+   mouse_in_rect (32,150,20,13) ? ( tips(); gfx_drawstr("Midi filter : Note max"));
+   );
+   
+ mouse_in_rect (10,20,44,44) ? ( tips(); gfx_drawstr("Output"));
+ mouse_in_rect (32,170,22,13) ? ( tips(); gfx_drawstr("Amount %"));
+ 
+    
+    mouse_in_rect (59,20,gfx_w-60,gfx_h-40) ? (
+    gfx_set(1,0,0.5,1);
+    gfx_x = 60; gfx_y = 5;
+    gfx_setfont(1,"Arial bold",13);
+    gfx_drawstr("Right Mouse Add/Del Point");
+    );
+    
+ Round_knobG(32,44,15);
+ 
+ 
+ // -----------------------------------------Last click for MODULATOR button
+   
+ _x = 10 ;
+ _y = 250 ;
+ _w = 42 ; 
+ _h = 16 ;
+ 
+     mouse_in_rect (_x,_y,_w,_h) ? (
+      gfx_set(0.24,0.86,1,1);
+      gfx_setfont(1,"Arial bold fat",12);
+      gfx_x = 65; gfx_y = _y;
+      gfx_drawstr("Click set MODULATOR LastTouched ");
+      gfx_set(1,0.88,0.26,1);
+      gfx_x = 65; gfx_y = _y+15;
+      gfx_drawstr("Link any parameter to MODULATOR");
+   );
+      bam = 0;
+           mouse.left_click ? (
+     mouse_in_rect (_x,_y,_w,_h) ? (
+      bam = 1;
+      slider_automate(slider32);
+   );
+ );
+ 
+ gfx_set(0.4,0.4,0.4,1);          
+ gfx_x =_x ; gfx_y =_y ;
+ gfx_rect(_x , _y, _w, _h, 0);
+ bam == 1  ? gfx_set(0.24,0.86,1,1) : gfx_set(1,0.88,0.26,1);
+ gfx_circle(_x+15,_y+8,3,1);
+ gfx_line(_x+14,_y+8,_x+29,_y+8);
+ gfx_line(_x+27,_y+6,_x+27,_y+10);
+ gfx_line(_x+26,_y+5,_x+26,_y+11);
+ gfx_line(_x+27,_y+6,_x+27,_y+10);
+ gfx_line(_x+28,_y+7,_x+28,_y+9);
+ 
+ 
+ //------------------------------------------------------------
+       
+   function on_knob_move (nslider, slider_min, slider_max, slider_is_log, factor) (
+     factor *= mouse.control ? 0.05 : 1;
+   
+       inc = (slider_max - slider_min) / 100 * -factor;
+       slider(nslider) += inc;
+   
+     slider(nslider) > slider_max ? slider(nslider) = slider_max;
+     slider(nslider) < slider_min ? slider(nslider) = slider_min;
+     sliderchange(slider(nslider));
+     slider_automate(slider(nslider));
+   );
+   
+   wheelknob_nslider ? (
+     on_knob_move(wheelknob_nslider, wheelknob_min, wheelknob_max, wheelknob_is_log, mouse.wheel * -7);
+   );
+   
+   selknob_nslider && mouse.left && mouse.dy != 0 ? (
+     on_knob_move(selknob_nslider, selknob_min, selknob_max, selknob_is_log, mouse.dy);
+   );
+   
+   doubleclk_nslider ? (
+     sliderchange(slider(doubleclk_nslider));
+     slider_automate(slider(doubleclk_nslider));
+     doubleclk_nslider = 0;
+   );
+   
+   gfx_setcursor(selknob_nslider ? 32511 : 0);
+   !mouse.wheel ? wheelknob_nslider = 0;
+   !mouse.left ? selknob_nslider = 0;
+    
+    

@@ -1,0 +1,285 @@
+desc:Curve v5
+//options:no_meter
+
+//import inc\mouse3Full.jsfx-inc
+//import inc\Grid1-1.jsfx-inc
+
+@init
+
+//==============================================================================
+
+/*----------------------------------------------------------
+-- Curve functions -----------------------------------------
+----------------------------------------------------------*/
+function Curve_Const(val)
+  instance(xx,yy, n_pnts) local(i)
+(
+  i=0;
+  loop(n_pnts,
+    xx[i] = i/(n_pnts-1);
+    yy[i] = val;
+    i+=1;
+  );
+);
+//-----------------
+function Curve_Linear()
+  instance(xx,yy, n_pnts) local(i)
+(
+  i=0;
+  loop(n_pnts,
+    xx[i] = this.yy[i] = i/(n_pnts-1);
+    i+=1;
+  );
+);
+//-----------------
+function Curve_Rand()
+  instance(xx,yy, n_pnts) local(i)
+(
+  i=0;
+  loop(n_pnts,
+    xx[i] = i/(n_pnts-1);
+    yy[i] = rand(1);
+    i+=1;
+  );
+);
+
+//-- Init curve --------------------------------------------
+function Curve_Init(x,y,w,h, curvebuf, max_n_pnts)
+  local(i)
+(
+  this.max_n_pnts = max_n_pnts; // maximum number of points
+  this.n_pnts = 5;     // number of curve points
+  this.snap = 1/64;      // def snap ( 0 = no snapping)
+  this.cap_pnt = -1;     // reset cap_pnt
+  //-- curve window coords ---------------
+  this.x = x; this.y = y; this.w = w; this.h = h; // curve wnd x,y,w,h
+  //-- curve-points coords(norm) list ----
+  //-- xx[0]...xx[n_pnts-1] and yy[0]...yy[n_pnts-1]
+  this.curvebuf = curvebuf;  
+  this.xx = curvebuf;                   // x-coord points mem slots offs
+  this.yy = curvebuf + this.max_n_pnts; // y-coord points mem slots offs
+  //-- def points values -----------------
+  this.Curve_Const(1); // Def init!
+
+);
+
+//-- Apply curve to value(while version) --------------------
+function Curve_App_to_Val(in_val)
+  instance(xx,yy, n_pnts, out_val)
+  local(x1,y1,x2,y2, i)
+( 
+  out_val = -1; // reset out_val to -1
+  i=0;
+  while(out_val < 0 && i < n_pnts-1) (
+    x1 = xx[i];     
+    x2 = xx[i+1];
+    in_val>=x1 && in_val<x2 ? (
+      y1 = yy[i];  
+      y2 = yy[i+1]; 
+      out_val = y1 + (in_val-x1) * (y2-y1)/(x2-x1);
+    );   
+    i+=1;
+  );
+  
+  //-- for last point --------
+  in_val >= xx[n_pnts-1] ? out_val = yy[n_pnts-1];  
+  
+  this.in_val = in_val; // store in_val for drawing
+  out_val; // return
+);
+
+//**********************************************************
+//-- Set Curve Point values(v2 - between nearst points) ----
+function Curve_SetPointVal()
+  instance(x,y,w,h, xx,yy, snap, n_pnts, cap_pnt)
+  local(gx0,gy0, i, vx,vy)
+(
+  //-- Origin(use "|_" view ) ----------
+  gx0 = x;     // min x;
+  gy0 = y + h; // min y;
+  vx = (mouse_x-gx0)/w;  // x-val norm
+  vy = (gy0-mouse_y)/h;  // y-val norm
+  
+  //-- regard snapping, if used --------
+  !Shift && snap ? (
+    vx = floor(vx/snap+0.5)*snap; 
+    vy = floor(vy/snap+0.5)*snap;
+  ); 
+    
+  cap_pnt > 0 && cap_pnt < n_pnts-1 ? ( // don't change first-last x-coord
+    xx[cap_pnt] = max( min(xx[cap_pnt+1], vx), xx[cap_pnt-1] ); 
+  );
+  yy[cap_pnt] = max( min(1, vy ), 0);
+
+);
+
+//-- Add new Point -----------------------------------------
+function Curve_AddPoint(new_pnt)
+  instance(x,y,w,h, xx, yy, n_pnts, max_n_pnts)
+(
+  n_pnts < max_n_pnts ? (
+    memcpy(xx+new_pnt+1, xx+new_pnt, n_pnts-new_pnt);
+    memcpy(yy+new_pnt+1, yy+new_pnt, n_pnts-new_pnt);
+    xx[new_pnt] = (mouse_x-x)/w;
+    yy[new_pnt] = max( min(1, (y+h-mouse_y)/h ), 0);
+    n_pnts+=1;
+  );
+);
+
+
+//-- Delete Point ------------------------------------------
+function Curve_DelPoint(del_pnt)
+  instance(x,y,w,h, xx, yy, n_pnts, max_n_pnts)
+(
+  del_pnt < n_pnts-1 ? (
+    memcpy(xx+del_pnt, xx+del_pnt+1, n_pnts-del_pnt-1);
+    memcpy(yy+del_pnt, yy+del_pnt+1, n_pnts-del_pnt-1);
+    n_pnts-=1;
+  );
+);
+
+//**********************************************************
+//----------------------------------------------------------
+//-- Draw Curve(main curve function) -----------------------
+//----------------------------------------------------------
+function Curve_Draw()
+  instance(x,y,w,h, xx,yy, n_pnts, cap_pnt, in_val,out_val)
+  local(gx0,gy0, gx1,gy1, gx2,gy2, i, new_pnt,del_pnt)
+(   
+     
+    //-- Origin(use "|_" view ) --------
+    gx0 = x;     // min x;
+    gy0 = y + h; // min y;
+        
+    //-- Draw curve, cap pnts --------------------
+ 
+    i=0;
+    loop(n_pnts,
+      gx1 = x + xx[i]*w; 
+      gy1 = y + h - yy[i]*h;
+      gx2 = x + xx[i+1]*w; 
+      gy2 = y + h - yy[i+1]*h;
+      //-- draw point ------------------
+      gfx_circle(gx1, gy1, 2, 1);      // point
+      //-- draw crv line, area ---------
+      i < n_pnts-1 ? ( // ! don't draw last line, area
+		  gfx_a = 0.5;
+        gfx_line(gx1,gy1, gx2,gy2, 1); // pnt to pnt line
+        // -- for other jsfx --
+        //gfx_triangle(gx1,gy1, gx2-1,gy2-1, gx2,gy0, gx1,gy0); // area - use if need
+      );  
+		//                                                                                           snjuk
+		
+		
+		
+		
+		
+        
+      //-- Capture point ---------------
+      this.Active ? (
+		    gfx_a = 1;
+          mouse_down && mouseINrect(gx1-10, gy1-10, 20, 20) ? cap_pnt = i; // capture
+          cap_pnt == i ? gfx_circle(gx1, gy1, 5, 0); // if point captured
+          
+          //-- Add - Del point -------------
+          mouse_rdown && !(del_pnt || new_pnt)  ? (
+              mouseINrect(gx1-12, gy1-12, 24, 24) ? (
+                del_pnt = i;
+              ) : (
+                mouse_x>gx1 && mouse_x<gx2 && mouse_y>y-10 && mouse_y<y+h+10 ? new_pnt = i+1;
+              );
+          );  
+      );
+      
+      //-------
+      i+=1;
+    );
+    
+    //-- Reset cap_pnt to -1 if mouse released ---
+    !mouse_cap&1 ? cap_pnt = -1; 
+    
+    //-- Set(change) captured point values -------
+    cap_pnt >= 0 ? this.Curve_SetPointVal();
+    
+    //-- Add-Del point on mouse_rdown ------------
+    new_pnt ? (this.Curve_AddPoint(new_pnt); new_pnt = 0 );
+    del_pnt ? (this.Curve_DelPoint(del_pnt); del_pnt = 0 );
+    
+    //-- Show last value(point) ------------------
+    //gfx_a += 0.2; // 
+	 gfx_set(1,0.49,0.06,1); 
+    gfx_circle(x + in_val*w , y + h - out_val*h , 3,1); // point    
+
+);
+
+
+//==============================================================================
+
+/*--------------------------------------------------------------
+--- Init Curve -------------------------------------------------
+--------------------------------------------------------------*/
+//args = (x,y,w,h, curvebuf, max_n_pnts)
+//example: my_crv.Curve_Init(40,20,720,240, 0, 128); // init curve!
+
+@slider
+
+@serialize
+  // serialize crv.n_pnts, curvebuf, example:
+  //file_var(0, crv.n_pnts);
+  //file_mem(0, crv.curvebuf, max_n_pnts*2); // all 
+   
+@block
+// For test Only!!!
+/*
+while (midirecv(offset,msg1,msg2,msg3)) ( // REAPER 4.59+ syntax while()
+       msgType = msg1&240;
+      (note_chbx.val && msgType==144 && msg2>=noteRng1.val && msg2<=noteRng2.val && msg3>0) || 
+      (cc_chbx.val && msgType==176 && msg2==ccNum.val) ? (
+         in_msg3 = msg3;
+         out_msg3 = ceil( crv.Curve_App_to_Val(in_msg3/127) * 127 ); // apply Curve to value
+         midisend(offset,msg1,msg2,out_msg3);       
+       ) : (
+         midisend(offset,msg1,msg2,msg3); // passthrough other events
+       );
+);
+*/
+@sample
+
+
+@gfx 1000 400
+// For test Only!!!
+/*
+function Update_Coords()
+(
+  crv.w = max(gfx_w-crv.x-40,720); // update crv w
+  crv.h = max(gfx_h-crv.y-80,240); // update crv h 
+);
+
+//-- Draw Controls ---------------------
+function Draw_Controls()
+(
+  Update_Coords();
+  gfx_set(0.5,1,0.5, 0.7);  // Curve color
+  crv.Curve_Draw(); 
+);
+
+//--------------------------------------
+GetMouseState(); 
+Draw_Controls();
+SetMouseLastState();
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
