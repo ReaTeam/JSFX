@@ -1,0 +1,384 @@
+desc: Btw Toggle Select 4  Modulator
+author: Snjuk2
+version: 1
+
+desc:Btw Toggle Select 4 Modulator
+
+/**
+ * JSFX : Btw Toggle Select 4 Modulator
+ * Author: Snjuk2
+ * Reaper forum : https://forum.cockos.com/showthread.php?t=277484
+ * Licence: GPL v3
+ * REAPER: 7.0
+ * Version: 1.1 (2023-12-1)
+ */
+
+slider1:0<0,100,1>  A
+slider2:0<0,100,1>  B
+slider3:0<0,100,1>  C
+slider4:0<0,100,1>  D
+
+slider6:1<0,1,1{Off ,On}>-Toggle
+slider7:0<0,1,1{Off ,On}>-Select
+slider8:0<0,1,1{Off ,On}>-Fill
+
+slider9:0<0,400,1> Selection
+
+
+in_pin:none
+out_pin:none
+
+@slider
+
+A = slider1;
+B = slider2;
+C = slider3;
+D = slider4;
+
+tog  = slider6;
+sel  = slider7;
+fill = slider8;
+S    = slider9;
+
+
+tog == 1 && sel == 1 && fill == 0 ? (
+S >= 1   && S <= 100 ? (A = 100 ; B = C = D = 0);
+S >= 101 && S <= 200 ? (B = 100 ; A = C = D = 0);
+S >= 201 && S <= 300 ? (C = 100 ; A = B = D = 0);
+S >= 301 && S <= 400 ? (D = 100 ; A = B = C = 0);
+);
+
+tog == 1 && sel == 1 && fill == 1 ? (
+S == 0               ? ( A = B = C = D = 0);
+S >= 1   && S <= 100 ? (A = 100 ; B = C = D = 0);
+S >= 101 && S <= 200 ? (B = 100 ; A = 100 ; C = D = 0);
+S >= 201 && S <= 300 ? (C = 100 ; A = B = 100 ; D = 0);
+S >= 301 && S <= 400 ? (D = 100 ; A = B = C = 100);
+);
+
+tog == 0 && sel == 1 && fill == 0 ? (
+S == 0               ? ( A = B = C = D = 0);
+S >= 1   && S <= 100 ? (A = S ; B = C = D = 0);
+S >= 101 && S <= 200 ? (B = S - 100 ; A = 200 - S ; C = D = 0);
+S >= 201 && S <= 300 ? (C = S - 200 ; A = 0 ; B = 300 - S ; D = 0);
+S >= 301 && S <= 400 ? (D = S - 300 ; A = B = 0 ; C = 400 - S);
+);
+
+tog == 0 && sel == 1 && fill == 1 ? (
+S == 0               ? ( A = B = C = D = 0);
+S >= 1   && S <= 100 ? (A = S ; B = C = D = 0);
+S >= 101 && S <= 200 ? (B = S - 100 ; A = 100 ; C = D = 0);
+S >= 201 && S <= 300 ? (C = S - 200 ; A = B = 100 ; D = 0);
+S >= 301 && S <= 400 ? (D = S - 300 ; A = B = C = 100);
+);
+
+@gfx  200 40
+      gfx_clear = 70 + 70 * 256 + 70 * 65536;
+
+      click = (mouse_cap&1) && !(last_cap&1) ? 1 : 0;
+      last_cap = mouse_cap;
+      
+function collision (_x _y _w _h)
+                   (
+                   mouse_x > _x && 
+                   mouse_x < _x + _w && 
+                   mouse_y > _y && 
+                   mouse_y < _y + _h
+                     );
+                     
+  
+function click_button_A (_x _y _w _h) (
+
+  //Button                                  
+  gfx_set(0.2,0.2,0.2,1);
+  gfx_rect(_x+1,_y+1,_w-2,_h-2);
+  
+  // Button Frame
+  gfx_set(1,1,0,Col_A);
+  gfx_rect(_x+1, _y + _h+1, _w-2, 4);
+  
+                          click ? (
+        collision (_x,_y,_w,_h) ? (
+                       tog == 1 ? (
+                       A == 0 ? (
+                    A = 100;
+                    ) : (
+                    A = 0;
+                   );
+                   slider_automate(slider1);
+              );
+            );
+         );
+        
+        
+        last_cap = mouse_cap;     
+        slider1 = A;
+        Col_A = A / 100 ;
+        
+  gfx_set(1,1,0,Col_A+0.3);
+  gfx_setfont(1,"Arial",17);
+  gfx_x = _x + 5; gfx_y = _y+4;
+  gfx_drawstr("A",0);
+  
+  );  
+    
+    
+function click_button_B (_x _y _w _h) (
+
+ //Button                                  
+ gfx_set(0.2,0.2,0.2,1);
+ gfx_rect(_x+1,_y+1,_w-2,_h-2);
+ 
+ // Button Frame
+ gfx_set(1,1,0,Col_B);
+ gfx_rect(_x+1, _y + _h+1, _w-2, 4);
+  
+                          click ? (
+        collision (_x,_y,_w,_h) ? (
+                       tog == 1 ? (
+                   B == 0 ? (
+                    B = 100;
+                    ) : (
+                    B = 0;
+                   );
+                   slider_automate(slider2);
+              );
+            );
+        );
+        
+        
+        last_cap = mouse_cap;     
+        slider2 = B;
+        Col_B = B / 100 ;
+  
+  gfx_set(1,1,0,Col_B+0.3);
+  gfx_setfont(1,"Arial",17);
+  gfx_x = _x + 4; gfx_y = _y+4;
+  gfx_drawstr("B",0);
+        
+  ); 
+  
+  
+function click_button_C (_x _y _w _h) (
+
+  //Button                                  
+  gfx_set(0.2,0.2,0.2,1);
+  gfx_rect(_x+1,_y+1,_w-2,_h-2);
+
+  // Button Frame
+  gfx_set(1,1,0,Col_C);
+  gfx_rect(_x+1, _y + _h+1, _w-2, 4);
+  
+                          click ? (
+        collision (_x,_y,_w,_h) ? (
+                       tog == 1 ? (
+                   C == 0 ? (
+                    C = 100;
+                    ) : (
+                    C = 0;
+                   );
+                   slider_automate(slider3);
+              );
+            );
+        );
+        
+        
+        last_cap = mouse_cap;     
+        slider3 = C;
+        Col_C = C / 100 ;
+  
+  gfx_set(1,1,0,Col_C+0.3);
+  gfx_setfont(1,"Arial",17);
+  gfx_x = _x + 4; gfx_y = _y+4;
+  gfx_drawstr("C",0);
+        
+  );
+  
+  
+function click_button_D (_x _y _w _h) (
+
+  //Button                                  
+  gfx_set(0.2,0.2,0.2,1);
+  gfx_rect(_x+1,_y+1,_w-2,_h-2);
+  
+  // Button Frame
+  gfx_set(1,1,0,Col_D);
+  gfx_rect(_x+1, _y + _h+1, _w-2, 4);
+  
+                          click ? (
+        collision (_x,_y,_w,_h) ? (
+                       tog == 1 ? (
+                   D == 0 ? (
+                    D = 100;
+                    ) : (
+                    D = 0;
+                   );
+                   slider_automate(slider4);
+              );
+            );
+        );
+        
+        
+        last_cap = mouse_cap;     
+        slider4 = D;
+        Col_D = D / 100 ;
+  
+  gfx_set(1,1,0,Col_D+0.3);
+  gfx_setfont(1,"Arial",17);
+  gfx_x = _x + 4; gfx_y = _y+4;
+  gfx_drawstr("D",0);
+        
+  );
+  
+  function click_button_T (_x _y _w _h) (
+  
+    //Button                                  
+    gfx_set(0.2,0.2,0.2,1);
+    gfx_rect(_x+1,_y+1,_w-2,_h-2);
+    
+                            click ? (
+          collision (_x,_y,_w,_h) ? (
+                     tog == 0 ? (
+                      tog = 1;
+                      ) : (
+                      tog = 0;
+                     );
+                     slider_automate(slider6);
+                );
+          );
+          
+          
+          last_cap = mouse_cap;     
+          slider6 = tog;
+          tog == 1 ? Col_T = 1 : Col_T = 0;
+    
+    gfx_set(1,1,0,Col_T+0.3);
+    gfx_setfont(1,"Arial",17);
+    gfx_x = _x + 4; gfx_y = _y+4;
+    gfx_drawstr("T",0);
+    
+    collision (_x,_y,_w,_h) ? (
+    gfx_set(0,1,1,1);
+    gfx_setfont(1,"Arial",15);
+    gfx_x = 190; gfx_y = 10;
+    gfx_drawstr("Toggle",0);
+    
+    gfx_x = 245; gfx_y = 11;
+    tog == 0 ? (
+    gfx_set(1,0,0,1);
+    gfx_drawstr("Off",0);
+      ) : (
+      gfx_set(0,1,0,1);
+      gfx_y = 10;
+      gfx_drawstr("On",0)
+    );
+    );
+          
+    );
+    
+    function click_button_S (_x _y _w _h) (
+    
+      //Button                                  
+      gfx_set(0.2,0.2,0.2,1);
+      gfx_rect(_x+1,_y+1,_w-2,_h-2);
+      
+                              click ? (
+            collision (_x,_y,_w,_h) ? (
+                       sel == 0 ? (
+                        sel = 1;
+                        ) : (
+                        sel = 0;
+                       );
+                       slider_automate(slider7);
+                  );
+            );
+            
+            
+            last_cap = mouse_cap;     
+            slider7 = sel;
+            sel == 1 ? Col_S = 1 : Col_S = 0;
+      
+      gfx_set(1,1,0,Col_S+0.3);
+      gfx_setfont(1,"Arial",17);
+      gfx_x = _x + 4; gfx_y = _y+4;
+      gfx_drawstr("S",0);
+      
+      collision (_x,_y,_w,_h) ? (
+      gfx_set(0,1,1,1);
+      gfx_setfont(1,"Arial",15);
+      gfx_x = 190; gfx_y = 10;
+      gfx_drawstr("Selection",0);
+      
+      gfx_x = 245; gfx_y = 11;
+      sel == 0 ? (
+      gfx_set(1,0,0,1);
+      gfx_drawstr("Off",0);
+        ) : (
+        gfx_set(0,1,0,1);
+        gfx_y = 10;
+        gfx_drawstr("On",0)
+      );
+      );
+            
+      );
+      
+      function click_button_F (_x _y _w _h) (
+      
+        //Button                                  
+        gfx_set(0.2,0.2,0.2,1);
+        gfx_rect(_x+1,_y+1,_w-2,_h-2);
+        
+                                click ? (
+              collision (_x,_y,_w,_h) ? (
+                         fill == 0 ? (
+                          fill = 1;
+                          ) : (
+                          fill = 0;
+                         );
+                         slider_automate(slider8);
+                    );
+              );
+              
+              
+              last_cap = mouse_cap;     
+              slider8 = fill;
+              fill == 1 ? Col_F = 1 : Col_F = 0;
+        
+        gfx_set(1,1,0,Col_F+0.3);
+        gfx_setfont(1,"Arial",17);
+        gfx_x = _x + 4; gfx_y = _y+4;
+        gfx_drawstr("F",0);
+        
+        collision (_x,_y,_w,_h) ? (
+        gfx_set(0,1,1,1);
+        gfx_setfont(1,"Arial",15);
+        gfx_x = 190; gfx_y = 10;
+        gfx_drawstr("Fill",0);
+        
+        
+        gfx_x = 245; gfx_y = 11;
+        fill == 0 ? (
+        gfx_set(1,0,0,1);
+        gfx_drawstr("Off",0);
+          ) : (
+          gfx_set(0,1,0,1);
+          gfx_y = 10;
+          gfx_drawstr("On",0)
+        );
+        );      
+     );
+
+  //--------------
+  
+   click_button_A (10,5,19,24);
+   click_button_B (30,5,19,24);
+   click_button_C (50,5,19,24);
+   click_button_D (70,5,19,24);
+   
+   click_button_T (110,5,19,24);
+   click_button_S (130,5,19,24);
+   click_button_F (150,5,19,24);
+    
+ 
+  
+  
