@@ -100,7 +100,7 @@ local(filehandle, wavechn, wavesrate)
       len = (len / 2) | 0;
     );
     normalize_wave(buf, len);
-    filename == "tilr_JSModulator/Sine 1.wav" ? (
+    filename == "tilr_JSModulator/Sine.wav" ? (
       // FIX - render a perfect sine wave as I couldn't
       //       a perfect single cycle one, fixes flanging effects
       render_sin(buf, len, 1);
