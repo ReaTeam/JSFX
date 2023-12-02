@@ -1,6 +1,7 @@
 desc: JS3Osc
 author: tilr
-version: 1.0
+version: 1.0.1
+changelog: Fix coarse tuning in semi-tones
 provides:
   tilr_JS3Osc/3o.adsr.jsfx-inc
   tilr_JS3Osc/3o.array.jsfx-inc
@@ -196,17 +197,17 @@ function on_slider() (
   osc1_gain = db2gain(osc1_vol);
   osc1_st_det = pow(2, osc1_phase_det / 1200); // stereo detune
   osc1_fine_det = pow(2, osc1_fine / 1200);
-  osc1_coarse_det = pow(2, osc1_coarse / 12);
+  osc1_coarse_det = pow(2, (osc1_coarse|0) / 12);
   
   osc2_gain = db2gain(osc2_vol);
   osc2_st_det = pow(2, osc2_phase_det / 1200);
   osc2_fine_det = pow(2, osc2_fine / 1200);
-  osc2_coarse_det = pow(2, osc2_coarse / 12);
+  osc2_coarse_det = pow(2, (osc2_coarse|0) / 12);
   
   osc3_gain = db2gain(osc3_vol);
   osc3_st_det = pow(2, osc3_phase_det / 1200);
   osc3_fine_det = pow(2, osc3_fine / 1200);
-  osc3_coarse_det = pow(2, osc3_coarse / 12);
+  osc3_coarse_det = pow(2, (osc3_coarse|0) / 12);
 );
 
 @slider
