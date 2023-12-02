@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="64d0d6d1e499037de172f816a83009957040259b">
+<index version="1" name="ReaTeam JSFX" commit="28be46cff29bec590151e78f14e91ba3a830e0a1">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2975,6 +2975,15 @@ version 1.02
         <source file="tilr_JS3Osc/3o.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc/3o.gfxlib.jsfx-inc</source>
         <source file="tilr_JS3Osc/3o.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc/3o.mouselib.jsfx-inc</source>
         <source file="tilr_JS3Osc/3o.zdf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/a0cc7b96493814a1fd71cfa37761a0cbf1f8b9c1/Synth/tilr_JS3Osc/3o.zdf_filter.jsfx-inc</source>
+      </version>
+      <version name="1.0.1" author="tilr" time="2023-12-02T16:09:56Z">
+        <changelog><![CDATA[Fix coarse tuning in semi-tones]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/28be46cff29bec590151e78f14e91ba3a830e0a1/Synth/tilr_JS3Osc.jsfx</source>
+        <source file="tilr_JS3Osc/3o.adsr.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/28be46cff29bec590151e78f14e91ba3a830e0a1/Synth/tilr_JS3Osc/3o.adsr.jsfx-inc</source>
+        <source file="tilr_JS3Osc/3o.array.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/28be46cff29bec590151e78f14e91ba3a830e0a1/Synth/tilr_JS3Osc/3o.array.jsfx-inc</source>
+        <source file="tilr_JS3Osc/3o.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/28be46cff29bec590151e78f14e91ba3a830e0a1/Synth/tilr_JS3Osc/3o.gfxlib.jsfx-inc</source>
+        <source file="tilr_JS3Osc/3o.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/28be46cff29bec590151e78f14e91ba3a830e0a1/Synth/tilr_JS3Osc/3o.mouselib.jsfx-inc</source>
+        <source file="tilr_JS3Osc/3o.zdf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/28be46cff29bec590151e78f14e91ba3a830e0a1/Synth/tilr_JS3Osc/3o.zdf_filter.jsfx-inc</source>
       </version>
     </reapack>
     <reapack name="tilr_JSDrumpad.jsfx" type="effect" desc="JSDrumpad">
