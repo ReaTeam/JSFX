@@ -1,0 +1,403 @@
+desc:2nd-order zero-delay feedback state variable filter
+
+// Copyright (C) 2013-2021 Theo Niessink <theo@taletn.com>
+// This work is free. You can redistribute it and/or modify it under the
+// terms of the Do What The Fuck You Want To Public License, Version 2,
+// as published by Sam Hocevar. See http://www.wtfpl.net/ for more details.
+
+// Initially based on the rsStateVariableFilter C++ class by Robin Schmidt,
+// as posted (in the public domain) on the KVR forum.
+// http://www.kvraudio.com/forum/viewtopic.php?p=5243733#p5243733
+
+/* Example
+
+   desc:Low-pass filter
+
+   slider1:1000<20,20000,1>Cutoff (Hz)
+   slider2:0.5<0.01,4.0,0.01>Q
+
+   import Tale/zdf_filter.jsfx-inc
+
+   @slider
+   lp.zdf_lp(slider1, slider2);
+   lp.zdf_gain(0.5);
+
+   @sample
+   spl0 = spl1 = lp.zdf_svf(spl0 + spl1);
+
+   Setting Functions
+
+    * zdf_lp(freq, q)       -- Low-pass
+    * zdf_hp(freq, q)       -- High-pass
+    * zdf_bp(freq, q)       -- Band-pass (constant skirt gain)
+    * zdf_bp2(freq, q)      -- Band-pass (constant peak gain)
+    * zdf_bs(freq, q)       -- Band-stop
+    * zdf_ap(freq, q)       -- All-pass
+    * zdf_eq(freq, q, gain) -- Peaking EQ
+    * zdf_ls(freq, q, gain) -- Low-shelf
+    * zdf_hs(freq, q, gain) -- High-shelf
+      Example: lp.zdf_lp(1000, 0.7);
+      Sets up the filter for the specified cutoff frequency (in Hz), and Q
+      and gain factors, and returns the feedback precomputation factor (h).
+
+      (To convert from dB to gain: gain=10^(db/20).)
+
+      Note: In v20151024 the behavior of zdf_bp2() and zdf_ap() has been
+      changed in such a way that these functions are not backward
+      compatible. To convert code relying on the old behavior, replace
+      zdf_bp2(freq, bw) with zdf_bp(freq, zdf_bwtoq(bw)), and
+      zdf_ap(freq, bw) with zdf_ap(freq, zdf_bwtoq(bw)).
+
+    * zdf_gain(gain)
+      Example: lp.zdf_lp(1000, 0.5); lp.zdf_gain(2.0);
+      Modifies the filter by applying the specified output gain.
+
+      Note: You should always first setup the filter, and then modify it. If
+      you change the filter frequency/Q afterwards, then this will reset the
+      gain to 1.0, and so you will have to modify it again.
+
+    * zdf_setf(freq, q)
+      Example: lp.zdf_setf(1000, 0.7);
+      Sets up the specialized low-pass, high-pass, or band-pass filter.
+
+      Note: This works only with zdf_svf_lp(), zdf_svf_hp(), or zdf_svf_bp().
+
+   Filter Functions
+
+    * zdf_svf(sample)
+      Example: output = lp.zdf_svf(input);
+      Sends a sample through the filter, and returns its output.
+
+    * zdf_svf_multi(sample)
+      Example: output = lp.zdf_svf_multi(input);
+      Sends a sample through the filter, returns its output, and also stores
+      the individual low-pass, band-pass, and high-pass outputs.
+
+    * zdf_svf_lp(sample) -- Low-pass
+    * zdf_svf_hp(sample) -- High-pass
+    * zdf_svf_bp(sample) -- Band-pass
+      Example: output = lp.zdf_svf_lp(input);
+      Specialized versions of zdf_svf(), each optimized for a specific
+      filter type.
+
+   Miscellaneous Functions
+
+    * zdf_reset([input])
+      Example: lp.zdf_reset();
+      Resets the filter state to the specified input value, or to zero if
+      the value is omitted.
+
+    * zdf_bwtoq(bw)
+    * zdf_qtobw(q)
+      Example: q = zdf_bwtoq(2.0);
+      Converts bandwidth (in octaves) to Q factor, or vice versa.
+
+   Instance Variables
+
+    * g  -- Embedded integrator gain
+    * r2 -- Damping (1/Q)
+    * h  -- Feedback precomputation factor
+      Example: lp2.g = lp1.g; lp2.r2 = lp1.r2; lp2.h = lp1.h;
+      Filter coefficients.
+
+    * cl -- Low-pass mix
+    * cb -- Band-pass mix
+    * ch -- High-pass mix
+      Example: lp2.cl = lp1.cl; lp2.cb = lp1.cb; lp2.ch = lp1.ch;
+      Filter mode output mix.
+
+    * s1
+    * s2
+      Example: lp2.s1 = lp1.s1; lp2.s2 = lp1.s2;
+      Filter state.
+
+    * yl -- Low-pass output
+    * yb -- Band-pass output
+    * yh -- High-pass output
+      Example: hp = lp.yh;
+      Multi-mode filter outputs.
+
+*/
+
+@init
+
+function zdf_bwtoq(bw)
+  local(x)
+(
+  // q = 1/(2 * sinh(log(2) / 2 * bw))
+  x = exp(0.5*log(2) * bw);
+  x/(sqr(x) - 1);
+);
+
+function zdf_qtobw(q)
+  local(x)
+(
+  // bw = 2 * asinh(1/(2 * q)) / log(2)
+  x = 0.5 / q;
+  2/log(2) * log(x + sqrt(sqr(x) + 1));
+);
+
+function _zdf_seth()
+  instance(g, r2, h)
+(
+  h = 1/((r2 + g)*g + 1);
+);
+
+// Low-pass
+
+function zdf_lp(freq, q)
+  // global(srate)
+  instance(g, r2, cl, cb, ch)
+(
+  g = tan($pi * min(freq / srate, 0.49));
+
+  r2 = 1/q;
+  cl = 1;
+  cb = 0;
+  ch = 0;
+
+  this._zdf_seth();
+);
+
+// High-pass
+
+function zdf_hp(freq, q)
+  // global(srate)
+  instance(g, r2, cl, cb, ch)
+(
+  g = tan($pi * min(freq / srate, 0.49));
+
+  r2 = 1/q;
+  cl = 0;
+  cb = 0;
+  ch = 1;
+
+  this._zdf_seth();
+);
+
+// Band-pass (constant skirt gain, peak gain = Q)
+
+function zdf_bp(freq, q)
+  // global(srate)
+  instance(g, r2, cl, cb, ch)
+(
+  g = tan($pi * min(freq / srate, 0.49));
+
+  r2 = 1/q;
+  cl = 0;
+  cb = 1;
+  ch = 0;
+
+  this._zdf_seth();
+);
+
+// Band-pass (constant 0 dB peak gain)
+
+function zdf_bp2(freq, q)
+  // global(srate)
+  instance(g, r2, cl, cb, ch)
+(
+  g = tan($pi * min(freq / srate, 0.49));
+
+  cl = 0;
+  cb = r2 = 1/q;
+  ch = 0;
+
+  this._zdf_seth();
+);
+
+// Band-stop
+
+function zdf_bs(freq, q)
+  // global(srate)
+  instance(g, r2, cl, cb, ch)
+(
+  g = tan($pi * min(freq / srate, 0.49));
+
+  r2 = 1/q;
+  cl = 1;
+  cb = 0;
+  ch = 1;
+
+  this._zdf_seth();
+);
+
+// All-pass
+
+function zdf_ap(freq, q)
+  // global(srate)
+  instance(g, r2, cl, cb, ch)
+(
+  g = tan($pi * min(freq / srate, 0.49));
+
+  r2 = 1/q;
+  cl = 1;
+  cb = -r2;
+  ch = 1;
+
+  this._zdf_seth();
+);
+
+// Peaking EQ
+
+function zdf_eq(freq, q, gain)
+  // global(srate)
+  instance(g, r2, cl, cb, ch)
+(
+  g = tan($pi * min(freq / srate, 0.49));
+
+  r2 = 1/(q * sqrt(gain));
+  cl = 1;
+  cb = r2 * gain;
+  ch = 1;
+
+  this._zdf_seth();
+);
+
+// Low-shelf
+
+function zdf_ls(freq, q, gain)
+  // global(srate)
+  instance(g, r2, cl, cb, ch)
+  local(a)
+(
+  a = sqrt(gain);
+  g = tan($pi * min(freq / srate, 0.49)) / sqrt(a);
+
+  r2 = 1/q;
+  cl = gain;
+  cb = r2 * a;
+  ch = 1;
+
+  this._zdf_seth();
+);
+
+// High-shelf
+
+function zdf_hs(freq, q, gain)
+  // global(srate)
+  instance(g, r2, cl, cb, ch)
+  local(a)
+(
+  a = sqrt(gain);
+  g = tan($pi * min(freq / srate, 0.49)) * sqrt(a);
+
+  r2 = 1/q;
+  cl = 1;
+  cb = r2 * a;
+  ch = gain;
+
+  this._zdf_seth();
+);
+
+function zdf_gain(gain)
+  instance(cl, cb, ch)
+(
+  cl *= gain;
+  cb *= gain;
+  ch *= gain;
+);
+
+function zdf_svf(sample)
+  instance(s1, s2, g, r2, h, cl, cb, ch)
+  local(yl, yb, yh)
+(
+  // High-pass
+  yh = (sample - (r2 + g) * s1 - s2) * h;
+
+  // Band-pass
+  yb = g*yh + s1;
+  s1 = g*yh + yb;
+
+  // Zero denormals
+  abs(s1) < 0.00000000000000006 ? s1 = 0;
+
+  // Low-pass
+  yl = g*yb + s2;
+  s2 = g*yb + yl;
+
+  abs(s2) < 0.00000000000000006 ? s2 = 0;
+
+  cl*yl + cb*yb + ch*yh;
+);
+
+function zdf_svf_multi(sample)
+  instance(s1, s2, g, r2, h, cl, cb, ch, yl, yb, yh)
+(
+  yh = (sample - (r2 + g) * s1 - s2) * h;
+  yb = g*yh + s1;
+  s1 = g*yh + yb;
+  abs(s1) < 0.00000000000000006 ? s1 = 0;
+  yl = g*yb + s2;
+  s2 = g*yb + yl;
+  abs(s2) < 0.00000000000000006 ? s2 = 0;
+  cl*yl + cb*yb + ch*yh;
+);
+
+// Optimized versions of zdf_svf() returning only 1 of the 3 outputs.
+
+function zdf_setf(freq, q)
+  // global(srate)
+  instance(g, r2)
+(
+  g = tan($pi * min(freq / srate, 0.49));
+  r2 = 1/q;
+  this._zdf_seth();
+);
+
+function zdf_svf_lp(sample)
+  instance(s1, s2, g, r2, h)
+  local(yl, yb, yh)
+(
+  yh = (sample - (r2 + g) * s1 - s2) * h;
+  yb = g*yh + s1; s1 = g*yh + yb;
+  abs(s1) < 0.00000000000000006 ? s1 = 0;
+  yl = g*yb + s2; s2 = g*yb + yl;
+  abs(s2) < 0.00000000000000006 ? s2 = 0;
+  yl;
+);
+
+function zdf_svf_hp(sample)
+  instance(s1, s2, g, r2, h)
+  local(yl, yb, yh)
+(
+  yh = (sample - (r2 + g) * s1 - s2) * h;
+  yb = g*yh + s1; s1 = g*yh + yb;
+  abs(s1) < 0.00000000000000006 ? s1 = 0;
+  yl = g*yb + s2; s2 = g*yb + yl;
+  abs(s2) < 0.00000000000000006 ? s2 = 0;
+  yh;
+);
+
+function zdf_svf_bp(sample)
+  instance(s1, s2, g, r2, h)
+  local(yl, yb, yh)
+(
+  yh = (sample - (r2 + g) * s1 - s2) * h;
+  yb = g*yh + s1; s1 = g*yh + yb;
+  abs(s1) < 0.00000000000000006 ? s1 = 0;
+  yl = g*yb + s2; s2 = g*yb + yl;
+  abs(s2) < 0.00000000000000006 ? s2 = 0;
+  yb;
+);
+
+// Reset SVF state.
+
+function zdf_reset(input)
+  instance(s1, s2)
+(
+  s1 = 0;
+  s2 = input;
+);
+
+// Legacy
+
+// function zdf_bp2(freq, bw) ( this.zdf_bp(freq, zdf_bwtoq(bw)) );
+// function zdf_ap(freq, bw) ( this.zdf_ap(freq, zdf_bwtoq(bw)) );
+function zdf_notch(freq, bw) ( this.zdf_bs(freq, zdf_bwtoq(bw)) );
+function zdf_peak(freq, gain, bw) local(fc) ( fc = $pi * min(freq / srate, 0.49); this.zdf_eq(freq, zdf_bwtoq(bw) * fc / tan(fc), gain); );
+function zdf_low_shelf(freq, gain, bw) ( this.zdf_ls(freq, zdf_bwtoq(bw), gain) );
+function zdf_high_shelf(freq, gain, bw) ( this.zdf_hs(freq, zdf_bwtoq(bw), gain) );
+function zdf_mute() instance(g, r2, cl, cb, ch) ( g = tan(0.49*$pi); r2 = 1; cl = cb = ch = 0; this._zdf_seth(); );
+function zdf_bypass() instance(g, r2, cl, cb, ch) ( g = tan(0.49*$pi); r2 = cl = cb = ch = 1; this._zdf_seth(); );
+function zdf_bypass(freq, q) ( this.zdf_bypass() );
