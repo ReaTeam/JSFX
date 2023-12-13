@@ -1,6 +1,6 @@
 desc: JSModulator
 author: tilr
-version: 1.0
+version: 1.0.1
 provides:
   tilr_JSModulator/mod.array.jsfx-inc
   tilr_JSModulator/mod.envlib.jsfx-inc
@@ -172,7 +172,7 @@ file_var(0, osc3.wavenum);
 file_var(0, osc4.wavenum);
 
 @init
-
+ext_noinit = 1;
 poly.array_init(1000, 127, 11); // [note, freq, ph1, ph2, ph3, ph4, signal1, signal2, signal3, signal4, note_repeat_flag]
 remove_notes.array_init(5000, 127, 1); // remove notes array
 envelope = 10000; // 18 * 127 - master envelope per key
