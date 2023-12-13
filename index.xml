@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="c25f3fedaca756008ff6c60d491285622ff1744b">
+<index version="1" name="ReaTeam JSFX" commit="03c7b2aa3725c33908950fac3993cfb001aef44a">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2984,6 +2984,60 @@ version 1.02
         <source file="tilr_JS3Osc/3o.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/28be46cff29bec590151e78f14e91ba3a830e0a1/Synth/tilr_JS3Osc/3o.gfxlib.jsfx-inc</source>
         <source file="tilr_JS3Osc/3o.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/28be46cff29bec590151e78f14e91ba3a830e0a1/Synth/tilr_JS3Osc/3o.mouselib.jsfx-inc</source>
         <source file="tilr_JS3Osc/3o.zdf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/28be46cff29bec590151e78f14e91ba3a830e0a1/Synth/tilr_JS3Osc/3o.zdf_filter.jsfx-inc</source>
+      </version>
+    </reapack>
+    <reapack name="tilr_JSAdditiv.jsfx" type="effect" desc="JSAdditiv">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 JSAdditiv\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Polyphonic additive synthesizer\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Features:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Wavetable oscillator that reads single cycle waveforms from disk\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Additive synthesis engine that allows to modify the wave\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Wave editors for harmonics amplitude and phase\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab 8 voices unison engine\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Pitch, amplitude and filter adsr\sa180\par}
+}
+]]></description>
+        <link rel="screenshot">https://raw.githubusercontent.com/tiagolr/JSAdditiv/master/doc/ss.png</link>
+      </metadata>
+      <version name="1.1" author="tilr" time="2023-12-13T14:07:33Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv.jsfx</source>
+        <source file="tilr_JSAdditiv/add.adsr.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/add.adsr.jsfx-inc</source>
+        <source file="tilr_JSAdditiv/add.array.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/add.array.jsfx-inc</source>
+        <source file="tilr_JSAdditiv/add.fft_real_synth.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/add.fft_real_synth.jsfx-inc</source>
+        <source file="tilr_JSAdditiv/add.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/add.gfxlib.jsfx-inc</source>
+        <source file="tilr_JSAdditiv/add.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/add.mouselib.jsfx-inc</source>
+        <source file="tilr_JSAdditiv/add.wavetable.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/add.wavetable.jsfx-inc</source>
+        <source file="tilr_JSAdditiv/add.zdf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/add.zdf_filter.jsfx-inc</source>
+        <source type="data" file="tilr_JSAdditiv/Complex 1.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Complex%201.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Complex 2.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Complex%202.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Complex 3.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Complex%203.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Complex 4.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Complex%204.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Complex 5.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Complex%205.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Organ 1.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Organ%201.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Organ 2.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Organ%202.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Organ 3.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Organ%203.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Organ 4.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Organ%204.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Organ 5.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Organ%205.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Organ 6.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Organ%206.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Organ 7.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Organ%207.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Saw 1.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Saw%201.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Saw 2.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Saw%202.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Saw 3.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Saw%203.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Sine 1.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Sine%201.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Sine 2.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Sine%202.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Sine 3.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Sine%203.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Sine 4.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Sine%204.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Sine 5.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Sine%205.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Spectral.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Spectral.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Square 1.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Square%201.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Square 2.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Square%202.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Stairs.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Stairs.wav</source>
+        <source type="data" file="tilr_JSAdditiv/Triangle.wav">https://github.com/ReaTeam/JSFX/raw/03c7b2aa3725c33908950fac3993cfb001aef44a/Synth/tilr_JSAdditiv/Triangle.wav</source>
       </version>
     </reapack>
     <reapack name="tilr_JSDrumpad.jsfx" type="effect" desc="JSDrumpad">
