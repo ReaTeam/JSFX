@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="28be46cff29bec590151e78f14e91ba3a830e0a1">
+<index version="1" name="ReaTeam JSFX" commit="c25f3fedaca756008ff6c60d491285622ff1744b">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -3043,6 +3043,114 @@ version 1.02
         <source file="tilr_JSDrumsynth/ds.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth/ds.mouselib.jsfx-inc</source>
         <source file="tilr_JSDrumsynth/ds.pad.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth/ds.pad.jsfx-inc</source>
         <source file="tilr_JSDrumsynth/ds.svf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/f3170aff73b21e043eb0ea687f568a21fc0114c5/Synth/tilr_JSDrumsynth/ds.svf_filter.jsfx-inc</source>
+      </version>
+    </reapack>
+    <reapack name="tilr_JSModulator.jsfx" type="effect" desc="JSModulator">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 JSModulator\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Polyphonic FM synth with 4 operators\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Features:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab 4 wavetable operators with additive synthesis\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab FM matrix 4x4\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Global envelope and envelope per operator\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Operator harmonics and phase editor\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Filter per voice with envelope ADSR\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Envelope curve/tension controls\sa180\par}
+}
+]]></description>
+        <link rel="screenshot">https://raw.githubusercontent.com/tiagolr/jsmodulator/master/doc/ss.png</link>
+      </metadata>
+      <version name="1.0" author="tilr" time="2023-12-13T14:02:46Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator.jsfx</source>
+        <source file="tilr_JSModulator/mod.array.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/mod.array.jsfx-inc</source>
+        <source file="tilr_JSModulator/mod.envlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/mod.envlib.jsfx-inc</source>
+        <source file="tilr_JSModulator/mod.fft_real_synth.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/mod.fft_real_synth.jsfx-inc</source>
+        <source file="tilr_JSModulator/mod.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/mod.gfxlib.jsfx-inc</source>
+        <source file="tilr_JSModulator/mod.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/mod.mouselib.jsfx-inc</source>
+        <source file="tilr_JSModulator/mod.osc.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/mod.osc.jsfx-inc</source>
+        <source file="tilr_JSModulator/mod.wavetable.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/mod.wavetable.jsfx-inc</source>
+        <source file="tilr_JSModulator/mod.zdf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/mod.zdf_filter.jsfx-inc</source>
+        <source type="data" file="tilr_JSModulator/Complex 2.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Complex%202.wav</source>
+        <source type="data" file="tilr_JSModulator/Complex 3.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Complex%203.wav</source>
+        <source type="data" file="tilr_JSModulator/Complex 4.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Complex%204.wav</source>
+        <source type="data" file="tilr_JSModulator/Complex 5.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Complex%205.wav</source>
+        <source type="data" file="tilr_JSModulator/Complex.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Complex.wav</source>
+        <source type="data" file="tilr_JSModulator/Organ 2.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Organ%202.wav</source>
+        <source type="data" file="tilr_JSModulator/Organ 3.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Organ%203.wav</source>
+        <source type="data" file="tilr_JSModulator/Organ 4.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Organ%204.wav</source>
+        <source type="data" file="tilr_JSModulator/Organ 5.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Organ%205.wav</source>
+        <source type="data" file="tilr_JSModulator/Organ 6.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Organ%206.wav</source>
+        <source type="data" file="tilr_JSModulator/Organ 7.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Organ%207.wav</source>
+        <source type="data" file="tilr_JSModulator/Organ.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Organ.wav</source>
+        <source type="data" file="tilr_JSModulator/Saw 2.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Saw%202.wav</source>
+        <source type="data" file="tilr_JSModulator/Saw 3.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Saw%203.wav</source>
+        <source type="data" file="tilr_JSModulator/Saw.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Saw.wav</source>
+        <source type="data" file="tilr_JSModulator/Sine 2.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Sine%202.wav</source>
+        <source type="data" file="tilr_JSModulator/Sine 3.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Sine%203.wav</source>
+        <source type="data" file="tilr_JSModulator/Sine 4.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Sine%204.wav</source>
+        <source type="data" file="tilr_JSModulator/Sine 5.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Sine%205.wav</source>
+        <source type="data" file="tilr_JSModulator/Sine.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Sine.wav</source>
+        <source type="data" file="tilr_JSModulator/Spectral.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Spectral.wav</source>
+        <source type="data" file="tilr_JSModulator/Square 2.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Square%202.wav</source>
+        <source type="data" file="tilr_JSModulator/Square.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Square.wav</source>
+        <source type="data" file="tilr_JSModulator/Stairs.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Stairs.wav</source>
+        <source type="data" file="tilr_JSModulator/Triangle.wav">https://github.com/ReaTeam/JSFX/raw/df4c290f00f4d96972b5fc457996d5f03ddc3fc2/Synth/tilr_JSModulator/Triangle.wav</source>
+      </version>
+    </reapack>
+    <reapack name="tilr_JSWavesynth.jsfx" type="effect" desc="JSWavesynth">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 JSWavesynth\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 JSFX polyphonic synth with a unison engine.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Features:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Single cycle waveforms read from wav files\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Polyphonic voices with independent adsr\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab 8 unison voices with detune and panning controls\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab ADSR for volume pitch and filter\sa180\par}
+}
+]]></description>
+        <link rel="screenshot">https://raw.githubusercontent.com/tiagolr/jswavesynth/master/doc/ss.png</link>
+      </metadata>
+      <version name="1.1" author="tilr" time="2023-12-13T14:03:15Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth.jsfx</source>
+        <source file="tilr_JSWavesynth/ws.adsr.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/ws.adsr.jsfx-inc</source>
+        <source file="tilr_JSWavesynth/ws.array.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/ws.array.jsfx-inc</source>
+        <source file="tilr_JSWavesynth/ws.gfxlib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/ws.gfxlib.jsfx-inc</source>
+        <source file="tilr_JSWavesynth/ws.mouselib.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/ws.mouselib.jsfx-inc</source>
+        <source file="tilr_JSWavesynth/ws.wavetable.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/ws.wavetable.jsfx-inc</source>
+        <source file="tilr_JSWavesynth/ws.zdf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/ws.zdf_filter.jsfx-inc</source>
+        <source type="data" file="tilr_JSWavesynth/Complex 1.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Complex%201.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Complex 2.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Complex%202.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Complex 3.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Complex%203.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Complex 4.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Complex%204.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Complex 5.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Complex%205.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Organ 1.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Organ%201.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Organ 2.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Organ%202.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Organ 3.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Organ%203.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Organ 4.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Organ%204.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Organ 5.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Organ%205.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Organ 6.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Organ%206.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Organ 7.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Organ%207.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Saw 1.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Saw%201.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Saw 2.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Saw%202.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Saw 3.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Saw%203.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Sine 1.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Sine%201.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Sine 2.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Sine%202.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Sine 3.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Sine%203.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Sine 4.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Sine%204.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Sine 5.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Sine%205.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Spectral.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Spectral.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Square 1.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Square%201.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Square 2.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Square%202.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Stairs.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Stairs.wav</source>
+        <source type="data" file="tilr_JSWavesynth/Triangle.wav">https://github.com/ReaTeam/JSFX/raw/c25f3fedaca756008ff6c60d491285622ff1744b/Synth/tilr_JSWavesynth/Triangle.wav</source>
       </version>
     </reapack>
     <reapack name="TimeWaster_ReaRack Modular Synth.jsfx" type="effect" desc="ReaRack Modular Synth">
