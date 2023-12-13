@@ -86,6 +86,7 @@ import ws.mouselib.jsfx-inc
 options:gfx_hz=60 no_meter
 
 @init
+ext_noinit = 1;
 lfile = -1;
 wavebuf = 100000;
 wavechn = 0;
