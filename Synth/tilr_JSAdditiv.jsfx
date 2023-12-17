@@ -1,7 +1,13 @@
 desc: JSAdditiv
 author: tilr
-version: 1.1.1
-changelog: Fix read initial wave file
+version: 1.2
+changelog:
+  1.2
+  Fix support large wave files
+  Fix import wave samplerate
+  Support file drag and drop
+  1.1.1
+  Fix read initial wave file
 provides:
   tilr_JSAdditiv/add.adsr.jsfx-inc
   tilr_JSAdditiv/add.array.jsfx-inc
@@ -171,6 +177,7 @@ local (window)
          : 1024 >= len ? 1024
          : 2048 >= len ? 2048
          : 4096;
+  memset(buf+window * 2, 0, 100000); // clear four.coef memory
   four.four_init(buf, window);
   four.four_fft();
 );
@@ -182,12 +189,18 @@ function resynthesize() (
   four.four_setf(1);
   four.four_update();
   four.four_ifft();
-  semi_normalize_wave(wavebuf, wavelen); // correct signal strenght after summing frequencies
+  semi_normalize_wave(wavebuf, four.size * 2); // correct signal strenght after summing frequencies
 );
 
-function read_file(filehandle) (
+function read_file(filehandle) 
+local (len)
+(
   filehandle > 0 ? (
+    len = file_avail(filehandle);
     file_riff(filehandle, wavechn, wavesrate);
+    file_rewind(filehandle);
+    wavesrate = wavesrate * (1024 / len);
+    file_riff(filehandle, wavechn='rqsr', wavesrate); // resample wave at 1024 length
     wavechn ? (
       wavelen = file_avail(filehandle);
       file_mem(filehandle,wavebuf,wavelen);
@@ -454,6 +467,12 @@ gfx_clear = COLOR_BG;
 mouse.update_mouse_state();
 
 draw_wave(20, 20, 120, 60, wavebuf, wavelen);
+
+dropped_file_str = 0;
+gfx_getdropfile(0, dropped_file_str) ? (
+  read_file_string(dropped_file_str);
+  gfx_getdropfile(-1);
+);
 
 //draw_grey_button(520 - 60, 2, 40, is_mono ? "Mono" : "Poly");
 //mouse.left_click && mouse_in_rect(520 - 60, 0, 40, 10 + 2) ? (
