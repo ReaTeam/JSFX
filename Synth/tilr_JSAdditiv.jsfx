@@ -2,12 +2,9 @@ desc: JSAdditiv
 author: tilr
 version: 1.2
 changelog:
-  1.2
   Fix support large wave files
   Fix import wave samplerate
   Support file drag and drop
-  1.1.1
-  Fix read initial wave file
 provides:
   tilr_JSAdditiv/add.adsr.jsfx-inc
   tilr_JSAdditiv/add.array.jsfx-inc
