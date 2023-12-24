@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f170203b855fc86f6f071a70b3ec0ca682f03834">
+<index version="1" name="ReaTeam JSFX" commit="e784f0c66e5c1e8ee26741987135687ca8a8a7df">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -247,6 +247,33 @@ Performance optimization.]]></changelog>
       <version name="1.0" author="tilr" time="2023-11-25T18:12:09Z">
         <source>https://github.com/ReaTeam/JSFX/raw/72270f4963a7ba07cbce46f012eb68a837ce0f5d/Filter/tilr_QuickFilter.jsfx</source>
         <source file="tilr_QuickFilter/qf.svf_filter.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/72270f4963a7ba07cbce46f012eb68a837ce0f5d/Filter/tilr_QuickFilter/qf.svf_filter.jsfx-inc</source>
+      </version>
+    </reapack>
+    <reapack name="tilr_SKFilter.jsfx" type="effect" desc="SKFilter">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 SKFilter\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 SKFilter (or Saikes filters) is a set of unique filters extracted from {\field{\*\fldinst{HYPERLINK "https://github.com/JoepVanlier/JSFX/tree/master/Yutani"}}{\fldrslt{\ul
+Yutani Bass
+}}}
+\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs24 Features\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab 29 filter types\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Non-linear analog modelled filters\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Filter drive\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Filter modes and morphing\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Oversampling up to 8x\sa180\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="tilr" time="2023-12-24T10:54:12Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/e784f0c66e5c1e8ee26741987135687ca8a8a7df/Filter/tilr_SKFilter.jsfx</source>
+        <source file="tilr_SKFilter/skf.Saike_Yutani_Filters.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/e784f0c66e5c1e8ee26741987135687ca8a8a7df/Filter/tilr_SKFilter/skf.Saike_Yutani_Filters.jsfx-inc</source>
+        <source file="tilr_SKFilter/skf.Saike_Yutani_oversampling.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/e784f0c66e5c1e8ee26741987135687ca8a8a7df/Filter/tilr_SKFilter/skf.Saike_Yutani_oversampling.jsfx-inc</source>
+        <source file="tilr_SKFilter/skf.Saike_Yutani_upsamplers">https://github.com/ReaTeam/JSFX/raw/e784f0c66e5c1e8ee26741987135687ca8a8a7df/Filter/tilr_SKFilter/skf.Saike_Yutani_upsamplers</source>
       </version>
     </reapack>
   </category>
