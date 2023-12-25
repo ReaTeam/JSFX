@@ -52,9 +52,6 @@ function mouse_in_rect (x, y, w ,h) (
 
 function draw_knob_empty(x, y, w, h, nslider, label, default, _min, _max, is_sym, val_label) (
   slider_val = slider(nslider);  
-  //scale = 46 / (_max-_min);
-  //_offset = (-_min * 46) / (_max - _min) ;
-  //slider_scaled = slider_val * scale + _offset;
  
                        // Frame
 	gfx_a = 0.5;
@@ -62,15 +59,53 @@ function draw_knob_empty(x, y, w, h, nslider, label, default, _min, _max, is_sym
   gfx_rect(x,y,w,h,0); 
   
   gfx_a = 1;
-  set_color(0xFFff00);
+  set_color(0xffff00);
   gfx_setfont(1,"Arial bold fat",13);
-  gfx_x = x - 40;
+  gfx_x = x - 37;
   gfx_y = y + 20 * 2 - 40; 
    gfx_drawstr(val_label, 1, x+20+20*2, y+100);
-   
-  /*gfx_x = x - 14;
-  gfx_y = y + 20 * 2 - 54;
-   gfx_drawstr(label, 1, x+20+20*2, y+100);*/
+	
+  set_color(0xf4f4f4);
+  gfx_x = x - 75;
+  gfx_y = y + 20 * 2 - 40;
+   gfx_drawstr(label, 1, x+10+20*2, y+100);
+
+  mouse_in_rect(x, y, w, h) ? (      
+    mouse.double_click ? (
+      slider(nslider) = default;
+      doubleclk_nslider = nslider;
+    );
+    mouse.left_click ? (		
+      selknob_nslider = nslider;
+      selknob_min = _min;
+      selknob_max = _max;
+    );
+    mouse.wheel ? (	 	 		 
+      wheelknob_nslider = nslider;
+      wheelknob_min = _min;
+      wheelknob_max = _max;
+    );
+  );   
+);
+
+function draw_knob_empty48(x, y, w, h, nslider, label, default, _min, _max, col, val_label) (
+  slider_val = slider(nslider);  
+ 
+                       // Frame
+	gfx_a = 0.5;
+  set_color(0x666666);
+  gfx_rect(x,y,w,h,0); 
+  
+  gfx_a = 1;
+  col == 0 ? set_color(0xffff00);
+  col == 1 ? set_color(0x00ccff);
+  gfx_setfont(1,"Arial bold fat",13);
+  gfx_x = x - 10;
+  gfx_y = y + 20 * 2 - 39; 
+   gfx_drawstr(val_label, 1, x+20+20*2, y+100);
+	
+  //col == 0 ? set_color(0xffff00);        // yellow
+  //col == 1 ? set_color(0x00ccff);        //blue
 
   mouse_in_rect(x, y, w, h) ? (      
     mouse.double_click ? (
@@ -220,19 +255,63 @@ function draw_knob_abl_rect(x, y, nslider, label, default, _min, _max, is_sym, v
   slider_scaled = slider_val * scale + _offset;
  
                        // Knob Frame
-  set_color(0x222222);
-  gfx_rect(x,y,48,18); 
+  set_color(0x383838);
+  gfx_rect(x,y,46,14); 
                        //Knob                                  
   set_color(0x19707F);
-  is_sym == 0 ? gfx_rect( x+1, y+1, slider_scaled, 16) : (
-  slider_val >= _min + (_max - _min)/2 ? gfx_rect( x+24, y+1, slider_scaled - 23, 16) : gfx_rect( x+1+slider_scaled, y+1, 23-slider_scaled , 16);
+  is_sym == 0 ? gfx_rect( x, y, slider_scaled, 14) : (
+  slider_val >= _min + (_max - _min)/2 ? gfx_rect( x+24, y+1, slider_scaled - 23, 14) : gfx_rect( x+1+slider_scaled, y+1, 23-slider_scaled , 14);
  );
   
   
-  set_color(0xf0f0f0);
+  set_color(0xDDDDDD);
   gfx_setfont(1,"Arial bold fat",13);
   gfx_x = x - 14;
-  gfx_y = y + 20 * 2 - 37; 
+  gfx_y = y + 20 * 2 - 39; 
+   gfx_drawstr(val_label, 1, x+20+20*2, y+100);
+   
+  gfx_x = x - 14;
+  gfx_y = y + 20 * 2 - 54;
+   gfx_drawstr(label, 1, x+20+20*2, y+100);
+
+  mouse_in_rect(x, y, 50, 20) ? (      
+    mouse.double_click ? (
+      slider(nslider) = default;
+      doubleclk_nslider = nslider;
+    );
+    mouse.left_click ? (		
+      selknob_nslider = nslider;
+      selknob_min = _min;
+      selknob_max = _max;
+    );
+    mouse.wheel ? (	 	 		 
+      wheelknob_nslider = nslider;
+      wheelknob_min = _min;
+      wheelknob_max = _max;
+    );
+  );   
+);
+
+function draw_knob_abl_rect2(x, y, nslider, label, default, _min, _max, is_sym, val_label) (
+  slider_val = slider(nslider);  
+  scale = 46 / (_max-_min);
+  _offset = (-_min * 46) / (_max - _min) ;
+  slider_scaled = slider_val * scale + _offset;
+ 
+                       // Knob Frame
+  set_color(0x383838);
+  gfx_rect(x,y,46,14); 
+                       //Knob                                  
+  set_color(0x19707F);
+  is_sym == 0 ? gfx_rect( x, y, slider_scaled, 14) : (
+  slider_val >= _min + (_max - _min)/2 ? gfx_rect( x+24, y+1, slider_scaled - 23, 14) : gfx_rect( x+1+slider_scaled, y+1, 23-slider_scaled , 14);
+ );
+  
+  
+  set_color(0xFFFF00);
+  gfx_setfont(1,"Arial bold fat",13);
+  gfx_x = x - 14;
+  gfx_y = y + 20 * 2 - 39; 
    gfx_drawstr(val_label, 1, x+20+20*2, y+100);
    
   gfx_x = x - 14;
@@ -259,18 +338,12 @@ function draw_knob_abl_rect(x, y, nslider, label, default, _min, _max, is_sym, v
 
 
 function draw_button (x, y, w, label, toggled) (   
-  set_color(0x222222);
-  gfx_rect(x, y, w, 18);
-  gfx_x = x; gfx_y = y ;
-  toggled ? (
-    set_color(0x19707F);
-    gfx_rect(x+1, y+1, w-2, 16);
-  ) : (
-    set_color(0x444444);
-    gfx_rect(x+1, y+1, w-2, 16);
-	);
-  gfx_x = x+1; gfx_y = y + 2;
-  set_color(toggled ? 0xffffff : 0x222222);
+  set_color(0x666666);
+  gfx_rect(x, y, w, 16,0);
+
+  
+  gfx_x = x; gfx_y = y + 1;
+  set_color(toggled ? 0x33BFDB : 0xc8c8c8);
   gfx_setfont(1,"Arial bold fat",13);
   gfx_drawstr(label, 1, x+w, y+16);
 );
