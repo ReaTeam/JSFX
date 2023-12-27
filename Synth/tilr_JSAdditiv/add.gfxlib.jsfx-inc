@@ -202,7 +202,6 @@ local (harm_w, amp, i, mouse_active, hx, ph, yamp, phase, real, img, yphase)
       );
       phase_mode && mouse_active && mouse_in_rect(hx, y, harm_w, h) ? (
         yphase = mouse.control ? 0 : (mouse.y - y) / h * -2 - 1;
-        yphasee = yphase;
         amp = harmonic_amplitude(buf[i], buf[i+1]);
         buf[i+1] = amp * cos(yphase*$pi); // real
         buf[i] = amp * sin(yphase*$pi); // img
