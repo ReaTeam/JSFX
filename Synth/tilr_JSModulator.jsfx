@@ -1,6 +1,12 @@
 desc: JSModulator
 author: tilr
-version: 1.0.1
+version: 1.1
+changelog:
+  1.1
+  replace zdf with rbj filters
+  fix read wave sample rate
+  fix volume knobs clicking
+  next and prev wave buttons
 provides:
   tilr_JSModulator/mod.array.jsfx-inc
   tilr_JSModulator/mod.envlib.jsfx-inc
@@ -9,7 +15,6 @@ provides:
   tilr_JSModulator/mod.mouselib.jsfx-inc
   tilr_JSModulator/mod.osc.jsfx-inc
   tilr_JSModulator/mod.wavetable.jsfx-inc
-  tilr_JSModulator/mod.zdf_filter.jsfx-inc
   [data] tilr_JSModulator/Complex 2.wav
   [data] tilr_JSModulator/Complex 3.wav
   [data] tilr_JSModulator/Complex 4.wav
@@ -35,6 +40,7 @@ provides:
   [data] tilr_JSModulator/Square.wav
   [data] tilr_JSModulator/Stairs.wav
   [data] tilr_JSModulator/Triangle.wav
+  tilr_JSModulator/mod.rbj_filter.jsfx-inc
 screenshot: https://raw.githubusercontent.com/tiagolr/jsmodulator/master/doc/ss.png
 about:
   # JSModulator
@@ -157,7 +163,7 @@ import mod.wavetable.jsfx-inc
 import mod.envlib.jsfx-inc
 import mod.mouselib.jsfx-inc
 import mod.gfxlib.jsfx-inc
-import mod.zdf_filter.jsfx-inc
+import mod.rbj_filter.jsfx-inc
 
 options: gfx_hz=60 no_meter
 
@@ -198,6 +204,20 @@ function freq2note(f) ( round(12*(log(f/440)/log(2))+69); );
 function normalizeFMSlider(val) ( 4 * (val/100) ^ 2; );
 function normalizeVolSlider(val) ( val * 60 / 100 - 60 );
 
+function rc_set(rc)
+  instance(a) (
+    a = 1 / (rc * srate + 1);
+);
+function rc_lp(sample)
+  instance(lp, a) (
+    lp += a * (sample - lp);
+);
+function smooth()
+  instance (lp, smooth) (
+    lp = smooth;
+    smooth = this.rc_lp(this);
+);
+
 function get_wavename(wavenum) (
   wavenum == 0 ? "Sine"
   : wavenum == 1 ? "Sine 2"
@@ -226,6 +246,20 @@ function load_wave(osc*, wavenum) (
   osc.wavenum = wavenum;
   osc.open_file(sprintf(#, "tilr_JSModulator/%s.wav", wavename), osc.four);
   osc.wave_init(osc.buf, osc.len);
+);
+
+function load_nextwave(osc*) (
+  wavenum = osc.wavenum;
+  wavenum += 1;
+  wavenum > 18 ? wavenum = 0;
+  load_wave(osc, wavenum);
+);
+
+function load_prevwave(osc*) (
+  wavenum = osc.wavenum;
+  wavenum -= 1;
+  wavenum < 0 ? wavenum = 18;
+  load_wave(osc, wavenum);
 );
 
 osc1.buf = 100000;
@@ -291,6 +325,22 @@ function on_slider() (
   flt_sus = normalizeVolSlider(_flt_sus);
 );
 
+// init slider smoothing
+gain.rc_set(0.0033);
+gain.smooth = db2gain(normalizeVolSlider(_vol));
+
+o1_gain.rc_set(0.0033);
+o1_gain.smooth = db2gain(normalizeVolSlider(o1_vol));
+o2_gain.rc_set(0.0033);
+o2_gain.smooth = db2gain(normalizeVolSlider(o2_vol));
+o3_gain.rc_set(0.0033);
+o3_gain.smooth = db2gain(normalizeVolSlider(o3_vol));
+o4_gain.rc_set(0.0033);
+o4_gain.smooth = db2gain(normalizeVolSlider(o4_vol));
+
+_flt_freq.rc_set(0.0033);
+_flt_freq.smooth = _flt_freq;
+
 function on_note(note) local (ptr, env) (
   ptr = poly.array_add();
   ptr[0] = note;
@@ -332,58 +382,12 @@ function on_note(note) local (ptr, env) (
   env_a(env, 1);
 );
 
-// copy filter coeficients from buffer1 to buffer2
-function filter_copy_coefs(buf1, buf2) (
-  buf2[2] = buf1[2];
-  buf2[3] = buf1[3];
-  buf2[4] = buf1[4];
-);
-
-// wraps filter function using buffers
-function filter_setf(buf, freq, q) (
-  filter.zdf_setf(freq, q);
-  buf[2] = filter.g;
-  buf[3] = filter.r2;
-  buf[4] = filter.h;
-);
-
-// wraps filter function using buffers
-function filter_lp(buf, sample) local(lp) (
-  filter.s1 = buf[0];
-  filter.s2 = buf[1];
-  filter.g = buf[2];
-  filter.r2 = buf[3];
-  filter.h = buf[4];
-  lp = filter.zdf_svf_lp(sample);
-  buf[0] = filter.s1;
-  buf[1] = filter.s2;
-  lp;
-);
-
-// wraps filter function using buffers
-function filter_bp(buf, sample) local(bp) (
-  filter.s1 = buf[0];
-  filter.s2 = buf[1];
-  filter.g = buf[2];
-  filter.r2 = buf[3];
-  filter.h = buf[4];
-  bp = filter.zdf_svf_bp(sample);
-  buf[0] = filter.s1;
-  buf[1] = filter.s2;
-  bp;
-);
-
-// wraps filter function using buffers
-function filter_hp(buf, sample) local(hp) (
-  filter.s1 = buf[0];
-  filter.s2 = buf[1];
-  filter.g = buf[2];
-  filter.r2 = buf[3];
-  filter.h = buf[4];
-  hp = filter.zdf_svf_hp(sample);
-  buf[0] = filter.s1;
-  buf[1] = filter.s2;
-  hp;
+function copy_filter_coefs (f1, f2) (
+  f2[0] = f1[0]; // a1
+  f2[1] = f1[1]; // a2
+  f2[2] = f1[2]; // b0
+  f2[3] = f1[3]; // b1
+  f2[4] = f1[4]; // b2
 );
 
 @slider
@@ -432,6 +436,13 @@ while (midirecv(offset, msg1, note, vel)) (
 );
 
 @sample
+
+gain.smooth();
+o1_gain.smooth();
+o2_gain.smooth();
+o3_gain.smooth();
+o4_gain.smooth();
+_flt_freq.smooth();
 
 remove_notes.array_clear();
 ptr = poly.array_first();
@@ -492,33 +503,32 @@ while(ptr >= 0) ( // for each note/voice
   ptr[8] = s3;
   ptr[9] = s4;
 
-  sl = s1 * o1_gain * (1 - o1_pan) + s2 * o2_gain * (1 - o2_pan) + s3 * o3_gain * (1 - o3_pan) + s4 * o4_gain * (1 - o4_pan);
-  sr = s1 * o1_gain * (1 + o1_pan) + s2 * o2_gain * (1 + o2_pan) + s3 * o3_gain * (1 + o3_pan) + s4 * o4_gain * (1 + o4_pan);
+  sl = s1 * o1_gain.smooth * (1 - o1_pan) + s2 * o2_gain.smooth * (1 - o2_pan) + s3 * o3_gain.smooth * (1 - o3_pan) + s4 * o4_gain.smooth * (1 - o4_pan);
+  sr = s1 * o1_gain.smooth * (1 + o1_pan) + s2 * o2_gain.smooth * (1 + o2_pan) + s3 * o3_gain.smooth * (1 + o3_pan) + s4 * o4_gain.smooth * (1 + o4_pan);
 
+  // Apply filter
   _flt_type != 0 ? (
     filterbuf = envelope_flt + ptr[0] * 18; // envelope buffer
     env_process(filterbuf);
-    filterbuf_l = filter_arr_l + ptr[0] * 11; // filter buffer left
-    filterbuf_r = filter_arr_r + ptr[0] * 11; // filter buffer right
-    adsr_mult = pow(22000/_flt_freq, filterbuf[0] * _flt_adsr_amt / 100);
+    multiplier = pow(22000/_flt_freq.smooth, filterbuf[0] * _flt_adsr_amt / 100);
 
-    filter_setf(filterbuf_l, _flt_freq * adsr_mult, _flt_q);
-    filter_copy_coefs(filterbuf_l, filterbuf_r);
+    filterbuf_l = filter_arr_l + ptr[0] * 11; // filter buffer left
+    filterbuf_r = filter_arr_r + ptr[0] * 11; // filter buffer left
 
     _flt_type == 1 ? (
-      sl = filter_lp(filterbuf_l, sl);
-      sr = filter_lp(filterbuf_r, sr);
+      rbj_lp(filterbuf_l, _flt_freq.smooth * multiplier, _flt_q);
     ) : _flt_type == 2 ? (
-      sl = filter_bp(filterbuf_l, sl);
-      sr = filter_bp(filterbuf_r, sr);
+      rbj_bp(filterbuf_l, _flt_freq.smooth * multiplier, _flt_q);
     ) : (
-      sl = filter_hp(filterbuf_l, sl);
-      sr = filter_hp(filterbuf_r, sr);
+      rbj_hp(filterbuf_l, _flt_freq.smooth * multiplier, _flt_q);
     );
+    copy_filter_coefs(filterbuf_l, filterbuf_r);
+    sl = rbj_df1(filterbuf_l, sl);
+    sr = rbj_df1(filterbuf_r, sr);
   );
 
-  spl0 += sl * gain * envbuf[];
-  spl1 += sr * gain * envbuf[];
+  spl0 += sl * gain.smooth * envbuf[];
+  spl1 += sr * gain.smooth * envbuf[];
 
   // Note repeat, trigger fast release
   ptr[10] ? (
@@ -583,7 +593,7 @@ gfx_panel == 0 ? (
   draw_knob(260,150, 6, "Rel", 1, 1, 5000, 1, 0, sprintf(#, "%d", slider(6)), 0);
   set_color(0x666666);
   gfx_x = 20; gfx_y = 130;
-  gfx_drawstr("ENVELOPE");
+  gfx_drawstr("GLOBAL ENVELOPE");
   gfx_x = 320;
   gfx_drawstr("CURVE");
   gfx_x = 320; gfx_y = 155;
@@ -617,6 +627,22 @@ gfx_panel > 0 && gfx_panel < 5 ? (
       gfx_panel == 3 ? load_wave(osc3, choice - 1);
       gfx_panel == 4 ? load_wave(osc4, choice - 1);
     );
+  );
+
+  set_color(COLOR_ACTIVE);
+  gfx_triangle(20+80+5, 95-2, 20+80+5+5, 95-2 + 5, 20+80+5, 105-2);
+  mouse.left_click && mouse_in_rect(20+80+5, 95-2, 5, 10) ? (
+    gfx_panel == 1 ? load_nextwave(osc1);
+    gfx_panel == 2 ? load_nextwave(osc2);
+    gfx_panel == 3 ? load_nextwave(osc3);
+    gfx_panel == 4 ? load_nextwave(osc4);
+  );
+  gfx_triangle(20-6, 95-2, 20-6-5, 95-2+5, 20-6, 105-2);
+  mouse.left_click && mouse_in_rect(20-6-5, 95-2, 5, 10) ? (
+    gfx_panel == 1 ? load_prevwave(osc1);
+    gfx_panel == 2 ? load_prevwave(osc2);
+    gfx_panel == 3 ? load_prevwave(osc3);
+    gfx_panel == 4 ? load_prevwave(osc4);
   );
 
   draw_knob(120,50, 22+(gfx_panel-1)*20, "Semi", 0, -48, 48, 0, 1, sprintf(#, "%d", slider(22+(gfx_panel-1)*20)), 0);
@@ -691,7 +717,7 @@ gfx_panel == 5 ? (
   draw_knob(260,150, 106, "Rel", 1, 1, 5000, 1, 0, sprintf(#, "%d", slider(106)), 0);
   set_color(0x666666);
   gfx_x = 20; gfx_y = 130;
-  gfx_drawstr("ENVELOPE");
+  gfx_drawstr("FILTER ENVELOPE");
   gfx_x = 320;
   gfx_drawstr("CURVE");
   gfx_x = 320; gfx_y = 155;
