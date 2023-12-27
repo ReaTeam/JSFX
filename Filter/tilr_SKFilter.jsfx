@@ -4,7 +4,7 @@ version: 1.0
 provides:
   tilr_SKFilter/skf.Saike_Yutani_Filters.jsfx-inc
   tilr_SKFilter/skf.Saike_Yutani_oversampling.jsfx-inc
-  tilr_SKFilter/skf.Saike_Yutani_upsamplers
+  tilr_SKFilter/skf.Saike_Yutani_upsamplers.jsfx-inc
 about:
   # SKFilter
   SKFilter (or Saikes filters) is a set of unique filters extracted from [Yutani Bass](https://github.com/JoepVanlier/JSFX/tree/master/Yutani)
