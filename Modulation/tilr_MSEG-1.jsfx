@@ -67,7 +67,7 @@ snap = 0;
 selected_point = -1;
 selected_midpoint = -1;
 midi_trigger = 0;
-dual_smooth = 1;
+dual_smooth = 0;
 paint_mode = 1; // 0 = Erase, 1 = Line
 
 curve.curve_init(0, 1000);
