@@ -2,14 +2,9 @@ desc: JSAdditiv
 author: tilr
 version: 1.3
 changelog:
-  1.3
   replace zdf with rbj filters
   fix note clicking 
   fix volume knob clicking
-  1.2
-  Fix support large wave files
-  Fix import wave samplerate
-  Support file drag and drop
 provides:
   tilr_JSAdditiv/add.adsr.jsfx-inc
   tilr_JSAdditiv/add.array.jsfx-inc
