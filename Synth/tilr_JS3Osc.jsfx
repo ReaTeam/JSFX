@@ -2,12 +2,9 @@ desc: JS3Osc
 author: tilr
 version: 1.1
 changelog:
-  1.1
   Normalize slider values
   Remove clicking from vol and phase_offset knobs
   Replace zdf with rbj filters
-  1.0.1
-  Fix coarse tuning in semi-tones
 provides:
   tilr_JS3Osc/3o.adsr.jsfx-inc
   tilr_JS3Osc/3o.array.jsfx-inc
