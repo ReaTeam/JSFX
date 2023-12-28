@@ -2,11 +2,8 @@ desc: JSWavesynth
 author: tilr
 version: 1.2
 changelog:
-  1.2
   replace zdf with rbj filters
   fix volume knob clicking
-  1.1.1
-  Fix read initial wave file
 provides:
   tilr_JSWavesynth/ws.adsr.jsfx-inc
   tilr_JSWavesynth/ws.array.jsfx-inc
