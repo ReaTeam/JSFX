@@ -89,7 +89,11 @@ local(filehandle, wavechn, wavesrate)
 (
   filehandle=file_open(filename);
   filehandle > 0 ? (
+    len = file_avail(filehandle);
     file_riff(filehandle, wavechn, wavesrate);
+    file_rewind(filehandle);
+    wavesrate = wavesrate * (1024 / len);
+    file_riff(filehandle, wavechn='rqsr', wavesrate); // resample wave at 1024 length
     wavechn ? (
       len = file_avail(filehandle);
       file_mem(filehandle, buf, len);
