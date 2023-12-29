@@ -64,7 +64,6 @@ function smooth()
 );
 
 samps.rc_set(0.33);
-mod_amp.rc_set(0.066);
 
 @slider
 feedback = _feedback / 100;
@@ -114,7 +113,6 @@ samps = delayms * 0.001 * srate; // delay time in samples
 
 play_state & 1 && !(lplay_state & 1) ? (
   samps.smooth = samps;
-  1;
 );
 lplay_state = play_state;
 
