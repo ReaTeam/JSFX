@@ -1,0 +1,181 @@
+desc: QuickDualDelay
+author: tilr
+version: 1.0
+provides:
+  tilr_QuickDualDelay/qd.delay.jsfx-inc
+  tilr_QuickDualDelay/qd.rbj_filter.jsfx-inc
+about:
+  # QuickDualDelay
+
+  Dual delay with independent or sync times, ping-pong mode, tempo sync and feedback filters.
+
+  #### Features
+
+  * Dual delay with independent or sync time and feedback
+  * Normal and ping-pong modes
+  * Ping-pong stereo width control
+  * Tempo sync
+  * Low pass and high pass feedback filters with Q controls
+  * Delay modulation
+
+desc:QuickDualDelay
+
+slider1:delay_sync=0<0,1,1{No,Yes}>Sync Delays
+
+slider3:delayms=250<1,1000>Delay Time 1 (ms)
+slider4:sync=0<0,16,1{Off,1/16,1/8,1/4,1/2,1/1,1/16t,1/8t,1/4t,1/2t,1/1t,1/16.,1/8.,1/4.,1/2.,1/1.}>Tempo Sync 1
+slider5:_feedback=0<0,100>Feedback 1
+
+slider7:delayms2=250<1,1000>Delay Time 2 (ms)
+slider8:sync2=0<0,16,1{Off,1/16,1/8,1/4,1/2,1/1,1/16t,1/8t,1/4t,1/2t,1/1t,1/16.,1/8.,1/4.,1/2.,1/1.}>Tempo Sync 2
+slider9:_feedback2=0<0,100>Feedback 2
+
+slider11:mode=0<0,1,1{Normal,Ping-Pong}>Mode
+slider12:spread=0<-100,100,1>Ping-Pong Spread
+
+slider14:lp_freq=20000<20,20000,1:log>Low Pass
+slider15:lp_q=0.707<0.707,2.0,0.01:log>Low Pass Q
+slider16:hp_freq=20<20,20000,1:log>High Pass
+slider17:hp_q=0.707<0.707,2.0,0.01:log>High Pass Q
+
+slider19:mod_amp=0<0,100>Modulation amp
+slider20:mod_freq=1<1,8>Modulation freq (Hz)
+
+slider22:_dry=100<0,100>Dry signal
+slider23:_wet=100<0,100>Wet signal
+
+import qd.delay.jsfx-inc
+import qd.rbj_filter.jsfx-inc
+
+@init
+// 10 second stereo delay line
+d0.delay(srate * 10);
+d1.delay(srate * 10);
+
+function sine_wave(cycle) (
+  sin(cycle * 2 * $pi);
+);
+
+function rc_set(rc)
+  instance(a) (
+    a = 1 / (rc * srate + 1);
+);
+function rc_lp(sample)
+  instance(lp, a) (
+    lp += a * (sample - lp);
+);
+function smooth()
+  instance (lp, smooth) (
+    lp = smooth;
+    smooth = this.rc_lp(this);
+);
+
+samps1.rc_set(0.33);
+samps2.rc_set(0.33);
+
+@slider
+feedback = _feedback / 100;
+feedback2 = delay_sync ? feedback : _feedback2 / 100;
+lfactor = spread > 0 ? 1 - spread / 100 : 1;
+rfactor = spread < 0 ? 1 + spread / 100 : 1;
+
+lp_l.rbj_lp(lp_freq, lp_q);
+lp_r.rbj_lp(lp_freq, lp_q);
+hp_l.rbj_hp(hp_freq, hp_q);
+hp_r.rbj_hp(hp_freq, hp_q);
+
+dry = _dry / 100;
+wet = _wet / 100;
+
+@block
+while (midirecv(offset, msg1, note, vel)) (
+  event = msg1 & 0xF0;
+  event == 0xB0 && note == 123 ? ( // All notes off
+    memset(d0.buf, 0, d0.size);
+    memset(d1.buf, 0, d1.size);
+  );
+);
+
+function get_time_sync (sync) (
+  sync == 1 ? 60000 / 4 / tempo:        // 1/16
+  sync == 2 ? 60000 / 2 / tempo:        // 1/8
+  sync == 3 ? 60000 / tempo:            // 1/4
+  sync == 4 ? 60000 * 2 / tempo:        // 1/2
+  sync == 5 ? 60000 * 4 / tempo:        // 1/1
+  sync == 6 ? 60000 / 6 / tempo:        // 1/16t
+  sync == 7 ? 60000 / 3 / tempo:        // 1/8t
+  sync == 8 ? 60000 / 3 * 2 / tempo:    // 1/4t
+  sync == 9 ? 60000 / 3 * 4 / tempo:    // 1/2t
+  sync == 10 ? 60000 / 3 * 8 / tempo:   // 1/1t
+  sync == 11 ? 60000 / 4 * 1.5 / tempo: // 1/16.
+  sync == 12 ? 60000 / 2 * 1.5 / tempo: // 1/8.
+  sync == 13 ? 60000 * 1.5 / tempo:     // 1/4.
+  sync == 14 ? 60000 * 2 * 1.5 / tempo: // 1/2.
+  sync == 15 ? 60000 * 4 * 1.5 / tempo: // 1/1.
+  1;
+);
+
+sync > 0 ? (
+  delayms = get_time_sync(sync);
+);
+delayms > 10000 ? delayms = 10000;
+
+delay_sync ? (
+  sync2 = sync;
+  delayms2 = delayms;
+) : (
+  sync2 > 0 ? (
+    delayms2 = get_time_sync(sync2);
+  );
+);
+delayms2 > 10000 ? delayms2 = 10000;
+
+samps1 = delayms * 0.001 * srate; // delay time in samples
+samps2 = delayms2 * 0.001 * srate;
+
+@sample
+
+play_state & 1 && !lplay_state & 1 ? (
+  samps1.smooth = samps1;
+  samps2.smooth = samps2;
+);
+lplay_state = play_state;
+
+samps1.smooth();
+samps2.smooth();
+
+// modulation sinewave
+mod_amp ? (
+  cycle += mod_freq / srate;
+  cycle > 1 ? cycle -= 1;
+  wave = sine_wave(cycle);
+) : (
+  wave = 0;
+);
+
+// read with cubic interpolation
+val0 = d0.delay_read3(samps1.smooth + wave * mod_amp);
+val1 = d1.delay_read3(samps2.smooth + wave * mod_amp);
+
+// apply filters on delay signal
+lp_freq < 20000 ? (
+  val0 = lp_l.rbj_df1(val0);
+  val1 = lp_r.rbj_df1(val1);
+);
+hp_freq > 20 ? (
+  val0 = hp_l.rbj_df1(val0);
+  val1 = hp_r.rbj_df1(val1);
+);
+
+// write values in delay lines
+mode == 0 ? (
+  d0.delay_write(spl0 + val0 * feedback);
+  d1.delay_write(spl1 + val1 * feedback2);
+) : mode == 1 ? (
+  d0.delay_write(spl0 * lfactor + val1 * feedback);
+  d1.delay_write(spl1 * rfactor + val0 * feedback2);
+);
+
+// sum and output
+spl0 = spl0*dry + val0*wet;
+spl1 = spl1*dry + val1*wet;
