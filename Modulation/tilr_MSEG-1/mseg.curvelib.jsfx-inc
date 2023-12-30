@@ -1,0 +1,301 @@
+desc:curvelib.jsfx-inc
+
+/*
+MIT License
+
+Copyright (c) 2024 TiagoLr
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+/*
+  Curvelib is a set of helpers to work with exponential curves
+
+  Example:
+    import curvelib.jsfx-inc
+    @init
+
+    curve.curve_init(0, 1000); // init a curve with up to 1000 points
+
+    curve.insert_point(0,0,1); // x, y, tension
+    curve.insert_point(0.25,0.25,-1);
+    curve.insert_point(0.75,0.75, 1);
+    curve.insert_point(1,1,0);
+
+    curve.build_segments(); // build curve segments from points
+
+    @gfx 300 300
+
+    x = 20;
+    y = 20;
+    width = 200;
+    height = 100;
+
+    // draw curve segments
+    gfx_set(1, 0, 0);
+    curve.draw_segments(x, y, width, height);
+
+    // draw a circle at midpoint
+    xx = 0.5;
+    yy = curve.get_y_at(x);
+    gfx_circle(xx * width + x, yy * height + y, 5);
+*/
+
+import mseg.array.jsfx-inc
+
+@init
+
+/*
+  Allocates memory for points and segments
+*/
+function curve_init(buf, npoints)
+instance(points, segments)
+(
+  buf = points.array_init(buf, npoints, 4); // x,y,tension
+  buf = segments.array_init(buf, npoints-1, 6); // x1,x2,y1,y2,tension,power
+  buf;
+);
+
+/*
+  Inserts point ordered by x
+*/
+function insert_point(x, y, tension, type)
+instance(points)
+local (ptr, p, i, index)
+(
+  index = -1;
+  points.size == 0 ? (
+    ptr = points.array_add();
+    ptr[0] = x;
+    ptr[1] = y;
+    ptr[2] = tension;
+    ptr[3] = type;
+    index = 0;
+  ) : (
+    i = points.size - 1;
+    while (i >= 0) (
+      ptr = points.array_get(i);
+      ptr[0] <= x ? (
+        p = points.array_insert(ptr + points.num);
+        p[0] = x;
+        p[1] = y;
+        p[2] = tension;
+        p[3] = type;
+        index = i + 1;
+        i = -1;
+      ) : (
+        i -= 1;
+      );
+    );
+  );
+  index;
+);
+
+function remove_point(x, y)
+instance(points)
+local (ptr)
+(
+  ptr = points.array_first();
+  while (ptr >= 0) (
+    ptr[0] === x && ptr[1] === y ? (
+      points.array_remove(ptr);
+      ptr = -1;
+    ) : (
+      ptr = points.array_next(ptr);
+    );
+  );
+);
+
+function remove_points_in_range(x1, x2)
+instance (points)
+local (ptr)
+(
+  ptr = points.array_next(points.array_first());
+  while (ptr >= 0) (
+    ptr[0] >= x1 && ptr[0] <= x2 && ptr !== points.array_last() ? (
+      points.array_remove(ptr);
+      ptr = points.array_next(points.array_first());
+    ) : (
+      ptr = points.array_next(ptr);
+    );
+  );
+);
+
+function remove_point(i)
+instance(points)
+(
+  points.array_remove(points.array_get(i));
+);
+
+function invert()
+instance(points)
+local(i)
+(
+  loop(i = 0; points.size,
+    point = points.array_get(i);
+    point[1] = 1-point[1];
+    i += 1;
+  );
+);
+
+function reverse()
+instance(points)
+local(i, point)
+(
+  // reverse array
+  loop(i=1; points.size,
+    point = points.array_insert(points.array_get(0));
+    memcpy(point, points.array_get(i), points.num);
+    point[0] = 1-point[0];
+    points.array_remove(points.array_get(i));
+    i += 1;
+  );
+  // reverse tension
+  loop(i=0; points.size-1,
+    point = points.array_get(i);
+    point[2] = points.array_next(point)[2] * -1;
+    i += 1;
+  );
+);
+
+function clear()
+instance(points)
+local(ptr)
+(
+  while(points.size) (
+    points.array_remove(points.array_get(1));
+  );
+  this.insert_point(0,0.5,0,1);
+  this.insert_point(1,0.5,0,1);
+);
+
+function build_segments()
+instance(points, segments)
+local (seg, p1, p2)
+(
+  segments.array_clear();
+  p1 = points.array_first();
+  p2 = points.array_next(p1);
+  while (p2 >= 0) (
+    seg = segments.array_add();
+    seg[0] = p1[0]; // x1
+    seg[1] = p2[0]; // x2
+    seg[2] = p1[1]; // y1
+    seg[3] = p2[1]; // y2
+    seg[4] = p1[2]; // tension
+    seg[5] = pow(1.1, abs(p1[2] * 50));
+    p1 = p2;
+    p2 = points.array_next(p2);
+  );
+);
+
+function load_sine()
+instance(points)
+(
+  points.array_clear();
+  this.insert_point(0, 1, 0.33, 1);
+  this.insert_point(0.25, 0.5, -0.33, 1);
+  this.insert_point(0.5, 0, 0.33, 1);
+  this.insert_point(0.75, 0.5, -0.33, 1);
+  this.insert_point(1, 1, 0, 1);
+);
+
+function load_triangle()
+instance(points)
+(
+  points.array_clear();
+  curve.insert_point(0,1,0,1);
+  curve.insert_point(0.5,0,0,1);
+  curve.insert_point(1,1,0,1);
+);
+
+function load_random(grid)
+instance(points)
+local(y, i)
+(
+  points.array_clear();
+  y = rand();
+  this.insert_point(0, y, 0, 1);
+  this.insert_point(1, y, 0, 1);
+  loop(i=0; grid,
+    this.insert_point(min(0.999999,max(0.00001, rand()/grid + i/grid)), rand(), 0,1);
+    i += 1;
+  );
+);
+
+/*
+  Based of https://github.com/KottV/SimpleSide/blob/main/Source/types/SSCurve.cpp
+*/
+function get_y(seg, x)
+local (ten, pwr)
+(
+  ten = seg[4];
+  pwr = seg[5];
+
+  seg[0] === seg[1] ? ( // x1 == x2
+    seg[3]; // FIX glitch
+  ) : ten >= 0 ? (
+    pow((x - seg[0]) / (seg[1] - seg[0]), pwr) * (seg[3] - seg[2]) + seg[2];
+  ) : (
+    -1 * (pow(1 - (x - seg[0]) / (seg[1] - seg[0]), pwr) - 1) * (seg[3] - seg[2]) + seg[2];
+  );
+);
+
+function get_y_at(x)
+instance(segments)
+local (seg, val)
+(
+  val = 0;
+  seg = segments.array_last(); //
+  while(seg >= 0) (
+    seg[0] <= x && seg[1] >= x ? (
+      val = get_y(seg, x);
+      seg = -1;
+    ) : (
+      seg -= segments.num;
+    );
+  );
+  val;
+);
+
+function is_collinear(seg) (
+  abs(seg[0] - seg[1]) < 0.01 || abs(seg[2] - seg[3]) < 0.01
+);
+
+// GFX FUNCTIONS
+
+function draw_segments(winx, winy, winw, winh)
+instance(points)
+local (i, px, py)
+(
+  gfx_x = winx;
+  gfx_y = points.array_first()[1] * winh + winy;
+
+  loop(i = 0; winw + 1,
+    py = this.get_y_at(i / winw);
+    gfx_a = 0.0625;
+    gfx_triangle(gfx_x, gfx_y, gfx_x, winh + winy, i + winx, winh + winy, i + winx, py * winh + winy);
+    gfx_a = 1;
+    gfx_lineto(i + winx, py * winh + winy);
+    i += 1;
+  );
+);
+
+
+
