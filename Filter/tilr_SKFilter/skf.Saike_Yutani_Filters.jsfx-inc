@@ -55,39 +55,41 @@ function cl01(v)
 
 function check_safety()
 (
+  limited_cutoff = 1;
+  warning = 0;
   ((filter_type == 1) || (filter_type==6)) && (oversampling == 1) ? (
     cutoff > safety_limit_ms20 ? (
-      slider_automate(cutoff = safety_limit_ms20);
-      warning = 75;
+      limited_cutoff = safety_limit_ms20;
+      warning = 1;
     );
   );
 
   ((filter_type == 26) && (oversampling == 1)) ? (
     cutoff > safety_limit_pir ? (
-      slider_automate(cutoff = safety_limit_pir);
-      warning = 75;
+      limited_cutoff = safety_limit_pir;
+      warning = 1;
     );
   );
 
   (filter_type == 3) || (filter_type == 4) ?
   (
     cutoff > current_safety_moog ? (
-      slider_automate(cutoff = current_safety_moog);
-      warning = 75;
+      limited_cutoff = current_safety_moog;
+      warning = 1;
     );
   );
 
   filter_type == 10 ? (
     (cutoff > safety_limit_svf) && (oversampling == 1) ? (
-      slider_automate(cutoff = safety_limit_svf);
-      warning = 75;
+      limited_cutoff = safety_limit_svf;
+      warning = 1;
     );
   );
 
   (filter_type == 18) || (filter_type == 19) || (filter_type == 20) || (filter_type == 21) || (filter_type == 22) || (filter_type == 23) || (filter_type == 24) || (filter_type == 25) ? (
     (cutoff > safety_limit_resa) && (oversampling == 1) ? (
-      slider_automate(cutoff = safety_limit_resa);
-      warning = 75;
+      limited_cutoff = safety_limit_resa;
+      warning = 1;
     );
   );
 );

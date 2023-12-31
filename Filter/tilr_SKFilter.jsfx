@@ -1,10 +1,14 @@
 desc: SKFilter
 author: tilr
-version: 1.0
+version: 1.0.1
+changelog:
+  Fix clicking when filter processing toggles on/off
+  Add cutoff limiting and description
+  Fix bad filename
 provides:
   tilr_SKFilter/skf.Saike_Yutani_Filters.jsfx-inc
   tilr_SKFilter/skf.Saike_Yutani_oversampling.jsfx-inc
-  tilr_SKFilter/skf.Saike_Yutani_upsamplers
+  tilr_SKFilter/skf.Saike_Yutani_upsamplers.jsfx-inc
 about:
   # SKFilter
   SKFilter (or Saikes filters) is a set of unique filters extracted from [Yutani Bass](https://github.com/JoepVanlier/JSFX/tree/master/Yutani)
@@ -100,11 +104,13 @@ lmorph != morph ? (
   lmorph = morph;
 );
 
-//check_safety();
+check_safety();
 
 @sample
 
-spl0 || spl1 ? (
+processing = max(0.9 * processing, spl0 || spl1);
+
+processing ? (
 cutoff.smooth();
 resonance.smooth();
 drive.smooth();
@@ -125,8 +131,8 @@ oversampling > 1 ? (
   f = 0;
   loop(oversampling,
     f += 1;
-    ssl = oversampling*upsampleL.upSample(oversampling);
-    ssr = oversampling*upsampleR.upSample(oversampling);
+    ssl = oversampling*upsampleL.upSample(oversampling) * preamp;
+    ssr = oversampling*upsampleR.upSample(oversampling) * preamp;
 
     filter.processSample(filter_type);
     ssl *= inv_preamp;
@@ -156,7 +162,10 @@ spl0 *= final_boost;
 spl1 *= final_boost;
 );
 
-@gfx 450 50
+// We need to make sure that both input and output are silent before shutting down the filter.
+processing = max(processing, spl0 || spl1);
+
+@gfx 460 60
 
 gfx_set(1,1,0);
 gfx_x = 5;
@@ -190,5 +199,12 @@ filter_type == 0 ? gfx_drawstr("2-pole linear state variable filter (12 dB/oct).
 : filter_type == 25 ? gfx_drawstr("Ladder filter")
 : filter_type == 26 ? gfx_drawstr("2-pole ladder filter with allpass filter for resonance.\nDrive this one hard.")
 : filter_type == 27 ? gfx_drawstr("2-pole SVF filter with antisaturator.\nDrive this one hard.")
-: filter_type == 28 ? gfx_drawstr("4-pole SVF filter with antisaturator.\nDrive this one hard.")
+: filter_type == 28 ? gfx_drawstr("4-pole SVF filter with antisaturator.\nDrive this one hard.");
+
+gfx_x = 5;
+gfx_y += 10;
+cutoff_hz = 0.5 * sampling_ratio * srate * exp((1.0 - clamp(min(limited_cutoff, cutoff), 0.0, 0.99)) * log(20/22050));
+
+warning_msg = warning ? "(Cutoff clamped! Increase oversampling)." : "";
+(cutoff_hz < 1000) ? gfx_printf("Cutoff: %d Hz %s", cutoff_hz, warning_msg) : gfx_printf("Cutoff: %.2f kHz %s", cutoff_hz / 1000, warning_msg);
 
