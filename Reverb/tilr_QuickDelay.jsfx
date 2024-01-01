@@ -39,8 +39,8 @@ slider13:mod_amp=0<0,100>Modulation amp
 slider14:mod_freq=1<1,8>Modulation freq (Hz)
 slider15:_semitones=0<-12,12,1>Transpose
 
-slider17:_dry=100<0,100>Dry signal
-slider18:_wet=100<0,100>Wet signal
+slider17:_dry=100<0,100>Dry
+slider18:_wet=100<0,100>Wet
 
 import qd.delay.jsfx-inc
 import qd.rbj_filter.jsfx-inc
