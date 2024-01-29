@@ -1,15 +1,8 @@
 desc: MIDI CC Mapper X
 author: Ben 'Talagan' Babut
-version: 5.3
+version: 5.3.1
 changelog:
-  - Bug Fix : Note OFF velocities are not forced to zero anymore, but left intact
-  - Feature : Made the circ family parametric, with varying radius
-  - Feature : Added channel info on the keyboard indicator when playing MIDI notes
-  - Feature : Added x,y position when free hand drawing
-  - Feature : Added xmirror, ymirror curve buttons
-  - Cosmetics : Reworked drawing toolbar buttons with xpm icons (pen, smooth, copy, paste)
-  - Cosmetics : Added tooltips on drawing toolbar buttons
-  - Cosmetics : Added pen mouse cursor when free hand drawing
+  - Bug Fix : Note OFF events with non-zero velocities should make keypress feedback indicator disappear
 screenshot:
   Dark Theme https://stash.reaper.fm/45504/MIDICCMapperX-5-0-Dark.png
   Light Theme https://stash.reaper.fm/45505/MIDICCMapperX-5-0-Light.png
@@ -6249,7 +6242,7 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("Midi CC Mapper X (5.3) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai");
+  gfx_drawstr("Midi CC Mapper X (5.3.1) by Benjamin 'Talagan' Babut - Dedicated to Kenji Kawai");
 
   drawSwitchButton(GUI_MODE,0,gfx_y-4,gfx_w-134,"Global settings","Back to plugin");
 );
@@ -6774,7 +6767,8 @@ function processNoteMessage(evt)
   is_note_on      = (evt.type == MSG_NOTE_ON);
 
   // Save the source velocity, this is for UI feedback (small dots on keys)
-  KEY_VELOCITIES[evt.key] = evt.velocity;
+  // Use 0 for note off velocities, so that these indicators disappear
+  KEY_VELOCITIES[evt.key] = (is_note_on)?(evt.velocity):(0);
   KEY_CHANNELS[evt.key]   = evt.chan;
 
   key_range_resolved    = keyKBRangeResolved(evt.key);
