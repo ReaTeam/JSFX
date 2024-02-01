@@ -1,15 +1,18 @@
 desc: MIDI Rhythm Trainer
 author: Eran Talmor
-version: 1.21
+version: 1.22
 changelog:
-  * Adjustable latency compensation for working with upstream audio-to-midi plugins (e.g. guitar / drums).
-  * Error bound is set in absolute time (ms) instead of relative time, promoting better tracking across different tempos and divisions.
-  * Current beat is highlighted, shrinking towards next beat.
-  * Fixed minor memory overwrite.
+  * Added margins on the left and right of the grid to improve the cyclic presentation of the data around the edges
+      (event, histograms, grid lines).
+  * Improved beat visibility by adding a beat ruler with alternating colors, and making the beat lines more pronounced.
+  * Now the phase can be dragged negatively, up to -360 degress. This is useful with working with the "copied" 1st grid line 
+      at the right margin.
+  * Mellowed down error rate update to be less jumpy.
+  * Minor color updates.
 link:
   Youtube tutorial https://youtu.be/cifj6eh_LF0
   Forum Thread https://forum.cockos.com/showthread.php?t=250891
-screenshot: Midi Rhythm Trainer 1.21 https://photos.google.com/photo/AF1QipMCKfXG4JCuU2bt23I9HGz_MkyCp8Uay48voM5P
+screenshot: Midi Rhythm Trainer 1.22 https://forum.cockos.com/attachment.php?attachmentid=53575&d=1691777240
 about:
   # MIDI Rhythm Trainer
 
@@ -28,6 +31,7 @@ about:
   * Support complex polyrhythms, e.g: 4 beat pattern, divided to 5 in the right hand, 7 in the left hand.
   * Set up complex splits - up to 4 "lanes",  receiving separate key ranges and input channels.
   * Set "click' sounds for each lane (like a metronome).
+  * Enable / disable individual division lines to create rhythmic patterns (right click on the line).
   * "Swing" and "Phase" parameters.
   * See you progress on a "10 minute training graph"
 
