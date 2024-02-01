@@ -2,7 +2,6 @@ desc: MIDI Rhythm Trainer
 author: Eran Talmor
 version: 1.22
 changelog:
-  Version 1.22:
   * Added margins on the left and right of the grid to improve the cyclic presentation of the data around the edges
       (event, histograms, grid lines).
   * Improved beat visibility by adding a beat ruler with alternating colors, and making the beat lines more pronounced.
