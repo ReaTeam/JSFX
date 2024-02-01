@@ -1,15 +1,19 @@
 desc: MIDI Rhythm Trainer
 author: Eran Talmor
-version: 1.21
+version: 1.22
 changelog:
-  * Adjustable latency compensation for working with upstream audio-to-midi plugins (e.g. guitar / drums).
-  * Error bound is set in absolute time (ms) instead of relative time, promoting better tracking across different tempos and divisions.
-  * Current beat is highlighted, shrinking towards next beat.
-  * Fixed minor memory overwrite.
+  Version 1.22:
+  * Added margins on the left and right of the grid to improve the cyclic presentation of the data around the edges
+      (event, histograms, grid lines).
+  * Improved beat visibility by adding a beat ruler with alternating colors, and making the beat lines more pronounced.
+  * Now the phase can be dragged negatively, up to -360 degress. This is useful with working with the "copied" 1st grid line 
+      at the right margin.
+  * Mellowed down error rate update to be less jumpy.
+  * Minor color updates.
 link:
   Youtube tutorial https://youtu.be/cifj6eh_LF0
   Forum Thread https://forum.cockos.com/showthread.php?t=250891
-screenshot: Midi Rhythm Trainer 1.21 https://photos.google.com/photo/AF1QipMCKfXG4JCuU2bt23I9HGz_MkyCp8Uay48voM5P
+screenshot: Midi Rhythm Trainer 1.22 https://forum.cockos.com/attachment.php?attachmentid=53575&d=1691777240
 about:
   # MIDI Rhythm Trainer
 
@@ -30,6 +34,22 @@ about:
   * Set "click' sounds for each lane (like a metronome).
   * "Swing" and "Phase" parameters.
   * See you progress on a "10 minute training graph"
+
+
+
+
+/*******************************************************************************
+*  Copyright 2023, Eran Talmor                                                 *
+*  This program is free software: you can redistribute it and/or modify        *
+*  it under the terms of the GNU General Public License as published by        *
+*  the Free Software Foundation, either version 3 of the License, or           *
+*  (at your option) any later version.                                         *
+*                                                                              *
+*  This program is distributed in the hope that it will be useful,             *
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of              *
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                *
+*  GNU General Public License (http://www.gnu.org/licenses/)for more details.  *
+*******************************************************************************/
 
 slider1:4<1,32,1>Beats
 slider2:0<0,3,1{1,2,3,4}>Lanes
@@ -127,7 +147,7 @@ hist_idx = 0;
 max_hist = 200;
 max_age = 60;
 max_graph = 10*60;
-hit_memory = 0.85;
+hit_memory = 0.97;
 prev_select = -1;
 histogram_buckets = 1024;
 histogram_size = histogram_buckets*2;
@@ -313,7 +333,7 @@ function getPhase(lane)
 
 function setPhase(lane, value) local(idx)
 (
-  setSlider(lane, slider_offset_phase, value, 0, 1, 1);
+  setSlider(lane, slider_offset_phase, value, -1, 1, 1);
 );
 
 function getClick(lane)
@@ -430,12 +450,12 @@ function getErrorRange()
 
 function getEarly(lane, divs, i)
 (
-  max(0, getGrid(lane, divs, i) - getErrorRange());
+  getGrid(lane, divs, i) - getErrorRange();
 );
 
 function getLate(lane, divs, i)
 (
-  min(1, getGrid(lane, divs, i) + getErrorRange());
+  getGrid(lane, divs, i) + getErrorRange();
 );
 
 function getMidiMonitorAge(lane)
@@ -460,8 +480,8 @@ function isHit(reltime, lane) local(i, hit, min_late, min_early, delta_early, de
   min_early = 1;
   divs = getDivs(lane);
   while(
-    delta_early = getEarly(lane, divs, i) - reltime;
-    delta_late = reltime - getLate(lane, divs, i);
+    delta_early = max(0, getEarly(lane, divs, i)) - reltime;
+    delta_late = reltime - min(1, getLate(lane, divs, i));
     hit |= isGridEnabled(lane, i) && (delta_early <= 0) && (delta_late <= 0);
     delta_early > 0 ? (min_early = min(min_early, delta_early));
     delta_late > 0 ? (min_late = min(min_late, delta_late));
@@ -972,10 +992,10 @@ function drawMidiMonitor(lane, l,t,w,h) local(age)
   emptyRect(l,t,w-1,h-1);
 );
 
-function drawHistogram(lane, l, t, w, h) local (value, x, y, normalized)
+function drawHistogram(lane, l, t, w, h, from, to, start_alpha, end_alpha) local (value, x, y, normalized)
 (
   rgb(0.5, 0.5, 0.5);
-  gfx_a = 0.6;
+  
   memcpy(v_histogram_tmp, v_histogram + lane*histogram_size, histogram_size);
   i = 0;
   while(i < histogram_buckets) (
@@ -985,55 +1005,83 @@ function drawHistogram(lane, l, t, w, h) local (value, x, y, normalized)
   fft(v_histogram_tmp, histogram_buckets);
   convolve_c(v_histogram_tmp, v_normal_mask, histogram_buckets);
   ifft(v_histogram_tmp, histogram_buckets);
-  i = 0;
+  i = from;
   max_value = 0;
   prev_max_value = v_histogram_max_value[lane];
-  while(i < w) (
+  while(i < to) (
     x = l+i;
     value = v_histogram_tmp[2*floor(modOne(-rel_latency_compensation + i/w)*histogram_buckets)];
     max_value = max(value, max_value);
     normalized = value / (prev_max_value ? prev_max_value : 1); 
     y = max(t, t+h*(1-normalized/2));
+    
+    gfx_a = (start_alpha + (end_alpha - start_alpha) * (i - from) / (to - from));
     gfx_line(x,y,x,t+h);
     i+=1;
   );
-  fit_speed = 0.05;
-  v_histogram_max_value[lane] = (1-fit_speed)*prev_max_value + fit_speed*max_value;
+  max_value;
 );
 
-function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high,i,divs, toolbar_height, focus_control)
+function drawGradientMargins(l, t, w, h, w_margin) local(grad_alpha, black_margin)
+(
+  rgb(0, 0, 0);
+  black_margin = ceil(0.3 * w_margin);
+  grad_alpha = 1 / (w_margin - black_margin);
+  gfx_rect(l, t, black_margin, h);
+  gfx_gradrect(l + black_margin, t, w_margin - black_margin, h, 0, 0, 0, 1, 0, 0, 0, -grad_alpha, 0, 0, 0, 0);
+  gfx_rect(l + w - black_margin, t, black_margin, h);
+  gfx_gradrect(l + w - w_margin+1, t, w_margin - black_margin, h, 0, 0, 0, 0, 0, 0, 0, grad_alpha, 0, 0, 0, 0);
+);
+
+function drawGrid(lane, l,t,w,h) local(beat_mark_ratio, i, x,y, age, birth, hit,now,low,grid,high,i,divs, toolbar_height, focus_control)
 (  
   focus_control = 0;
   toolbar_height = 20;
  
   rgb(0.2, 0.2, 0.2);
   gfx_a = 1;
+  
   gfx_rect(l, t, w, h);
+  
+  // Draw gradient margins for wrapping the pattern
+  pattern_wrap = 0.15;
+  w_pattern = w / (1+pattern_wrap);
+  w_margin = (w-w_pattern)/2;
+  l_pattern = l + w_margin;
 
+  drawGradientMargins(l, t, w, h, w_margin);
+  
   // Draw "grid" area
   divs = getDivs(lane);
     
   // Draw green areas
   rgb(0, 0.4, 0);
-  i=-1;
-  loop(divs+2,
+  i=0;
+  loop(divs+1,
     isGridEnabled(lane, i) ? (
-      low = l+getEarly(lane, divs, i)*w;
-      high = l+getLate(lane, divs, i)*w+1;
+      low = l_pattern+getEarly(lane, divs, i)*w_pattern;
+      high = l_pattern+getLate(lane, divs, i)*w_pattern+1;
       gfx_rect(low, t, high-low, h);
     );
     i+=1;
   );
-  drawHistogram(lane, l, t, w, h);
+  
+  histo_alpha = 0.62;
+  drawHistogram(lane, l_pattern - w_pattern, t, w_pattern, h, w_pattern - w_margin, w_pattern, 0, histo_alpha);
+  drawHistogram(lane, l_pattern + w_pattern, t, w_pattern, h, 0, w_margin, histo_alpha, 0);
+  max_value = drawHistogram(lane, l_pattern, t, w_pattern, h, 0, w_pattern, histo_alpha, histo_alpha);
+  fit_speed = 0.05;
+  v_histogram_max_value[lane] = (1-fit_speed)*prev_max_value + fit_speed*max_value;
   
   // Draw dashed rhythm lines
+  gfx_a = 0.6;
   i=0;
   ctrl_phase_id = controlId(lane, control_phase);
   ctrl_swing_id = controlId(lane, control_swing);
-  loop(divs, 
-    grid = l+getGrid(lane, divs, i)*w;
+  loop(divs+1, 
+    grid = l_pattern+getGrid(lane, divs, i)*w_pattern;
     grid_mask_mode ? (
-      mouse_focus = isMouseInRect(grid - w/divs/2, t, w/divs, h - toolbar_height);
+      mouse_focus = isMouseInRect(grid - w_pattern/divs/2, t, w_pattern/divs, h - toolbar_height);
       mouse_focus && (mouse_cap & 2) ? setGridMask(lane, i, 2-grid_mask_mode);
     )
     : (
@@ -1041,7 +1089,7 @@ function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high
       mouse_focus && isRButtonPress() ? grid_mask_mode = 1 + getGridMask(lane, i);
       ((i+1)%2) && ((!active_control && mouse_focus) || (active_control == ctrl_phase_id)) ? (
         focus_control = ctrl_phase_id;
-        rgb(0,0.5,0.5);
+        rgb(0,0.7,0.7);
         gfx_rect(grid-6, t, 12, h);
       );
       (i%2) && ((!active_control && mouse_focus) || (active_control == ctrl_swing_id)) ? (
@@ -1053,8 +1101,8 @@ function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high
     rgb(0.67, 0.67, 0.67);
     verticalDashedLine(grid, t, t+h, 1, 5);
     isGridEnabled(lane, i) ? 
-      (sprintf(str, "%d", i+1); rgb(1,1,1)) 
-    : (sprintf(str, "(%d)", i+1); rgb(0.5, 0.5, 0.5));
+      (sprintf(str, "%d", (i%divs)+1); rgb(1,1,1)) 
+    : (sprintf(str, "(%d)", (i%divs)+1); rgb(0.5, 0.5, 0.5));
     gfx_setfont(1, "Arial", 16);
     printCenter(grid,t+h/2,str);
     i+=1;
@@ -1063,18 +1111,31 @@ function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high
   isRButtonRelease() ? grid_mask_mode = 0;
     
   // Draw beat marks
-  rgb(0.8, 0.8, 0.8);
+  
   (lane == 0) ? gfx_setfont(1, "Arial", 12);
   i=0;
-  loop(beats,
-    grid = l + i*w/beats;
-    gfx_line(grid,t, grid,t+h*0.1);
-    gfx_line(grid,t+h*0.9, grid,t+h);
-    (lane == 0) ? (
+  beat_mark_ratio = 0.20;
+  gfx_a = 1;
+  loop(beats+1,
+    grid = l_pattern + i*w_pattern/beats;
+    
+    ((lane == 0) && (i < beats)) ? (
       gfx_x = grid + 3;
       gfx_y = t + 1;
-      gfx_printf("%d",i+1);
+      (i < beats) ? (
+        gfx_a = 0.4;
+        (i % 2 == 0) ? rgb(0, 0, 0) : rgb(0.5, 0.5, 0.5);
+        gfx_rect(grid,t, w_pattern/beats, 14);
+      );
+      rgb(1,1,1);
+      gfx_a = 1;
+      gfx_printf("%d",(i % beats)+1);
     );
+    
+    rgb(1, 1, 1);
+    gfx_line(grid,t, grid,t+h*beat_mark_ratio);
+    gfx_line(grid,t+h*(1-beat_mark_ratio), grid,t+h);
+    
     i+=1;
   );
   gfx_setfont(1, "Arial", 14);
@@ -1090,10 +1151,17 @@ function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high
         age = min(max_age, now - birth);
         (hit == 0) ? rgb(0,1,0) : 
           (hit == 1) ? rgb(1,0,0) : rgb(0,0,1);
-        x = w * modOne(v_history_rel_time[i] + rel_latency_compensation);
+        x = w_pattern * modOne(v_history_rel_time[i] + rel_latency_compensation);
         y = age*20;
         gfx_a = 1 - sqrt(y/h);
-        y < h ? (drawEvent(l+x,t+y, v_history_notes[i], age));
+        y < h ? (
+          drawEvent(l_pattern+x,t+y, v_history_notes[i], age);
+          rgb(0.5, 0.5, 0.5);
+          (x < w_margin) ?
+            drawEvent(l_pattern+w_pattern+x,t+y, v_history_notes[i], age);
+          (x >= w_pattern - w_margin) ?
+            drawEvent(l_pattern-w_pattern+x,t+y, v_history_notes[i], age);
+        );
         age == max_age ? (v_history_time[i] = 0);
       );
       i += 1;
@@ -1102,13 +1170,17 @@ function DrawGrid(lane, l,t,w,h) local(i, x,y, age, birth, hit,now,low,grid,high
     // Draw vertical time line and highlight current beat
     curr_beat = beat_position % beats;
     rgb(1,1,0);
-    x = l + w * getRelTime(0);
+    x = l_pattern + w_pattern * getRelTime(0);
     gfx_a = 0.15;
     current_rel_beat = (curr_beat + 1) / beats;
-    delta_x = ceil(l+w*current_rel_beat)-x;
+    delta_x = ceil(l_pattern+w_pattern*current_rel_beat)-x;
     gfx_rect(x, t, delta_x, h);
     gfx_a = 1;
     gfx_line(x, t, x, t+h);
+    gfx_a = 1-(x - l_pattern) / w_margin;
+    gfx_line(x+w_pattern, t, x+w_pattern, t+h);
+    gfx_a = 1-(l_pattern + w_pattern - x) / w_margin;
+    gfx_line(x-w_pattern, t, x-w_pattern, t+h);
   );  
   
   drawToolBar(lane, l+2,t+h-toolbar_height-1,w-2,20);
@@ -1218,11 +1290,11 @@ total_grid_height -= total_grid_height % num_lanes;
 
 grid_margin = 6;
 grid_height = total_grid_height / num_lanes;
-DrawGrid(0, xmargin, header_margin, width, grid_height-grid_margin);
+drawGrid(0, xmargin, header_margin, width, grid_height-grid_margin);
 y = header_margin + grid_height;
-num_lanes > 1 ? (DrawGrid(1, xmargin, y, width, grid_height-grid_margin); y+=grid_height);
-num_lanes > 2 ? (DrawGrid(2, xmargin, y, width, grid_height-grid_margin); y+=grid_height);
-num_lanes > 3 ? (DrawGrid(3, xmargin, y, width, grid_height-grid_margin); y+=grid_height);
+num_lanes > 1 ? (drawGrid(1, xmargin, y, width, grid_height-grid_margin); y+=grid_height);
+num_lanes > 2 ? (drawGrid(2, xmargin, y, width, grid_height-grid_margin); y+=grid_height);
+num_lanes > 3 ? (drawGrid(3, xmargin, y, width, grid_height-grid_margin); y+=grid_height);
 
 drawTrainingGraphTitle(xmargin, y);
 y+=20;
