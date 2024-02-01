@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f9ebaf83a4dc55d44d9a1aaaf935bb3583523875">
+<index version="1" name="ReaTeam JSFX" commit="8721149a29eb51f03b7066cd626826f9629bc8f6">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -442,7 +442,7 @@ Fix note off events always being sent to channel 1]]></changelog>
 ]]></description>
         <link rel="website" href="https://youtu.be/cifj6eh_LF0">Youtube tutorial</link>
         <link rel="website" href="https://forum.cockos.com/showthread.php?t=250891">Forum Thread</link>
-        <link rel="screenshot" href="https://photos.google.com/photo/AF1QipMCKfXG4JCuU2bt23I9HGz_MkyCp8Uay48voM5P">Midi Rhythm Trainer 1.21</link>
+        <link rel="screenshot" href="https://forum.cockos.com/attachment.php?attachmentid=53575&amp;d=1691777240">Midi Rhythm Trainer 1.22</link>
       </metadata>
       <version name="1.01" author="Eran Talmor" time="2021-03-16T14:08:03Z">
         <source>https://github.com/ReaTeam/JSFX/raw/da21627cf6f3bb421417fbb68bfd7f8c23489340/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
@@ -506,6 +506,16 @@ Easier setting of mask by right mouse button drag over grid lines.]]></changelog
 * Current beat is highlighted, shrinking towards next beat.
 * Fixed minor memory overwrite.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/9507e2b86c3617f9aacf5af437e77817e11e9557/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
+      </version>
+      <version name="1.22" author="Eran Talmor" time="2024-02-01T07:30:54Z">
+        <changelog><![CDATA[* Added margins on the left and right of the grid to improve the cyclic presentation of the data around the edges
+    (event, histograms, grid lines).
+* Improved beat visibility by adding a beat ruler with alternating colors, and making the beat lines more pronounced.
+* Now the phase can be dragged negatively, up to -360 degress. This is useful with working with the "copied" 1st grid line 
+    at the right margin.
+* Mellowed down error rate update to be less jumpy.
+* Minor color updates.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/8721149a29eb51f03b7066cd626826f9629bc8f6/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
       </version>
     </reapack>
     <reapack name="juan_r_Keyboard MirrorInvert (Juan_R).jsfx" type="effect" desc="Keyboard Mirror/Invert">
