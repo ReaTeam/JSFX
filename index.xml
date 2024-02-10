@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="8721149a29eb51f03b7066cd626826f9629bc8f6">
+<index version="1" name="ReaTeam JSFX" commit="c2c2f840f28af27828515ad5a28a34d91abf0d42">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2378,6 +2378,9 @@ Add value slider]]></changelog>
       </metadata>
       <version name="2.0" author="Will Develop" time="2020-02-18T16:53:48Z">
         <source>https://github.com/ReaTeam/JSFX/raw/8d8f6e2023f4efde85b745015d2e7c1e52a50bbd/MIDI/willdevelop_MIDI%20Note%20Repeater%20%5BDefault%20Key%20Map%20B1%20-%20A4%5D.jsfx</source>
+      </version>
+      <version name="2.0.1" author="Will Develop" time="2024-02-10T11:37:28Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/c2c2f840f28af27828515ad5a28a34d91abf0d42/MIDI/willdevelop_MIDI%20Note%20Repeater%20%5BDefault%20Key%20Map%20B1%20-%20A4%5D.jsfx</source>
       </version>
     </reapack>
     <reapack name="willdevelop_MIDI Velocity Filter.jsfx" type="effect" desc="MIDI Velocity Filter">
