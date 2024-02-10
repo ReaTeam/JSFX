@@ -1,6 +1,6 @@
 desc: MIDI Note Repeater [Default Key Map B1 - A4]
 author: Will Develop
-version: 2.0
+version: 2.0.1
 link:
   Forum thread https://forum.cockos.com/showthread.php?p=2239428#post2239428
   My Website https://will-records.tk/
@@ -744,9 +744,3 @@ notecnt > 0 &&   pbincpos >= 1.0 ?
 );
 
 //spos+=1;
-
-  );
-);
-
-//spos+=1;
-
