@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="c2c2f840f28af27828515ad5a28a34d91abf0d42">
+<index version="1" name="ReaTeam JSFX" commit="99a12abd264bfb2da185457ed136c8999bee6163">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2142,6 +2142,25 @@ And a bit of source code cleaning.]]></changelog>
         <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s9.txt">https://github.com/ReaTeam/JSFX/raw/f9ebaf83a4dc55d44d9a1aaaf935bb3583523875/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s9.txt</source>
         <source type="data" file="talagan_MIDI CC Mapper X/func/lib/sstep/s9_m.txt">https://github.com/ReaTeam/JSFX/raw/f9ebaf83a4dc55d44d9a1aaaf935bb3583523875/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/lib/sstep/s9_m.txt</source>
         <source type="data" file="talagan_MIDI CC Mapper X/func/user_lib/USER_LIB_FILES_GO_HERE.md">https://github.com/ReaTeam/JSFX/raw/f9ebaf83a4dc55d44d9a1aaaf935bb3583523875/MIDI/talagan_MIDI%20CC%20Mapper%20X/func/user_lib/USER_LIB_FILES_GO_HERE.md</source>
+      </version>
+    </reapack>
+    <reapack name="talagan_MIDI Split Pitch Bend to CCs.jsfx" type="effect" desc="MIDI Split Pitch Bend to CCs">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Splits the pitch bend wheel into two CCs, one for the positive, and one for the negative part.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Channel Pressure may be used, as CC#128.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Channels may be set to "same as received"\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The rest should be straight forward.\par}
+}
+]]></description>
+        <link rel="donation">https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&amp;no_recurring=1&amp;currency_code=EUR</link>
+      </metadata>
+      <version name="0.5" author="Ben 'Talagan' Babut" time="2024-02-21T21:06:23Z">
+        <changelog><![CDATA[- Initial version]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/99a12abd264bfb2da185457ed136c8999bee6163/MIDI/talagan_MIDI%20Split%20Pitch%20Bend%20to%20CCs.jsfx</source>
       </version>
     </reapack>
     <reapack name="tilr_Notes to CC.jsfx" type="effect" desc="Notes to CC">
