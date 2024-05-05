@@ -6,7 +6,6 @@ about:
 
   Disable/Enable each MIDI Channel
 
-
 slider1:1<0,1,1{Off,On}>Channel 1
 slider2:1<0,1,1{Off,On}>Channel 2
 slider3:1<0,1,1{Off,On}>Channel 3
