@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="9fdae3e34da7a0e150915cbebbf94e1c10d8535f">
+<index version="1" name="ReaTeam JSFX" commit="e3488ad87e1653827abb8d118aa688e71091d393">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -414,6 +414,21 @@ Fix note off events always being sent to channel 1]]></changelog>
       </metadata>
       <version name="1" author="ee33" time="2021-04-18T16:54:58Z">
         <source>https://github.com/ReaTeam/JSFX/raw/5cdadb30d3dc33d8401313a217ec3c0c4dd8ac19/MIDI/ee33_Triggered%20Random%20Modal%20Riffer.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="eralumin_MIDI Channel Toggle.jsfx" type="effect" desc="MIDI Channel Toggle">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MIDI Channel Toggle\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Disable/Enable each MIDI Channel\par}
+}
+]]></description>
+      </metadata>
+      <version name="0.0.1" author="eralumin" time="2024-05-05T01:39:33Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/e3488ad87e1653827abb8d118aa688e71091d393/MIDI/eralumin_MIDI%20Channel%20Toggle.jsfx</source>
       </version>
     </reapack>
     <reapack name="erantalmor_MIDI Rhythm Trainer.jsfx" type="effect" desc="MIDI Rhythm Trainer">
