@@ -1,0 +1,921 @@
+desc:MIDI Poly Aftertouch CC Multiplexer
+author:Ben 'Talagan' Babut
+version: 0.9
+donation:
+  https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
+screenshot:
+  https://stash.reaper.fm/48606/MIDI%20Poly%20Aftertouch%20CC%20Multiplexer.gif
+license:
+  MIT (Do whatever you like with this code).
+changelog:
+  - First version.
+about:
+  # MIDI Poly Aftertouch CC Multiplexer
+
+  ## Purpose
+
+  This plugin converts Poly Aftertouch MIDI keys/pads to CCs. The word multiplexer comes from the fact that you may reassign multiple keys/pads to different CCs.
+  
+  ## More explanation
+
+  Poly AT controls are really cool for some applications, because they automatically go back to their rest position. They feel really organic (especially to control things like vibratos, expressivity, and the like) and cease their effect when they are released.
+  
+  Generally, if you need this plugin, it is because you've already assigned a role to PolyAT, and you may find yourself stuck, wanting to control more parameters with those kind of controls. With this plugin, you can sacrifice some keys from your MIDI Controller (lowest or highest ones, for example) to convert each one to a CC with automatic return to the rest position.
+  
+  You can think of them as some kind of keyswitches with continuous detection.
+  
+  ## How to use
+  
+  Click on a note to assign a CC to it. Now, all events related to this note (Note ON/OFF and Poly AT) will be transformed to CC events with the CC number you've chosen. 
+  
+  Note ON/OFF events will be affected a CC value of 0. 
+  
+  Events are scoped within MIDI Bus/Channel context (non-matching events are left untouched, and some routing may be applied to matching ones).
+  
+  ## MIDI Bus handling
+
+  A basic handling of MIDI Buses is offered : the plugin will only handle events from the "In" MIDI Bus,
+  other buses are left untouched. You may set it to "ANY" to handle all MIDI Buses. You may also reroute
+  one MIDI Bus to another one by changing the "Out" MIDI Bus.
+  
+  ## MIDI Channel handling
+  
+  Same remarks as for the MIDI Bus for the MIDI Channel.
+
+<? 
+  DBG                 = 0;  // Show / Hide sliders in the JSFX window
+?>
+
+
+# 0 == ANY, Use only MIDI Bus 1 by default
+slider1: 1        <0,16,1>-Input MIDI Bus
+# 0 == AS_INPUT, so copy input by default
+slider2: 0        <0,16,1>-Output MIDI Bus
+
+# 0 == ANY, Use ANY
+slider3: 0        <0,16,1>-Input Channel
+# 0 == AS_INPUT, so copy input by default
+slider4: 0        <0,16,1>-Output Channel
+
+slider5: 0        <0,1,1>-Theme
+
+<?
+  dbg = (DBG == 1)?(""):("-");
+  
+  ni = 0;
+  while(ni < 128) (
+    
+    oct  = floor(ni / 12) - 1;
+    note = floor(ni % 12);
+    
+    note_name =  (note==0)?("C"):((note==1)?("C#"):((note==2)?("D"):((note==3)?("D#"):
+                ((note==4)?("E"):((note==5)?("F"):((note==6)?("F#"):((note==7)?("G"):
+                ((note==8)?("G#"):((note==9)?("A"):((note==10)?("A#"):("B")))))))))));
+    
+    // Generate sliders for held notes
+    printf("slider%d:-1<-1,127,1>    %s%s%d associated CC\n", ni + 10, dbg, note_name, oct, ni);
+  
+    ni += 1;
+  );
+?>
+
+@init
+
+MSG_NOTE_OFF              = 8;
+MSG_NOTE_ON               = 9;
+MSG_AT_POLY               = 10; // 0x0A
+MSG_CC                    = 11; // 0x0B
+
+ext_midi_bus = 1;
+ext_noinit = 1;
+
+function setTheme(theme_num) 
+  local(thslnum)
+(
+  slider(SLIDER_THEME) = theme_num;
+  slider_automate(1 << (SLIDER_THEME-1));
+);
+
+function midiBusInput()                   ( slider(SLIDER_MIDI_BUS_IN) );
+function midiBusOutput()                  ( slider(SLIDER_MIDI_BUS_OUT) );
+
+function midiChanInput()                  ( slider(SLIDER_MIDI_CHAN_IN) );
+function midiChanOutput()                 ( slider(SLIDER_MIDI_CHAN_OUT) );
+
+function currentTheme()                   ( slider(SLIDER_THEME) );
+
+function roundi(valf) (
+  floor(valf+0.5) | 0;
+);
+
+// Helper function for memory allocation.
+function malloc(msize)
+  local(ret)
+(
+  ret = MEM_PTR;
+  MEM_PTR += msize;
+  ret;
+);
+
+// Same thing for gmem.
+function galloc(msize)
+  local(ret)
+(
+  ret = GMEM_PTR;
+  GMEM_PTR += msize;
+  ret;
+);
+
+function instanceGlobalVarInit() (
+
+  // Theme attribute container
+  TH                  = 0;
+  
+  // Theme enum
+  DARK_THEME          = 0;
+  LIGHT_THEME         = 1;
+  
+  // Design pattern constants
+  ANY                 = 0;
+  AS_SRC              = 0;
+  KEEP                = 0;
+  DROP                = -1;
+  NONE                = -1;
+  
+  // Coordinates of UI elements
+  MIDI_BUS_TOP        = 50;
+  MIDI_BUS_LEFT       = 600;
+
+  MIDI_CHAN_TOP       = 150;
+  MIDI_CHAN_LEFT      = 600;
+  
+  THEME_TOP           = 250;
+  THEME_LEFT          = 596;
+  
+  SLIDER_MIDI_BUS_IN      = 1;
+  SLIDER_MIDI_BUS_OUT     = 2;
+  SLIDER_MIDI_CHAN_IN     = 3;
+  SLIDER_MIDI_CHAN_OUT    = 4;
+  SLIDER_THEME            = 5;
+  SLIDER_NOTE_TO_CC_START = 10;
+);
+
+function instanceMemoryMapInit() 
+  local(ni)
+(
+  
+  MEM_PTR   = 0;
+  GMEM_PTR  = 0;
+  
+  NOTE_ACTIVITY = malloc(128);
+  NOTE_PRESSED  = malloc(128);
+  ni = 0;
+  while(ni < 128) (
+    NOTE_ACTIVITY[ni] = 0;
+    NOTE_PRESSED[ni]  = 0;
+    ni = ni+1;
+  );
+  
+  freembuf(MEM_PTR);
+);
+
+function switchToDarkTheme() (
+  
+  TH.BACKGROUND          = 0x000000;
+  TH.DEFAULT_FONT        = 0xCCCCCC; // Default font color
+  TH.TITLE               = 0xFFFFFF;
+  
+  TH.HEADER              = 0x202066;
+  TH.HEADER_TEXT         = TH.DEFAULT_FONT;
+  
+  TH.GRID               = 0x909090;
+  TH.GRID_NUMS          = 0xFFFFFF;
+  TH.GRID_HIGHLIGHT     = 0x7070F0;
+  TH.GRID_ENABLED       = 0xA0A000;
+  
+  TH.GRID_BLACK_KEY      = TH.BACKGROUND;
+  TH.GRID_WHITE_KEY      = 0x303030; 
+  
+  TH.MONO_B              = 0x202020;
+  TH.MONO_B_H            = 0x505050;
+  TH.MONO_B_TEXT         = 0xAAAAFF;
+  
+  TH.DYN_LABEL           = 0x8080FF;
+  
+  // Enable/Disable button colors (Green/Grey)
+  TH.EN_B_ON             = TH.GRID_ENABLED; // Toggle button on
+  TH.EN_B_ON_H           = TH.GRID_HIGHLIGHT; // Toggle button on+hover
+  TH.EN_B_ON_TEXT        = 0xFFFFFF;
+  TH.EN_B_OFF            = 0x202020; // Toggle button off
+  TH.EN_B_OFF_H          = 0x606060; // Toggle button off+hover
+  TH.EN_B_OFF_TEXT       = TH.DEFAULT_FONT;
+  
+  // Switch button (Bistate button, but does not change color)
+  // Used for changing tabs for example
+  TH.SW_B_ON             = 0x202020;
+  TH.SW_B_ON_H           = 0x505050;
+  TH.SW_B_ON_TEXT        = TH.DEFAULT_FONT;
+  TH.SW_B_OFF            = 0x202020;
+  TH.SW_B_OFF_H          = 0x505050;
+  TH.SW_B_OFF_TEXT       = TH.DEFAULT_FONT;
+);
+
+function switchToLightTheme() (
+  
+  TH.BACKGROUND          = 0xE0E0E0;
+  TH.DEFAULT_FONT        = 0x404040; // Default font color
+  TH.TITLE               = 0x000000;
+
+  TH.HEADER              = 0xC0C0C0;
+  TH.HEADER_TEXT         = TH.DEFAULT_FONT;
+  
+  TH.GRID                = 0x909090;
+  TH.GRID_NUMS           = 0x000000;
+  TH.GRID_HIGHLIGHT      = 0xC7C7FF;
+  TH.GRID_ENABLED        = 0x7070F0;
+  
+  TH.GRID_BLACK_KEY      = 0xD0D0D0;
+  TH.GRID_WHITE_KEY      = TH.BACKGROUND; 
+  
+  TH.MONO_B              = 0xA0A0A0;
+  TH.MONO_B_H            = 0xD0D0D0;
+  TH.MONO_B_TEXT         = 0xFFFFFF;
+  
+  TH.DYN_LABEL           = 0x6060FF;
+  
+  // Enable/Disable button colors (Green/Grey)
+  TH.EN_B_ON             = TH.GRID_ENABLED; // Toggle button on
+  TH.EN_B_ON_H           = TH.GRID_HIGHLIGHT; // Toggle button on+hover
+  TH.EN_B_ON_TEXT        = 0xFFFFFF;
+  TH.EN_B_OFF            = 0xA0A0A0; // Toggle button off
+  TH.EN_B_OFF_H          = 0xD0D0D0; // Toggle button off+hover
+  TH.EN_B_OFF_TEXT       = TH.DEFAULT_FONT;
+  
+  // Switch button (Bistate button, but does not change color)
+  // Used for changing tabs for example
+  TH.SW_B_ON             = 0xA0A0A0;
+  TH.SW_B_ON_H           = 0xD0D0D0;
+  TH.SW_B_ON_TEXT        = TH.DEFAULT_FONT;
+  TH.SW_B_OFF            = 0xA0A0A0;
+  TH.SW_B_OFF_H          = 0xD0D0D0;
+  TH.SW_B_OFF_TEXT       = TH.DEFAULT_FONT;
+);
+
+function switchToTheme(theme_num) (
+  (theme_num == DARK_THEME)?(switchToDarkTheme()):(switchToLightTheme());
+);
+
+function updateTheme() (
+  switchToTheme(currentTheme());
+);
+
+function initThemes() (
+  slider(SLIDER_THEME) = DARK_THEME;
+  updateTheme();
+);
+
+function fontInit() (
+  gfx_setfont(2,"Arial",10,'b');  // Configure font number 2
+  gfx_setfont(1,"Arial",10,'b');  // Configure font number 1
+  gfx_setfont(0);
+);
+
+instanceGlobalVarInit();
+fontInit();
+initThemes();
+instanceMemoryMapInit();
+
+@gfx 800 400
+
+function gfx_rgb(hex_col) (
+  gfx_r = ((hex_col>>16)&0xFF)/255;
+  gfx_g = ((hex_col>>8)&0xFF)/255;
+  gfx_b = ((hex_col>>0)&0xFF)/255;
+);
+
+function gfx_xy(x,y) (
+  gfx_x = x;
+  gfx_y = y;
+);
+
+// Functions to enrich if some widgets need customization
+function bgColorForComboBox(widget_id) (
+  TH.BACKGROUND;
+);
+
+function txtColorForComboBox(widget_id) (
+  TH.DYN_LABEL;
+);
+
+function textForComboBox(widget_id, value)
+  local(str)
+(
+  ( (widget_id == "midibus_input" || widget_id == "midichan_input" ) && value == ANY)?("Any"):(
+  ( (widget_id == "midibus_output" || widget_id == "midichan_output" ) && value == ANY)?("= In"):(
+    str = #;
+    sprintf(str, "%d", value);
+  ));
+);
+
+function noteName(note) (
+   (note==0)?("C"):((note==1)?("C #"):((note==2)?("D"):((note==3)?("D #"):
+  ((note==4)?("E"):((note==5)?("F"):((note==6)?("F #"):((note==7)?("G"):
+  ((note==8)?("G #"):((note==9)?("A"):((note==10)?("A #"):("B")))))))))));
+);
+
+function noteIsWhite(note) (
+  note = note % 12;
+  (note == 0 || note == 2 || note == 4 || note == 5 || note == 7 || note == 9 || note == 11);
+);
+
+
+function drawBottomBanner()
+(
+  // Header Background
+  gfx_rgb(TH.HEADER);
+  gfx_rect(0,gfx_h-20,gfx_w,20);
+
+  // Header text
+  gfx_rgb(TH.HEADER_TEXT);
+  gfx_x = 6; gfx_y = gfx_h - 14;
+  gfx_drawstr("MIDI Poly Aftertouch CC Multiplexer v0.9 by Benjamin 'Talagan' Babut");
+);
+
+
+// - or + button for a spinbox
+function drawAddOrSubButton(button_id,slider_num,l,t,add_or_sub,minval,maxval,should_wrap)
+   local(known_val, bl ,bt, br, bb, in_rect, val_shift, val_shift_abs, got_event, new_srcdstbtn_time, last_srcdstbtn_time, long_time_spent_on_button)
+(
+  got_event = 0;
+
+  bl = l;
+  bt = t;
+
+  br = bl + 15;
+  bb = bt + 15;
+
+  in_rect = (mouse_x >= bl && mouse_x <= br && mouse_y <= bb && mouse_y >= bt);
+
+  (mouse_click == 1 && in_rect)?(
+    mouse_capturator = button_id;
+    g_start_add_or_sub_time = time_precise();
+  );
+
+  in_rect  ?
+  (
+    gfx_rgb(TH.MONO_B_H);
+    val_shift = 0;
+
+    mouse_cap == 1 && mouse_capturator == button_id ? (
+      // Limit this to 20 calls / seconds
+      new_srcdstbtn_time = time_precise();
+      (new_srcdstbtn_time - last_srcdstbtn_time > 0.03 || mouse_click) ? (
+
+        val_shift_abs               = 1;
+        long_time_spent_on_button   = new_srcdstbtn_time - g_start_add_or_sub_time - 1;
+
+        (long_time_spent_on_button > 0)?(
+          // This starts at 1.
+          val_shift_abs = exp(long_time_spent_on_button);
+        );
+
+        val_shift = (add_or_sub)?(val_shift_abs):(-val_shift_abs);
+        last_srcdstbtn_time = new_srcdstbtn_time;
+
+        // Force immediate first pressure
+        mouse_click == 1 ? (last_srcdstbtn_time += 0.3);
+      );
+    );
+
+    val_shift != 0 ? (
+
+      known_val = slider(slider_num);
+      known_val += val_shift;
+      known_val = roundi(known_val);
+
+      (should_wrap)?(
+        (known_val>maxval)?(known_val = minval);
+        (known_val<minval)?(known_val = maxval);
+      ):(
+        known_val = min(max(known_val,minval),maxval);
+      );
+
+      slider(slider_num) = known_val;
+      slider_automate(2 ^ (slider_num - 1));
+
+      got_event = val_shift;
+    );
+
+  ):( gfx_rgb(TH.MONO_B) );
+
+  // Button background
+  gfx_x   = bl;
+  gfx_y   = bt;
+  gfx_rect(bl,bt,br-bl,bb-bt);
+
+  // Button text
+  gfx_x   = bl+3;
+  gfx_y   = bt+4;
+  gfx_rgb(TH.MONO_B_TEXT);
+
+  (should_wrap)?(
+    add_or_sub == 0?(gfx_drawstr("<")):(gfx_drawstr(">"));
+  ):(
+    add_or_sub == 0?(gfx_drawstr("-")):(gfx_drawstr("+"));
+  );
+
+  got_event;
+);
+
+
+// Draws a enable/disable button
+// This button is linked to an adress in memory : flag_address[flag_local_address].
+// The only way I had found in EEL to use "pointers" was an array trick.
+// I've just discovered pseudo objects, it could be a solution too.
+function drawBistateButton(slider_num,t,l,ontext,offtext,color_on,color_off,color_on_hover,color_off_hover,text_color_on,text_color_off)
+  local(tmp, ontextw, offtextw, minitick,
+        bb, br, bw, bh, bl, bt,
+        in_rect, enabled)
+(
+  minitick = 0;
+
+  tmp = 0; ontextw = 0; offtextw = 0;
+  (ontext == "")?(
+    minitick = 1;
+  ):(
+    gfx_measurestr(ontext, ontextw, tmp);
+  );
+
+  (offtext == "")?(
+    minitick = 1;
+  ):(
+    gfx_measurestr(offtext, offtextw, tmp);
+  );
+
+  (minitick)?(
+    bh = 12;
+    bw = 12;
+  ):(
+    bh = 15;
+    bw = max(ontextw,offtextw) + 10;
+  );
+
+  bl = l;
+  bt = t;
+
+  br = bl + bw;
+  bb = bt + bh;
+
+  enabled = slider(slider_num);
+  in_rect = mouse_x >= bl && mouse_x <= br && mouse_y >= bt && mouse_y <= bb;
+
+  in_rect ?(
+    // Hover color
+    gfx_rgb((enabled)?(color_on_hover):(color_off_hover));
+
+    // Click
+    mouse_click == 1 ? (
+      enabled = !enabled;
+      slider(slider_num) = enabled;
+      slider_automate(2 ^ (slider_num - 1));
+    );
+  ):(
+    // Not-hovered color
+    gfx_rgb((enabled)?(color_on):(color_off));
+  );
+  gfx_rect(bl,bt,bw,bh);
+
+  // Text color
+  gfx_rgb((enabled)?(text_color_on):(text_color_off));
+  gfx_y = t + 4;
+  enabled?(
+    gfx_x = l+(bw-ontextw)/2;
+    gfx_drawstr(ontext);
+  ):(
+    gfx_x = l+(bw-offtextw)/2;
+    gfx_drawstr(offtext)
+  );
+);
+
+function drawStandardBistateButton(slider_num,t,l,on_text,off_text) (
+  drawBistateButton(slider_num,t,l,on_text,off_text, TH.EN_B_ON ,TH.EN_B_OFF, TH.EN_B_ON_H, TH.EN_B_OFF_H, TH.EN_B_ON_TEXT, TH.EN_B_OFF_TEXT);
+);
+
+// ShortCut for a OnOff button with "Enabled"/"Bypass" texts
+function drawEnableDisableButton(flag_address,flag_local_address,t,l) (
+  drawStandardBistateButton(slider_num,t,l,"Enabled","Disabled");
+);
+
+// ShortCut for a OnOff button with "Yes"/"No" texts
+function drawYesNobutton(slider_num,t,l) (
+  drawStandardBistateButton(slider_num,t,l,"Yes","No");
+);
+
+function drawTick(slider_num,t,l) (
+  drawStandardBistateButton(slider_num, t, l, "", "");
+);
+
+// ShortCut for a bistate button with equally balanced values
+function drawSwitchButton(slider_num,t,l,on_text,off_text) (
+ drawBistateButton(slider_num,t,l,on_text,off_text, TH.SW_B_ON ,TH.SW_B_OFF, TH.SW_B_ON_H, TH.SW_B_OFF_H, TH.SW_B_ON_TEXT, TH.SW_B_OFF_TEXT);
+);
+
+// A Spinbox, with a int value and two +/- buttons
+function drawAddOrSubWidget(widget_id, slider_num, l, t, minval, maxval, labelwidth, should_wrap)
+   local(tmp, roffset, got_event, w, h, loff, bt, bl, bb, br)
+(
+  // Offset of the right button
+  roffset = labelwidth + 15;
+
+  got_event = 0;
+
+  // Buttons -/+
+  got_event |= drawAddOrSubButton(widget_id,slider_num,l,t,0,minval,maxval,should_wrap);
+  got_event |= drawAddOrSubButton(widget_id,slider_num,l+roffset,t,1,minval,maxval,should_wrap);
+
+  (labelwidth > 0)?(
+
+    gfx_rgb(bgColorForComboBox(widget_id));
+    bt = t; bl=l+15; br=bl+labelwidth; bb = bt+15;
+    gfx_rect(bl,bt,br-bl,bb-bt);
+
+    g_add_or_sub_hover = (mouse_x >= bl && mouse_x <= br && mouse_y >= bt && mouse_y <= bb);
+
+    // Inner text
+    gfx_rgb(txtColorForComboBox(widget_id));
+    tmp = textForComboBox(widget_id, slider(slider_num) );
+
+    w = 0; h = 0; gfx_measurestr(tmp,w,h);
+    loff = (labelwidth - w) / 2;
+    gfx_xy(l+16+loff, t+4);
+    gfx_drawStr(tmp);
+  );
+
+  got_event;
+);
+
+function drawGridLabels(lpos, tpos, square_w, square_h)
+  local(xi, yi, loff, toff, w, h, str)
+(
+  gfx_setfont(1);
+  gfx_rgb(TH.GRID_NUMS);
+
+  // Draw horizontal labels
+  xi = 0;
+  while(xi<12) (
+    str = #;
+    sprintf(str, "%s", noteName(xi));
+    gfx_measurestr(str,w,h);
+
+    loff = (square_w - w)/2;
+    toff = (square_h - h)/2;
+
+    // Add one square for column
+    gfx_xy(xi*square_w + square_w + lpos + loff, tpos + toff);
+    gfx_drawstr(str);
+    xi+=1;
+  );
+
+  // Draw vertical labels
+  yi = 0;
+  while(yi<11) (
+    str = #;
+    sprintf(str, "%d",yi-1);
+    gfx_measurestr(str,w,h);
+
+    loff = (square_w - w)/2;
+    toff = (square_h - h)/2;
+
+    // Add one square for column
+    gfx_xy(lpos + loff, yi*square_h + square_h + tpos + toff + 1);
+    gfx_drawstr(str);
+    yi+=1;
+  );
+
+  // Labels
+  //gfx_xy(lpos + 8, tpos - 12);
+  //gfx_drawstr("out");
+  //gfx_xy(lpos - 8, tpos + 6);
+ // gfx_drawstr("in");
+
+  gfx_setfont(0);
+);
+
+function drawContextMenu()
+  local(str, r, str_sep, str_chk, str_name, i, curval) (
+
+  (g_menu_is_on)?(
+    str = #; sprintf(str,"");
+    
+    curval  = roundi(slider(SLIDER_NOTE_TO_CC_START + g_menu_ni));
+  
+    i = -1;
+    while(i<128)
+    (
+      str_name = #;
+      (i == -1)?(sprintf(str_name, "None")):(sprintf(str_name, "CC %d", i));
+      str_sep  = ( i == -1 )?(""):("|");
+      str_chk  = ( i == curval )?("!"):("");
+      sprintf(str, "%s%s%s%s", str, str_sep, str_chk, str_name);
+  
+      i = i + 1;
+    );
+    
+    gfx_xy(g_menu_l, g_menu_t);
+    r = gfx_showmenu(str);
+    
+    (r >= 0)?(
+      g_menu_is_on = 0;
+      (r > 0)?(
+        r = r - 2; // Selected value in the combo box
+        slider(SLIDER_NOTE_TO_CC_START + g_menu_ni) = r;
+      );
+    );
+  );
+);
+
+function drawGridSquares(lpos, tpos, square_w, square_h) 
+  local(in_rect, in_zone, left, top,  xi, yi, en, ni, cc, str, str_w, str_h)
+(
+  ni = 0;
+  while(ni < 11 * 12) (
+    yi = floor(ni / 12);
+    xi = floor(ni % 12);
+  
+    gfx_rgb((noteIsWhite(ni)?(TH.GRID_WHITE_KEY):(TH.GRID_BLACK_KEY)));
+    gfx_rect(lpos + square_w + xi * square_w+1,
+     tpos + square_h + yi * square_h+1,
+     square_w-2,
+     square_h-2);
+     
+     ni = ni +1;
+  );
+
+  // Draw squares
+  ni = 0;
+  in_zone = 0;
+  while(ni < 128) (
+    yi = floor(ni / 12);
+    xi = floor(ni % 12);
+          
+    cc      = slider(SLIDER_NOTE_TO_CC_START + ni);
+    en      = (cc != -1);
+    left    = lpos + square_w + xi * square_w;
+    top     = tpos + square_h + yi * square_h;
+    in_rect = (mouse_x > left && mouse_x <= left + square_w && mouse_y > top && mouse_y <= top + square_h);
+    
+    (in_rect)?(
+      in_zone = 1;
+      // Hover : highlight top and left labels
+      gfx_rgb(TH.GRID_HIGHLIGHT);
+      gfx_rect(lpos + square_w + xi * square_w, tpos, square_w, square_h);
+      gfx_rect(lpos, tpos + square_h + yi * square_h, square_w, square_h);
+    );
+      
+    (mouse_click && in_rect)?(
+      g_grid_operation = !en;
+      mouse_capturator = "grid";
+    );
+      
+    (mouse_cap == 1 && in_rect)?(
+      g_menu_l      = left;
+      g_menu_t      = top;
+      g_menu_is_on  = 1;
+      g_menu_ni     = ni;
+    );
+  
+    (NOTE_PRESSED[ni])?(
+      gfx_rgb(TH.GRID_ENABLED);
+       
+      // Draw border
+      gfx_rect(lpos + square_w + xi * square_w, 
+        tpos + square_h + yi * square_h, 
+        square_w, 
+        3);
+      gfx_rect(lpos + square_w + xi * square_w,
+        tpos + square_h + (yi+1) * square_h-2,
+        square_w, 
+        3);         
+      gfx_rect(lpos + square_w + xi * square_w, 
+        tpos + square_h + yi * square_h,
+        3,
+        square_h);
+      gfx_rect(lpos + square_w + (xi + 1) * square_w - 2, 
+        tpos + square_h + yi * square_h,
+        3,
+        square_h);
+        
+      // Draw "progress" bar
+      gfx_rect(lpos + square_w + xi * square_w,
+        tpos + square_h + yi * square_h,
+        square_w * (NOTE_ACTIVITY[ni] / 127.0),
+        square_h);
+    );
+    
+  
+    (en)?(
+      gfx_rgb(TH.DEFAULT_FONT);
+      str = #; sprintf(str, "%d", cc);
+      
+      gfx_measurestr(str, str_w, str_h);
+      gfx_xy(left+square_w/2-str_w/2,top+9);
+      gfx_drawStr(str);
+    );
+      
+    ni += 1;
+  );
+  
+  gfx_setcursor((in_zone)?(186):(0),1);
+  
+  drawContextMenu();
+);
+
+function drawGridLines(lpos, tpos, square_w, square_h)
+  local(xi,yi)
+(
+  // Horizontal grid lines
+  gfx_rgb(TH.GRID);
+  yi = 0;
+  while(yi < 12) (
+    gfx_xy    (lpos + square_w,                 tpos + square_h + yi * square_h);
+    gfx_lineto(lpos + square_w + 12 * square_w, tpos + square_h + yi * square_h);
+    yi += 1;
+  );
+  
+  // Vertical grid lines
+  xi = 0; 
+  while(xi < 13) (
+    gfx_xy    (lpos + square_w + xi * square_w, tpos + square_h );
+    gfx_lineto(lpos + square_w + xi * square_w, tpos + square_h + 11 * square_h);
+    xi += 1;
+  );
+  
+  // Diag
+  //gfx_xy(lpos-10,tpos-10);
+  //gfx_lineto(lpos+square_w,tpos+square_w);
+);
+
+function drawGrid() 
+  local(lpos, tpos, square_w, square_h)
+(
+  updateTheme();
+  
+  gfx_clear = (TH.BACKGROUND & 0xFF) << 16 + (TH.BACKGROUND & 0x00FF00) + (TH.BACKGROUND >> 16) ;
+ 
+  lpos     = 20;
+  tpos     = 30;
+  square_w = 40;
+  square_h = 25;
+  
+  drawGridLines(lpos, tpos, square_w, square_h);
+  drawGridSquares(lpos, tpos, square_w, square_h);
+  drawGridLabels(lpos, tpos, square_w, square_h);
+);
+
+
+function mouseClickAddOn()
+(
+  // Create a mouse_click event
+  (mouse_cap != g_last_mouse_cap)?(
+    (mouse_cap == 1 || mouse_cap == 2)?(mouse_click = 1):(mouse_click = 0);
+    g_last_mouse_cap = mouse_cap;
+  ):(
+    mouse_click = 0;
+  );
+
+  // Clear the capturator source
+  (mouse_cap == 0)?(
+     mouse_capturator = "";
+  );
+);
+
+
+function drawOptionsPanel() (
+  gfx_rgb(TH.TITLE);
+  gfx_xy(MIDI_BUS_LEFT + 35, MIDI_BUS_TOP);
+  gfx_drawstr("MIDI Bus");
+
+  gfx_rgb(TH.DEFAULT_FONT);
+  gfx_xy(MIDI_BUS_LEFT+10, MIDI_BUS_TOP + 30);
+  gfx_drawstr("In");
+  gfx_xy(MIDI_BUS_LEFT+10, MIDI_BUS_TOP + 55);
+  gfx_drawstr("Out");
+
+  drawAddOrSubWidget("midibus_input", SLIDER_MIDI_BUS_IN,MIDI_BUS_LEFT+53,MIDI_BUS_TOP+26,ANY,16,40,0);
+  drawAddOrSubWidget("midibus_output",SLIDER_MIDI_BUS_OUT,MIDI_BUS_LEFT+53,MIDI_BUS_TOP+51,ANY,16,40,0);
+
+
+  gfx_rgb(TH.TITLE);
+  gfx_xy(MIDI_CHAN_LEFT + 30, MIDI_CHAN_TOP);
+  gfx_drawstr("MIDI Chan");
+  
+  gfx_rgb(TH.DEFAULT_FONT);
+  gfx_xy(MIDI_CHAN_LEFT+10, MIDI_CHAN_TOP + 30);
+  gfx_drawstr("In");
+  gfx_xy(MIDI_CHAN_LEFT+10, MIDI_CHAN_TOP + 55);
+  gfx_drawstr("Out");
+
+  drawAddOrSubWidget("midichan_input", SLIDER_MIDI_CHAN_IN, MIDI_CHAN_LEFT+53,MIDI_CHAN_TOP+26,ANY,16,40,0);
+  drawAddOrSubWidget("midichan_output",SLIDER_MIDI_CHAN_OUT,MIDI_CHAN_LEFT+53,MIDI_CHAN_TOP+51,ANY,16,40,0);
+
+  gfx_rgb(TH.TITLE);
+  gfx_xy(THEME_LEFT+15, THEME_TOP+4);
+  gfx_drawstr("Theme");
+
+  drawSwitchButton(SLIDER_THEME,THEME_TOP,THEME_LEFT+70,"Light","Dark");
+);
+
+function draw() (
+  mouseClickAddOn();
+  drawGrid();
+  drawBottomBanner();
+  drawOptionsPanel();
+);
+
+draw();
+
+@block
+
+function receive()
+  local(mpos,msg1,msg2,msg3)
+(
+  evt.present  = 0;
+
+  (midirecv(mpos, msg1, msg2, msg3))?(
+    evt.bus          = midi_bus + 1; // 1-16, not 0-15
+    evt.mpos         = mpos;
+    evt.msg1         = msg1;
+    evt.msg2         = msg2;
+    evt.msg3         = msg3;
+    evt.status       = msg1;
+    evt.type         = (msg1 >> 4) & 0x0F;
+    evt.chan         = (msg1 & 0x0F) + 1; // 1-16, not 0-15
+    evt.present      = 1;
+    
+    (evt.type == MSG_NOTE_ON || evt.type == MSG_NOTE_OFF)?(
+      evt.note        = evt.msg2;
+      evt.velocity    = evt.msg3;
+      evt.after_touch = 0;
+    );
+    
+    (evt.type == MSG_AT_POLY)?(
+      evt.note        = evt.msg2;
+      evt.after_touch = evt.msg3;
+    );
+  );
+);
+
+function forwardCurrentEvent() (
+  midisend(evt.mpos, evt.msg1, evt.msg2, evt.msg3)
+);
+
+function treatCurrentEvent()
+  local(chano,chani,chan_mask,nmsg1, midi_bus_matches, midi_chan_matches,event_type_matches, out_cc, out_bus, out_chan, routing_is_defined)
+(
+  midi_bus_matches    = ((midiBusInput() == ANY) || (midiBusInput() == evt.bus));
+  midi_chan_matches   = ((midiChanInput() == ANY) || (midiChanInput() == evt.chan));
+  event_type_matches  = (evt.type == MSG_NOTE_ON || evt.type == MSG_NOTE_OFF || evt.type == MSG_AT_POLY);
+ 
+  (midi_bus_matches && midi_chan_matches && event_type_matches)?(
+  
+    out_cc              = slider(SLIDER_NOTE_TO_CC_START + evt.note);
+    routing_is_defined  = (out_cc != -1);
+
+    NOTE_ACTIVITY[evt.note] = evt.after_touch;
+      
+    (evt.type == MSG_NOTE_ON)?(  NOTE_PRESSED[evt.note] = (evt.velocity != 0)?(1):(0); );
+    (evt.type == MSG_NOTE_OFF)?( NOTE_PRESSED[evt.note] = 0; );
+
+    (routing_is_defined)?(
+      out_bus  = (midiBusOutput() == AS_SRC)?(evt.bus-1):(midiBusOutput()-1);
+      out_chan = (midiChanOutput() == AS_SRC)?(evt.chan-1):(midiChanOutput()-1);
+      
+      midi_bus = out_bus;
+      midisend(evt.mpos, (out_chan | (MSG_CC << 4)), out_cc, evt.after_touch); 
+    ):(
+      forwardCurrentEvent();
+    );
+  ):(
+    forwardCurrentEvent();
+  ); // <-- Bus & event type matching
+);
+
+function handleMidiEvents()
+(
+  evt = 0;
+
+  receive();
+  while(evt.present)
+  (
+    treatCurrentEvent();
+    receive();
+  );
+);
+
+function mainLoop() (
+  handleMidiEvents();
+);
+
+mainLoop();
+
+
