@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="e3488ad87e1653827abb8d118aa688e71091d393">
+<index version="1" name="ReaTeam JSFX" commit="3fa7494a11057c1bcf75d5a509ca2ad70466406a">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2185,6 +2185,37 @@ And a bit of source code cleaning.]]></changelog>
       <version name="0.9" author="Ben 'Talagan' Babut" time="2024-03-30T16:46:53Z">
         <changelog><![CDATA[- First version.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/9fdae3e34da7a0e150915cbebbf94e1c10d8535f/MIDI/talagan_MIDI%20Channel%20Matrix%20Router.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="talagan_MIDI Poly Aftertouch CC Multiplexer.jsfx" type="effect" desc="MIDI Poly Aftertouch CC Multiplexer">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MIDI Poly Aftertouch CC Multiplexer\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Purpose\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This plugin converts Poly Aftertouch MIDI keys/pads to CCs. The word multiplexer comes from the fact that you may reassign multiple keys/pads to different CCs.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 More explanation\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Poly AT controls are really cool for some applications, because they automatically go back to their rest position. They feel really organic (especially to control things like vibratos, expressivity, and the like) and cease their effect when they are released.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Generally, if you need this plugin, it is because you've already assigned a role to PolyAT, and you may find yourself stuck, wanting to control more parameters with those kind of controls. With this plugin, you can sacrifice some keys from your MIDI Controller (lowest or highest ones, for example) to convert each one to a CC with automatic return to the rest position.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 You can think of them as some kind of keyswitches with continuous detection.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 How to use\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Click on a note to assign a CC to it. Now, all events related to this note (Note ON/OFF and Poly AT) will be transformed to CC events with the CC number you've chosen.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Note ON/OFF events will be affected a CC value of 0.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Events are scoped within MIDI Bus/Channel context (non-matching events are left untouched, and some routing may be applied to matching ones).\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 MIDI Bus handling\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 A basic handling of MIDI Buses is offered : the plugin will only handle events from the "In" MIDI Bus, other buses are left untouched. You may set it to "ANY" to handle all MIDI Buses. You may also reroute one MIDI Bus to another one by changing the "Out" MIDI Bus.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 MIDI Channel handling\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Same remarks as for the MIDI Bus for the MIDI Channel.\par}
+}
+]]></description>
+        <link rel="screenshot">https://stash.reaper.fm/48606/MIDI%20Poly%20Aftertouch%20CC%20Multiplexer.gif</link>
+        <link rel="donation">https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&amp;no_recurring=1&amp;currency_code=EUR</link>
+      </metadata>
+      <version name="0.9" author="Ben 'Talagan' Babut" time="2024-06-09T21:02:42Z">
+        <changelog><![CDATA[- First version.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/3fa7494a11057c1bcf75d5a509ca2ad70466406a/MIDI/talagan_MIDI%20Poly%20Aftertouch%20CC%20Multiplexer.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI Split Pitch Bend to CCs.jsfx" type="effect" desc="MIDI Split Pitch Bend to CCs">
