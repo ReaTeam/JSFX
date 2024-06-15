@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="ad473d2d8fed73db81b05284a88a36b1ec81c588">
+<index version="1" name="ReaTeam JSFX" commit="aaa021f7ff31d394d9591ce06c677114fa0ceb26">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2185,6 +2185,10 @@ And a bit of source code cleaning.]]></changelog>
       <version name="0.9" author="Ben 'Talagan' Babut" time="2024-03-30T16:46:53Z">
         <changelog><![CDATA[- First version.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/9fdae3e34da7a0e150915cbebbf94e1c10d8535f/MIDI/talagan_MIDI%20Channel%20Matrix%20Router.jsfx</source>
+      </version>
+      <version name="0.9.1" author="Ben 'Talagan' Babut" time="2024-06-15T23:41:28Z">
+        <changelog><![CDATA[- Bug fix : MIDI Bus was not handled correctly]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/aaa021f7ff31d394d9591ce06c677114fa0ceb26/MIDI/talagan_MIDI%20Channel%20Matrix%20Router.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI Poly Aftertouch CC Multiplexer.jsfx" type="effect" desc="MIDI Poly Aftertouch CC Multiplexer">
