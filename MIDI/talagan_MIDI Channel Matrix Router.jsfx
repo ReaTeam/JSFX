@@ -1,8 +1,8 @@
 desc:MIDI Channel Matrix Router
 author: Ben 'Talagan' Babut
-version: 0.9
+version: 0.9.1
 changelog:
-  - First version.
+  - Bug fix : MIDI Bus was not handled correctly
 donation:
   https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
 screenshot:
@@ -529,7 +529,7 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("MIDI Channel Matrix Router v0.9 by Benjamin 'Talagan' Babut");
+  gfx_drawstr("MIDI Channel Matrix Router v0.9.1 by Benjamin 'Talagan' Babut");
 );
 
 function drawGridLabels(lpos, tpos, square_w, square_h)
@@ -770,6 +770,7 @@ function receive()
 );
 
 function forwardCurrentEvent() (
+  midi_bus = evt.bus-1;
   midisend(evt.mpos, evt.msg1, evt.msg2, evt.msg3)
 );
 
@@ -789,6 +790,7 @@ function treatCurrentEvent()
     while(chano < 16) (
       (chan_mask & (1 << chano) != 0)?(
         // Channel matches
+        midi_bus = (midiBusOutput() == AS_SRC)?(evt.bus-1):(midiBusOutput()-1);
         nmsg1 = (evt.type << 4) | chano;
         midisend(evt.offset, nmsg1, evt.msg2, evt.msg3);
       );
