@@ -1,8 +1,8 @@
 desc:MIDI Channel Matrix Router
 author: Ben 'Talagan' Babut
-version: 0.9.1
+version: 0.9.2
 changelog:
-  - Bug fix : MIDI Bus was not handled correctly
+  - Feature : Added pass through option for MIDI Bus Routing
 donation:
   https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
 screenshot:
@@ -28,16 +28,18 @@ about:
   If no boxes match the input channel (the complete line for an input channel is unchecked),
   then corresponding events are simply dropped.
 
-  ## Pass through
+  ## Channel Pass through
 
   If you want to pass through an original event for channel x, just check the x/x box.
 
   ## MIDI Bus handling
 
   A basic handling of MIDI Buses is offered : the plugin will only handle events from the "In" MIDI Bus,
-  other buses are left untouched. You may set it to "ANY" to handle all MIDI Buses. You may also reroute
-  one MIDI Bus to another one by changing the "Out" MIDI Bus.
-
+  other buses are left untouched. You may set it to "ANY" to handle all MIDI Buses. 
+  
+  You may also reroute the input MIDI Bus(es) to another one by changing the "Out" MIDI Bus. If you do so,
+  you can specifically check the "PT" (Passthrough) option to prevent the incoming events from being dropped
+  from the original bus (this is a way to "fork" and modify the input bus(es)).
 
 
 slider1:  1        <0,0xFFFF,1>-Channel 1 Routing Mask
@@ -61,6 +63,8 @@ slider16: 32768    <0,0xFFFF,1>-Channel 16 Routing Mask
 slider17: 1        <0,16,1>-Input MIDI Bus
 # 0 == AS_INPUT, so copy input by default
 slider18: 0        <0,16,1>-Output MIDI Bus
+slider19: 0        <0,1,1>-Passthrough
+
 
 slider20: 1        <0,1,1>-Apply to Note ON
 slider21: 1        <0,1,1>-Apply to Note OFF
@@ -93,6 +97,8 @@ ext_noinit = 1;
 // Remap sliders with handy aliases
 function midiBusInput()                   ( slider(17) );
 function midiBusOutput()                  ( slider(18) );
+function midiBusPassthrough()             ( slider(19) );
+
 function currentTheme()                   ( slider(32) );
 function routeMaskForChannel(channel)     ( slider(channel+1) );
 
@@ -161,11 +167,13 @@ function instanceGlobalVarInit() (
   NONE                = -1;
 
   // Coordinates of UI elements
-  MIDI_BUS_TOP        = 240;
-  MIDI_BUS_LEFT       = 398;
-  EVENT_SEL_TOP       = 26;
+  EVENT_SEL_TOP       = 20;
   EVENT_SEL_LEFT      = 392;
-  THEME_TOP           = 342;
+  
+  MIDI_BUS_TOP        = 230;
+  MIDI_BUS_LEFT       = 398;
+  
+  THEME_TOP           = 350;
   THEME_LEFT          = 398;
 );
 
@@ -529,7 +537,7 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("MIDI Channel Matrix Router v0.9.1 by Benjamin 'Talagan' Babut");
+  gfx_drawstr("MIDI Channel Matrix Router v0.9.2 by Benjamin 'Talagan' Babut");
 );
 
 function drawGridLabels(lpos, tpos, square_w, square_h)
@@ -692,19 +700,6 @@ function drawAffect(text, num, slider_num) (
 );
 
 function drawOptionsPanel() (
-  gfx_rgb(TH.TITLE);
-  gfx_xy(MIDI_BUS_LEFT + 35, MIDI_BUS_TOP);
-  gfx_drawstr("MIDI Bus");
-
-  gfx_rgb(TH.DEFAULT_FONT);
-  gfx_xy(MIDI_BUS_LEFT+10, MIDI_BUS_TOP + 30);
-  gfx_drawstr("In");
-  gfx_xy(MIDI_BUS_LEFT+10, MIDI_BUS_TOP + 55);
-  gfx_drawstr("Out");
-
-  drawAddOrSubWidget("midibus_input", 17,MIDI_BUS_LEFT+53,MIDI_BUS_TOP+26,ANY,16,40,0);
-  drawAddOrSubWidget("midibus_output",18,MIDI_BUS_LEFT+53,MIDI_BUS_TOP+51,ANY,16,40,0);
-
 
   gfx_rgb(TH.TITLE);
   gfx_xy(EVENT_SEL_LEFT+45, EVENT_SEL_TOP);
@@ -718,6 +713,24 @@ function drawOptionsPanel() (
   drawAffect("Program Change",    5, 25);
   drawAffect("Poly AT",           6, 26);
   drawAffect("Others",            7, 27);
+  
+
+  gfx_rgb(TH.TITLE);
+  gfx_xy(MIDI_BUS_LEFT + 35, MIDI_BUS_TOP);
+  gfx_drawstr("MIDI Bus");
+
+  gfx_rgb(TH.DEFAULT_FONT);
+  gfx_xy(MIDI_BUS_LEFT+10, MIDI_BUS_TOP + 30);
+  gfx_drawstr("In");
+  gfx_xy(MIDI_BUS_LEFT+10, MIDI_BUS_TOP + 55);
+  gfx_drawstr("Out");
+  gfx_xy(MIDI_BUS_LEFT+10, MIDI_BUS_TOP + 80);
+  gfx_drawstr("PT");
+
+  drawAddOrSubWidget("midibus_input", 17,MIDI_BUS_LEFT+53,MIDI_BUS_TOP+26,ANY,16,40,0);
+  drawAddOrSubWidget("midibus_output",18,MIDI_BUS_LEFT+53,MIDI_BUS_TOP+51,ANY,16,40,0);
+  drawYesNobutton(19,MIDI_BUS_TOP+76,MIDI_BUS_LEFT+71);
+
 
   gfx_rgb(TH.TITLE);
   gfx_xy(THEME_LEFT+15, THEME_TOP+4);
@@ -784,19 +797,29 @@ function treatCurrentEvent()
     // Midi type is not affected
     chani     = evt.chan - 1; // Reconvert back to 0..15
     chan_mask = routeMaskForChannel(chani);
+    
+    // Set the output MIDI bus
+    midi_bus  = (midiBusOutput() == AS_SRC)?(evt.bus-1):(midiBusOutput()-1);
 
     chano     = 0;
 
     while(chano < 16) (
       (chan_mask & (1 << chano) != 0)?(
         // Channel matches
-        midi_bus = (midiBusOutput() == AS_SRC)?(evt.bus-1):(midiBusOutput()-1);
         nmsg1 = (evt.type << 4) | chano;
         midisend(evt.offset, nmsg1, evt.msg2, evt.msg3);
       );
 
       chano += 1;
     ); // <-- output chan loop
+    
+    // MIDI Bus Pass through original events
+    // Only apply if the output bus is different from the input bus
+    // (else, it's handled by the channel grid)
+    ((midi_bus != evt.bus-1) && midiBusPassthrough())?(
+      forwardCurrentEvent();
+    )
+    
   ):(
     forwardCurrentEvent();
   ); // <-- Bus & event type matching
