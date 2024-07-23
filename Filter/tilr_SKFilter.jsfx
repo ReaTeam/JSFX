@@ -1,0 +1,194 @@
+desc: SKFilter
+author: tilr
+version: 1.0
+provides:
+  tilr_SKFilter/skf.Saike_Yutani_Filters.jsfx-inc
+  tilr_SKFilter/skf.Saike_Yutani_oversampling.jsfx-inc
+  tilr_SKFilter/skf.Saike_Yutani_upsamplers
+about:
+  # SKFilter
+  SKFilter (or Saikes filters) is a set of unique filters extracted from [Yutani Bass](https://github.com/JoepVanlier/JSFX/tree/master/Yutani)
+
+  #### Features 
+  * 29 filter types
+  * Non-linear analog modelled filters
+  * Filter drive
+  * Filter modes and morphing
+  * Oversampling up to 8x
+
+desc:SKFilter
+
+slider1:filter_type=1<0,28,1{Linear,MS-20,Linear x2,Moog,Ladder,303,MS-20 asym,DblRes,DualPeak,TriplePeak,svf nl 2p,svf nl 4p,svf nl 2p inc,svf nl 4p inc,rectified resonance,Steiner,SteinerA,Muck,Pill2p,Pill4p,Pill2p Aggro,Pill4p Aggro,Pill2p Stacc,Pill4p Stacc,Ladder3,Ladder6,HLadder,SVF2,SVF4}>Filter type
+slider2:drive=0<0,48,1>Filter Drive (dB)
+slider3:boost=0<-6,48,1>Post Boost (dB)
+slider4:cutoff=.6<0,1,.0001>Cutoff
+slider5:resonance=0.7<0,1,.0001>Resonance
+slider6:filter_mode=0<0,3,1{Low Pass,Band Pass,High Pass,Band Reject}>Filter Mode
+slider7:morph=0<0,1,.0001>Morph
+
+slider10:_oversampling=0<0,7,1{Off,2x,3x,4x,5x,6x,7x,8x}>Oversampling
+
+import skf.Saike_Yutani_Filters.jsfx-inc
+import skf.Saike_Yutani_oversampling.jsfx-inc
+import skf.Saike_Yutani_upsamplers.jsfx-inc
+
+@init
+freemem = 0;
+lfilter_mode = filter_mode;
+lmorph = morph;
+
+/* Oversampling memory */
+freemem = (sinc_hist1 = freemem) + 10000;
+freemem = (sinc_hist2 = freemem) + 10000;
+freemem = (sinc_flt = freemem) + 10000;
+freemem = (sinc_flt2 = freemem) + 10000;
+freemem = (sinc_flt3 = freemem) + 10000;
+freemem = (sinc_flt4 = freemem) + 10000;
+freemem = (sinc_tmp = freemem) + 10000;
+
+freemem = (l_buffer = freemem) + 2001;
+freemem = (r_buffer = freemem) + 2001;
+
+freemem = (l_pdc_buffer = freemem) + 2001;
+freemem = (r_pdc_buffer = freemem) + 2001;
+
+log10d20_conversion  = .11512925464970228420089957273422;
+
+function rc_set(rc)
+  instance(a) (
+    a = 1 / (rc * srate + 1);
+);
+function rc_lp(sample)
+  instance(lp, a) (
+    lp += a * (sample - lp);
+);
+function smooth()
+  instance (lp, smooth) (
+    lp = smooth;
+    smooth = this.rc_lp(this);
+);
+
+cutoff.rc_set(0.0033);
+cutoff.smooth = cutoff;
+resonance.rc_set(0.0033);
+resonance.smooth = resonance;
+drive.rc_set(0.0033);
+drive.smooth = drive;
+boost.rc_set(0.0033);
+boost.smooth = boost;
+
+@slider
+oversampling = _oversampling + 1;
+sampling_ratio = 44100 / srate;
+sampling_factor = oversampling / sampling_ratio;
+isampling_factor = 1 / sampling_factor;
+israte = 1.0 / srate;
+israte_radian = 2.0*$pi*israte;
+current_safety_moog = (1.0 - log(safety_limit_moog * oversampling) / log(20/22050));
+
+// change morph based on filter_mode
+lfilter_mode != filter_mode ? (
+  morph = filter_mode / 4;
+  lmorph = morph;
+  lfilter_mode = filter_mode;
+);
+
+// change filter_mode based on morph
+lmorph != morph ? (
+  filter_mode = floor(morph * 4);
+  lfilter_mode = filter_mode;
+  lmorph = morph;
+);
+
+//check_safety();
+
+@sample
+
+spl0 || spl1 ? (
+cutoff.smooth();
+resonance.smooth();
+drive.smooth();
+boost.smooth();
+
+filter.init_filter(filter_type, cutoff.smooth, cutoff.smooth, morph, morph, resonance.smooth);
+
+current_drive = clamp(drive.smooth, -32, 48);
+current_boost = clamp(boost.smooth, -6, 48);
+preamp      = exp(log10d20_conversion*current_drive);
+inv_preamp  = exp(-log10d20_conversion*current_drive);
+final_boost = exp(log10d20_conversion*current_boost);
+
+oversampling > 1 ? (
+  upsampleL.updateUpHist(oversampling, spl0);
+  upsampleR.updateUpHist(oversampling, spl1);
+
+  f = 0;
+  loop(oversampling,
+    f += 1;
+    ssl = oversampling*upsampleL.upSample(oversampling);
+    ssr = oversampling*upsampleR.upSample(oversampling);
+
+    filter.processSample(filter_type);
+    ssl *= inv_preamp;
+    ssr *= inv_preamp;
+
+    downL.updateDownHist(oversampling, ssl);
+    downR.updateDownHist(oversampling, ssr);
+
+    ( f == 1 ) ? (
+      spl0 = downL.downSample(oversampling);
+      spl1 = downR.downSample(oversampling);
+    );
+  );
+) : (
+  ssl = spl0 * preamp;
+  ssr = spl1 * preamp;
+
+  filter.processSample(filter_type);
+  ssl *= inv_preamp;
+  ssr *= inv_preamp;
+
+  spl0 = ssl;
+  spl1 = ssr;
+);
+
+spl0 *= final_boost;
+spl1 *= final_boost;
+);
+
+@gfx 450 50
+
+gfx_set(1,1,0);
+gfx_x = 5;
+gfx_y = 5;
+
+filter_type == 0 ? gfx_drawstr("2-pole linear state variable filter (12 dB/oct).")
+: filter_type == 1 ? gfx_drawstr("MS-20 emulation (12 dB/oct LP, BP, 6 dB/oct HP).")
+: filter_type == 2 ? gfx_drawstr("4-pole linear state variable filter (12 dB/oct)")
+: filter_type == 3 ? gfx_drawstr("Moog emulation (24 dB/oct).")
+: filter_type == 4 ? gfx_drawstr("Ladder filter with two stages (12 dB/oct).")
+: filter_type == 5 ? gfx_drawstr("Blaukraut's 303 filter emulation")
+: filter_type == 6 ? gfx_drawstr("MS-20 emulation with diode asymmetry\n(12 dB/oct LP, BP, 6 dB/oct HP).")
+: filter_type == 7 ? gfx_drawstr("DblRes")
+: filter_type == 8 ? gfx_drawstr("2 2-pole state variable filters in series\nwhere one is placed at four times the cutoff.\nResonance peak is saturated (approximate).")
+: filter_type == 9 ? gfx_drawstr("3 2-pole state variable filters in series.\nCutoff frequencies are at one, two and four times\nthe base cutoff.\nResonance peak is saturated (approximate).")
+: filter_type == 10 ? gfx_drawstr("2-pole non-linear state variable filter (12 dB/oct)\nwith asymmetry in the saturation which leads\nto flutter when driven.\nSounds nice at low resonances.")
+: filter_type == 11 ? gfx_drawstr("4-pole non-linear state variable filter (24 dB/oct)\nwith asymmetry in the saturation which leads\nto flutter when driven.\nSounds nice at low resonances.")
+: filter_type == 12 ? gfx_drawstr("2-pole non-linear state variable filter (12 dB/oct)\ninc")
+: filter_type == 13 ? gfx_drawstr("4-pole non-linear state variable filter (24 dB/oct)\ninc")
+: filter_type == 14 ? gfx_drawstr("2-pole linear state variable filter where\nthe approximate resonance is rectified.")
+: filter_type == 15 ? gfx_drawstr("2-pole non-linear Steiner filter with diode clipped\n(symmetric) feedback.Be warned, over 0.5 this filter\ngoes into hard oscillation. This sounds awful unless\nthere's sufficient drive to choke it.\nResonance loss more dominant at HF.")
+: filter_type == 16 ? gfx_drawstr("2-pole non-linear Steiner filter with diode clipped\n(asymmetric) feedback. Raising the drive lowers the\nresonance (chokes it). Resonance loss more dominant\nat HF.")
+: filter_type == 17 ? gfx_drawstr("Damaged 4p non-linear SVF.")
+: filter_type == 18 ? gfx_drawstr("2-pole pillowy non-linear filter")
+: filter_type == 19 ? gfx_drawstr("4-pole pillowy non-linear filter")
+: filter_type == 20 ? gfx_drawstr("2-pole pillowy non-linear filter w/ clipper in feedback")
+: filter_type == 21 ? gfx_drawstr("4-pole pillowy non-linear filter w/ clipper in feedback")
+: filter_type == 22 ? gfx_drawstr("2-pole pillowy non-linear filter w/ clipper in feedback\nand crossover dist")
+: filter_type == 23 ? gfx_drawstr("4-pole pillowy non-linear filter w/ clipper in feedback\nand crossover dist")
+: filter_type == 24 ? gfx_drawstr("Ladder filter")
+: filter_type == 25 ? gfx_drawstr("Ladder filter")
+: filter_type == 26 ? gfx_drawstr("2-pole ladder filter with allpass filter for resonance.\nDrive this one hard.")
+: filter_type == 27 ? gfx_drawstr("2-pole SVF filter with antisaturator.\nDrive this one hard.")
+: filter_type == 28 ? gfx_drawstr("4-pole SVF filter with antisaturator.\nDrive this one hard.")
+

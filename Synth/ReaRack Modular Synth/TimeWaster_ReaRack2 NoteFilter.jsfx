@@ -1,0 +1,289 @@
+version: 2.0.0
+desc:ReaRack2 - Note Filter
+noindex: true
+author:    Malcolm Smith
+           Copyright(C) 2016 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
+           
+license:   LGPL - http://www.gnu.org/licenses/lgpl.html
+         
+about:     MIDI note filter module for the ReaRack modular JSFX synth system.
+
+changelog: Version 2.0.0 (10/12/2017) Initial version 2 release.
+
+slider1:chanout=1<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Ouput Channel
+slider2:edge1=0<0,127,1>Filter Window Edge 1
+slider3:edge2=127<0,127,1>Filter Window Edge 2
+slider5:strt=1<1,32,1>Note thinning Start note
+slider6:nth=1<1,32,1>Note thinning Loop note
+slider8:beatdiv1=0<0,24,1{1/64,1/32,1/16,1/8,1/4,1/3,1/2,2/3,1,1.5,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Beat window Start beat
+slider9:beatstrtft=0<-1,1,0.001>Start beat fine tune
+slider10:beatdiv2=8<0,24,1{1/64,1/32,1/16,1/8,1/4,1/3,1/2,2/3,1,1.5,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Beat window Loop beat
+slider11:beatdiv3=8<0,24,1{1/64,1/32,1/16,1/8,1/4,1/3,1/2,2/3,1,1.5,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Beat window Size
+slider12:beatwinft=0<-1,1,0.001>Window size fine tune
+slider14:sclass=0<0,3,1{None,Master,Slave}>Class
+slider15:sgroup=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Group
+
+in_pin:none
+out_pin:none
+
+options:gmem=ReaRack
+
+@init
+fxn = 260;
+notecount = 0;
+initstate = 1;
+
+function beatSldr(beatdiv)
+(
+ beatdiv <= 4 ? 2^(beatdiv-6):
+ beatdiv == 5 ? 1/3:
+ beatdiv == 6 ? 0.5:
+ beatdiv == 7 ? 2/3:
+ beatdiv == 8 ? 1:
+ beatdiv == 9 ? 1.5:
+ beatdiv >=10 ? beatdiv-8;
+ );
+
+@slider
+
+slidermove = 1;
+
+@block
+
+sclass == 2 ? slidermove  = gmem[group+fxn+10];
+
+slidermove == 1 ?
+(
+//Store slider values
+group = sgroup*1000;
+
+sclass == 1 ? (
+  gmem[group+fxn+0] = edge1;
+  gmem[group+fxn+1] = edge2;
+  gmem[group+fxn+2] = strt;
+  gmem[group+fxn+3] = nth;
+  gmem[group+fxn+4] = beatdiv1;
+  gmem[group+fxn+5] = beatstrtft;
+  gmem[group+fxn+6] = beatdiv2;
+  gmem[group+fxn+7] = beatdiv3;
+  gmem[group+fxn+8] = beatwinft;
+  gmem[group+fxn+9] = chanout;
+  gmem[group+fxn+10] = slidermove;
+);
+// Retrieve slider values
+sclass == 2 ? ( 
+  edge1      = gmem[group+fxn+0];
+  edge2      = gmem[group+fxn+1];
+  strt       = gmem[group+fxn+2];
+  nth        = gmem[group+fxn+3];
+  beatdiv1   = gmem[group+fxn+4];
+  beatstrtft = gmem[group+fxn+5];
+  beatdiv2   = gmem[group+fxn+6];
+  beatdiv3   = gmem[group+fxn+7];
+  beatwinft  = gmem[group+fxn+8];
+  chanout    = gmem[group+fxn+9];
+);
+
+initstate == 1 ? (
+ initbeat = beat_position;
+ initstate = 0;
+ );
+ 
+strt > nth ? (
+  strt = nth;
+  sliderchange(2^5); // The start note value can't be higer than the note loop length.
+  );
+beatdiv1 > beatdiv2 ? (
+  beatdiv1 = beatdiv2;
+  sliderchange(2^8); // The start beat value can't be higer than the beat loop length.
+  );
+beatdiv3 > beatdiv2 ? (
+  beatdiv3 = beatdiv2;
+  sliderchange(2^11);// The beat window size value can't be higer than the beat loop length.
+  );
+  
+beatstart = beatSldr(beatdiv1)+beatstrtft;
+beatloop = beatSldr(beatdiv2);
+beatsize = beatSldr(beatdiv3)+beatwinft;
+
+beatpos = (beat_position-initbeat);
+looppos = beatpos-(floor(beatpos/beatloop)*beatloop);
+
+looppos <= beatsize ? beatwin = 1 : beatwin = 0;
+
+slidermove = 0;
+); // end if slidermove
+
+/////////////////////////Get MIDI inputs/////////////////
+// MIDI keyboard pitch control
+while (midirecv(offset, msg1, msg2, msg3))
+  (  
+  // Extract message type and channel
+  status = msg1 & $xF0;
+  // Is it something other than a note on or note off event?
+     status != $x90 && status != $x80 ?
+      (
+      //Pass through all
+       midisend(offset, msg1, msg2, msg3);
+       ):(
+          // If it's a note on event, get note value
+          status == $x90 ?
+          (
+          note = msg2 & $x7F;
+          noteon = 1;
+          notecount > nth-1 ? notecount = 0;
+          notecount +=1;
+          note[0] = 1;
+          edge1 <= edge2 ?
+            (
+            note >= edge1 && note <= edge2 && notecount == strt && beatwin == 1 ?
+              (
+               midisend(offset, msg1, msg2, msg3);
+               pass = 1;
+               ):
+               pass = 0;
+            ):(
+              note >= edge1 || note <= edge2 && notecount == strt && beatwin == 1?
+                (
+                 midisend(offset, msg1, msg2, msg3);
+                 pass = 1;
+                 ):
+                 pass = 0;
+              );
+              
+            ):
+              // Otherwise, it's a note off event
+              (
+              note = msg2;
+              noteon = 0;
+              note[0] == 1 ?
+                (
+                 midisend(offset, msg1, msg2, msg3);
+                 note[0] = 0;
+                 );
+            );
+      );
+);
+      
+@gfx 500 200
+          
+xscl = 1.7;
+ox = 40;
+oy = 40;
+y2 = 15;
+
+gfx_r = 1;
+gfx_g = 1;
+gfx_b = 1;
+gfx_a = 0.7;
+
+gfx_x = ox-12;
+gfx_y = oy+5;
+gfx_drawstr("0");
+gfx_x = ox+xscl*127+5;
+gfx_y = oy+5;
+gfx_drawstr("127");
+
+gfx_x = ox+xscl*edge1-3;
+gfx_y = oy-13;
+gfx_drawnumber(edge1,0);
+gfx_x = ox+xscl*edge2-3;
+gfx_y = oy+y2+5;
+gfx_drawnumber(edge2,0);
+
+gfx_a = 0.3;
+
+gfx_x = ox;
+gfx_y = oy;
+gfx_lineto(ox+xscl*127,oy);
+gfx_lineto(ox+xscl*127,oy+y2);
+gfx_lineto(ox,oy+y2);
+gfx_lineto(ox,oy);
+
+gfx_r = 1;
+gfx_g = 1;
+gfx_b = 1;
+gfx_a = 1;
+
+edge1 <= edge2 ?
+  (
+  pass == 1 ?
+  (
+  gfx_r = 0;
+  gfx_g = 1;
+  gfx_b = 0;
+  ):
+  (
+  gfx_r = 1;
+  gfx_g = 0;
+  gfx_b = 0;
+  );
+  gfx_x = ox+xscl*edge1;
+  gfx_y = oy;
+  gfx_lineto(ox+(xscl*edge2),oy);
+  gfx_lineto(ox+(xscl*edge2),oy+y2);
+  gfx_lineto(ox+(xscl*edge1),oy+y2);
+  gfx_lineto(ox+(xscl*edge1),oy);
+  
+  noteon == 1 ?
+  (
+  note >= edge1 && note <= edge2 && notecount == strt && beatwin == 1 ?
+    (
+    gfx_r = 0;
+    gfx_g = 1;
+    gfx_b = 0;
+    gfx_a = 1;
+    ):(
+      gfx_r = 1;
+      gfx_g = 0;
+      gfx_b = 0;
+      gfx_a = 0.5;
+      );
+    gfx_x = ox+(note*xscl);
+    gfx_y = oy+y2;
+    gfx_lineto(ox+(xscl*note),oy);
+    );
+  ):(
+    pass == 1 ?
+    (
+    gfx_r = 0;
+    gfx_g = 1;
+    gfx_b = 0;
+   ):
+    (
+    gfx_r = 1;
+    gfx_g = 0;
+    gfx_b = 0;
+    );
+    gfx_x = ox;
+    gfx_y = oy;
+    gfx_lineto(ox+(xscl*edge2),oy);
+    gfx_lineto(ox+(xscl*edge2),oy+y2);
+    gfx_lineto(ox,oy+y2);
+    gfx_lineto(ox,oy);
+    gfx_x = ox+xscl*edge1;
+    gfx_y = oy;
+    gfx_lineto(ox+(xscl*127),oy);
+    gfx_lineto(ox+(xscl*127),oy+y2);
+    gfx_lineto(ox+(xscl*edge1),oy+y2);
+    gfx_lineto(ox+(xscl*edge1),oy);
+    noteon == 1 ?
+    (
+    note <= edge2 || note >= edge1 && notecount == strt && beatwin == 1 ?
+      (
+      gfx_r = 0;
+      gfx_g = 1;
+      gfx_b = 0;
+      gfx_a = 1;
+      ):(
+        gfx_r = 1;
+        gfx_g = 0;
+        gfx_b = 0;
+        gfx_a = 0.5;
+        );
+      gfx_x = ox+(note*xscl);
+      gfx_y = oy+y2;
+      gfx_lineto(ox+(xscl*note),oy);
+      );
+);
+

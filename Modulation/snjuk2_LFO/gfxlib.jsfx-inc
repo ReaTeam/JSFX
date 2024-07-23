@@ -1,0 +1,313 @@
+desc:dp.gfxlib.jsfx-inc
+
+@init
+
+selknob_nslider = 0;
+selknob_min = 0;
+selknob_max = 0;
+selknob_is_log = 0;
+
+wheelknob_nslider = 0;
+wheelknob_min = 0;
+wheelknob_max = 0;
+wheelknob_is_log = 0;
+
+doubleclk_nslider = 0;
+
+function deg2rad (deg) (deg * $pi / 180;);
+RAD130 = deg2rad(130);
+RAD140 = deg2rad(140);
+
+function set_color(color) (
+  gfx_r = (color & 0xFF0000) / 0xFF0000;
+  gfx_g = (color & 0x00FF00) / 0x00FF00;
+  gfx_b = (color & 0x0000FF) / 0x0000FF;
+);
+
+function log_scale (value, max, min) (
+    minP = min;
+    maxP = max;
+
+    minV = log(min);
+    maxV = log(max);
+
+    scale = (maxV - minV) / (maxP - minP);
+    exp(minV + scale * (value - minP));
+);
+
+function inverse_log_scale (lg, max, min) (
+    minP = min;
+    maxP = max;
+
+    minV = log(min);
+    maxV = log(max);
+
+    scale = (maxV - minV) / (maxP - minP);
+    (log(lg) - minV) / scale + minP;
+);
+
+function mouse_in_rect (x, y, w ,h) (
+  mouse.x >= x && mouse.x <= x + w && mouse.y >= y && mouse.y <= y + h;
+);
+
+function draw_knob_empty(x, y, w, h, nslider, label, default, _min, _max, is_sym, val_label) (
+  slider_val = slider(nslider);  
+  //scale = 46 / (_max-_min);
+  //_offset = (-_min * 46) / (_max - _min) ;
+  //slider_scaled = slider_val * scale + _offset;
+ 
+                       // Frame
+	gfx_a = 0.5;
+  set_color(0x666666);
+  gfx_rect(x,y,w,h,0); 
+  
+  gfx_a = 1;
+  set_color(0xFFff00);
+  gfx_setfont(1,"Arial bold fat",13);
+  gfx_x = x - 40;
+  gfx_y = y + 20 * 2 - 40; 
+   gfx_drawstr(val_label, 1, x+20+20*2, y+100);
+   
+  /*gfx_x = x - 14;
+  gfx_y = y + 20 * 2 - 54;
+   gfx_drawstr(label, 1, x+20+20*2, y+100);*/
+
+  mouse_in_rect(x, y, w, h) ? (      
+    mouse.double_click ? (
+      slider(nslider) = default;
+      doubleclk_nslider = nslider;
+    );
+    mouse.left_click ? (		
+      selknob_nslider = nslider;
+      selknob_min = _min;
+      selknob_max = _max;
+    );
+    mouse.wheel ? (	 	 		 
+      wheelknob_nslider = nslider;
+      wheelknob_min = _min;
+      wheelknob_max = _max;
+    );
+  );   
+);
+
+function draw_knob_btw(x, y, nslider, label, default, _min, _max, is_sym, val_label) (
+  slider_val = slider(nslider);
+
+  // linear map value from min/max to -130deg +130deg
+  scale = (130 - -130) / (_max-_min);
+  _offset = (-_min * (130 - -130)) / (_max - _min) + -130;
+  slider_deg = slider_val * scale + _offset;
+  slider_rad = deg2rad(slider_deg);
+  
+  set_color(0x797979);
+  gfx_circle(x+20, y+20, 12, 1, 1);               //grey circle
+  
+  set_color(0x676767);
+  gfx_arc(x+20, y+20, 18, -RAD130, RAD130, 1);
+  gfx_arc(x+20, y+20, 19, -RAD130, RAD130, 1);
+  
+  set_color(0xe5e5e5);
+  i = 1;
+  loop(7,
+  gfx_circle(x+20-sin(-slider_rad)*(12-i), y+20-cos(-slider_rad)*(12-i), 1, 1);  //line
+  i += 1;
+  );
+   
+  //set_color(0xFF7D0F);                                         // orange
+  set_color(0xFF0000);                                         // red
+  //set_color(0xFFff00);                                         // yellow
+  
+  gfx_arc(x+20, y+20, 18, is_sym ? 0 : -RAD130, slider_rad, 1);
+  gfx_arc(x+20, y+20, 19, is_sym ? 0 : -RAD130, slider_rad, 1);
+
+  set_color(0x797979);
+  gfx_setfont(1,"Arial bold fat",14);
+  gfx_x = x - 20;
+  gfx_y = y + 20 * 2 - 2;
+  selknob_nslider == nslider ? (
+    gfx_drawstr(val_label, 1, x+20+20*2, y+100);
+  ) : (
+    gfx_drawstr(label, 1, x+20+20*2, y+100);
+  );
+
+  mouse_in_rect(x, y, 40, 40) ? (
+    mouse.double_click ? (
+      slider(nslider) = default;
+      doubleclk_nslider = nslider;
+    );
+    mouse.left_click ? (
+      selknob_nslider = nslider;
+      selknob_min = _min;
+      selknob_max = _max;
+      selknob_is_log = is_log;
+    );
+    mouse.wheel ? (
+      wheelknob_nslider = nslider;
+      wheelknob_min = _min;
+      wheelknob_max = _max;
+      //wheelknob_is_log = is_log;
+    );
+  );
+);
+
+function draw_knob_abl(x, y, nslider, label, default, _min, _max, is_sym, val_label) (
+  slider_val = slider(nslider);
+
+  // linear map value from min/max to -140deg +140deg
+  scale = (140 - -140) / (_max-_min);
+  _offset = (-_min * (140 - -140)) / (_max - _min) + -140;
+  slider_deg = slider_val * scale + _offset;
+  slider_rad = deg2rad(slider_deg);
+  
+  set_color(0x050505);
+  gfx_arc(x+20, y+20, 14, -RAD140, RAD140, 1);
+  gfx_arc(x+20, y+20, 13, -RAD140, RAD140, 1);
+    
+  //set_color(0xFF7D0F);                                         // orange
+  set_color(0x33BFDB);                                         // blue
+   
+  gfx_arc(x+20, y+20, 14, is_sym ? 0 : -RAD140, slider_rad, 1);
+  gfx_arc(x+20, y+20, 13, is_sym ? 0 : -RAD140, slider_rad, 1);
+  
+  set_color(0x050505);
+  i = 1;
+  loop(14,
+  gfx_circle(x+20-sin(-slider_rad)*(14-i), y+20-cos(-slider_rad)*(14-i), 1, 1);  //line
+  i += 1;
+  );
+
+  set_color(0xf0f0f0);
+  gfx_setfont(1,"Arial bold fat",13);
+  gfx_x = x - 18;
+  gfx_y = y + 20 * 2 - 6; 
+   gfx_drawstr(val_label, 1, x+20+20*2, y+100);
+   
+  gfx_x = x - 16;
+  gfx_y = y + 20 * 2 - 50;
+   gfx_drawstr(label, 1, x+20+20*2, y+100);
+
+  mouse_in_rect(x, y, 40, 40) ? (
+  
+   /*mouse.left  ? (
+	   set_color(0x646464);
+		gfx_rect(x,y-12,42,60,0);
+		);*/
+       
+    mouse.double_click ? (
+      slider(nslider) = default;
+      doubleclk_nslider = nslider;
+    );
+    mouse.left_click ? (		
+      selknob_nslider = nslider;
+      selknob_min = _min;
+      selknob_max = _max;
+      //selknob_is_log = is_log;
+    );
+    mouse.wheel ? (	 	 		 
+      wheelknob_nslider = nslider;
+      wheelknob_min = _min;
+      wheelknob_max = _max;
+      //wheelknob_is_log = is_log;
+    );
+  );   
+);
+
+
+function draw_knob_abl_rect(x, y, nslider, label, default, _min, _max, is_sym, val_label) (
+  slider_val = slider(nslider);  
+  scale = 46 / (_max-_min);
+  _offset = (-_min * 46) / (_max - _min) ;
+  slider_scaled = slider_val * scale + _offset;
+ 
+                       // Knob Frame
+  set_color(0x222222);
+  gfx_rect(x,y,48,18); 
+                       //Knob                                  
+  set_color(0x19707F);
+  is_sym == 0 ? gfx_rect( x+1, y+1, slider_scaled, 16) : (
+  slider_val >= _min + (_max - _min)/2 ? gfx_rect( x+24, y+1, slider_scaled - 23, 16) : gfx_rect( x+1+slider_scaled, y+1, 23-slider_scaled , 16);
+ );
+  
+  
+  set_color(0xf0f0f0);
+  gfx_setfont(1,"Arial bold fat",13);
+  gfx_x = x - 14;
+  gfx_y = y + 20 * 2 - 37; 
+   gfx_drawstr(val_label, 1, x+20+20*2, y+100);
+   
+  gfx_x = x - 14;
+  gfx_y = y + 20 * 2 - 54;
+   gfx_drawstr(label, 1, x+20+20*2, y+100);
+
+  mouse_in_rect(x, y, 50, 20) ? (      
+    mouse.double_click ? (
+      slider(nslider) = default;
+      doubleclk_nslider = nslider;
+    );
+    mouse.left_click ? (		
+      selknob_nslider = nslider;
+      selknob_min = _min;
+      selknob_max = _max;
+    );
+    mouse.wheel ? (	 	 		 
+      wheelknob_nslider = nslider;
+      wheelknob_min = _min;
+      wheelknob_max = _max;
+    );
+  );   
+);
+
+
+function draw_button (x, y, w, label, toggled) (   
+  set_color(0x222222);
+  gfx_rect(x, y, w, 18);
+  gfx_x = x; gfx_y = y ;
+  toggled ? (
+    set_color(0x19707F);
+    gfx_rect(x+1, y+1, w-2, 16);
+  ) : (
+    set_color(0x444444);
+    gfx_rect(x+1, y+1, w-2, 16);
+	);
+  gfx_x = x+1; gfx_y = y + 2;
+  set_color(toggled ? 0xffffff : 0x222222);
+  gfx_setfont(1,"Arial bold fat",13);
+  gfx_drawstr(label, 1, x+w, y+16);
+);
+
+//--------------------------------Mouse
+
+function update_mouse_state()
+instance(cap, x, y, lx, ly, dx, dy, right_click, left_click, lleft, lright, left, right, click_time, double_click, control, lwheel, wheel)
+global(mouse_cap, mouse_x, mouse_y, mouse_wheel)
+(
+  lleft = left;
+  lright = right;
+  lx = x;
+  ly = y;
+  cap = mouse_cap;
+  control = mouse_cap & 4;
+  x = mouse_x;
+  y = mouse_y;
+
+  left = cap & 1 > 0;
+  right = cap & 2 > 0;
+  left_click = left && lleft == 0;
+  right_click = right && lright == 0;
+  dx = x - lx;
+  dy = y - ly;
+
+  wheel = mouse_wheel > lwheel ? 1 : mouse_wheel < lwheel ? -1 : 0;
+  lwheel = mouse_wheel;
+
+  left_click ? (
+    time_precise() - click_time < .5 ? double_click = 1;
+    click_time = time_precise();
+  ) : (
+    double_click = 0;
+  );
+);
+
+
+
+  

@@ -1,0 +1,115 @@
+desc: MIDI route via GMEM
+author: mschnell
+version: 1.4
+changelog: improve documentation
+about:
+  ## Description 
+
+    The MIDI route via GMEM JSFX is mostly used to route MIDI events to the Monitor FX chain or  between project tabs, as Reaper naively can't do that.
+
+    The JSFX in "Sender" mode sends MIDI events to  MIDI route via GMEM  instances in "Receiver" mode.
+
+    Multiple instances in Sender mode are allowed. The MIDI messages are combined to be received.
+
+    Multiple instances in Receiver mode are allowed, as long as they don't share the same transfer bus. If two Receivers work on the same Transfer Bus, the behavior is undefined. 
+
+    The slider "Mode" sets the Sender or Receiver mode.
+
+    The slider "MIDI Bus" determines which MIDI bus is use to take the messages from or to send midi messages to. 
+    MIDI Buses can be used to allow for up to 16 independent MIDI streams in an FX chain.
+
+    The slider "Transfer Bus" selects one of 16 transfer buses. A receiver will get only the messages from a sender set to the same Transfer Bus. 
+
+    All MIDI Messages are passed through unchanged by a the plugin.
+
+  ### Beware: 
+
+    As the FX chains of different tracks at the same computing time can be handling audio/MIDI blocks associated with different positions in the virtual audio time, the MIDI Transfer JSFXes can induce decent timing issues when used for (virtual) "real time" messages. They should only be used for not time critical control information. 
+    A change of a slider in any instance will asynchronously clean all transfer bus queues. So be very careful with automating this plugin.
+
+options:gmem=MIDI_TRANSFER
+
+in_pin:none
+out_pin:none
+
+slider1: 0<0,1,1{Sender,Receiver}>Mode
+slider2: 0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Bus  
+slider3: 0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Transfer Bus  
+
+@init
+  ext_midi_bus = 1; 
+  msg_count = 1000-1;
+  msg_count_4 = msg_count * 4;
+
+@slider
+  transfer_bus = slider3;
+  j = 16;
+  while (j) (
+    j -= 1;
+    start = j * (msg_count_4 + 4);
+    gmem[start]   = start + 4; // write pointer for writers (needs atomic)
+    gmem[start+1] = start + 4; // write pointer for readers
+    gmem[start+2] = start + 4; // read pointer
+    gmem[start+3] = -1; 
+    i = msg_count;
+    ptr = start+4;
+    while (i) (
+      i -= 1;
+      gmem[ptr] = -1;  // not valid
+      ptr += 4;
+    );
+  );  
+  start = transfer_bus * (msg_count_4 + 4);
+  limit = start + 4 + msg_count_4;
+  ptr_rd = start + 4;
+
+@block
+  !slider1 ? (
+    while (midirecv(mpos, msg1, msg2, msg3) ) (         
+      midisend(mpos, msg1, msg2, msg3);  // pass through
+      midi_bus == slider2 ? (
+        ptr_if = 1;
+        while (ptr_if)  (
+          ptr = atomic_get(gmem[start]);
+          ptr_4 =  ptr + 4;
+          ptr_4 >= limit ? ptr_4 = start + 4;
+          ptr == atomic_setifequal(gmem[start], ptr, ptr_4)  ? (  // qmwm[start] not changed by another sending instance
+            gmem[ptr+1]   = msg1;
+            gmem[ptr+2]   = msg2;
+            gmem[ptr+3]   = msg3;
+            gmem[ptr]     = mpos; // >= 0: now a valid entry
+            gmem[start+1] = ptr_4; // allow reading 
+            ptr_if = 0;  // successfully queued
+//         ):(
+//          _1 += 1; 
+          );
+        );
+      );
+    ); 
+   ) : (  
+    while (midirecv(mpos, msg1, msg2, msg3) ) (         
+      midisend(mpos, msg1, msg2, msg3);  // pass through
+    );  
+    midi_bus = slider2;
+    ptr_wr = gmem[start+1];
+    ptr_rd = gmem[start+2];
+    while (ptr_rd != ptr_wr) (
+      mpos = gmem[ptr_rd];  
+      mpos >= 0 ? (          //  valid
+        gmem[ptr_rd] = -1;  
+        msg1 = gmem[ptr_rd+1];
+        msg2 = gmem[ptr_rd+2];
+        msg3 = gmem[ptr_rd+3];
+        ptr_rd += 4;
+        ptr_rd >= limit ? ptr_rd = start + 4;
+        ptr_wr = gmem[start+1];
+        midisend(mpos, msg1, msg2, msg3);
+     ) : ( 
+      // exceptionally rare case: a writer had been interrupted by another writer which increases the pointer again. 
+    // Then the reader gets active before the former is able to continue. Hence the receiver sees a gap-
+        ptr_wr = ptr_rd;      // avoid CPU hogging: don't spin but cancel to restart with the next @block 
+      );
+    );
+    gmem[start+2] = ptr_rd;
+  );
+

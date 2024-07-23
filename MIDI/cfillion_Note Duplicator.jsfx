@@ -1,0 +1,83 @@
+desc: Note Duplicator
+version: 1.0
+author: cfillion
+about:
+  # Note Duplicator
+  
+  This effect repeats the previous MIDI notes when they are released, preserving the original duration.
+  Useful for playing 16th notes while actually only playing 8th on the keyboard.
+
+slider1:0<-126,126>Velocity Add
+slider2:1<0.2,1>Length Scale
+
+@init
+BUFSIZE = 128;
+OFF = -2;
+HELD = -1;
+
+notebuf = 0;
+memset(velbuf, OFF, BUFSIZE);
+
+lengthbuf = notebuf + BUFSIZE;
+memset(lengthbuf, 0, BUFSIZE);
+
+heldlenbuf = lengthbuf + BUFSIZE;
+memset(heldlenbuf, 0, BUFSIZE);
+
+chanbuf = heldlenbuf + BUFSIZE;
+memset(chanbuf, 0, BUFSIZE);
+
+function releaseNote(note)
+(
+  midisend(offset, $x90 + chanbuf[note], note, 0);
+  notebuf[note] = OFF;
+  lengthbuf[note] = 0;
+  heldlenbuf[note] = 0;
+  chanbuf[note] = 0;
+)
+
+@block
+// process new midi events
+while(midirecv(offset, msg, note, vel)) (
+  type = msg & 0xf0;
+  chan = msg & 0x0f;
+
+  // send note off if currently repeated
+  type == $x90 && vel > 0 ? (
+    notebuf[note] != OFF ? releaseNote(note);
+  );
+
+  midisend(offset, msg, note, vel);
+  
+  type == $x80 ? ( // note off
+    type = $x90;
+    vel = 0;
+  );
+
+  type == $x90 ? ( // note message
+    vel > 0 ? (
+      // note on
+      notebuf[note] = vel;
+      chanbuf[note] = chan;
+    ) : (
+      // note off
+      notebuf[note] != OFF ? (
+        midisend(offset, $x90 + chan, note,
+          max(1, min(notebuf[note] + slider1, 127)));
+        notebuf[note] = HELD; // repeated note
+      );
+    );
+  );
+);
+
+// process currently held or repeated notes
+i = 0;
+loop(BUFSIZE, (
+  notebuf[i] > HELD ? lengthbuf[i] += 1 : notebuf[i] == HELD ? (
+    // note is being repeated
+    heldlenbuf[i] += 1;
+    heldlenbuf[i] > lengthbuf[i] * slider2 ? releaseNote(i);
+  );
+
+  i += 1;
+));

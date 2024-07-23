@@ -1,0 +1,125 @@
+desc: MIDI Display 3 CCs
+author: Michael Schnell (mschnell@bschnell.de)
+version: 2.0
+changelog: HiRes support added
+about: Three selectable CC or HiRes CC values are shown. Especially useful in embedded view
+
+
+slider1:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Midi Channel 
+slider2:0.2<0,1,0.01> start delay after All Notes Off
+//slider3:1<0,128,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>CC1
+slider3:  144<0,160,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,0 Bank Sel HR,1 Mod Wheel HR,2 Breath HR,3+35 HR,4 Foot P HR,5 Porta HR,6 Data Entry HR,7 Vol HR,8 Balance HR,9+42 HR,10 Pan HR,11 Expression HR,12 Ctrl 1 HR,13 Ctrl 2 HR,14+46 HR,15+47 HR,16 GP Slider HR,17 GP Slider HR,18 GP Slider HR,19 GP Slider HR,20+52 HR,21+53 HR,22+54 HR,23+55 HR,24+56 HR,25+57 HR,26+58 HR,27+59 HR,28+60 HR,29+61 HR,30+62 HR,31+63 HR}>In CC1 
+//slider4:2<0,128,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>CC2
+slider4:  145<0,160,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,0 Bank Sel HR,1 Mod Wheel HR,2 Breath HR,3+35 HR,4 Foot P HR,5 Porta HR,6 Data Entry HR,7 Vol HR,8 Balance HR,9+42 HR,10 Pan HR,11 Expression HR,12 Ctrl 1 HR,13 Ctrl 2 HR,14+46 HR,15+47 HR,16 GP Slider HR,17 GP Slider HR,18 GP Slider HR,19 GP Slider HR,20+52 HR,21+53 HR,22+54 HR,23+55 HR,24+56 HR,25+57 HR,26+58 HR,27+59 HR,28+60 HR,29+61 HR,30+62 HR,31+63 HR}>In CC2 
+//slider5:3<0,128,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>CC3
+slider5:  146<0,160,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,0 Bank Sel HR,1 Mod Wheel HR,2 Breath HR,3+35 HR,4 Foot P HR,5 Porta HR,6 Data Entry HR,7 Vol HR,8 Balance HR,9+42 HR,10 Pan HR,11 Expression HR,12 Ctrl 1 HR,13 Ctrl 2 HR,14+46 HR,15+47 HR,16 GP Slider HR,17 GP Slider HR,18 GP Slider HR,19 GP Slider HR,20+52 HR,21+53 HR,22+54 HR,23+55 HR,24+56 HR,25+57 HR,26+58 HR,27+59 HR,28+60 HR,29+61 HR,30+62 HR,31+63 HR}>In CC3 
+
+
+@init
+  display = 1;
+  statCC    = $xB0;
+  v1_old = -1;
+  v2_old = -1;
+  v3_old = -1;
+  off    = 0;
+  
+  
+@slider
+  inChannel = slider1;  
+  c1h = slider3;
+  c2h = slider4;
+  c3h = slider5;
+  c1h < 128 ? (
+    c1l = -1;
+   ) : ( 
+    c1h -= 128;
+    c1l = c1h+32;
+  );
+  c2h < 128 ? (
+    c2l = -1;
+   ) : ( 
+    c2h -= 128;
+    c2l = c2h+32;
+  );
+  c3h < 128 ? (
+    c3l = -1;
+   ) : ( 
+    c3h-= 128;
+    c3l = c3h+32;
+ );
+ v1 = v2 = v3 = -1; 
+ v1l = v2l= v3l = 0;
+ v1h = v2h= v3h = -1;
+
+@block
+while(midirecv(mpos, msg1, msg2, msg3)) (
+  status = msg1 & $xF0;
+  channel = msg1 & $x0F;
+      
+    // Is it on our channel?
+  status == statCC ?  (
+    (channel == inChannel) || (inChannel > 15)?  (
+    // Is it a note on event?    
+      msg2 == c1h ? (  
+        v1h = msg3;
+       ) : msg2 == c2h ? (  
+        v2h = msg3;
+       ) : msg2 == c3h ? (  
+        v3h = msg3;
+       ) : msg2 == c1l ? (  
+        v1l = msg3/128;
+       ) : msg2 == c2l ? (  
+        v2l = msg3/128;
+       ) : msg2 == c3l ? (  
+        v3l = msg3/128;
+       ) : msg2 ==  0x7B ? (     // all notes off;
+        off = 0 | (slider2 * (srate/samplesblock));
+      ); 
+    );  
+  );  
+  midisend(mpos, msg1, msg2, msg3);
+);  
+off > 0 ? (
+  off -= 1;
+  v1 = v2 = v3 = -1; 
+  v1l = v2l= v3l = 0;
+  v1h = v2h= v3h = -1;
+);  
+
+
+@gfx 650 450  
+  function bar(_x0, v) (
+    _x1 = _x0 + 2*_x6;
+    _y0 = gfx_h;
+    _y1 = gfx_h - _y8 * v;
+    gfx_x = _x0;
+    gfx_y = _y0;
+    gfx_rectto(_x1, _y1);     
+  );
+
+  //display file
+//  textw = gfx_texth * 0.6;
+  v1 = v1h;
+  v2 = v2h;
+  v3 = v3h;
+  v1l > 0 ? v1 += v1l;
+  v2l > 0 ? v2 += v2l;
+  v3l > 0 ? v3 += v3l;
+  (v1 != v1_old) || (v2 != v2_old) ||  (v3 != v3_old) ? (
+      v1_old = v1;
+      v2_old = v2;
+      v3_old = v3;
+      gfx_r=0; gfx_g=gfx_b=0.5; gfx_a=1;
+      gfx_x=gfx_y=0;
+      gfx_rectto(gfx_w,gfx_h);
+      _x6 = gfx_w / 12;
+      _y8 = gfx_h /128;
+      gfx_r = 1; gfx_g = 0; gfx_b = 0;
+      bar(_x6*1, v1);
+      gfx_r = 0; gfx_g = 1; gfx_b = 0;
+      bar(_x6*5, v2);
+      gfx_r = 0; gfx_g = 0; gfx_b = 1;
+      bar(_x6*9, v3);
+  );
+  
+  

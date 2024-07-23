@@ -1,0 +1,1077 @@
+desc: Routter
+author: mrelwood
+version: 1.19
+screenshot: Mono mode https://static.wixstatic.com/media/0bf8fa_71d5fbaf71aa402f867521265174c319~mv2.png/v1/crop/x_17,y_0,w_1025,h_604/fill/w_1023,h_604,al_c,q_90,enc_auto/Routter%201v15%20mono.png
+about:
+  Routter is a inter-track multichannel routing/mixing tool. A stereo track contains two channels, but REAPER supports up to 64 channels per track. Routter can route and blend the first 16 of them in many ways.
+
+  Copy, move, merge, replace, blend volume, mono/stereo, etc.
+
+  INSTRUCTIONS:
+
+  Input Channels - Choose the channels you want to process. Click the title for channels 9-16.
+  Set the volume for the processed channels with the slider next to the Input Channel selector.
+  Stereo/Mono - Switches between selecting mono or stereo channels.
+  Copy or Move - Chooses whether the original channels will be muted or not.
+  To Channels - Chooses which channels the selected channels will be moved/blended to. Click the title for channels 9-16.
+  Merge or Replace - Chooses whether the chosen channels will be blended or if they'll replace the To Channels.
+  Original Volume - Sets the volume for the original To Channels (only in Blend mode).
+
+desc: Routter  1.19  [mrelwood]
+
+// (Copyright) 2018 - mrelwood plugins
+//
+//  This program is a free software plugin: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//
+//  This plugin is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//  <https://www.gnu.org/licenses/>.
+
+
+Version history:
+
+1.18:
+- mutes a slider at -60dB.
+
+1.19:
+- Circumvented a spl(-1) issue
+
+
+slider1:1<1,15,2>-Input Channels
+slider2:1<1,2,1>-Copy/Move
+slider3:3<1,15,2>-Output Channels
+slider4:2<1,2,1>-Merge/Replace
+slider5:1<0,1,1>-Stereo mode
+
+slider7:2<1,16,1>-Mono Input 2nd Channel
+slider8:4<1,16,1>-Mono Output 2nd Channel
+
+slider11:-0.15<-1,0,0.01>-Gain
+slider12:-0.15<-1,0,0.01>-Mix
+
+options:no_meter
+
+
+
+@init
+ver = "1.19";
+
+ext_noinit = 1;
+ext_nodenorm = 1;
+gfx_ext_retina = 1;
+
+inch = ouch = 0;
+
+
+
+/*
+noob < 2 ? (
+	in = 1;
+	out = 2;
+	move = 0;
+	replace = 1;
+	);
+*/
+
+olinLtmr = olinRtmr = olorigLtmr = olorigRtmr = oloutLtmr = oloutRtmr = 20;
+
+// INIT GFX
+
+r < 1 ? r = 1;
+y = 30;
+
+function button(x y str n) (
+	gfx_setfont(2);
+	gfx_x = x;
+	y < 30 ? y = 30;
+	gfx_y = y;
+	gfx_set(1,0.7,0,0.8,0);
+	n >  num_ch ? gfx_a /= 2;
+	gfx_measurestr(str, strw, strh);
+	strw += strh/2 ;
+	strh *= 1;
+//     gfx_a = ch;
+	gfx_rect(x,y, strw,strh ,0,0);
+	mx1 = x;
+	mx2 = x+strw;
+	my1 = y;
+	my2 = y+strh;
+	mouse_cap > 0 && mouse_capold == 0 ? (
+		(mouse_x > x) && (mouse_x < x + strw) && (mouse_y > y) && (mouse_y < y + strh) ? (
+			mou = 1;
+			);
+		):(
+		mou = 0;
+		);
+	gfx_y -= 1;
+	gfx_x += strh * 0.3;
+	gfx_drawstr(str);
+	);
+
+function upbutts()
+	globals(in move out replace slider1 slider2 slider3 slider4)(
+	in = slider1 /2 + 0.5;
+	/*
+	mou1 == 1 ? in = 1;
+	mou2 == 1 ? in = 2;
+	mou3 == 1 ? in = 3;
+	mou4 == 1 ? in = 4;
+	*/
+	move = slider2 -1;
+	//mou11 == 1 ? move = 0;
+	//mou12 == 1 ? move = 1;
+	
+	out = slider3 /2 + 0.5;
+	/*
+	mou21 == 1 ? out = 1;
+	mou22 == 1 ? out = 2;
+	mou23 == 1 ? out = 3;
+	mou24 == 1 ? out = 4;
+	*/
+	replace = slider4-1;
+	//mou31 == 1 ? replace = 0;
+	//mou32 == 1 ? replace = 1;
+);
+
+
+
+
+@serialize
+
+store_01 = file_var(0, noob);
+store_02 = file_var(0, inch);
+store_03 = file_var(0, ouch);
+//store_02 = file_var(0, gfx_ext_retina);
+
+upbutts();
+
+@slider
+
+@block
+
+// Input volume
+slider11 == -1 ? (
+	vol = -160;
+	volv = 0;
+):(
+	slider11 > -0.3 ? (
+		vol = -6 + (slider11+0.3)/0.3 * 12;
+		):(
+		vol = -5.7 - ((-slider11-0.3)/0.7 *0.92 +0.08)^2 * 54.4;
+		);
+	vol = ceil(vol*10) /10;
+	volv = 2^(vol/6);
+);
+
+// Mix volume
+slider12 == -1 ? (
+	mix = -160;
+	mixv = 0;
+):(
+	slider12 > -0.3 ? (
+		mix = -6 + (slider12+0.3)/0.3 * 12;
+		):(
+		mix = -5.7 - ((-slider12-0.3)/0.7 *0.92 +0.08)^2 * 54.4;
+		);
+	mix = ceil(mix*10) /10;
+	mixv = 2^(mix/6);
+);
+
+noob += 1;
+noob < srate *2 ? (
+	r = gfx_ext_retina;
+	r == 0 ? r = 1;
+	);
+
+n = num_ch ;
+while(n <= 16)(
+	spl(n) = 0;
+	n += 1;
+	);
+
+
+
+
+@sample
+
+slider5 == 1 ? (
+	inL = slider1 - 1;
+	inR = slider1 ;
+):(
+	inL = slider1 - 1;
+	inR = slider7 - 1;
+);
+
+busL = spl(inL) * volv * (inL>=0);
+busR = spl(inR) * volv * (inR>=0);
+
+//slider1 > num_ch ? busL = busR = 0;
+
+//busR = 0;
+
+(move == 1) ? (
+	slider1 > 0 && slider3 > 0 ? (
+		(inL>=0) ? spl(inL) = 0;
+		slider5 == 1 && (inR>=0) ? (
+			spl(inR) = 0;
+		);
+	);
+	slider5 == 0 ? (
+		slider7 > 0 && slider8 > 0 && (inR>=0) ? spl(inR) = 0;
+	);
+);          
+
+
+// Move Merge Mono R chan not independent!
+
+	
+(in == out) && (replace == 0) ? (mixv = 0);
+
+slider5 == 1 ? (
+	outL = slider3 - 1;
+	outR = slider3 ;
+):(
+	outL = slider3 - 1;
+	outR = slider8 - 1;
+);
+
+//slider3 > num_ch ? spl(outL) = spl(outR) = 0;
+
+outL < num_ch && inL >= 0 && outL >= 0 ? origL = spl(outL) : origL = 0;
+outR < num_ch && inR >= 0 && outR >= 0 ? origR = spl(outR) : origR = 0;
+
+
+slider5 == 1 ? (
+	slider1 > 0 ? (
+		(outL>=0) ? spl(outL) = busL;
+		(outR>=0) ? spl(outR) = busR;
+	);
+):(
+	slider1 > 0 && (outL>=0) ? spl(outL) = busL;
+	slider7 > 0 && (outR>=0) ? (
+		outL != outR ? (
+			spl(outR) = busR;
+		):(
+			( (inL==inR)*(outL==outR) == 0 ) ? spl(outR) += busR;
+		);
+	);
+);
+
+replace == 0 ? (
+	(outL>=0) ? spl(outL) += origL * mixv;
+	(outR>=0) && ( (inL==inR)*(outL==outR) == 0 ) ? spl(outR) += origR * mixv;
+);
+
+
+
+
+
+
+
+
+
+// METERS
+
+//busL = spl(inL);
+//busR = spl(inR);
+
+mtrdecay = 20/srate +1;
+mtrhold = srate * 0.1;
+
+mtrinL_ = abs(busL);
+(mtrinL_ > mtrinL) ? (
+	mtrinL = mtrinL_;
+	mtrinLhold = 1;
+	) : (
+	mtrinLhold += 1;
+	mtrinLhold > (mtrhold) ? (
+		mtrinL /= mtrdecay;
+		);
+	);
+mtrinL == 0 ? mtrinL = mtrinL_;
+mtrinL > 1 ? (
+	olinL = 1;
+	mtrinL = 1;
+	):(
+	olinL = 0;
+	);
+
+mtrinR_ = abs(busR);
+(mtrinR_ > mtrinR) ? (
+	mtrinR = mtrinR_;
+	mtrinRhold = 1;
+	) : (
+	mtrinRhold += 1;
+	mtrinRhold > (mtrhold) ? (
+		mtrinR /= mtrdecay;
+		);
+	);
+mtrinR == 0 ? mtrinR = mtrinR_;
+mtrinR > 1 ? (
+	olinR = 1;
+	mtrinR = 1;
+	):(
+	olinR = 0;
+	);
+
+mtrorigL_ = abs(origL) * mixv;
+(mtrorigL_ > mtrorigL) ? (
+	mtrorigL = mtrorigL_;
+	mtrorigLhold = 1;
+	) : (
+	mtrorigLhold += 1;
+	mtrorigLhold > (mtrhold) ? (
+		mtrorigL /= mtrdecay;
+		);
+	);
+mtrorigL == 0 ? mtrorigL = mtrorigL_;
+mtrorigL > 1 ? (
+	olorigL = 1;
+	mtrorigL = 1;
+	):(
+	olorigL = 0;
+	);
+
+mtrorigR_ = abs(origR) * mixv;
+(mtrorigR_ > mtrorigR) ? (
+	mtrorigR = mtrorigR_;
+	mtrorigRhold = 1;
+	) : (
+	mtrorigRhold += 1;
+	mtrorigRhold > (mtrhold) ? (
+		mtrorigR /= mtrdecay;
+		);
+	);
+mtrorigR == 0 ? mtrorigR = mtrorigR_;
+mtrorigR > 1 ? (
+	olorigR = 1;
+	mtrorigR = 1;
+	):(
+	olorigR = 0;
+	);
+
+mtroutL_ = abs(spl(outL) );
+(mtroutL_ > mtroutL) ? (
+	mtroutL = mtroutL_;
+	mtroutLhold = 1;
+	) : (
+	mtroutLhold += 1;
+	mtroutLhold > (mtrhold) ? (
+		mtroutL /= mtrdecay;
+		);
+	);
+mtroutL == 0 ? mtroutL = mtroutL_;
+mtroutL > 1 ? (
+	oloutL = 1;
+	mtroutL = 1;
+	):(
+	oloutL = 0;
+	);
+
+mtroutR_ = abs(spl(outR) );
+(mtroutR_ > mtroutR) ? (
+	mtroutR = mtroutR_;
+	mtroutRhold = 1;
+	) : (
+	mtroutRhold += 1;
+	mtroutRhold > (mtrhold) ? (
+		mtroutR /= mtrdecay;
+		);
+	);
+mtroutR == 0 ? mtroutR = mtroutR_;
+mtroutR > 1 ? (
+	oloutR = 1;
+	mtroutR = 1;
+	):(
+	oloutR = 0;
+	);
+
+
+
+
+
+
+
+
+
+@gfx 432*gfx_ext_retina 143*gfx_ext_retina
+r = gfx_ext_retina;
+r < 1 ? r = 1;
+fon = "Tahoma";
+//fon = "Verdana";
+gfx_setfont(1 , fon , 12*r);
+gfx_setfont(2 , fon , 13*r);
+gfx_setfont(3 , fon , 20*r, 'ib');
+gfx_setfont(4 , fon , 14*r, 'i');
+gfx_setfont(5 , fon , 12*r);
+
+gfx_set(0.2 , 0.1 , 0 , 0.5);
+gfx_gradrect(0,0,gfx_w,gfx_h , 0.2,0.1,0,0.8 , 0,0,0,0.3/gfx_w , 0,0,0,-0.42/gfx_h);
+
+// Title
+//gfx_set(0.9,0.7,0.5,0.32,0);
+gfx_set(0.8,0.6,0.1,0.5);
+gfx_setfont(4);
+//gfx_x = 175*r - gfx_texth * 2;
+//gfx_y = 150*r - gfx_texth * 1.1;
+gfx_x = volx + 20*r;
+gfx_y = mtry2-4*r;
+gfx_drawstr("[mrelwood]");
+gfx_setfont(3);
+
+
+//gfx_x = 295*r - (w1 + w2 + w3) *0.5;
+//gfx_y = 150*r - gfx_texth;
+mixx = (mx2 + pad*3 -3*r)  ;
+
+gfx_x = titx = mixx-16*r;
+gfx_y = mtry2-8*r;
+gfx_a -= .1;
+tit1 = "Routter";
+tit2 = " ";
+gfx_measurestr(tit1, w1 ,h1);
+gfx_drawstr(tit1,258,gfx_x,gfx_y);
+gfx_setfont(4);
+gfx_x = titx - 25*r;
+gfx_y -= gfx_texth * .6;
+gfx_measurestr(tit2, w2 ,h2);
+gfx_drawstr(tit2,258,gfx_x,gfx_y);
+gfx_measurestr(ver, w3, h3);
+gfx_drawstr(ver);
+
+
+
+
+// Input channels box
+pad = 10*r;
+rm = 1*r;
+gfx_x = inchx1 = pad;
+gfx_y = (inchy1 = pad/2)+0;
+gfx_setfont(1);
+gfx_set(0.8,0.7,0.5,0.9,0);
+gfx_drawstr("Input channels");
+gfx_measurestr("Input channels", inchw, inchh);
+inchx2 = inchx1 + inchw;
+gfx_rect(inchx1 -rm*3 , inchy1 , inchw +rm *6,inchh +rm  ,0);
+blink == 3 ? (
+	gfx_set(1,1,1,0.3,1);
+	gfx_rect(inchx1 -rm*4 , inchy1 , inchw +rm *8,inchh +rm  , 1);
+	);
+
+// Mono / Stereo box
+gfx_x = inchx2 + pad*2;
+gfx_y = (inchy1 = pad/2);
+gfx_setfont(1);
+slider5 == 1 ? gfx_set(0.8,0.7,0.5,0.95,0) : gfx_set(0.8,0.7,0.5,0.6,0);
+ststr = "Stereo";
+gfx_drawstr(ststr);
+gfx_set(0.8,0.7,0.5,0.5,0);
+slstr = " / ";
+gfx_drawstr(slstr);
+slider5 == 0 ? gfx_set(0.8,0.7,0.5,0.95,0) : gfx_set(0.8,0.7,0.5,0.6,0);
+mostr = "Mono";
+gfx_drawstr(mostr);
+gfx_measurestr(ststr + slstr + mostr + rm*3, stereow, 0);
+stereox = inchx1 + inchw + pad*2 -rm*3;
+gfx_set(0.8,0.7,0.5,0.95,0);
+gfx_rect(stereox  , stereoy = inchy1 , stereow += rm *15, stereoh = inchh +rm  ,0);
+blink == 5 ? (
+	gfx_set(1,1,1,0.3,1);
+	gfx_rect(stereox -rm*2*0 , inchy1 , stereow +rm *10*0,inchh +rm  , 1);
+	);
+
+
+
+
+
+inmx1 = inchx1 -rm*3;
+inmx2 = inchx2 +rm*3;
+inmy1 = inchy1;
+inmy2 = inchy1 + inchh +rm;
+
+x = buttx1 = 30*r;
+x2 = x + h*1.3;
+y = 30*r;
+h = 25*r;
+inpair = slider1/2-0.5;
+
+slider5 == 1 ? (
+	inch == 0 ? (
+		button(x,y," 1 + 2 " ,2);
+		mou == 1 ? slider1 = 1; mou = 0;
+	//     mou1 = mou; mou = 0;
+		button(x,y+h*1," 3 + 4 " ,4);
+		mou == 1 ? slider1 = 3; mou = 0;
+		button(x,y+h*2," 5 + 6 " ,6);
+		mou == 1 ? slider1 = 5; mou = 0;
+		button(x,y+h*3," 7 + 8 " ,8);
+		mou == 1 ? slider1 = 7; mou = 0;
+		):(
+		button(x,y," 9 + 10" ,10);
+		mou == 1 ? slider1 = 9; mou = 0;
+		button(x,y+h*1,"11 + 12" ,12);
+		mou == 1 ? slider1 = 11; mou = 0;
+		button(x,y+h*2,"13 + 14" ,14);
+		mou == 1 ? slider1 = 13; mou = 0;
+		button(x,y+h*3,"15 + 16" ,16);
+		mou == 1 ? slider1 = 15; mou = 0;
+		);
+	):(
+	inch == 0 ? (
+		button(x,y," 1 " ,1);
+		mou == 1 ? slider1 = (slider1 == 1 ? 0 : 1); mou = 0;
+		button(x,y+h," 2 " ,2);
+		mou == 1 ? slider1 = (slider1 == 2 ? 0 : 2); mou = 0;
+		button(x,y+h*2," 3 " ,3);
+		mou == 1 ? slider1 = (slider1 == 3 ? 0 : 3); mou = 0;
+		button(x,y+h*3," 4 " ,4);
+		mou == 1 ? slider1 = (slider1 == 4 ? 0 : 4); mou = 0;
+
+		button(x2,y," 1 " ,1);
+		mou == 1 ? slider7 = (slider7 == 1 ? 0 : 1); mou = 0;
+		button(x2,y+h," 2 " ,2);
+		mou == 1 ? slider7 = (slider7 == 2 ? 0 : 2); mou = 0;
+		button(x2,y+h*2," 3 " ,3);
+		mou == 1 ? slider7 = (slider7 == 3 ? 0 : 3); mou = 0;
+		button(x2,y+h*3," 4 " ,4);
+		mou == 1 ? slider7 = (slider7 == 4 ? 0 : 4); mou = 0;
+		):(
+		button(x,y," 5 " ,5);
+		mou == 1 ? slider1 = (slider1 == 5 ? 0 : 5); mou = 0;
+		button(x,y+h," 6 " ,6);
+		mou == 1 ? slider1 = (slider1 == 6 ? 0 : 6); mou = 0;
+		button(x,y+h*2," 7 " ,7);
+		mou == 1 ? slider1 = (slider1 == 7 ? 0 : 7); mou = 0;
+		button(x,y+h*3," 8 " ,8);
+		mou == 1 ? slider1 = (slider1 == 8 ? 0 : 8); mou = 0;
+
+		button(x2,y," 5 " ,5);
+		mou == 1 ? slider7 = (slider7 == 5 ? 0 : 5); mou = 0;
+		button(x2,y+h," 6 " ,6);
+		mou == 1 ? slider7 = (slider7 == 6 ? 0 : 6); mou = 0;
+		button(x2,y+h*2," 7 " ,7);
+		mou == 1 ? slider7 = (slider7 == 7 ? 0 : 7); mou = 0;
+		button(x2,y+h*3," 8 " ,8);
+		mou == 1 ? slider7 = (slider7 == 8 ? 0 : 8); mou = 0;
+
+
+		);
+	);
+
+
+// Input meter
+mtrh = 3.7*h;
+mtrr = 30;
+mtryL = y + (1-mtrinL^0.4) * mtrh;
+mtryR = y + (1-mtrinR^0.4) * mtrh;
+mtrx1 = 8*r;
+mtrw = 5*r;
+mtrx2 = mtrx1 + mtrw + 2*r;
+mtry2 = y + mtrh;
+(olinL == 1) ? olinLtmr = 0;
+(olinLtmr < 10) ? (
+	olinLtmr += 1;
+	gfx_set(1,0,0,0.9,0);
+	):(
+	gfx_set(0.8,0.5,0.1,0.3,0);
+	);
+gfx_rect(mtrx1,mtryL , mtrw , mtry2-mtryL);
+(olinR == 1) ? olinRtmr = 0;
+(olinRtmr < 10) ? (
+	olinRtmr += 1;
+	gfx_set(1,0,0,0.9,0);
+	):(
+	gfx_set(0.8,0.5,0.1,0.9,0);
+	);
+gfx_rect(mtrx2,mtryR , mtrw , mtry2-mtryR);
+gfx_x = mtrx1 +r;
+gfx_y = mtry2;
+(olinLtmr < 10) ? gfx_set(1,0,0,0.9,0);
+gfx_drawstr("in");
+// In meter bottom line
+gfx_set(0.4,0.2,0.05,1,0);
+gfx_rect(mtrx1-2,mtry2-1,mtrx2+mtrw+2-(mtrx1-2),1);
+
+// Orig meter
+mtryL = y + (1-mtrorigL^0.4) * mtrh;
+mtryR = y + (1-mtrorigR^0.4) * mtrh;
+mtrx1 = 388*r;
+mtrx2 = mtrx1 + mtrw + 2*r;
+(olorigL == 1) ? olorigLtmr = 0;
+(olorigLtmr < 10) ? (
+	olorigLtmr += 1;
+	gfx_set(1,0,0,0.9,0);
+	):(
+	gfx_set(0.8,0.5,0.1,0.3,0);
+	);
+gfx_rect(mtrx1,mtryL , mtrw , y + mtrh-mtryL);
+(olorigR == 1) ? olorigRtmr = 0;
+(olorigRtmr < 10) ? (
+	olorigRtmr += 1;
+	gfx_set(1,0,0,0.9,0);
+	):(
+	gfx_set(0.8,0.5,0.1,0.7,0);
+	);
+gfx_rect(mtrx2,mtryR , mtrw , y + mtrh-mtryR);
+gfx_x = mtrx1 -7*r;
+gfx_y = mtry2;
+(olorigLtmr < 10) ? gfx_set(1,0,0,0.9,0);
+
+gfx_drawstr("orig");
+
+gfx_set(0.4,0.2,0.05,1,0);
+gfx_rect(mtrx1-2,mtry2-1,mtrx2+mtrw+2-(mtrx1-2),1);
+
+
+// Sum meter
+mtryL = y + (1-mtroutL^0.4) * mtrh;
+mtryR = y + (1-mtroutR^0.4) * mtrh;
+mtrx1 += 20*r;
+mtrx2 = mtrx1 + mtrw + 2*r;
+(oloutL == 1) ? oloutLtmr = 0;
+(oloutLtmr < 10) ? (
+	oloutLtmr += 1;
+	gfx_set(1,0,0,0.9,0);
+	):(
+	gfx_set(0.8,0.6,0.3,0.7,0);
+	);
+gfx_rect(mtrx1,mtryL , mtrw , y + mtrh-mtryL);
+(oloutL == 1) ? oloutLtmr = 0;
+(oloutLtmr < 10) ? (
+	oloutLtmr += 1;
+	gfx_set(1,0,0,0.9,0);
+	):(
+	gfx_set(0.8,0.6,0.3,0.8,0);
+	);
+gfx_rect(mtrx2,mtryR , mtrw , y + mtrh-mtryR);
+gfx_x = mtrx1 -2*r;
+gfx_y = mtry2;
+(oloutLtmr < 10) ? gfx_set(1,0,0,0.9,0);
+
+gfx_drawstr("out");
+
+gfx_set(0.4,0.2,0.05,1,0);
+gfx_rect(mtrx1-2,mtry2-1,mtrx2+mtrw+2-(mtrx1-2),1);
+ 
+// Input selection bright box
+slider5 == 1 ? (
+	stereold == 0 ? (
+		slider1 <= 0 ? (
+			slider1 = 1;
+			slider7 = 2;
+			);
+		
+		inch = 0;
+		);
+	(slider1 & 1) ? p=0 : slider1 -= 1;
+	slider1 < 8 ? (iny = slider1/2-0.5) : (iny = (slider1/2-0.5 -4));
+	):(
+	stereold == 1 ? (
+		slider1 > 8 ? slider1 = 7;
+		slider7 = slider1 +1;
+		slider1 > 4 ? inch = 1 : inch = 0;
+		);
+	(iny = slider1-1 - inch*4);
+	(iny2 = slider7-1 - inch*4);
+	);
+
+	
+gfx_set(0.8,0.7,0.5,0.4,1);
+((slider1 <= 8 /(2-slider5)) && (inch == 0)) || ((slider1 > 8 / (2-slider5)) && (inch == 1)) ? (
+	slider1 > 0 && slider1 <= 16/(2-inch) ? (
+		slider5 == 0 && slider3 == 0 ? gfx_set(0.8,0.7,0.5,0.15,1) : gfx_set(0.8,0.7,0.5,0.4,1);
+		gfx_rect(x - pad/2 , pad*2.5 + (iny) * h , strw + pad , strh +pad , 1,1);
+		);
+	);
+(slider5 == 0 && (slider7 <= 8 ) && (slider7 > 0)) ? (
+	slider7 > inch*4 && slider7 <= 8/(2-inch) ? (
+		slider5 == 0 && slider8 == 0 ? gfx_set(0.8,0.7,0.5,0.15,1) : gfx_set(0.8,0.7,0.5,0.4,1);
+		gfx_rect(x2 - pad/2 , pad*2.5 + (iny2) * h , strw + pad , strh +pad , 1,1);
+		);
+	);
+gfx_set(0.7,0.6,0.2,0.9,0);
+
+
+volx = (buttx1 + 85*r)  ;
+
+
+
+
+
+mx2 = volx + pad *0;
+
+
+x = mx2 + pad * 3.3;
+y = 55*r;
+h = 25*r;
+button(x,y,"Copy " ,0);
+//mou11 = mou; mou = 0;
+	mou == 1 ? slider2 = 1; mou = 0;
+button(x,y+h,"Move " ,0);
+	mou == 1 ? slider2 = 2; mou = 0;
+
+gfx_set(0.8,0.7,0.5,0.4,1);
+gfx_rect(x - pad/2 , pad*2.5 + (slider2) * h , strw + pad -1*r , strh +pad , 1,1);
+gfx_set(0.8,0.7,0.5,0.9,0);
+
+
+
+gfx_set(0.8,0.7,0.5,0.9);
+gfx_x = ouchx1 = 203*r;
+gfx_y = (ouchy1 = pad/2);
+gfx_setfont(1);
+gfx_drawstr("To channels");
+gfx_measurestr("To channels", ouchw, ouchh);
+ouchx2 = ouchx1 + ouchw;
+
+oumx1 = ouchx1 -rm*3;
+oumx2 = ouchx2 +rm*3;
+oumy1 = ouchy1;
+oumy2 = ouchy1 + ouchh +rm;
+
+
+gfx_rect(ouchx1 -rm*3 , ouchy1 , ouchw +rm *6,ouchh +rm  ,0);
+blink == 4 ? (
+	gfx_set(1,1,1,0.3,1);
+	gfx_rect(ouchx1 -rm*4 , ouchy1 , ouchw +rm *8,ouchh +rm  , 1);
+	);
+
+
+
+x = ouchx1 + 10*r;
+x2 = x + h* 1.3;
+y = 30*r;
+h = 25*r;
+slider5 == 1 ? (
+	ouch == 0 ? (
+		button(x,y," 1 + 2 " ,2);
+	//     mou21 = mou; mou = 0;
+		mou == 1 ? slider3 = 1; mou = 0;
+		button(x,y+h*1," 3 + 4 " ,4);
+		mou == 1 ? slider3 = 3; mou = 0;
+		button(x,y+h*2," 5 + 6 " ,6);
+		mou == 1 ? slider3 = 5; mou = 0;
+		button(x,y+h*3," 7 + 8 " ,8);
+		mou == 1 ? slider3 = 7; mou = 0;
+		):(
+		button(x,y," 9 + 10" ,10);
+		mou == 1 ? slider3 = 9; mou = 0;
+		button(x,y+h*1,"11 + 12" ,12);
+		mou == 1 ? slider3 = 11; mou = 0;
+		button(x,y+h*2,"13 + 14" ,14);
+		mou == 1 ? slider3 = 13; mou = 0;
+		button(x,y+h*3,"15 + 16" ,16);
+		mou == 1 ? slider3 = 15; mou = 0;
+		);
+	):(
+	ouch == 0 ? (
+		button(x,y," 1 " ,1);
+		mou == 1 ? slider3 = (slider3 == 1 ? 0 : 1); mou = 0;
+		button(x,y+h," 2 " ,2);
+		mou == 1 ? slider3 = (slider3 == 2 ? 0 : 2); mou = 0;
+		button(x,y+h*2," 3 " ,3);
+		mou == 1 ? slider3 = (slider3 == 3 ? 0 : 3); mou = 0;
+		button(x,y+h*3," 4 " ,4);
+		mou == 1 ? slider3 = (slider3 == 4 ? 0 : 4); mou = 0;
+
+		button(x2,y," 1 " ,1);
+		mou == 1 ? slider8 = (slider8 == 1 ? 0 : 1); mou = 0;
+		button(x2,y+h," 2 " ,2);
+		mou == 1 ? slider8 = (slider8 == 2 ? 0 : 2); mou = 0;
+		button(x2,y+h*2," 3 " ,3);
+		mou == 1 ? slider8 = (slider8 == 3 ? 0 : 3); mou = 0;
+		button(x2,y+h*3," 4 " ,4);
+		mou == 1 ? slider8 = (slider8 == 4 ? 0 : 4); mou = 0;
+		):(
+		button(x,y," 5 " ,5);
+		mou == 1 ? slider3 = (slider3 == 5 ? 0 : 5); mou = 0;
+		button(x,y+h," 6 " ,6);
+		mou == 1 ? slider3 = (slider3 == 6 ? 0 : 6); mou = 0;
+		button(x,y+h*2," 7 " ,7);
+		mou == 1 ? slider3 = (slider3 == 7 ? 0 : 7); mou = 0;
+		button(x,y+h*3," 8 " ,8);
+		mou == 1 ? slider3 = (slider3 == 8 ? 0 : 8); mou = 0;
+
+		button(x2,y," 5 " ,5);
+		mou == 1 ? slider8 = (slider8 == 5 ? 0 : 5); mou = 0;
+		button(x2,y+h," 6 " ,6);
+		mou == 1 ? slider8 = (slider8 == 6 ? 0 : 6); mou = 0;
+		button(x2,y+h*2," 7 " ,7);
+		mou == 1 ? slider8 = (slider8 == 7 ? 0 : 7); mou = 0;
+		button(x2,y+h*3," 8 " ,8);
+		mou == 1 ? slider8 = (slider8 == 8 ? 0 : 8); mou = 0;
+		);
+	);
+
+slider5 == 1 ? (
+	stereold == 0 ? (
+		slider3 <= 0 ? (
+			slider3 = 1;
+			slider8 = 2;
+			);
+		ouch = 0;
+		);
+	(slider3 & 1) ? p=0 : slider3 -= 1;
+	slider3 < 8 ? (outy = slider3/2-0.5) : (outy = (slider3/2-0.5 -4));
+	):(
+	stereold == 1 ? (
+		slider3 > 8 ? slider3 = 7;
+		slider8 = slider3 +1;
+		slider3 > 4 ? ouch = 1 : ouch = 0;
+		);
+	(outy = slider3-1 - ouch*4);
+	(outy2 = slider8-1 - ouch*4);
+	);
+
+((slider3 <= 8 /(2-slider5)) && (ouch == 0)) || ((slider3 > 8 / (2-slider5)) && (ouch == 1)) ? (
+	slider3 > 0 && slider3 <= 16/(2-ouch) && outy < 4 ? (
+		slider5 == 0 && slider1 == 0 ? gfx_set(0.8,0.7,0.5,0.15,1) : gfx_set(0.8,0.7,0.5,0.4,1);
+		gfx_rect(x - pad/2 , pad*2.5 + (outy) * h , strw + pad , strh +pad , 1,1);
+		);
+	);
+(slider5 == 0 && (slider8 <= 8 ) && (slider8 > 0)) ? (
+	slider8 > ouch*4 && slider8 <= 8/(2-ouch) ? (
+		slider5 == 0 && slider7 == 0 ? gfx_set(0.8,0.7,0.5,0.15,1) : gfx_set(0.8,0.7,0.5,0.4,1);
+		gfx_rect(x2 - pad/2 , pad*2.5 + (outy2) * h , strw + pad , strh +pad , 1,1);
+		);
+	);
+gfx_set(0.7,0.6,0.2,0.9,0);
+
+stereold = slider5;
+
+
+/*
+(slider3 > 0 && (slider3 < 8) && (ouch == 0)) || ((slider3 > 8) && (ouch == 1)) ? (
+	gfx_set(0.8,0.7,0.5,0.4,1);
+	gfx_rect(x - pad/2 , pad*2.5 + (outy) * h , strw + pad , strh +pad , 1,1);
+	slider5 == 2 ? gfx_rect(x2 - pad/2 , pad*2.5 + (outy2) * h , strw + pad , strh +pad , 1,1);
+	gfx_set(0.8,0.7,0.5,0.9,0);
+	);
+*/
+
+x = 280*r;
+y = 55*r;
+h = 25*r;
+button(x,y," Merge " ,0);
+//mou31 = mou; mou = 0;
+	mou == 1 ? slider4 = 1;  mou = 0;
+button(x,y+h,"Replace" ,0);
+	mou == 1 ? slider4 = 2;  mou = 0;
+
+gfx_set(0.8,0.7,0.5,0.4,1);
+(in == out) ? (gfx_a = 0.1);
+gfx_rect(x - pad/2 , pad*2.5 + (slider4) * h , strw + pad , strh +pad , 1,1);
+gfx_set(0.8,0.7,0.5,0.9,0);
+
+
+upbutts();
+
+blink > 0 ? (
+	blinktimer += 1;
+	blinktimer > 3 ? (
+		blink = blinktimer = 0;
+		);
+	);
+
+
+mouse_cap > 0 && mouse_capold == 0 ? (
+	(mouse_x > volx-pad) && (mouse_x < volx + pad*1.5) && (mouse_y > voly) && (mouse_y < voly + pad*1.5) ? (
+		cap = 1;
+		);
+	(mouse_x > mixx-pad) && (mouse_x < mixx + pad*1.5) && (mouse_y > mixy) && (mouse_y < mixy + pad*1.5) ? (
+		cap = 2;
+		);
+	(mouse_x > inmx1) && (mouse_x < inmx2) && (mouse_y > inmy1) && (mouse_y < inmy2) ? (
+		cap = 3;
+		);
+	(mouse_x > oumx1) && (mouse_x < oumx2) && (mouse_y > oumy1) && (mouse_y < oumy2) ? (
+		cap = 4;
+		);
+	(mouse_x > stereox) && (mouse_x < stereox+stereow) && (mouse_y > stereoy) && (mouse_y < stereoy+stereoh) ? (
+		cap = 5;
+		);
+	click += 1;
+	drag = blink = cap;
+	);
+
+//(mouse_cap > 0) && (mouse_capold > 0) ? drag = cap;
+mouse_cap > 1 ? precise = 3 : precise = 1;
+
+
+/*     
+cap > 0 ? (
+	
+	starty = mouse_y;
+	drag1 = cap;
+	cap = 0;
+	click == 0 ? click = 1;
+	cap > 2 ? drag = cap1;
+	);
+*/
+
+click > 0 ? (
+	clicktimer += 1;
+	clicktimer > 15 ? (
+		clicktimer = dblclk = click = 0;
+		);
+	(click >= 2) ? (
+		dblclk = drag;
+		);
+	);
+mouse_capold = mouse_cap;
+
+dblclk > 0 ? (
+	dblclk == 1 ? (
+		slider11 == -0.15 ? slider11 = -0.3 : slider11 = -0.15;
+		);
+	dblclk == 2 ? (
+		slider12 == -0.15 ? slider12 = -0.3 : slider12 = -0.15;
+		);
+	dblclk = drag = 0;
+	);
+cap == 3 ? (
+	inch == 0 ? inch = 1 : inch = 0;
+	drag = cap = 0;
+	);
+cap == 4 ? (
+	ouch == 0 ? ouch = 1 : ouch = 0;
+	drag = cap = 0;
+	);
+cap == 5 ? (
+	slider5 += 1;
+	slider5 == 2 ? slider5 = 0;
+	);
+
+travel = (mouse_yold - mouse_y) / (precise);
+mouse_yold = mouse_y;
+
+
+/*
+drag == 1 ? (
+	slider11 = start + (travel/volh)/4 *(1+ (-slider11));
+	slider11 > 0 ? slider11 = 0;
+	slider11 < -1 ? slider11 = -1;
+	);
+drag == 2 ? (
+	slider12 = start + (travel/volh)/4 *(1+ (-slider12));
+	slider12 > 0 ? slider12 = 0;
+	slider12 < -1 ? slider12 = -1;
+	);
+*/
+drag == 1 ? (
+	slider11 += (travel/volh)/4 *(1+ (-slider11));
+	slider11 > 0 ? slider11 = 0;
+	slider11 < -1 ? slider11 = -1;
+	);
+drag == 2 ? (
+	slider12 += (travel/volh)/4 *(1+ (-slider12));
+	slider12 > 0 ? slider12 = 0;
+	slider12 < -1 ? slider12 = -1;
+	);
+
+cap = 0;
+mouse_cap == 0 ? drag = 0;
+
+
+
+gfx_set(0.8,0.7,0.5,0.9,0);
+
+// Volume reading
+volnry = pad *2.5 -1;
+volv == 0 ? #voltxt = "--.- " :
+sprintf(#voltxt , "%.1f", vol);
+gfx_measurestr(#voltxt, voltxtw , voltxth);
+gfx_measurestr("0", zerow , 0);
+gfx_x = floor( volx + zerow *(1.5 + .25 * (volv == 0) ) -voltxtw );
+gfx_y = volnry;
+gfx_drawstr(#voltxt);
+gfx_x -= zerow * .2 * (volv == 0);
+gfx_drawstr(" dB");
+
+
+// Volume slider
+volr = 100;
+volpos = -slider11;
+gfx_x = x = volx;
+volsly = volnry + pad *1.5;
+gfx_y = volsly;
+//volh = min(150*r , max( 70*r , (gfx_h -pad*3 )* 0.8) );
+volh = 80*r;
+voly = gfx_y + volpos * volh;
+gfx_set(0.8,0.6,0.1,0.2);
+gfx_rect(gfx_x,gfx_y , pad/2, volh + pad*1.5 );
+gfx_set(0.8,0.7,0.3,0.8);
+gfx_rect(gfx_x-pad*1, voly , pad*2.5 , pad*1.5);
+
+
+
+gfx_set(0.8,0.7,0.5,0.9,0);
+
+gfx_a -= replace * 0.4;
+(in == out) ? (gfx_a = 0.5);
+
+// mix reading
+//mix = (slider12/mixr *0.8 +0.2)^2 * slider12;
+mixv == 0 ? #mixtxt = "--.- " :
+sprintf(#mixtxt , "%.1f", mix);
+gfx_measurestr(#mixtxt, mixtxtw , mixtxth);
+//gfx_measurestr("0", zerow , 0);
+gfx_x = floor( mixx  +zerow *(1.5 + .25 * (mixv == 0) ) -mixtxtw);
+gfx_y = volnry;
+gfx_drawstr(#mixtxt);
+gfx_x -= zerow * .25 * (mixv == 0);
+gfx_drawstr(" dB");
+
+/*
+orig = "Orig  ";
+mixtxtmax = "-60.0";
+sprintf(origtxt , "%c", orig);
+gfx_measurestr(orig, origtxtw , origtxth);
+gfx_measurestr(mixtxtmax, mixtxtmaxw , 0);
+gfx_x = mixx + pad - origtxtw - mixtxtmaxw;
+gfx_drawstr(orig);
+*/
+gfx_setfont(5);
+orig = "Original";
+mixtxtmax = "-60.0";
+sprintf(origtxt , "%c", orig);
+gfx_measurestr(orig, origtxtw , origtxth);
+gfx_measurestr(mixtxtmax, mixtxtmaxw , 0);
+gfx_x = mixx + pad*2 - origtxtw;
+//gfx_y = pad/4;
+gfx_y = volnry/3;
+gfx_drawstr(orig);
+
+
+
+
+
+// mix slider
+mixr = 100;
+mixpos = -slider12;
+gfx_x = mixx;
+gfx_y = volsly;
+//mixh = min(150*r , max( 70*r , (gfx_h -pad*3 )* 0.8) );
+mixh = 80*r;
+mixy = gfx_y + mixpos * mixh;
+gfx_set(0.8,0.6,0.1,0.2);
+gfx_a -= replace * 0.0;
+(in == out) ? (gfx_a = 0.2);
+gfx_rect(gfx_x,gfx_y , pad/2, mixh + pad*1.5 );
+
+gfx_set(0.8,0.7,0.3,0.8);
+gfx_a -= replace * 0.5;;
+(in == out) ? (gfx_a = 0.3);
+gfx_rect(gfx_x-pad*1, mixy , pad*2.5 , pad*1.5);
+
+
+
+
+
+
+

@@ -1,0 +1,233 @@
+desc: Hard Clipper
+author: sinefabula
+version: 0.1
+screenshot: https://i.imgur.com/nJDwzYq.png
+about:
+  # Hard Clipper
+
+  A simple hard clipper which clips the incoming signal at 0 dB. It is useful
+  for reducing the dynamic range of the signal without audibly affecting its
+  timbre, as opposed to soft saturators which colour the audio. Used for the CTZ
+  (Clip to Zero) mixing method as taught by Baphometrix
+  (https://www.youtube.com/@baphometrix). Inspired by Kazrog KClip3.
+
+
+
+  # Features
+
+  - Simple one-knob control.
+  - Automatic gain compensation so that the signal doesn't get louder with more
+    gain.
+  - Extra makeup for those cases when you push the clipper too hard and it gets
+    quieter.
+  - Waveform display with gain reduction visualised as a folded-back wave.
+  - Maximum clipped dB display.
+  - Two modes of waveform visualisation: either Scan (draws the entire screen
+    then starts over, like an oscilloscope scanline) or Scroll (continuously
+    scrolls the waveform, like an ECG printout).
+  - Linear or logarithmic level display.
+
+
+  # Usage
+
+  Simply increase the Gain slider until:
+
+  - You get some gain reduction.
+  - You still don't hear any clipping artifacts.
+
+  This way, you'll have your dynamic range reduced while preserving the timbre.
+  This way, your tracks get louder without any audible saturation. This is
+  especially useful on high dynamic range sounds like drums, bells etc.
+
+
+slider1:0.0<0.0,36.0,0.1>Gain (dB)
+slider2:0.0<0.0,24.0,0.1>Extra makeup gain (dB)
+slider3:0<0,1,1{Linear,Logarithmic}>Waveform scale
+slider4:0<0,1,1{Scan,Scroll}>Time display
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+  // Display interval.
+  window_sec = 4;
+  // This will be set to gfx window size in the gfx module.
+  window_size = 0;
+  window = 0;
+  window_index = 0;
+  // Max pooling batch, to reduce stored number of points and preserve peaks.
+  batch_size = 0;
+  batch_index = 0;
+  batch_max = 0;
+  // Display range.
+  max_db = 0;
+  min_db = -18;
+  // Text padding.
+  pad = 5;
+  // Invalidate current gain reduction value.
+  gr_invalid = 1;
+
+@slider
+  gain = 10 ^ (slider1 / 20);
+  extra_makeup = 10 ^ (slider2 / 20);
+  // Invalidate current gain reduction value.
+  gr_invalid = 1;
+ 
+@sample
+  // The core clipping algorithm.
+  // First, we apply gain.
+  spl0 *= gain;
+  spl1 *= gain;
+  sign0 = sign(spl0);
+  sign1 = sign(spl1);
+  abs0 = abs(spl0);
+  abs1 = abs(spl1);
+  // If clipping occurs, just hard-limit the signal value at 0 dB (value of 1).
+  abs0 > 1.0 ? (
+    spl0 = sign0;
+  );
+  abs1 > 1.0 ? (
+    spl1 = sign1;
+  );
+  // Then, reduce gain back so that the signal doesn't get louder.
+  spl0 /= gain;
+  spl1 /= gain;
+  // Then, apply extra makeup if enabled, and we're done with clipping.
+  spl0 *= extra_makeup;
+  spl1 *= extra_makeup;
+  // The rest of the code is solely for visualisation purposes.
+  // Maximum of (left, right) channels BEFORE CLIPPING, that's what we're going
+  // to display.
+  sig = max(abs0, abs1);
+  // Actual gain reduction, it can't be less that 0 dB, in which case there's
+  // no reduction per se.
+  gr = max(1.0, sig);
+  // If the current gain reduction is invalidated by moving the Gain slider,
+  // we reset the peak gain reduction to the current gain reduction value.
+  // Else, we update the peak gain reduction value.
+  // This is required to quickly update the current maximum.
+  gr_invalid ? (
+    gr_invalid = 0;
+    gr_max = gr;
+  ) : (
+    gr_max = max(gr, gr_max);
+  );
+  // Only proceed if `batch_size` already set (that means, `gfx` was already
+  // called at least once).
+  batch_size > 0 ? (
+    // Perform 'max_pooling' technique to extract local per-batch maxima
+    // to display crisp waveforms without losing peaks (more like envelope
+    // follower as we've only finding max absolute values).
+    sig > batch_max ? (
+      batch_max = sig;
+    );
+    batch_index += 1;
+    // When the batch is full, save pooled maximum value into the window.
+    batch_index >= batch_size ? (
+      window[window_index] = batch_max;
+      batch_max = 0;
+      batch_index = 0;
+      window_index += 1;
+      // When the window is completely filled, start over.
+      window_index >= window_size ? (
+        window_index = 0;
+      );
+    );
+  );
+  
+@gfx 0 128
+  // Linearly scales values from one range to another.
+  function scale(x a b u v) (
+    u + (x - a) / (b - a) * (v - u);
+  );
+
+  // Converts signal level to a screen Y coordinate. The `log` argument
+  // specifies if the scaling is logarithmic (set 0 for linear).
+  function screen(sig log) (
+    log ? (
+        x = 20 * log10(sig);
+        val_min = min_db;
+        val_max = max_db;
+    ) : (
+        x = sig;
+        val_min = 10 ^ (min_db / 20);
+        val_max = 10 ^ (max_db / 20);
+    );
+    scale(x, val_min, val_max, gfx_h, 0);
+  );
+
+  window_size = gfx_w;
+  // Batch size is determined as number of samples per pixel of the window.
+  batch_size = floor(window_sec * srate / window_size);
+
+  // Draw the grid.
+  gfx_setfont(0);
+  gfx_r = gfx_g = gfx_b = 1;
+  level = -3; // dB
+  prev_y = 0;
+  while (
+    gfx_y = screen(10 ^ (level / 20), slider3);
+    gfx_y >= gfx_texth + 2 ? (
+      gfx_x = 0;
+      gfx_a = 0.5;
+      gfx_lineto(gfx_w, gfx_y, 0);
+      // Only display 'dB' text if there is enough room for the font.
+      gfx_y - prev_y > gfx_texth + 2 ? (
+          prev_y = gfx_y;
+          gfx_y -= gfx_texth + 2;
+          gfx_x = 2;
+          gfx_a = 1;
+          gfx_drawnumber(level, 0);
+      ) : (
+        prev_y = gfx_y;
+      );
+    );
+    // This is for the level to follow the 3 6 9 12 18 24 30 36 48 60 series.
+    level -= 3;
+    level < -12 ? (
+        level -= 3;
+    );
+    level < -36 ? (
+        level -= 6;
+    );
+    level >= min_db;
+  );
+
+  // Draw the waveform.
+  gfx_a = 0.8;
+  // Two modes of waveform display:
+  // - `Scan`, when we're drawing the waveform left to right and then wrap
+  //   around and start over from the left, like a scanline on an oscilloscope.
+  // - `Scroll`, when we're sliding the waveform from right to left, like an
+  //   ECG printed on a paper roll.
+  imax = slider4 ? gfx_w : window_index;
+  i = 0;
+  while (i < imax) (
+    y = window[slider4 ? (i + window_index + 1) % gfx_w : i];
+    y_scr = screen(y, slider3);
+    gfx_r = gfx_g = gfx_b = 1;
+    gfx_line(i, gfx_h, i, y_scr);
+    // If gain reduction took place, draw it as a folded wave.
+    y > 1 ? (
+        gfx_r = 0.9;
+        gfx_g = 0.3;
+        gfx_b = 1.0;
+        gr_y = screen(1 / y, slider3);
+        gfx_line(i, 0, i, gr_y);
+    );
+    i += 1;
+  );
+
+  // Display gain reduction value.
+  gfx_setfont(1, "Helvetica", 16, "b");
+  sprintf(gr_str, "GR: %.1f dB", 20 * log10(gr_max));
+  gfx_measurestr(gr_str, gr_w, gr_h);
+  gfx_r = gfx_g = gfx_b = 1;
+  gfx_a = 0.8;
+  gfx_rect(0, 0, gr_w + 2 * pad, gr_h + 2 * pad);
+  gfx_x = gfx_y = pad;
+  gfx_r = gfx_g = gfx_b = 0;
+  gfx_a = 1;
+  gfx_drawstr(gr_str);

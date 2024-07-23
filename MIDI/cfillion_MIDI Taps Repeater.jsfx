@@ -1,0 +1,92 @@
+desc: MIDI Taps Repeater
+version: 1.0
+author: cfillion
+about:
+  # MIDI Taps Repeater
+
+  Repeat MIDI notes *n* times after a delay set in beats until released.
+
+  If the "Taps" parameter is set to 0 the note is repeated forever (or until velocity reaches zero).
+
+slider1:delay=0.5<0,4>Delay (Beats)
+slider2:taps=1<0,64,1>Taps
+slider3:vel_scale=1<0,1>Velocity Scale
+slider4:in_chan=0<0,16,1{Any,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Input Channel
+slider5:low_key=0<0,127>Lowest Key
+slider6:hi_key=127<0,127>Highest Key
+
+@init
+BUFSIZE = 128;
+
+notebuf = 0;
+memset(notebuf, 0, BUFSIZE);
+
+chanbuf = notebuf + BUFSIZE;
+memset(chanbuf, 0, BUFSIZE);
+
+velbuf = chanbuf + BUFSIZE;
+memset(velbuf, 0, BUFSIZE);
+
+tapsbuf = velbuf + BUFSIZE;
+memset(tapsbuf, 0, BUFSIZE);
+
+pos = 0;
+
+function repeatNote(note)
+(
+  velbuf[note] *= vel_scale;
+
+  midisend(offset, $x90 + chanbuf[note], note, 0);
+  midisend(offset, $x90 + chanbuf[note], note, velbuf[note]);
+  
+  tapsbuf[note] += 1;
+  notebuf[note] = (!taps || tapsbuf[note] < taps) && velbuf[note] > 0 ? pos : 0;
+);
+
+function beats2time(val)
+(
+  val * (tempo / ts_denom / 60);
+);
+
+function isOverDelay(note)
+(
+  delay && notebuf[note] && pos >= notebuf[note] + beats2time(delay);
+);
+
+@block
+pos += samplesblock / srate;
+
+// process new midi events
+while(midirecv(offset, msg, note, vel)) (
+  type = msg & 0xf0;
+  chan = msg & 0x0f;
+
+  type == $x80 ? ( // note off
+    type = $x90;
+    vel = 0;
+  );
+
+  capture = (!in_chan || (in_chan-1) == chan) &&
+    note >= low_key && note <= hi_key;
+
+  type == $x90 && capture ? ( // note message
+    vel > 0 ? (
+      // note on
+      notebuf[note] = pos;
+      chanbuf[note] = chan;
+      velbuf [note] = vel;
+      tapsbuf[note] = 0;
+    ) : notebuf[note] ? (
+      // note off
+      notebuf[note] = 0;
+    );
+  );
+
+  midisend(offset, msg, note, vel);
+);
+
+i = 0;
+loop(BUFSIZE, (
+  isOverDelay(i) ? repeatNote(i);
+  i += 1;
+));

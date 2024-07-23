@@ -1,0 +1,402 @@
+desc: MIDI Display Patch Name
+author: mschnell
+version: 1.1
+changelog:
+  allow for bank no > 7
+  Explicitly disallow more than 1024 patch names (due to limitation of JSFX/EEL)
+  Bug fixes
+about:
+  MIDI Display Patch Name is intended to show the name of the currently selected patch in the embedded FX window of the track in the mixer.
+
+  It reads a file that is formatted as a Reaper *.reabank file, containing multiple banks of up to 128 patch names each. In sum 1024 patch names can be handled. 
+
+  Incoming MIDI bank select (CC# 32) and program chanfe / patch select are used to control the display. 
+
+  The patch names are formatted to fit best in the three lines of display.
+
+  "Input Channel" selects the MIDI channel to be listen to or "all".
+
+  "Font size" defines the character size to display the patch name {12, 18, or 24}
+
+  "Patchname File" selects a file in the .../Data/Display Patchname directory. The file needs to feature a ".txt" extension. 
+
+  "Display" selects if the beginning of the list of patch names is shown (for debugging purpose) or if the currently selected patch is displayed. In embedded mode, always the currently selected patch is displayed.
+
+
+slider1:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,all}>Input Channel
+slider2:1<0,2,1{12,18,24}>Font size
+slider3:/Display Patchname::Patchname File
+slider4:0<0,1,1{Current,0...,50...,100...,150...,200...,250...,300...,350...,400...,450...}>Display
+
+@init
+maxlines  = 1024;
+file_old  = -1;
+statPC    = $xC0;
+statCC    = $xB0;
+CC_BS_LSB = $x20;
+cur_patch = -1;
+cur_bank  = 0;
+old_patch = -2;
+old_bank  = -1;
+banks     = 0;
+patches   = 1024;          // only 1024 strbgs allowen in jsfx
+
+@slider
+filenr_old != slider3 ? (  // Multiple file use would kill the programm permanently !
+  
+  filenr_old = slider3;
+
+  offset = 0;
+  while (offset < maxlines) (
+    strcpy (offset, "");
+    offset += 1;  
+  );  
+  
+  offset = 0;
+  lines  = 0;
+  bank   = 0;
+  
+  handle=file_open(slider3);
+//  file_string(handle,offset);
+  while( offset < maxlines ) (
+    file_string(handle,#s);
+    file_avail(handle) ? (
+
+      c = 0;
+      strlen(#s) > 0 ? (
+//        #s = strcpy(#, offset);
+        c = str_getchar(#s, 0, 'c');     
+        c0 = c;
+/* 
+        offset == 0 ? (
+          ___0 = c;
+         ) : offset == 1 ? (
+          ___1 = c;
+         ) : offset == 2 ? (
+          ___2 = c;
+         ) : offset == 3 ? (
+          ___3 = c;
+         ) : offset == 4 ? (
+          ___4 = c;
+         ) : offset == 5 ? (
+          ___5 = c;
+        );   
+*/            
+        c1 = -1;
+        c2 = -1;
+        c0 < 0x30 || c0 > 0x39 ? (
+          c0 = -1 ;
+         ) : ( 
+          c1 = str_getchar(#s, 1, 'c');     
+          c1 < 0x30 || c1 > 0x39 ? (
+            c1 = -1 ;
+           ) : ( 
+            c2 = str_getchar(#s, 2, 'c');     
+            c2 < 0x30 || c2 > 0x39 ? (
+              c2 = -1 ;
+            );  
+          );
+        );
+      );  
+      c0 > 0 ? (
+        patch = c0 - 0x30;
+        c1 > 0 ? (
+          patch = patch * 10 + c1 -0x30;
+          c2 > 0 ? (
+            patch = patch * 10 + c2 -0x30;
+          );
+        );    
+        c2 > 0 ? (
+          strcpy_from(#s, #s, 4);
+         ) :  c1 > 0 ? (
+          strcpy_from(#s, #s, 3);
+         ) : (
+          strcpy_from(#s, #s, 2);
+        );  
+
+        len = strlen(#s);
+        c   = str_getchar(#s, len-2, 'c');     // Trim CR / LF   
+        c <= ' ' ? (
+          len -= 2;
+         ) : (
+          len -= 1; 
+        );
+        strncpy(#s, #s, len);
+        
+/*
+        offset == 0 ? (
+          ___0 = nn;
+         ) : offset == 1 ? (
+          ___1 = nn;
+         ) : offset == 2 ? (
+          ___2 = nn;
+         ) : offset == 3 ? (
+          ___3 = nn;
+         ) : offset == 4 ? (
+          ___4 = nn;
+         ) : offset == 5 ? (
+          ___5 = nn;
+        );   
+*/
+      
+//      strcpy(offset, #s);
+//        nn += 128 * bank;
+        nn = lines;
+        banks[nn]   = bank;
+        patches[nn] = patch;
+        
+        nn <= maxlines ? (      
+          strcpy(nn, #s);
+        );
+        offset+=1;   
+        lines +=1;
+       ) : c == 'B' ? ( 
+        /*
+        c1 = str_getchar(#s, 9, 'c');     
+        bank = c1 - 0x30;;
+        */
+        i = 0;
+        while (c != ' ') (
+          i += 1;
+          c = str_getchar(#s, i, 'c');     
+        );  
+
+/*
+        ___ia = i;
+*/
+
+        c = '0';
+        while (c != ' ') (
+          i += 1;
+          c = str_getchar(#s, i, 'c');     
+        );  
+/*        
+        strcpy(#___s, #s);
+        ___ib = i;
+*/        
+        
+        c1 = str_getchar(#s, i+1, 'c');     
+        c2 = str_getchar(#s, i+2, 'c');     
+        c3 = str_getchar(#s, i+3, 'c');     
+        bank = c1 - 0x30;;
+        (c2 >= '1') && (c2 <= '9') ? (
+          bank *= 10;
+          bank += c2 - 0x30;;
+          (c3 >= '1') && (c3 <= '9') ? (
+            bank *= 10;
+            bank += c3 - 0x30;;
+          );
+        );
+      );  
+     ) : (
+      offset = 1000000;       
+    );
+  );
+  file_close(handle);
+);  
+inChannel = slider1;
+display   = slider4;
+fontsize  = slider2;
+
+@block
+while (midirecv(offset, msg1, msg23))  (  
+    // Extract message type and channel
+  status = msg1 & $xF0;
+  channel = msg1 & $x0F;
+      
+    // Is it on our channel?
+  (channel == inChannel) || (inChannel > 15)?  (
+    // Is it a note on event?
+    status == statPC ? (
+      cur_patch = msg23 & 0x7F;
+     ) :  status == statCC ? (
+      msg23 & 0xFF == CC_BS_LSB ? (
+        cur_bank = msg23 >> 8;
+      );
+    );
+  );
+  midisend(offset, msg1, msg23);
+);  
+
+@gfx 650 450  
+
+  //display file
+//  textw = gfx_texth * 0.6;
+  display && gfx_w > 300 ? (
+    gfx_r=gfx_g=gfx_b=0; gfx_a=1;
+    gfx_x=gfx_y=0;
+    gfx_rectto(gfx_w,gfx_h);
+  
+    gfx_setfont(2,#font,18);
+    gfx_x=10;
+    gfx_y=10;
+    gfx_r=gfx_g=gfx_b=1;
+    gfx_printf("lines: %d", lines);
+//    handle >= 0 && lines ? (
+    lines ? (
+      _row = 0;
+//      _n   = 0;
+      _n = (display-1) * 50;
+      loop(maxlines,
+        gfx_x=10;
+        gfx_y=40 + 20 * _row;
+        #s = strcpy(#, _n);
+        gfx_r=gfx_g=gfx_b=1;
+//        gfx_drawstr(#s);
+        strlen(#s) ? (
+          gfx_printf("%d:/%d %s", banks[_n], patches[_n], #s);
+          _row += 1;
+        );
+        _n += 1;
+      );  
+     ) : ( 
+      gfx_x=10;
+      gfx_y=40;
+      gfx_r=1;gfx_g=0;gfx_b=0;
+      gfx_drawstr("No appropriate *.txt file in   >>>>  .../Display Patchname  <<<<");    
+    );
+   ) : ( 
+    gfx_w > 300 ? old_bank = -1;                                      // for testing
+    (old_bank != cur_bank) ||( old_patch != cur_patch) ? ( 
+      fontsize == 0 ? (
+        _fontsize   = 12;
+        _fontheight = 11;
+        maxchars    = 17;
+       ) : fontsize == 1 ? (
+        _fontsize   = 18;
+        _fontheight = 14;
+        maxchars    = 10;
+       ) : ( 
+        _fontsize   = 24; 
+        _fontheight = 20;
+        maxchars    = 6;
+      ); 
+      maxchars *= gfx_w / 80;
+      old_bank  = cur_bank;
+      old_patch = cur_patch; 
+      gfx_r=0; gfx_g=gfx_b=0.5; gfx_a=1;
+      gfx_x=gfx_y=0;
+      gfx_rectto(gfx_w,gfx_h);
+  
+      gfx_setfont(2,#font,_fontsize);
+
+      gfx_r=1; gfx_g=gfx_b=1;
+//      _n = cur_patch + 128 * cur_bank;
+      _ii = 0;
+      _n = 9999;
+      while (_ii<lines && _n >= 9999) (
+        _ii += 1;
+        (banks[_ii] == cur_bank) && (patches[_ii] == cur_patch) ? _n = _ii;
+      );
+
+/*    
+      strcpy_substr(#_s1,_n,0,10);  
+      strcpy_substr(#_s2,_n,10,10);  
+      strcpy_substr(#_s3,_n,20,10);  
+*/  
+      lastb = 5;
+      _maxb = maxchars - lastb;
+
+      _len = strlen(_n);
+      
+/*      
+      _len -= 2;    // Why -2 ???
+      ___len = _len;
+      ___cn1 = str_getchar(_n, _len,   'c');
+      ___cn  = str_getchar(_n, _len+1, 'c');
+*/      
+      
+      _ok  = 0;
+      while (_ok < 2) (
+      #_s1 = "";
+      #_s2 = "";
+      #_s3 = "";
+      _i   =  0;
+      _o   =  0;
+      _bi  = 0;
+      _bo  = 0;
+      _s1  = 0;
+      _s2  = 0;
+      _bc  = 0;
+      _s   = 1;
+      while (_i < _len) (
+        _c = str_getchar(_n, _i, 'c');     
+        _s == 1 ? (
+          str_setchar(#_s1,_o, _c, 'c');
+         ) : _s == 2 ? (
+          str_setchar(#_s2,_o, _c, 'c');
+         ) : _s == 3 ? (
+          str_setchar(#_s3,_o, _c, 'c');
+        );  
+        (_c == ' ')  || /*(_c == '-') ||*/ (_c == '_') ? (
+          _bi = _i;
+          _bo = _o;
+          _bc += 1;
+        );
+        _o += 1;
+        _o > maxchars ? (
+          bo += 1;
+          (_bo > _maxb) && (_bo != maxchars) ? (
+            while (_bo <= maxchars) (
+              _s == 1 ? (
+                str_setchar(#_s1,_bo, ' ', 'c');
+                _s1 = 1;
+               ) : _s == 2 ? (
+                str_setchar(#_s2,_bo, ' ', 'c');
+                _s2 = 1;
+               ) : _s == 3 ? (
+                str_setchar(#_s3,_bo, ' ', 'c');
+              );  
+              _bo += 1;
+              _i -= 1;
+            );
+            _i += 1;
+          );
+          _o = 0;
+          _s += 1;
+        );  
+        _i += 1;        
+      );
+
+      (_s < 3) /* && strlen(#_s3) == 0 */? (
+        !_s1 ? (
+          _bc && (_bc < 3) ? (
+            _maxb = -1;
+            _ok += 1;
+           ) : ( 
+            _ok = 2; 
+          );
+         ) : ( 
+          _ok = 2; 
+        );
+       ) : (
+        _ok = 2;
+      );  
+      
+//      _ok = 1;
+      
+      );
+
+
+  
+      gfx_x = 0;
+      gfx_y = 0;
+/*      
+      gfx_printf("width: %d", gfx_w);
+*/      
+      gfx_drawstr(#_s1);
+      gfx_x = 0;
+      gfx_y += _fontheight;
+      gfx_drawstr(#_s2);
+      gfx_x = 0;
+      gfx_y += _fontheight;
+      gfx_drawstr(#_s3);
+      
+/*
+      ___1 = strlen(#_s1);
+      ___2 = strlen(#_s2);
+      ___3 = strlen(#_s3);
+*/      
+      
+    );
+  );  

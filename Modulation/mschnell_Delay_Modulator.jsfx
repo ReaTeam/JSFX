@@ -1,0 +1,230 @@
+desc: Delay Modulator
+tags: stereo delay
+author: Michael Schnell (mschnell@bschnell.de)
+version: 1.1
+changelog: bug fixes, added graphics for fun and to start to gain compatibility with ReaRack
+donation: United Nations Foundation http://www.unfoundation.org/
+about:
+  ## Description
+  The plugin introduces a delay that can be set by the "Center Delay" sliders either in Milliseconds or in Samples.  
+  The other slider always moves appropriately. (Remember that you also can type in values outside the regular range of the sliders.)
+  This delay will be set as "pdc-delay" and hence automatically be compensated by the Reaper. 
+  
+  The center delay can be modulated between 0 and twice the "Center" value. Requesting a greater modulation results in clipping the modulation amount appropriately.
+  The amount of modulation can be set between 0 and 100 % (100 % = maximum possible modulation with the sum of the side chain inputs = 0 db) 
+  
+  The Modulation Type selection allows for using either the straight side chain signals to modulate the delay, resulting in a kind of Phase Modulation 
+  or to use the interal of the site chain signal resulting in a kind of Frequency Modulation. 
+  
+  "Dry" and "wet" sliders are provide the obvious functionality and can be set between 0 and 100 %
+  
+  A graphic shows the delay from left to right and the amplitude of the carrier upwards. 
+  The original (red), dry (blue) and wet (green) signals connected by white lines. 
+  ## usage 
+  The plugin can be used as a very versatile vibrato when recording a low frequency wave form and providing same as the side chain input.
+  
+  In the same way a creative Flanger can be done by mixing the dry and wet signals. 
+  
+  Vice versa, a versatile kind of Tremolo can be done by using the side chain input for the audio and sending a low frequency value to the input 1 or 2. 
+  
+  Very creative effects can be accomplished by sending different audio streams to the input and to the site chain 
+  (beware that the "carrier" input (1+2) is stereo, while the side chain input (3+4) is mixed to a single mono signal. 
+// NO WARRANTY IS GRANTED. THIS PLUG-IN IS PROVIDED ON AN "AS IS" BASIS, WITHOUT
+// WARRANTY OF ANY KIND. NO LIABILITY IS GRANTED, INCLUDING, BUT NOT LIMITED TO,
+// ANY DIRECT OR INDIRECT,  SPECIAL,  INCIDENTAL OR CONSEQUENTIAL DAMAGE ARISING
+// OUT OF  THE  USE  OR INABILITY  TO  USE  THIS PLUG-IN,  COMPUTER FAILTURE  OF
+// MALFUNCTION INCLUDED.  THE USE OF THE SOURCE CODE,  EITHER  PARTIALLY  OR  IN
+// TOTAL, IS ONLY GRANTED,  IF USED IN THE SENSE OF THE AUTHOR'S INTENTION,  AND
+// USED WITH ACKNOWLEDGEMENT OF THE AUTHOR. FURTHERMORE IS THIS PLUG-IN A  THIRD
+// PARTY CONTRIBUTION,  EVEN IF INCLUDED IN REAPER(TM),  COCKOS INCORPORATED  OR
+// ITS AFFILIATES HAVE NOTHING TO DO WITH IT.  LAST BUT NOT LEAST, BY USING THIS
+// PLUG-IN YOU RELINQUISH YOUR CLAIM TO SUE IT'S AUTHOR, AS WELL AS THE CLAIM TO
+// ENTRUST SOMEBODY ELSE WITH DOING SO.
+
+slider1:200<100,1000,0.1>Center Delay  (ms)
+slider2:20000<10000,100000,10>Center Delay L (spls)
+slider3:0<0,1,1{staight (similar Phase Modulation),integral (similar Frequency Modulation))}>Modulation Type
+slider4:0<0,100,0.1>Modulation (%)
+slider5:100<0,100,1>wet (%)
+slider6:0<0,100,1>dry (%)
+
+in_pin:left input
+in_pin:right input
+in_pin:Modulator input
+in_pin:Modulator input
+out_pin:left output
+out_pin:right output
+
+@init
+s1 = -1;
+s2 = -1;
+mod = -1;
+intc = 0.999;
+intf = 0.1;
+tf = 0.90;
+
+@slider
+ss = 0;
+slider1 != s1 ? (
+  s1 = slider1;
+  s2 =  floor(s1 / 1000 * srate+0.5);
+  slider2 = s2;
+  ss = 1;
+ ) : slider2 != s2 ? (
+  ss = 1;
+  s2 = slider2;
+  s1 = floor((s2 * 100000 / srate)+0.5)/100;
+  slider1 = s1;
+);  
+
+fm  = slider3;
+mod = slider4*s2/100;
+wet = slider5 / 100;
+dry = slider6 / 100;
+
+ss ? (
+  l    = s2;
+  l2   = 2*l;
+  bufL = 0;
+  bufR = l2;
+  bufR = 1000000;
+  pdc_delay = s2;
+  pdc_bot_ch=0;
+  pdc_top_ch=2;
+  bufpos = 0;
+  memset(bufL, 0, l2);
+  memset(bufR, 0, l2);
+  int = 0;
+);  
+fm ? mod *= intf;
+
+@sample
+bufL[bufpos] = spl0 ;
+bufR[bufpos] = spl1 ;
+gorg = spl0 + spl1;
+
+fm ? (
+  int += spl2+spl3;
+  int *= intc;
+  n = int*mod;
+ ) : (
+  n = (spl2+spl3)*mod;
+);
+n0 = floor(n);
+n0 >= l ? (
+  n0 = l;
+  dd = 0;
+ ) : ( 
+  n0 <= -l ? (
+    n0 = -l; 
+    dd = 0;
+   ) : (
+    dd = n - n0; 
+  );  
+);    
+
+  
+nd  = bufpos - l;
+nd < 0 ? nd += l2;
+
+n1 = nd + n0;
+n1 >= 0 ? (
+  n1 >= l2 ? (
+    n1 -= l2;
+  ); 
+ ) : (
+  n1 += l2;
+);
+n2 = n1 + 1;
+n2 >= l2 ? n2 -= l2;
+
+d  = bufL[nd];
+o1 = bufL[n1];
+o2 = bufL[n2];
+w = o1 + dd*(o2-o1);
+spl0 = d*dry + w*wet;
+gwet = w;
+gdry = d;
+
+d  = bufR[nd];
+o1 = bufR[n1];
+o2 = bufR[n2];
+w = o1 + dd*(o2-o1);
+spl1 =  d*dry + w*wet;
+gwet += w;
+gdry += d;
+
+bufpos = bufpos + 1 ;
+bufpos >= l2 ? bufpos = 0;
+
+
+@gfx 640 400
+
+gorgmax *= tf;
+gdrymax *= tf;
+gwetmax *= tf;
+
+gorg = sqrt(gorg*gorg);
+gdry = sqrt(gdry*gdry);
+gwet = sqrt(gwet*gwet);
+
+gorgmax < gorg ? gorgmax = gorg;
+gdrymax < gdry ? gdrymax = gdry;
+gwetmax < gwet ? gwetmax = gwet;
+
+gorgmax > 0.97 ? gorgmax = 0.97;
+gdrymax > 0.97 ? gdrymax = 0.97;
+gwetmax > 0.97 ? gwetmax = 0.97;
+
+gfx_r=gfx_g=gfx_b=0; gfx_a=1;
+gfx_x=gfx_y=0;
+gfx_rectto(gfx_w,gfx_h);
+
+gfx_r=gfx_g=gfx_b=0.3;
+y2  = gfx_h; // / 2;
+x2  = gfx_w / 2;
+x = gfx_w;
+
+gfx_x = 0;
+gfx_y = y2;
+
+gfx_x = x2;
+gfx_y = 0;
+gfx_lineto(gfx_x, gfx_h);
+  
+gfx_r=1;
+gfx_g=gfx_b=0;
+
+xo = 0;
+yo = -gfx_h * gorgmax + y2;
+gfx_x = xo;
+gfx_y = yo-8;
+gfx_rectto(xo+4, yo+8);
+gfx_x = xo;
+gfx_y = yo;
+
+xd = x2;;
+yd = -gfx_h * gdrymax + y2;
+gfx_r=gfx_g=gfx_b=1;
+gfx_lineto(xd, yd);
+gfx_r=gfx_g=gfx_b=1;
+gfx_x = xd-8;
+gfx_y = yd-8;
+gfx_r=gfx_g=0;
+gfx_b=1;
+gfx_rectto(xd+8, yd+8);
+gfx_x = xd-2;
+gfx_y = yd-2;
+xw = gfx_w * n / s2 + x2;;
+yw = -gfx_h * gwetmax + y2;
+gfx_r=gfx_g=gfx_b=1;
+gfx_lineto(xw, yw);
+
+//xdif = yw - xd;
+//ydif = yw - yd
+
+gfx_lineto(xw-8, yw-8);
+gfx_r=gfx_b=0;
+gfx_g=1;
+gfx_rectto(xw+8, yw+8);
+

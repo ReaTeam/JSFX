@@ -1,0 +1,157 @@
+desc: Transient Controller 2
+author: Ersh
+version: 2.1.1
+changelog:
+  Add gain smoothness parameter.
+  Increased internal frame rate to 1500 for finer peak resolution.
+  Performance optimization.
+screenshot: Screenshot https://i.imgur.com/UMMDxQI.png
+about:
+  # Transient Controller 2
+
+  A basic improvement of the standard TransientController supplied with Reaper64.
+
+  - Unhides internal parameters for finer adjustment.
+  - Adds graphical visualisation: [screenshot](https://i.imgur.com/UMMDxQI.png).
+
+// (C) 2007, Michael Gruhn.
+// (C) 2021, Yury Ershov.
+
+// NO WARRANTY IS GRANTED. THIS PLUG-IN IS PROVIDED ON AN "AS IS" BASIS, WITHOUT
+// WARRANTY OF ANY KIND. NO LIABILITY IS GRANTED, INCLUDING, BUT NOT LIMITED TO,
+// ANY DIRECT OR INDIRECT,  SPECIAL,  INCIDENTAL OR CONSEQUENTIAL DAMAGE ARISING
+// OUT OF  THE  USE  OR INABILITY  TO  USE  THIS PLUG-IN,  COMPUTER FAILTURE  OF
+// MALFUNCTION INCLUDED.  THE USE OF THE SOURCE CODE,  EITHER  PARTIALLY  OR  IN
+// TOTAL, IS ONLY GRANTED,  IF USED IN THE SENSE OF THE AUTHOR'S INTENTION,  AND
+// USED WITH ACKNOWLEDGEMENT OF THE AUTHOR. FURTHERMORE IS THIS PLUG-IN A  THIRD
+// PARTY CONTRIBUTION,  EVEN IF INCLUDED IN REAPER(TM),  COCKOS INCORPORATED  OR
+// ITS AFFILIATES HAVE NOTHING TO DO WITH IT.  LAST BUT NOT LEAST, BY USING THIS
+// PLUG-IN YOU RELINQUISH YOUR CLAIM TO SUE IT'S AUTHOR, AS WELL AS THE CLAIM TO
+// ENTRUST SOMEBODY ELSE WITH DOING SO.
+
+// Further more is this released under the GPL License:
+// http://www.gnu.org/licenses/gpl.html
+
+//tags: processing dynamics transient
+//author: LOSER, ERSH
+
+slider1:0<-100,100,1>Attack (%)
+slider2:0<-100,100,1>Sustain (%)
+slider3:0<-12,6,.1>Output (dB)
+slider4:-30<-1000,-.1,.1>Transient Detector decay
+slider5:-1250<-10000,-.1,.1>Attack Detector decay
+slider6:-3<-100,-.1,.1>Sustain Detector decay
+slider7:0<0,1,1{No,Yes}>Use slow gain release
+slider8:25<1,1000,.1>Gain Release Rate dB/sec
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+b1Env1 = -exp(slider4 / srate );
+a0Env1 = 1.0 + b1Env1;
+b1Env2 = -exp(slider5 / srate );
+a0Env2 = 1.0 + b1Env2;
+b1Env3 = -exp(slider6 / srate );
+a0Env3 = 1.0 + b1Env3;
+gain = 0;
+
+g_maxx = 2000;         // number of points on axis X
+g_framerate = 1500;    // graph frame rate
+g_n = 4;               // number of graphs
+freembuf(g_maxx*g_n + 1);
+memset(0, 0, g_maxx*g_n);
+g_idx = 0;
+
+g_spf = srate / g_framerate;  // samples per frame
+g_sample = 0;
+
+@slider
+attack=slider1/100;
+sustain=slider2/50;
+vol = 2^(slider3/6);
+
+b1Env1 = -exp(slider4 / srate );
+a0Env1 = 1.0 + b1Env1;
+b1Env2 = -exp(slider5 / srate );
+a0Env2 = 1.0 + b1Env2;
+b1Env3 = -exp(slider6 / srate );
+a0Env3 = 1.0 + b1Env3;
+
+gain_decay = slider8 / srate;
+
+@sample
+maxSpls = max(abs(spl0),abs(spl1));
+env1 = sqrt(tmpEnv1 = a0Env1*maxSpls - b1Env1*tmpEnv1);
+env2 = sqrt(tmpEnv2 = a0Env2*maxSpls - b1Env2*tmpEnv2);
+env3 = sqrt(tmpEnv3 = a0Env3*maxSpls - b1Env3*tmpEnv3);
+
+gainAttack = log(max(env2/env1,1))*attack;
+gainSustain = log(max(env3/env1,1))*sustain;
+
+gainLast = gain;
+gain = gainAttack + gainSustain;
+slider7 ? gain = gain >= 0 ?
+  max(gain, gainLast - gain_decay) :
+  min(gain, gainLast + gain_decay);
+
+gainV = exp(gain) * vol;
+
+spl0 *= gainV;
+spl1 *= gainV;
+
+play_state == 1 || play_state == 5 ? (g_sample = (g_sample + 1) % g_spf) == 0 ? (
+  0[g_idx] = env1;
+  1[g_idx] = env2;
+  2[g_idx] = env3;
+  3[g_idx] = gain/5 + 0.5;
+  g_idx = (g_idx + g_n) % (g_maxx*g_n);
+);
+
+@gfx 600 300
+
+function g_y(y) (
+  gfx_h - gfx_h * y;
+);
+
+function graph(idx, r, g, b, legend) (
+  gfx_r = r; gfx_g = g; gfx_b = b; gfx_a = 1;
+
+  gfx_x = 34; gfx_y = 4 + idx * (gfx_texth+4);
+  gfx_drawstr(legend);
+  gfx_y += 3;
+  gfx_line(2, gfx_y, 30, gfx_y);
+
+  i = 0;
+  ii = g_idx;
+  gfx_x = 0;
+  gfx_y = idx[ii];
+  while (
+    x = i*gfx_w/g_maxx;
+    gfx_a = (idx == 3) || (idx != 0 && idx[ii] > 0[ii]) ? 1 : 0.5;
+    gfx_lineto(x, g_y(idx[ii]));
+    idx != 0 && idx != 3 && idx[ii] > 0[ii] ? gfx_line(x, g_y(0[ii]), x, g_y(idx[ii]));
+    i += 1;
+    ii = (ii + g_n) % (g_maxx*g_n);
+    i < g_maxx;
+  );
+);
+
+gfx_clear = 0;
+graph(2, 0, 0, 1, "Sustain (when exceeds Transient)");
+graph(1, 1, 0, 0, "Attack (when exceeds Transient)");
+graph(0, 1, 1, 1, "Transient");
+graph(3, 0, 1, 0, "Gain");
+
+mouse_x >= 0 && mouse_x < gfx_w && mouse_y >= 0 && mouse_y < gfx_h ? (
+  val = 3[(floor(mouse_x*g_maxx/gfx_w)*g_n + g_idx) % (g_maxx*g_n)];
+  gfx_circle(mouse_x, g_y(val), 2, 1, 1);
+
+  val = (val-0.5)*5;
+  gfx_y = 4; gfx_x = gfx_w*3/4;
+  val >= 0 ? gfx_drawstr("+");
+  gfx_drawnumber(val, 2); gfx_drawstr("dB");
+);
+

@@ -1,0 +1,64 @@
+desc: Sustain pedal to note length
+author: cfillion
+version: 1.0.1
+changelog:
+  Fix handling of MIDI note #128
+  Fix note off events always being sent to channel 1
+screenshot: https://i.imgur.com/nzzbF20.gif
+about: This effect delays note off message when a pedal is down until it is released. The (customizable) pedal CC events can either be eaten or let through the MIDI stream.
+
+slider1:in_chan=0<0,16,1{Any,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Input channel
+slider2:pedal_cc=64<0,127,1>Pedal CC
+slider3:pedal_passthrough=0<0,1,1{No,Yes}>Passthrough pedal
+slider4:pedal_threshold=64<0,127,1>-Pedal down threshold
+
+@init
+eatenNoteOff = 0x1000;
+zeroNoteOn   = 0x100;
+
+@block
+function indexOf(chan, note) (
+  (128 * chan) + note
+);
+
+function sendNoteOffs(offset) local(chan, note, index, event) (
+  chan = 0;
+  loop(16,
+    note = 0;
+    loop(128,
+      index = indexof(chan, note);
+      event = notes[index] & zeroNoteOn ? $x70 : $x80;
+      notes[index] & eatenNoteOff ? (
+        midisend(offset,
+          event + chan,
+          note, notes[index] & $xFF);
+        notes[index] = 0;
+      );
+      note += 1;
+    );
+    chan += 1;
+  );
+);
+
+while(midirecv(offset, msg, note, vel)) (
+  type = msg & 0xf0;
+  chan = msg & 0x0f;
+  passthrough = 1;
+
+  !in_chan || (in_chan-1) == chan ? (
+    pedal_down ? type == $x80 || (type == $x90 && vel == 0) ? ( // note off
+      index = indexOf(chan, note);
+      notes[index] = eatenNoteOff | vel;
+      type == $x90 ? notes[index] |= zeroNoteOn;
+      passthrough = 0;
+    );
+
+    type == $xb0 && note == pedal_cc ? (
+      pedal_down = vel >= pedal_threshold;
+      !pedal_down ? sendNoteOffs(offset);
+      passthrough = pedal_passthrough;
+    )
+  );
+
+  passthrough == 1 ? midisend(offset, msg, note, vel);
+);

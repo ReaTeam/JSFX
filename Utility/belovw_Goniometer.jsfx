@@ -1,0 +1,388 @@
+desc: Goniometer
+author: Vladimir Belov
+version: 1.00
+changelog: New goniometer visualization mode.
+
+//tags: analysis visualization
+
+slider1:led=1<1,5,1>-Led
+slider2:gon=0<0,1,1>-Goniometr
+
+options:no_meter,
+in_pin:left input
+in_pin:right input
+out_pin:none
+
+@init
+//ext_noinit=1;
+k=sqrt(2);
+function GFXClear () (
+gfx_x=gfx_y=gfx_r=gfx_g=gfx_b=0; gfx_a=1;
+gfx_rectto(gfx_w,gfx_h)
+);
+gfx_clear=-1;
+p=$PI/180;
+c=1;
+s=0;
+i=0;
+Corr=1;
+Indicar=1;
+
+attack = exp(-1/(3/1000*srate));
+release = exp(-1/(1000/1000*srate));
+decay = 1/srate/0.6;
+
+
+@sample
+
+//////////////////////////////////////
+// Auto gain control for Goniometer //
+//////////////////////////////////////
+
+in=sqrt(sqr(spl0)+sqr(spl1));
+in*c>0.35 ? (c*=attack) : (c/=release); c=min(100000,c);
+
+inl=spl0;
+inr=spl1;
+
+// Rotate Goiometr. LR to MS
+
+Lr=inl-inr;
+Rr=inl+inr;
+
+
+// Bufering input
+
+0[s]=Lr*c;
+1[s]=Rr*c;
+s+=2;
+
+
+//////////////////
+// Detect Phase //
+//////////////////
+
+As=abs(Lr);
+Am=abs(Rr);
+
+Am>=As ? Corr=1 : Corr=-1;     // Correlation     1.3
+Am==As && Am>0.001 ? Corr=0;   // Stabilizer      1.9
+
+
+//////////////////////////////
+// Alternative detect Phase //
+//////////////////////////////
+
+////////
+// 1) //
+////////
+
+/*
+Corr=(Am-As)*10000; //                            2.5
+Corr=min(1,max(-1,Corr));
+*/
+
+////////
+// 2) //
+////////
+
+//Corr=sign(Am-As);// *((Am==As) ==  (Am<0.001)) //  Zero stabilization. Old schema 1.6 - 5.3
+
+
+// Correlator dempher
+
+Indicor=Indicor-(Indicor-corr)*decay;
+
+
+@gfx 500 500
+
+mouse_cap==1 && mm==0 ? (mm=1; mouse_y/gfx_h>0.9 ? (led+=1; GFXClear(); led > 5 ? led=1;) : (gon+=1; gon>1 ? gon=0)); // Next Correlometer
+mouse_cap==2 && mm==0 ? (mm=1; mouse_y/gfx_h>0.9 ? (led-=1; GFXClear(); led < 1 ? led=5;) : (gon-=1; gon<0 ? gon=1)); // Previus  Correlometr
+mouse_cap==0 ? mm=0;
+
+gfx_w!=w && gfx_h!=h ? (GFXClear(); w=gfx_w; h=gfx_h); // Clear screen by resize
+
+size = min(gfx_w,gfx_h);
+Sizi = Size*45/46/2;
+gx0=gfx_w/2;
+gx2=gx0-sizeh*1/45;
+sizeH = size/2;
+sizeQ=sizeH/2;
+size2Q=2*sizeQ;
+size3Q=3*sizeQ;
+x03=gx0-sizeh;
+shiftLed=(size>150)*15+(size<150)*4;
+step=0.004;
+
+//Goniometr
+i=0;
+
+gon==0 ?
+
+////////
+// 1) //
+////////
+  (
+        gfx_a=0.33;
+  while(
+        gfx_x=gx0-sizeH*0[i]+0.5;
+        gfx_y=sizeH*(1-1[i]);
+        gfx_setpixel(c/20,1-c/600,-c/40+0.8);
+        (i+=2)<s;
+        );
+  ):
+
+////////
+// 2) //
+////////
+  (     gfx_x=gx0;
+        gfx_y=sizeH;
+        gfx_r=c/20;
+        gfx_g=1-c/600;
+        gfx_b=-c/40+0.8;
+        gfx_a=0.1;
+  while(
+        gfx_lineto(gx0-sizeH*0[i]+0.5,sizeH*(1-1[i]),1);
+        (i+=2)<s;
+        )
+    );
+
+s=0;
+
+//Corr+=1/300; Corr>1?Corr=-1;
+
+//Clear Screen
+
+gfx_r=gfx_g=gfx_b=gfx_x=gfx_y=0;
+gfx_a=0.05;
+gfx_rectto(gfx_w,gfx_h);
+
+
+///
+
+ph=Indicor;
+
+
+////////////
+// Led 1  //
+////////////
+
+led==1 ?
+(
+gfx_r=gfx_g=gfx_b=0.1; gfx_g=0; gfx_a=0.066;
+gfx_x=gx2-sizi; gfx_y=size-1;
+gfx_rectto(gfx_x+size+11,gfx_y-size*0.06);
+
+gfx_r=(1-PH)*0.7; gfx_g=(PH+1)*0.7; gfx_b=2*ph-1; gfx_a=1;
+gfx_x=gx2+(ph)*sizi; gfx_y=size-1;
+gfx_rectto(gfx_x+size*0.033,gfx_y-size*0.06);
+);
+
+///////////
+// Led 2 //
+///////////
+
+led==2 ?
+(
+gfx_r=0.06;
+gfx_g=0.24;
+gfx_b=0.06; gfx_a=0.13;
+gfx_x=gx2-sizi;
+gfx_y=size-shiftLed;
+
+gfx_rectto(gfx_x+size*1.004,gfx_y-size*0.067);
+
+gfx_r=(1-PH)*0.8; gfx_g=(PH+1)*0.7; gfx_b=0.6*ph/2; gfx_a=0.66;
+
+
+gfx_x=gx2+sizi*floor(PH*22+0.5)/22;
+gfx_y=size-shiftled;
+gfx_rectto(gfx_x+Size/46,gfx_y-size*0.06);
+
+
+dx=gx2-sizi;
+gfx_x=gfx_y=gfx_r=gfx_g=gfx_b=0; gfx_a=1;
+loop(46,
+gfx_x=dx;
+gfx_y=size-shiftled;
+gfx_rectto(gfx_x+size*0.004,gfx_y-size*0.064);
+dx+=size/45);
+
+gfx_r=0.15;
+gfx_g=0.15;
+gfx_b=0.17; gfx_a=1;
+gfx_x=gx2-sizi+sizi*0.004; gfx_y=size-shiftLed+1;
+gfx_rectto(gfx_x+size,gfx_y-size*0.007);
+gfx_x=gx2-sizi+sizi*0.004; gfx_y=size*0.94-shiftled;
+gfx_rectto(gfx_x+size,gfx_y-size*0.007);
+);
+
+///////////
+// Led 3 //
+///////////
+ph=min(ph,0.96);
+
+led==3 ?
+(
+gx3=gx2+sizeH*(1/45+0.007);
+sl3=size*0.023;
+gfx_r=gfx_g=gfx_b=0; gfx_a=0.1;
+gfx_x=gx0-sizeH; gfx_y=size-shiftLed;
+gfx_rectto(gfx_x+size+1,gfx_y-sl3);
+//gfx_r=0.8; gfx_g=0.25; gfx_b=0.15; gfx_a=1;
+gfx_r=0; gfx_g=0.8; gfx_b=0.5; gfx_a=1;
+gfx_x=gx0+sizeH; gfx_y=size-shiftLed;
+gfx_rectto(gx0+sizeH*PH,gfx_y-sl3);
+
+gfx_r=0;
+gfx_g=0;
+gfx_b=0; gfx_a=1;
+
+dy=size-shiftLed;
+
+loop(0.025/step,
+gfx_x=gx0-sizeh;
+gfx_y=dy;
+gfx_rectto(gfx_x+size*(0.007+1),gfx_y-size*Step);
+dy-=2*size*step;
+);
+
+
+dx=gx0-sizeh;
+
+loop(1/step/2+2,
+gfx_x=dx;
+gfx_y=size-shiftLed;
+gfx_rectto(gfx_x+size*step,gfx_y-sl3);
+dx+=2*size*step);
+);
+
+///////////
+// Led 4 //
+///////////
+
+led==4 ?
+(
+gx3=gx2+sizeH*(1/45+0.007);
+sl3=size*0.023;
+gfx_r=gfx_g=gfx_b=0; gfx_a=0.1;
+gfx_x=gx0-sizeH; gfx_y=size-shiftLed;
+gfx_rectto(gfx_x+size+1,gfx_y-sl3);
+gfx_r=0.8; gfx_g=0.25; gfx_b=0.15; gfx_a=1;
+gfx_x=gx0+sizeH; gfx_y=size-shiftLed;
+gfx_rectto(gx0+sizeH*PH,gfx_y-sl3);
+
+gfx_r=0;
+gfx_g=0;
+gfx_b=0; gfx_a=1;
+
+
+dy=size-shiftLed;
+
+loop(0.025/step,
+gfx_x=gx0-sizeh;
+gfx_y=dy;
+gfx_rectto(gfx_x+size*(0.007+1),gfx_y-size*Step);
+dy-=2*size*step;
+);
+
+
+dx=gx0-sizeh;
+
+loop(1/step/2+2,
+gfx_x=dx;
+gfx_y=size-shiftLed;
+gfx_rectto(gfx_x+size*step,gfx_y-sl3);
+dx+=2*size*step);
+);
+
+///////////
+// Led 5 //
+///////////
+
+led==5 ?
+(
+gx3=gx2+sizeH*(1/45+0.007);
+sl3=size*0.023;
+gfx_r=gfx_g=gfx_b=0; gfx_a=0.1;
+gfx_x=gx0-sizeH; gfx_y=size-shiftLed;
+gfx_rectto(gfx_x+size+1,gfx_y-sl3);
+
+gfx_r=0; gfx_g=0.8; gfx_b=0.5; gfx_a=1;
+gfx_x=gx0+sizeH; gfx_y=size-shiftLed;
+gfx_rectto(max(gx0,gx0+sizeH*PH),gfx_y-sl3);
+
+gfx_r=0.85; gfx_g=0.25; gfx_b=0.25; gfx_a=1;
+gfx_x=gx0; gfx_y=size-shiftLed;
+gfx_rectto(min(gx0,floor(gx0+sizeH*PH)),gfx_y-sl3);
+
+gfx_r=0;
+gfx_g=0;
+gfx_b=0; gfx_a=1;
+
+
+dy=size-shiftLed;
+
+loop(0.025/step,
+gfx_x=gx0-sizeh;
+gfx_y=dy;
+gfx_rectto(gfx_x+size*(0.007+1),gfx_y-size*Step);
+dy-=2*size*step;
+);
+
+
+dx=gx0-sizeh;
+
+loop(1/step/2+2,
+gfx_x=dx;
+gfx_y=size-shiftLed;
+gfx_rectto(gfx_x+size*step,gfx_y-sl3);
+dx+=2*size*step);
+);
+/////////////////////
+// Osi
+/////////////////////
+
+gfx_r=gfx_g=gfx_b=0.5; gfx_a=0.03;
+
+gfx_x=X03+sizeQ; gfx_y=sizeQ;
+gfx_lineto(X03+size3Q,size3Q,0);
+
+gfx_x=X03+sizeQ; gfx_y=size3Q;
+gfx_lineto(X03+size3Q,sizeQ,0);
+
+gfx_x=X03+size2Q; gfx_y=size2Q-sizeQ*k;
+gfx_lineto(X03+size2Q,size2Q+sizeQ*k,1);
+
+gfx_x=X03+size2Q-sizeQ*k; gfx_y=size2Q;
+gfx_lineto(X03+size2Q+sizeQ*k,size2Q,1);
+
+size>200 ? (
+
+gfx_r=gfx_g=gfx_b=0.3; gfx_a=1;
+gfx_x = gx0+Sizeh*(1/44+0.007-1)-12; gfx_y = size-10;
+gfx_drawnumber(-1,0);
+gfx_x = gx2+SizeH*(1/44+0.007)-3; gfx_y = size-10;
+gfx_drawnumber(0,0);
+gfx_x = gx2+sizi*(1+1/45+0.007)-3; gfx_y = size-10;
+gfx_drawnumber(1,0);
+
+gfx_r=gfx_g=gfx_b=0.25; gfx_a=1;
+gfx_x = gx0-sizeh; gfx_y = 10;
+Gon==0 ? gfx_drawstr("Dot") : gfx_drawstr("Line");
+gfx_x = gx0-sizeh; gfx_y = 20;
+gfx_drawstr("Led - ");
+gfx_drawnumber(Led,0);
+
+gfx_x = X03+sizeQ-8;
+gfx_y = sizeQ-8;
+gfx_drawchar($'L');
+gfx_x = X03+size3Q+1; gfx_y = sizeQ-8;
+gfx_drawchar($'R');
+gfx_x = X03+sizeH-3; gfx_y = size2Q-SizeQ*k-10;
+gfx_drawchar($'M');
+gfx_x = X03+size2Q-sizeQ*k-18; gfx_y = sizeH-3;
+gfx_drawstr("+S");
+gfx_x = X03+size2Q+sizeQ*k+8; gfx_y = sizeH-3;
+gfx_drawstr("-S");
+);

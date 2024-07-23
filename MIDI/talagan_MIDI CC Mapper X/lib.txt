@@ -1,0 +1,100 @@
+@noindex
+
+# WARNING! DON'T MODIFY THIS FILE. 
+# It will be overwritten by reapack on plugin update.
+# 
+# This is the default library file bundled with MIDI CC Mapper X.
+#
+# You can create your own library file alongside with the same format, 
+# you should name it "user_lib.txt" for it to be visible by the plugin.
+# This will superseed this file.
+#
+# The purpose of those files is to extend MIDI CC Mapper X by adding your own
+# set of functions for the MIDI curves.
+#
+# See README.md for the documentation of this feature.
+
+addpset|linear
+addpset|circn
+addpset|expnx
+addpset|xn
+
+addset|sin|sin(x)|An extended set based on the sin(x) function.
+addfunc|sin|1|1|lib/sin/classic
+addfunc|sin|1|2|lib/sin/classic_m
+addfunc|sin|2|1|lib/sin/classic_rm
+addfunc|sin|2|2|lib/sin/classic_r
+addfunc|sin|3|1|lib/sin/step
+addfunc|sin|3|2|lib/sin/step_m
+addfunc|sin|4|1|lib/sin/step_rm
+addfunc|sin|4|2|lib/sin/step_r
+addfunc|sin|1|4|lib/sin/inverse_rm
+addfunc|sin|1|5|lib/sin/inverse_r
+addfunc|sin|2|4|lib/sin/inverse
+addfunc|sin|2|5|lib/sin/inverse_m
+addfunc|sin|3|4|lib/sin/inverse_step_rm
+addfunc|sin|3|5|lib/sin/inverse_step_r
+addfunc|sin|4|4|lib/sin/inverse_step
+addfunc|sin|4|5|lib/sin/inverse_step_m
+addfunc|sin|5|1|lib/sin/classic_m_gate
+addfunc|sin|5|2|lib/sin/classic_rm_gate
+addfunc|sin|5|3|lib/sin/step_gate
+addfunc|sin|5|4|lib/sin/step_m_gate
+
+# The next set is now parametric with varying R
+# addset|circ|Circ|An extended set based on circles.
+# addfunc|circ|1|1|lib/circ/classic
+# addfunc|circ|1|2|lib/circ/classic_m
+# addfunc|circ|2|1|lib/circ/classic_rm
+# addfunc|circ|2|2|lib/circ/classic_r
+# addfunc|circ|3|1|lib/circ/step
+# addfunc|circ|3|2|lib/circ/step_m
+# addfunc|circ|4|1|lib/circ/step_rm
+# addfunc|circ|4|2|lib/circ/step_r
+# addfunc|circ|5|1|lib/circ/classic_m_gate
+# addfunc|circ|5|2|lib/circ/classic_rm_gate
+# addfunc|circ|5|3|lib/circ/step_gate
+# addfunc|circ|5|4|lib/circ/step_m_gate
+
+addset|sstep|Smooth|Smooth steps, from order 0 to 14.
+addfunc|sstep|1|1|lib/sstep/s0
+addfunc|sstep|1|2|lib/sstep/s0_m
+addfunc|sstep|1|3|lib/sstep/s1
+addfunc|sstep|1|4|lib/sstep/s1_m
+addfunc|sstep|1|5|lib/sstep/s2
+addfunc|sstep|1|6|lib/sstep/s2_m
+addfunc|sstep|2|1|lib/sstep/s3
+addfunc|sstep|2|2|lib/sstep/s3_m
+addfunc|sstep|2|3|lib/sstep/s4
+addfunc|sstep|2|4|lib/sstep/s4_m
+addfunc|sstep|2|5|lib/sstep/s5
+addfunc|sstep|2|6|lib/sstep/s5_m
+addfunc|sstep|3|1|lib/sstep/s6
+addfunc|sstep|3|2|lib/sstep/s6_m
+addfunc|sstep|3|3|lib/sstep/s7
+addfunc|sstep|3|4|lib/sstep/s7_m
+addfunc|sstep|3|5|lib/sstep/s8
+addfunc|sstep|3|6|lib/sstep/s8_m
+addfunc|sstep|4|1|lib/sstep/s9
+addfunc|sstep|4|2|lib/sstep/s9_m
+addfunc|sstep|4|3|lib/sstep/s10
+addfunc|sstep|4|4|lib/sstep/s10_m
+addfunc|sstep|4|5|lib/sstep/s11
+addfunc|sstep|4|6|lib/sstep/s11_m
+addfunc|sstep|5|1|lib/sstep/s12
+addfunc|sstep|5|2|lib/sstep/s12_m
+addfunc|sstep|5|3|lib/sstep/s13
+addfunc|sstep|5|4|lib/sstep/s13_m
+addfunc|sstep|5|5|lib/sstep/s14
+addfunc|sstep|5|6|lib/sstep/s14_m
+
+addset|kawaik4|Kawai K4|Based on the 1989 synth manual curves, p 44.
+addfunc|kawaik4|2|2|lib/kawaik4/lin_classic
+addfunc|kawaik4|2|3|lib/kawaik4/exp_classic
+addfunc|kawaik4|2|4|lib/kawaik4/exp2_classic
+addfunc|kawaik4|2|5|lib/circ/classic
+addfunc|kawaik4|3|2|lib/kawaik4/lin_clamp_hi
+addfunc|kawaik4|3|3|lib/kawaik4/lin_clamp_lo
+addfunc|kawaik4|3|4|lib/circ/step_rm
+addfunc|kawaik4|3|5|lib/circ/step
+

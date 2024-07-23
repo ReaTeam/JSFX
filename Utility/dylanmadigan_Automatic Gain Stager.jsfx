@@ -1,0 +1,315 @@
+desc: Automatic Gain Stager
+author: Dylan Madigan
+version: 1.0
+about:
+  This is a Gain plugin with a VU meter and a feature to automatically match the output volume to a target level.
+
+  Gain - Allows you to manually change the gain.
+
+  Target Level - This is the level you want your volume level to be at. This will be a target for gain matching as well as a target for the 0 on the VU meter so that you can match the level manually. By default this is set to the standard -18db.
+
+  Gain Match - When you slide this over, it will set the gain so that the output level matches the target level and then it will immediately switch off. 
+
+  VU Speed - This is the speed/response of the VU meter
+
+
+  To achieve the most accurate results, set the gain to 0db and play/loop your track at its busiest/loudest point when you Gain Match. If the result isn't quite right, it may be because you matched if on significant dip/peak. You can set the Gain back to 0 and try again. Or if the result is just a little bit off, you can adjust the gain accordingly and watch the VU meter for reference to your Target level.
+
+slider1:gain_db=0<-30,30,0.1>Gain (dB)
+slider2:-18<-36,0,0.1>Target Level (dB)
+slider3:0<0,1,1>Gain Match
+slider4:10<1,100,0.25>VU Meter Speed
+
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+last_gain=10^(gain_db/20);
+
+//st - sample time, sc - db scale, rp - right channel y pading, r - radius
+sc = 6/log(2);
+rp = 261;
+r = 200;
+yl = yr = ylt = yrt = 74;
+xl = xr = 66;
+ms = slider4;
+cs = 0;
+suml = sumr = 0;
+rms_i = 0;
+i_max = 36;
+
+@slider
+next_gain=10^(gain_db/20);
+speed = slider4*2;
+
+rel = speed/10;
+ms = speed;
+st = ms*srate/1000;
+hold = (0.001*ms*srate);
+cs = 0;
+suml = sumr = 0;
+
+@block
+d_gain = (next_gain - last_gain)/samplesblock;
+
+rmsl = floor(sc*log(sqrt(suml/cs))*100)/100;
+
+ab1 = log(sqrt(suml/cs));
+ab2 = sqrt(suml/cs);
+
+rms_i == i_max ? (
+  rmsl_gfx = rmsl;
+  rms_i = 0;
+);
+rms_i += 1;
+
+bscnt > st ? (
+
+  ool = log(pvl)*sc;
+  
+read = ool-target;
+  
+  //get x from exp scale
+  xlt = floor(exp(log(1.055)*2.1*read)*285);
+  
+  //get y from x and radius - r     
+  l=sqrt(sqr(r)+sqr(212-xlt));
+  h=((l-r)*r/l);
+  m=sqrt(sqr(l-r)-sqr(h));
+  ylt=35+h;
+  xlt < 212 ? xlt=xlt+m : xlt=xlt-m;
+  
+  //update x,y,out
+  old_xl < xlt ? (xl = min(max(xlt,66),375); yl = ylt; olt = ool;);
+  bscnt = pvl = pvr = 0;
+);
+
+old_xl = xl;
+
+bscnt += samplesblock;
+
+//indicator fall-back
+fallback = rel/2*samplesblock/1024;
+fbi_l = exp(xl/512)*fallback;
+xl > 66 ? xl -= fbi_l;
+
+//limit x
+xl = min(max(xl,66),375);
+
+//get y after fall-back
+yl=35;
+l=sqrt(sqr(r)+sqr(212-xl));
+h=((l-r)*r/l);
+yl=floor(yl+h);
+
+@sample
+spl0 *= last_gain;
+spl1 *= last_gain;
+last_gain += d_gain;
+
+
+pvl = max(pvl,abs((spl0+spl1)/2));
+cs == hold ? (
+cs = 0;
+suml = 0;
+) : (
+cs += 1;
+suml += sqr(abs((spl0+spl1)/2));
+);
+
+
+
+//TRIGGER FUNCTION
+target = slider2;
+
+slider3 ? (
+  
+  gain_db = 0;
+  
+  gain_db = slider1 = floor(target-olt);
+  
+  sliderchange(slider1);
+  sliderchange(slider3);
+  
+  slider3 = 0;
+
+);
+///////////////////
+
+
+
+
+@gfx 425 240
+
+// override drawing functions for graphical window scaling
+gsc = min(gfx_w/425,gfx_h/240); igsc = 1.0/gsc;
+gxo = max(0,  gfx_w/2 - gfx_h*425/240/2);
+function gfx_lineto(x,y,aa) ( gfx_x*=gsc; gfx_y*=gsc; gfx_x+=gxo; gfx_lineto(x*gsc+gxo,y*gsc,aa); gfx_x-=gxo; gfx_x*=igsc; gfx_y*=igsc; );
+function gfx_rectto(x,y)(gfx_x*=gsc; gfx_y*=gsc; gfx_x+=gxo; gsc>.5 ? gfx_rectto(x*gsc+gxo,y*gsc); gfx_x-=gxo;  gfx_x*=igsc; gfx_y*=igsc;);
+function gfx_drawnumber(y,x) (
+  gsc>.5 ? (
+    gsc<.7 && x>1 ? x=1;
+    gfx_x*=gsc; gfx_y*=gsc; gfx_x+=gxo; gfx_drawnumber(y,x); gfx_x-=gxo;  gfx_x*=igsc; gfx_y*=igsc; 
+  );
+);
+function gfx_drawchar(x) ( gfx_x*=gsc; gfx_y*=gsc; gfx_x+=gxo; gsc>.5 ? gfx_drawchar(x); gfx_x-=gxo; gfx_x*=igsc; gfx_y*=igsc; );
+
+
+//**************************************************************** left
+//red scale
+gfx_r =  gfx_a = 1;
+gfx_g = gfx_b =0;
+gfx_x = 283;
+gfx_y = 28;
+gfx_drawnumber(0,0);
+gfx_x = 370;
+gfx_y = 55;
+gfx_drawnumber(3,0);
+gfx_x = 405;
+gfx_y = 57;
+gfx_drawchar($'+');
+gfx_x = 283;
+gfx_y = 38;
+gfx_lineto(269,76,0.5);
+gfx_x = 311;
+gfx_y = 43;
+gfx_lineto(293,80,1);
+gfx_x = 342;
+gfx_y = 51;
+gfx_lineto(318,85,1);
+gfx_x = 370;
+gfx_y = 65;
+gfx_lineto(344,93,0.5);
+
+//white scale
+gfx_r = gfx_g = gfx_b = 1;
+gfx_a = 1;
+gfx_x = 12;
+gfx_y = 60;
+gfx_drawchar($'-');
+gfx_x = 41;
+gfx_y = 53;
+gfx_drawnumber(20,0);
+gfx_x = 80;
+gfx_y = 37;
+gfx_drawnumber(10,0);
+gfx_x = 125;
+gfx_y = 29;
+gfx_drawnumber(7,0);
+gfx_x = 157;
+gfx_y = 25;
+gfx_drawnumber(5,0);
+gfx_x = 198;
+gfx_y = 24;
+gfx_drawnumber(3,0);
+gfx_x = 56;
+gfx_y = 63;
+gfx_lineto(82,92,0.5);
+gfx_x = 95;
+gfx_y = 47;
+gfx_lineto(119,82,0.5);
+gfx_x = 130;
+gfx_y = 39;
+gfx_lineto(146,77,0.5);
+gfx_x = 145;
+gfx_y = 37;
+gfx_lineto(158,75,1);
+gfx_x = 162;
+gfx_y = 35;
+gfx_lineto(171,74,0.5);
+gfx_x = 180;
+gfx_y = 34;
+gfx_lineto(187,74,1);
+gfx_x = 202;
+gfx_y = 34;
+gfx_lineto(204,72,0.5);
+gfx_x = 227;
+gfx_y = 34;
+gfx_lineto(223,73,1);
+gfx_x = 253;
+gfx_y = 35;
+gfx_lineto(245,73,1);
+
+//meter
+olt > 0 ? (
+  gfx_r = 1; 
+  gfx_g = gfx_b = 0;
+) : (
+  gfx_r = gfx_g = gfx_b = 1;
+);
+gfx_a = 1;
+gfx_x = 212;
+gfx_y = 236;
+gfx_lineto(xl,yl,1);
+gfx_x = 211;
+gfx_y = 236;
+gfx_lineto(xl-1,yl,1);
+gfx_x = 210;
+gfx_y = 236;
+gfx_lineto(xl-2,yl,1);
+
+//big border
+gfx_r = gfx_g = gfx_b = 0.55;
+gfx_a = 1;
+gfx_x = -1000;
+gfx_y = 190;
+gfx_rectto(2000,261);
+//ch textbox1
+gfx_r = gfx_g = gfx_b = 0;
+gfx_a = 1;
+gfx_x = 350;
+gfx_y = 205;
+gfx_rectto(415,227);
+//ch textbox2
+gfx_r = gfx_g = gfx_b = 0;
+gfx_a = 1;
+gfx_x = 250;
+gfx_y = 204;
+gfx_rectto(315,227);
+//ch text
+gfx_r = gfx_g = gfx_b = 1;
+gfx_a = 1;
+gfx_x = 20;
+gfx_y = 212;
+gfx_drawchar($'L');
+gfx_drawchar($'+');
+gfx_drawchar($'R');
+gfx_x = 215;
+gfx_drawchar($'R');
+gfx_drawchar($'M');
+gfx_drawchar($'S');
+gfx_x = 333;
+gfx_drawchar($'P');
+gfx_x = 258;
+rmsl_gfx > -300 ? (
+  rmsl_gfx > 0.0 ? (
+    gfx_r = 1;
+    gfx_g = gfx_b = 0;
+    gfx_drawchar($'+');
+  );
+  gfx_drawnumber(rmsl_gfx,2);
+) : (
+  gfx_drawchar($'-');
+  gfx_drawchar($'I');
+  gfx_drawchar($'N');
+  gfx_drawchar($'F');
+);
+gfx_r = 1;
+gfx_g = gfx_b = 1;
+gfx_x = 357;
+olt > -300 ? (
+  olt >= 0.0 ? (
+    gfx_drawchar($'+');
+    gfx_r = 1;
+    gfx_g = gfx_b = 0;  
+  );
+  gfx_drawnumber(olt,2);
+) : (
+  gfx_drawchar($'-');
+  gfx_drawchar($'I');
+  gfx_drawchar($'N');
+  gfx_drawchar($'F');
+);

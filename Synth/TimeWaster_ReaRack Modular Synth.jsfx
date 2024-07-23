@@ -1,0 +1,31 @@
+desc: ReaRack Modular Synth
+author: Malcolm Smith
+version: 2.3.7
+changelog: Updated the LFO and the Additive Oscillator
+about:
+  # ReaRack Modular Synth
+  ReaRack is a modular MIDI controlled digital synth system. There are currently 20 modules-
+  Oscillator - Trapezoidal
+  Oscillator - Twin-Saw
+  Oscillator - Additive
+  Oscillator - Noise
+  LFO
+  Envelope Generator
+  Envelope Multi-Tool
+  Filter
+  Filter - Moog 24 db
+  Amplifier
+  MIDI mixer
+  Trigger
+  Key Follower
+  Poly Splitter
+  Sample and Hold
+  MIDI Nonlinerizer
+  Karplus-Strong Delay
+  Note Filter
+  Audio-MIDI converter
+  Note Scope
+  ## User Guide
+  http://stash.reaper.fm/28621/ReaRack_Manual.pdf
+provides: ReaRack Modular Synth/*.jsfx
+metapackage: true

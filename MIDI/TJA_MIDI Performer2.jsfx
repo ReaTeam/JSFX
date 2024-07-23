@@ -1,0 +1,907 @@
+desc: MIDI Performer2
+author: Kevin Morrison (ThrashJazzAssassin)
+version: 0.6.5
+changelog: - Filter sustain pedal with note filter
+link: Forum thread https://forum.cockos.com/showthread.php?t=216034
+screenshot: https://stash.reaper.fm/35134/performer.PNG
+about:
+  MIDI Router / Filter / Transposer / CC generator / Bank+Program
+
+  MIDI multi-tool with hanging note prevention: out routing/filter/transpose don't cause hanging notes.
+
+  [CTRL]/Command : mousewheel shift by 12 (only if the fx window is focused).
+  [Right click]: Return values to default
+
+slider1:  dispOuts=8<0, 128,  1>-Rows
+slider2: globBusIn=0<0, 128, 1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -Global Bus In
+slider3:globChanIn=0<0, 128, 1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -Global Channel In
+slider4:  rowRoute=1<0, 128, 1{None,All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}>-Row#
+slider5:      thru=0<0,  1,  1{OFF,ON}>-Thru
+slider6: globTrans=48<   0, 128, 1{-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}>- Global Transpose
+slider7:  PCresend=0<0,  1,  1>-PCresend
+
+slider8:   0<   0, 128, 1{^,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -1-In Bus
+slider9:   0<   0, 128, 1{^,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -1-In Channel
+slider10:  1<   0, 128, 1{OFF,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -1-Output Bus
+slider11:  1<   0, 128, 1>-1-Ouput Channel
+slider12:  0<   0, 128, 1{C-2,C#-2,D-2,D#-2,E-2,F-2,F#-2,G-2,G#-2,A-2,A#-2,B-2,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,-}> -1-Minimum Note
+slider13:127<   0, 128, 1{C-2,C#-2,D-2,D#-2,E-2,F-2,F#-2,G-2,G#-2,A-2,A#-2,B-2,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,-}> -1-Maximum Note
+slider14: 48<   0, 128, 1{-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -1-Transpose
+slider15:  0<   0, 128, 1>-1-Bank MSB
+slider16:  0<   0, 128, 1>-1-Bank LSB
+slider17:  0<   0, 128, 1>-1-Program
+
+slider18:  0<   0, 128, 1{^,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}>   -2-In Bus
+slider19:  0<   0, 128, 1{^,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}>   -2-In Channel
+slider20:  1<   0, 128, 1{OFF,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -2-Output Bus
+slider21:  1<   0, 128, 1> -2-Ouput Channel
+slider22:  0<   0, 128, 1{C-2,C#-2,D-2,D#-2,E-2,F-2,F#-2,G-2,G#-2,A-2,A#-2,B-2,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,-}> -2-Minimum Note
+slider23:127<   0, 128, 1{C-2,C#-2,D-2,D#-2,E-2,F-2,F#-2,G-2,G#-2,A-2,A#-2,B-2,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,-}> -2-Maximum Note
+slider24: 48<   0, 128, 1{-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -2-Transpose
+slider25:  0<   0, 128, 1> -2-Bank MSB
+slider26:  0<   0, 128, 1> -2-Bank LSB
+slider27:  0<   0, 128, 1> -2-Program
+
+slider28:  0<   0, 128, 1{^,  1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}>   -3-In Bus
+slider29:  0<   0, 128, 1{^,  1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}>   -3-In Channel
+slider30:  0<   0, 128, 1{OFF,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -3-Output Bus
+slider31:  1<   0, 128, 1> -3-Ouput Channel
+slider32:  0<   0, 128, 1{C-2,C#-2,D-2,D#-2,E-2,F-2,F#-2,G-2,G#-2,A-2,A#-2,B-2,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,-}> -3-Minimum Note
+slider33:127<   0, 128, 1{C-2,C#-2,D-2,D#-2,E-2,F-2,F#-2,G-2,G#-2,A-2,A#-2,B-2,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,-}> -3-Maximum Note
+slider34: 48<   0, 128, 1{-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -3-Transpose
+slider35:  0<   0, 128, 1> -3-Bank MSB
+slider36:  0<   0, 128, 1> -3-Bank LSB
+slider37:  0<   0, 128, 1> -3-Program
+
+slider38:  0<   0, 128, 1{^,  1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}>   -4-In Bus
+slider39:  0<   0, 128, 1{^,  1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}>   -4-In Channel
+slider40:  0<   0, 128, 1{OFF,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -4-Output Bus
+slider41:  1<   0, 128, 1> -4-Ouput Channel
+slider42:  0<   0, 128, 1{C-2,C#-2,D-2,D#-2,E-2,F-2,F#-2,G-2,G#-2,A-2,A#-2,B-2,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,-}> -4-Minimum Note
+slider43:127<   0, 128, 1{C-2,C#-2,D-2,D#-2,E-2,F-2,F#-2,G-2,G#-2,A-2,A#-2,B-2,C-1,C#-1,D-1,D#-1,E-1,F-1,F#-1,G-1,G#-1,A-1,A#-1,B-1,C0,C#0,D0,D#0,E0,F0,F#0,G0,G#0,A0,A#0,B0,C1,C#1,D1,D#1,E1,F1,F#1,G1,G#1,A1,A#1,B1,C2,C#2,D2,D#2,E2,F2,F#2,G2,G#2,A2,A#2,B2,C3,C#3,D3,D#3,E3,F3,F#3,G3,G#3,A3,A#3,B3,C4,C#4,D4,D#4,E4,F4,F#4,G4,G#4,A4,A#4,B4,C5,C#5,D5,D#5,E5,F5,F#5,G5,G#5,A5,A#5,B5,C6,C#6,D6,D#6,E6,F6,F#6,G6,G#6,A6,A#6,B6,C7,C#7,D7,D#7,E7,F7,F#7,G7,G#7,A7,A#7,B7,C8,C#8,D8,D#8,E8,F8,F#8,G8,-}> -4-Maximum Note
+slider44: 48<   0, 128, 1{-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-32,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,-13,-12,-11,-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -4-Transpose
+slider45:  0<   0, 128, 1> -4-Bank MSB
+slider46:  0<   0, 128, 1> -4-Bank LSB
+slider47:  0<   0, 128, 1> -4-Program
+
+slider48: 7<0, 7, 1{None, PW, CC, CC+PW, N, N+PW, N+CC, All,-}>-1-Filter
+slider49: 7<0, 7, 1{None, PW, CC, CC+PW, N, N+PW, N+CC, All,-}>-2-Filter
+slider50: 7<0, 7, 1{None, PW, CC, CC+PW, N, N+PW, N+CC, All,-}>-3-Filter
+slider51: 7<0, 7, 1{None, PW, CC, CC+PW, N, N+PW, N+CC, All,-}>-4-Filter
+
+//CC Sliders for selected row 1&2
+slider52: 64<   0, 128, 1>-CC1-1
+slider53: 64<   0, 128, 1>-CC1-2
+slider54: 64<   0, 128, 1>-CC1-3
+slider55: 64<   0, 128, 1>-CC1-4
+slider56: 64<   0, 128, 1>-CC1-5
+slider57: 64<   0, 128, 1>-CC1-6
+slider58: 64<   0, 128, 1>-CC2-1
+slider59: 64<   0, 128, 1>-CC2-2
+slider60: 64<   0, 128, 1>-CC2-3
+slider61: 64<   0, 128, 1>-CC2-4
+slider62: 64<   0, 128, 1>-CC2-5
+slider63: 64<   0, 128, 1>-CC2-6
+slider64:128<   0, 128, 1{C -2,C#-2,D -2,D#-2,E -2,F -2,F#-2,G -2,G#-2,A -2,A#-2,B -2,C -1,C#-1,D -1,D#-1,E -1,F -1,F#-1,G -1,G#-1,A -1,A#-1,B -1,C  0,C# 0,D  0,D# 0,E  0,F  0,F# 0,G  0,G# 0,A  0,A# 0,B  0,C  1,C# 1,D  1,D# 1,E  1,F  1,F# 1,G  1,G# 1,A  1,A# 1,B  1,C  2,C# 2,D  2,D# 2,E  2,F  2,F# 2,G  2,G# 2,A  2,A# 2,B  2,C  3,C# 3,D  3,D# 3,E  3,F  3,F# 3,G  3,G# 3,A  3,A# 3,B  3,C  4,C# 4,D  4,D# 4,E  4,F  4,F# 4,G  4,G# 4,A  4,A# 4,B  4,C  5,C# 5,D  5,D# 5,E  5,F  5,F# 5,G  5,G# 5,A  5,A# 5,B  5,C  6,C# 6,D  6,D# 6,E  6,F  6,F# 6,G  6,G# 6,A  6,A# 6,B  6,C  7,C# 7,D  7,D# 7,E  7,F  7,F# 7,G  7,G# 7,A  7,A# 7,B  7,C  8,C# 8,D  8,D# 8,E  8,F  8,F# 8,G  8,-}> -Last Note Played
+
+@init
+//////////////////////////////
+////                      ////
+////   USER PREFERENCES   ////
+////                      ////
+//////////////////////////////
+
+FONT_SIZE_FIXED = 1; // default:1
+
+FONT_SIZE =16; // default:16
+ 
+PCenable = 0;  // default:0 | Set to 1 to enable program changes (PC) by default
+               //             *WARNING* bank & program changes will be sent when loading projects,
+               //             which may replace the saved state of reacting plugins.
+
+               // Change to preferred CC's (0 - 127)
+CCsend1 =  7;  // default:  7 (Volume)
+CCsend2 = 10;  // default: 10 (Pan)
+CCsend3 =  2;  // default:  2 (Breath)
+CCsend4 = 11;  // default: 11 (Expression)
+CCsend5 = 12;
+CCsend6 = 13;
+
+////////////////////////////////////
+////                            ////
+////    END USER PREFERENCES    ////
+////                            ////
+////////////////////////////////////
+
+
+ext_midi_bus = 1;
+ext_noinit   = 1;
+
+noOfOuts = 32;
+noteStr  = "C -2 C#-2 D -2 D#-2 E -2 F -2 F#-2 G -2 G#-2 A -2 A#-2 B -2 C -1 C#-1 D -1 D#-1 E -1 F -1 F#-1 G -1 G#-1 A -1 A#-1 B -1 C  0 C# 0 D  0 D# 0 E  0 F  0 F# 0 G  0 G# 0 A  0 A# 0 B  0 C  1 C# 1 D  1 D# 1 E  1 F  1 F# 1 G  1 G# 1 A  1 A# 1 B  1 C  2 C# 2 D  2 D# 2 E  2 F  2 F# 2 G  2 G# 2 A  2 A# 2 B  2 C  3 C# 3 D  3 D# 3 E  3 F  3 F# 3 G  3 G# 3 A  3 A# 3 B  3 C  4 C# 4 D  4 D# 4 E  4 F  4 F# 4 G  4 G# 4 A  4 A# 4 B  4 C  5 C# 5 D  5 D# 5 E  5 F  5 F# 5 G  5 G# 5 A  5 A# 5 B  5 C  6 C# 6 D  6 D# 6 E  6 F  6 F# 6 G  6 G# 6 A  6 A# 6 B  6 C  7 C# 7 D  7 D# 7 E  7 F  7 F# 7 G  7 G# 7 A  7 A# 7 B  7 C  8 C# 8 D  8 D# 8 E  8 F  8 F# 8 G  8";
+inputMon = 0.3;
+rowPreset = 2;
+// statusbytes
+statNoteOn  = $x90;
+statNoteOff = $x80;
+statAT      = $xA0;
+statCC      = $xB0;
+statProgram = $xC0;
+statPressure= $xD0;
+statPitchW  = $xE0;
+
+function isNoteOn  ()(noteStatus == statNoteOn && msg3);
+function isNoteOff ()(noteStatus == statNoteOff || (noteStatus == statNoteOn && msg3 == 0) );
+function isAT      ()(noteStatus == statAT);
+function isCC      ()(noteStatus == statCC);
+function isProgram ()(noteStatus == statProgram);
+function isMSB     ()(isCC() && ( msg2 == 0  ) );
+function isLSB     ()(isCC() && ( msg2 == 32 ) );
+function isPressure()(noteStatus == statPressure);
+function isPitchW  ()(noteStatus == statPitchW);
+function isSusPedal()(noteStatus == statCC && msg2 == 64);
+function isRow     (i)(rowRoute   == 1 || rowRoute - 1 == row[i] || row[i] == 0);
+
+function isBussAndChannel(i) (
+  (origBus == inBus [i]-1 || (inBus [i] == 0 && (globBusIn -1==origBus || globBusIn  == 0) ) ) &&
+  (channel == inChan[i]-1 || (inChan[i] == 0 && (globChanIn-1==channel || globChanIn == 0) ) )
+);
+
+function findLargest(arr, len) local(i) (
+  largest = i = 0;
+  loop(dispOuts,
+    arr[i] > largest ? largest = arr[i];
+    i += 1;
+  );
+  largest;
+);
+
+function countEnabledRows() local(i) (
+  i = rowCount = 0;
+  loop(dispOuts,
+    isRow(i) && outBus[i] && filter[i]&4 ? rowCount += 1 ;
+    i +=1;
+  );
+  rowCount;
+);
+
+//arrays
+  //sliders
+  row      = 0;
+  inBus    = noOfOuts + row;
+  inChan   = noOfOuts + inBus;
+  filter   = noOfOuts + inChan;
+  outBus   = noOfOuts + filter;
+  outChan  = noOfOuts + outBus;
+  minNote  = noOfOuts + outChan;
+  maxNote  = noOfOuts + minNote;
+  trans    = noOfOuts + maxNote;
+  bankMSB  = noOfOuts + trans;
+  _bankMSB = noOfOuts + bankMSB;
+  bankLSB  = noOfOuts + _bankMSB;
+  _bankLSB = noOfOuts + bankLSB;
+  prog     = noOfOuts + _bankLSB;
+  _prog    = noOfOuts + prog;
+  RowOnPC  = noOfOuts + _prog;
+
+  //CCs
+  CC1 = noOfOuts + RowOnPC;
+  CC2 = noOfOuts + CC1;
+  CC3 = noOfOuts + CC2;
+  CC4 = noOfOuts + CC3;
+  CC5 = noOfOuts + CC4;
+  CC6 = noOfOuts + CC5;
+
+  _CC1 = noOfOuts + CC6;
+  _CC2 = noOfOuts + _CC1;
+  _CC3 = noOfOuts + _CC2;
+  _CC4 = noOfOuts + _CC3;
+  _CC5 = noOfOuts + _CC4;
+  _CC6 = noOfOuts + _CC5;
+
+  //Output states
+  outputMon    = noOfOuts + _CC6;
+  susPedal     = noOfOuts + outputMon;
+  susPedalBus  = noOfOuts + susPedal;
+  susPedalChan = noOfOuts + susPedalBus;
+  noteInfo     = noOfOuts + susPedalChan;
+
+//noteInfo Offsets
+offsetNoteInBus   = 128;
+offsetNoteInChan  = 128 * 2;
+offsetNoteOutBus  = 128 * 3;
+offsetNoteOutChan = 128 * 4;
+offsetTrans       = 128 * 5;
+offsetNoteMon     = 128 * 6;
+
+//Give each row 2 zones
+i=j=0; loop(noOfOuts,
+  memset(row+j  , i+1, 1);
+  memset(row+j+1, i+1, 1);
+  i += 1;
+  j += 2;
+);
+
+///////dest    , val, len
+memset(inBus   ,   0, noOfOuts);
+memset(inChan  ,   0, noOfOuts);
+memset(outBus  ,   1, 1);
+memset(outBus+1,   0, noOfOuts-1);
+memset(outChan ,   0, noOfOuts);
+memset(minNote ,   0, noOfOuts);
+memset(maxNote , 127, noOfOuts);
+memset(trans   ,  48, noOfOuts);
+memset(bankMSB ,   0, noOfOuts);
+memset(bankLSB ,   0, noOfOuts);
+memset(prog    ,   0, noOfOuts);
+memset(filter  ,   7, noOfOuts);
+memset(outputMon,0.3, noOfOuts);
+memset(RowOnPC ,   1, noOfOuts);
+
+memset(CC1 , 64, noOfOuts);
+memset(CC2 , 64, noOfOuts);
+memset(CC3 , 64, noOfOuts);
+memset(CC4 , 64, noOfOuts);
+memset(CC5 , 64, noOfOuts);
+memset(CC6 , 64, noOfOuts);
+
+memset(_CC1, 64, noOfOuts);
+memset(_CC2, 64, noOfOuts);
+memset(_CC3, 64, noOfOuts);
+memset(_CC4, 64, noOfOuts);
+memset(_CC5, 64, noOfOuts);
+memset(_CC6, 64, noOfOuts);
+
+@slider
+dispOuts   = min(dispOuts,  32);
+globBusIn  = min(globBusIn, 16);
+globChanIn = min(globChanIn,16);
+!globTrans ? globTrans = 48 : globTrans  = min(max(globTrans ,24),72);
+
+rowRoute=min(rowRoute,findLargest(row, dispOuts)+1);
+
+_rowRoute2 == rowRoute ? (
+  s = t =0; loop(dispOuts,
+    isRow(s) &&  t < 4 ? (
+                          //Constrain param: MIN-MAX
+      inBus  [s] = min(    slider((t*10)+ 8),     16);
+      inChan [s] = min(    slider((t*10)+ 9),     16);
+      outBus [s] = min(    slider((t*10)+10),     16);
+      outChan[s] = min(max(slider((t*10)+11),1),  16);
+      minNote[s] = min(    slider((t*10)+12),    127);
+      maxNote[s] = min(    slider((t*10)+13),    127);
+      trans  [s] = min(    slider((t*10)+14),     96);
+      bankMSB[s] = min(    slider((t*10)+15),    127);
+      bankLSB[s] = min(    slider((t*10)+16),    127);
+      prog   [s] = min(    slider((t*10)+17),    127);
+      filter [s] =         slider( t+48);
+
+      t<2?(
+        CC1[s] = slider((t*6)+52);
+        CC2[s] = slider((t*6)+53);
+        CC3[s] = slider((t*6)+54);
+        CC4[s] = slider((t*6)+55);
+        CC5[s] = slider((t*6)+56);
+        CC6[s] = slider((t*6)+57);
+      );
+
+      t += 1;
+    );
+    s+=1;
+  );
+);
+
+@serialize
+file_mem(0,     row, DispOuts);
+file_mem(0,   inBus, DispOuts);
+file_mem(0,  inChan, DispOuts);
+file_mem(0,  filter, DispOuts);
+file_mem(0, minNote, DispOuts);
+file_mem(0, maxNote, DispOuts);
+file_mem(0,   trans, DispOuts);
+file_mem(0, bankMSB, DispOuts);
+file_mem(0, bankLSB, DispOuts);
+file_mem(0,    prog, DispOuts);
+file_mem(0,  outBus, DispOuts);
+file_mem(0, outChan, DispOuts);
+file_mem(0, RowOnPC, DispOuts);
+
+@block
+while (midirecv(offset,msg1,msg2,msg3)) (
+
+ origBus    = midi_bus;
+  noteStatus = msg1&$xF0;
+  channel    = msg1&$x0F;
+  
+  thru ? midisend(offset,msg1,msg2,msg3);
+  
+  //Input & Keyboard monitor
+  isNoteOn    ()?(inputMon = 0.6; value = msg3; slider64 = msg2; sliderchange(slider64); inputType=strcpy_fromslider(#, slider64); noteInfo[offsetNoteMon+msg2] = 1)
+  :isNoteOff  ()?(inputMon = 0.6; noteInfo[offsetNoteMon+msg2] = 0)
+  :isSusPedal ()?(inputMon = 0.6; value = msg3; inputType="Sus"  )
+  :isAT       ()?(inputMon = 0.6; value = msg3; inputType="AT")
+  :isCC       ()?(inputMon = 0.6; value = msg3; #cc="CC "; inputType=strcat( #cc , sprintf(#,"%d",msg2)))
+  :isProgram  ()?(inputMon = 0.6; value = msg2; inputType="Prg")
+  :isMSB      ()?(inputMon = 0.6; value = msg3; inputType="MSB")
+  :isLSB      ()?(inputMon = 0.6; value = msg3; inputType="LSB")
+  :isPressure ()?(inputMon = 0.6; value = msg2; inputType="Press")
+  :isPitchW   ()?(inputMon = 0.6; value = msg3; inputType="Pitch");
+
+
+  i = j = 0;
+
+  loop(DispOuts,
+
+        midi_bus = outBus[i]-1;
+
+        isNoteOn() && isRow(i)  ? (
+            
+          
+          isBussAndChannel(i) && msg2>=minNote[i] && msg2<=maxNote[i] && outBus[i]-1 >= 0 && filter[i]&4 ? (
+            noteInfo[j+msg2] += 1;                              //Store note-on
+            noteInfo[j+offsetNoteInBus  +msg2] = origBus;       //Store note in Bus
+            noteInfo[j+offsetNoteInChan +msg2] = channel;       //Store note in Chan
+            noteInfo[j+offsetNoteOutBus +msg2] = outBus [i]-1;  //Store note out Bus
+            noteInfo[j+offsetNoteOutChan+msg2] = outChan[i]-1;  //Store note out Chan
+            noteInfo[j+offsetTrans      +msg2] = trans  [i]+globTrans-48;    //Store note Trans
+            temp_msg2 = msg2 + trans[i]-48+globTrans-48 ;                     //Transpose note
+            temp_msg2<0?temp_msg2=0:temp_msg2>127?temp_msg2=127;//Constrain note
+            outputMon[i]=0.6;
+            midisend(offset, noteStatus + outChan[i]-1, temp_msg2, msg3);
+          );
+
+        ):isNoteOff() ? (
+          noteInfo[j+msg2]>0 //Has note-on been stored?
+          && (origBus == noteInfo[j+offsetNoteInBus  +msg2] || (inBus [i] == 0 && (globBusIn -1==origBus || globBusIn  == 0) ) ) 
+          && (channel == noteInfo[j+offsetNoteInChan +msg2] || (inChan[i] == 0 && (globChanIn-1==channel || globChanIn == 0) ) )
+          ? (
+            noteInfo[j + msg2] -= 1;                                //remove record of note-on
+            midi_bus = noteInfo[j + offsetNoteOutBus + msg2];       //Restore note bus
+            temp_msg2 = noteInfo[j + offsetTrans + msg2]-48 + msg2; //Restore note transpose
+            temp_msg2<0?temp_msg2=0:temp_msg2>127?temp_msg2=127;    //Constrain note
+            outputMon[i]=0.6;
+            midisend(offset,noteStatus+noteInfo[j+offsetNoteOutChan+msg2],temp_msg2,msg3);
+          );
+
+        ):isSusPedal() ? (
+          
+          msg3 && isRow(i)  && isBussAndChannel(i) && outBus[i]-1>=0 && filter[i]&4 ? (  //Sustain pedal depressed?
+            susPedal[i]     = 1;                                          //Store sustain depression
+            susPedalBus[i]  = outBus[i]-1;                                //Store Bus
+            susPedalChan[i] = outChan[i]-1;                               //Store Channel
+            outputMon[i]=0.6;
+            midisend(offset,noteStatus+susPedalChan[i],msg2,msg3);
+
+          ):!msg3 && susPedalBus[i]>-1 && susPedal[i] ? ( //Sustain pedal been depressed and now raised?
+            susPedal[i] = 0;                              //Remove stored sustain depression
+            midi_bus    = susPedalBus[i];                 //Restore MIDI bus
+            msg1        = noteStatus+susPedalChan[i];     //Restore MIDI Chan
+            outputMon[i]=0.6;
+            midisend(offset,msg1,msg2,msg3);
+          );
+
+        ):isProgram() ? (
+          
+          isRow(i) && isBussAndChannel(i) && outBus[i]-1>=0 && rowOnPC[i] ? ( 
+            prog[i] = _prog[i] = msg2;
+            midisend(0,statProgram + outChan[i] - 1, prog[i]);
+            outputMon[i]=0.6;
+            );
+
+        ):isMSB() ? (
+          
+          isRow(i) && isBussAndChannel(i) && outBus[i]-1>=0 && rowOnPC[i] ? (
+            bankMSB[i] = _bankMSB[i] = msg3;
+            midisend(0, statCC + outChan[i] - 1, 0,bankMSB[i]);
+            outputMon[i]=0.6;
+            );
+
+        ):isLSB() ? (
+          
+          isRow(i) && isBussAndChannel(i) && outBus[i]-1>=0 && rowOnPC[i] ? ( 
+            bankLSB[i] = _bankLSB[i] = msg3;
+            midisend(0, statCC + outChan[i] - 1, 32,bankLSB[i]);
+            outputMon[i]=0.6;
+            );
+
+        ):isCC() || isAT() || isPressure() ? (
+          
+          isRow(i) && isBussAndChannel(i) && filter[i]&2 && outBus[i]>0 ? (
+            outputMon[i]=0.6;
+            midisend(offset,noteStatus+outChan[i]-1,msg2,msg3));
+
+        ):isPitchW() ? ( inputMon = 0.6;
+          isRow(i) && isBussAndChannel(i)  && filter[i]&1 && outBus[i]>0 ? (
+            outputMon[i]=0.6;
+            midisend(offset,noteStatus+outChan[i]-1,msg2,msg3)
+          );
+       );
+
+    i+=1;
+    j+=$x400;
+  );
+);
+
+
+_rowRoute2 = rowRoute;
+
+i=j=0; loop(dispOuts,
+
+  midi_bus = outBus[i]-1;
+
+  //Send Bank+PC
+  PCenable && rowOnPC[i] && (!PCresend || isRow(i)) ? (
+    bankMSB[i]!=_bankMSB[i] || bankLSB[i]!=_bankLSB[i] || prog[i]!=_prog[i] || (PCresend && rowRoute!=_rowRoute)
+    ? (
+      _bankMSB[i] = bankMSB[i];
+      _bankLSB[i] = bankLSB[i];
+      _prog   [i] = prog   [i];
+      outBus[i]?(
+        outputMon[i]=0.6;
+        midisend(0,     statCC + outChan[i] - 1,  0,bankMSB[i]);
+        midisend(0,     statCC + outChan[i] - 1, 32,bankLSB[i]);
+        midisend(0,statProgram + outChan[i] - 1, prog[i]);
+      );
+    );
+  );
+
+
+  //Send CC's
+    _CC1[i] != CC1[i] ? ( _CC1[i] = CC1[i]; outBus[i] && isRow(i) ? (outputMon[i]=0.6; midisend(0, statCC + outChan[i] - 1, CCsend1,CC1[i])));
+    _CC2[i] != CC2[i] ? ( _CC2[i] = CC2[i]; outBus[i] && isRow(i) ? (outputMon[i]=0.6; midisend(0, statCC + outChan[i] - 1, CCsend2,CC2[i])));
+    _CC3[i] != CC3[i] ? ( _CC3[i] = CC3[i]; outBus[i] && isRow(i) ? (outputMon[i]=0.6; midisend(0, statCC + outChan[i] - 1, CCsend3,CC3[i])));
+    _CC4[i] != CC4[i] ? ( _CC4[i] = CC4[i]; outBus[i] && isRow(i) ? (outputMon[i]=0.6; midisend(0, statCC + outChan[i] - 1, CCsend4,CC4[i])));
+    _CC5[i] != CC5[i] ? ( _CC5[i] = CC5[i]; outBus[i] && isRow(i) ? (outputMon[i]=0.6; midisend(0, statCC + outChan[i] - 1, CCsend5,CC5[i])));
+    _CC6[i] != CC6[i] ? ( _CC6[i] = CC6[i]; outBus[i] && isRow(i) ? (outputMon[i]=0.6; midisend(0, statCC + outChan[i] - 1, CCsend6,CC6[i])));
+
+  //Update sliders to values of the top 4 selected rows
+  isRow(i) &&  j < 4 ? (
+    slider((j*10)+ 8) !=   inBus[i] ? (  slider((j*10)+ 8) =   inBus[i]; slider_automate(slider((j*10)+ 8));  );
+    slider((j*10)+ 9) !=  inChan[i] ? (  slider((j*10)+ 9) =  inChan[i]; slider_automate(slider((j*10)+ 9));  );
+    slider( j    +48) !=  filter[i] ? (  slider( j    +48) =  filter[i]; slider_automate(slider( j    +48));  );
+    slider((j*10)+10) !=  outBus[i] ? (  slider((j*10)+10) =  outBus[i]; slider_automate(slider((j*10)+10));  );
+    slider((j*10)+11) != outChan[i] ? (  slider((j*10)+11) = outChan[i]; slider_automate(slider((j*10)+11));  );
+    slider((j*10)+12) != minNote[i] ? (  slider((j*10)+12) = minNote[i]; slider_automate(slider((j*10)+12));  );
+    slider((j*10)+13) != maxNote[i] ? (  slider((j*10)+13) = maxNote[i]; slider_automate(slider((j*10)+13));  );
+    slider((j*10)+14) !=   trans[i] ? (  slider((j*10)+14) =   trans[i]; slider_automate(slider((j*10)+14));  );
+    slider((j*10)+15) != bankMSB[i] ? (  slider((j*10)+15) = bankMSB[i]; slider_automate(slider((j*10)+15));  );
+    slider((j*10)+16) != bankLSB[i] ? (  slider((j*10)+16) = bankLSB[i]; slider_automate(slider((j*10)+16));  );
+    slider((j*10)+17) !=    prog[i] ? (  slider((j*10)+17) =    prog[i]; slider_automate(slider((j*10)+17));  );
+
+
+    j < 2 ? (
+      slider((j*6)+52) !=   CC1[i] ? ( slider((j*6)+52) =   CC1[i]; slider_automate(slider((j*6)+52)) );
+      slider((j*6)+53) !=   CC2[i] ? ( slider((j*6)+53) =   CC2[i]; slider_automate(slider((j*6)+53)) );
+      slider((j*6)+54) !=   CC3[i] ? ( slider((j*6)+54) =   CC3[i]; slider_automate(slider((j*6)+54)) );
+      slider((j*6)+55) !=   CC4[i] ? ( slider((j*6)+55) =   CC4[i]; slider_automate(slider((j*6)+55)) );
+      slider((j*6)+56) !=   CC5[i] ? ( slider((j*6)+56) =   CC5[i]; slider_automate(slider((j*6)+56)) );
+      slider((j*6)+57) !=   CC6[i] ? ( slider((j*6)+57) =   CC6[i]; slider_automate(slider((j*6)+57)) );
+    );
+
+    j += 1;
+  );
+
+  i += 1;
+);
+
+slider1 !=   dispOuts ? ( slider1 =   dispOuts; slider_automate(slider(1)) );
+slider2 !=  globBusIn ? ( slider2 =  globBusIn; slider_automate(slider(2)) );
+slider3 != globChanIn ? ( slider3 = globChanIn; slider_automate(slider(3)) );
+slider4 !=   rowRoute ? ( slider4 =   rowRoute; slider_automate(slider(4)) );
+slider5 !=       thru ? ( slider5 =       thru; slider_automate(slider(5)) );
+slider6 !=  globTrans ? ( slider6 =  globTrans; slider_automate(slider(6)) );
+slider7 !=   PCresend ? ( slider7 =   PCresend; slider_automate(slider(7)) );
+
+_rowRoute != rowRoute ? (slider_automate(slider(4)) );
+
+_rowRoute=rowRoute;
+
+////////////////////////////////////
+//////////////////GFX///////////////
+////////////////////////////////////
+@gfx 710 330
+
+function isOver(x, y, w, h) (
+    mouse_x>=x && mouse_x<=x+w && mouse_y>=y && mouse_y<=y+h
+);
+
+function isOver2(_x, _y, x, y, w, h) (
+    _x>=x && _x<=x+w && _y>=y && _y<=y+h
+);
+
+function hex3tocolour(hex) (
+    red = ((hex&$xf00)/$xf00);
+    grn = ((hex&$x0f0)/$xf0);
+    blu = ((hex&$x00f)/$xf);
+    gfx_set(red,grn,blu);
+);
+
+function button(label, x, y, w, h, clicked) (
+  !disable ? (
+    !mouse_cap ? allow = 1;
+
+    clicked ? (
+      isOver(x, y, w, h) ? gfx_set(0.65, 0.9, 1) : gfx_set(0.5, 0.75, 0.9);
+    ):isOver(x, y, w, h) ? gfx_set(0.6)          : gfx_set(0.5);
+
+    allow && mouse_cap && isOver(x, y, w, h) && !dragMode? (
+      allow = 0;
+      clicked ? clicked = 0 : clicked = 1;
+    );
+  );
+  gfx_rect(x, y, w, h);
+
+  gfx_set(1); gfx_x = x; gfx_y = y - gfx_texth * 1.2; drawLabel ? gfx_drawstr(label);
+  clicked;
+);
+
+function numSlide(label, zeroStr, oneStr, num, x, y, w, h, default, mini, maxi, numOffset, type) (
+
+
+
+
+  //CC knobs
+  type=="CC"? ( gfx_set(0,0,0,0.4); gfx_circle(x+gfx_texth/1.5, y+gfx_texth/2, w/4,1));
+
+  //Draw label
+  gfx_set(1);
+
+  !disable ? (
+    type == "CC" ? (
+      hex3tocolour(setgfx);
+      gfx_x = x-gfx_texth*3.8;
+      gfx_y = y;
+      gfx_drawstr(sprintf(#,"%d",label),2,x-gfx_texth/6,y+h);
+
+    ):(
+      gfx_x = x;
+      gfx_y = y - gfx_texth * 1.2;
+      drawLabel?gfx_drawstr(label,1,x+w,y);
+    );
+
+    hex3tocolour(setgfx);
+    isOver(x, y, w, h) ? hover = 1;
+    mouse_cap == 0 ? dragMode = 0;
+
+    dragMode && isOver2(_x, _y, x, y, w, h) ? (
+      gfx_set(1);
+      mouse_y != _mouse_y ? (
+        Mchng = _mouse_y - mouse_y;
+        abs(Mchng) > 8 ? (
+          num += floor((Mchng / 8) + 0.5);
+          _mouse_y = mouse_y;
+        );
+      );
+
+    ):isOver(x, y, w, h) && !dragMode ? (
+      gfx_r=gfx_r+0.1;
+      gfx_g=gfx_g+0.1;
+      gfx_b=gfx_b+0.1;
+
+      mouse_cap == 1 ? (
+        _mouse_y = mouse_y;
+        _x = mouse_x;
+        _y = mouse_y;
+        dragMode = 1;
+
+      ):mouse_cap == 2 ? (
+        num = default;
+
+      ):abs(mouse_wheel)>=120 ? (
+        diff = mouse_wheel / 120;
+        mouse_cap == 4 ? diff *= 12;
+        num += diff;
+        num = floor(num+0.5);
+        mouse_wheel = 0;
+      );
+    );
+  );
+
+  //Constrain
+  num<mini ? num=mini : num>maxi ? num=maxi;
+
+  //Draw Value
+  type == "note" ? (
+    outBus[g] && filter[g]&4 && isRow(g) ? (
+      gfx_set(0.5);
+      e%3==0 ? gfx_r=0.8;
+      e%3==1 ? gfx_g=0.8;
+      e%3==2 ? gfx_b=0.8;
+      e+=0.5;
+    );
+    gfx_x = x + 2; gfx_y = y; gfx_rect(x, y, w, h);
+    gfx_set(0);
+    gfx_drawstr(strcpy_substr(#, noteStr, (num*5)  , 2) ); //Note
+    //gfx_x = x;
+    gfx_drawstr(strcpy_substr(#, noteStr, (num*5+2), 2), 2, x+w/1.1, y+h) //Octave
+      
+  ):type=="num"? (
+      gfx_x = x + 5; gfx_y = y; gfx_rect(x, y, w, h);
+      gfx_set(0);
+      num ==0?gfx_drawstr(zeroStr,2,x+w/1.1,y+h)
+      :num==1?gfx_drawstr(oneStr,2,x+w/1.1,y+h)
+      :gfx_drawstr(sprintf(#,"%d",num+numOffset),2,x+w/1.1,y+h);
+          
+  ):type=="CC"? (
+      value = num/127;
+      value = -$PI/1.5 + value*$PI*1.4;
+      gfx_arc(x+gfx_texth/1.5, y+gfx_texth/2, w/5,   -$PI/1.4, value,1);
+      gfx_arc(x+gfx_texth/1.5, y+gfx_texth/2, w/5.3, -$PI/1.4, value,1);
+  );
+  
+  
+  
+  //white_border_if_not_default
+  num != default ? (
+    gfx_set(1);
+    gfx_line(x  ,y  ,x+w,y  );
+    gfx_line(x+w,y  ,x+w,y+h);
+    gfx_line(x+w,y+h,x  ,y+h);
+    gfx_line(x,  y+h,x  ,y  );
+  );
+  
+  num;
+);
+
+function drawKeyboard(y, h) (
+  gfx_set(0.9); gfx_rect(0, y, gfx_w, h);
+
+  noOfNotes      = 128;
+  allNoteWidth   = gfx_w /  noOfNotes;
+  whiteNoteWidth = gfx_w / (noOfNotes / 1.714285714285714);
+
+  g=0;
+  loop(noOfNotes,
+    //Draw White Keys
+    gfx_set(0.1);
+    x = g * whiteNoteWidth;
+    gfx_line(x, y, x, y+h);
+
+    //Draw Black Keys
+    b = g%7;
+    b==1 || b==2 || b==4 || b==5 || b==6?
+      gfx_rect(x - (gfx_w/noOfNotes)/2, y, gfx_w/(noOfNotes), h/1.5);
+
+    //Draw note monitor
+    gfx_set(1,1,0.8,0.8);
+    noteInfo[offsetNoteMon+g] ? (
+      gfx_rect(g*allNoteWidth, y-gfx_texth/4, allNoteWidth, gfx_texth/4.4);
+    );
+    g+=1;
+  );
+
+  //Draw note keyzones
+  enabledRows = countEnabledRows();
+  h = h/enabledRows+gfx_texth/18;
+
+  g=0; f=0; loop(DispOuts,
+    outBus[g] && filter[g]&4 && isRow(g)?(
+      gfx_set(0.2,0.2,0.2,0.6);
+
+      f%3==0 ? gfx_r=0.8;
+      f%3==1 ? gfx_g=0.8;
+      f%3==2 ? gfx_b=0.8;
+      x = minNote[g] * gfx_w / noOfNotes;
+
+
+      w = ( (maxNote[g]-minNote[g]) * allNoteWidth) + allNoteWidth;
+      gfx_rect(x,y,w,h);
+      y += h-gfx_texth/18;
+      f+=1;
+    );
+    g+=1;
+  );
+);
+
+/////////////////////
+////START DRAWING////
+/////////////////////
+hover = 0;
+setgfx=$x999;
+SIZE = FONT_SIZE_FIXED ? FONT_SIZE : min(gfx_w/44, gfx_h/(9.1+dispOuts*1.5)); //Auto resize/fit
+
+gfx_getchar();
+gfx_setfont(1,"Tahoma Bold",SIZE);
+gfx_set(0.16); gfx_rect(0, 0, gfx_w, gfx_h      );
+gfx_set(0.1 ); gfx_rect(0, 0, gfx_w, gfx_texth*4);
+
+x    = gfx_texth*0.5;
+y    = gfx_texth*1.4;
+w    = gfx_texth*1.6;
+h    = gfx_texth;
+xgap = gfx_texth*3;
+
+drawLabel = 1;
+disable = settings;
+
+//Draw top parameters
+dispOuts   = numSlide(  "#☰",   "",  "1",   dispOuts, x, y, w, h, 8, 1, noOfOuts ,0, "num"); x += xgap;
+         w = gfx_texth*2.4;
+         
+globBusIn  = numSlide( "Bus", "All", "1",  globBusIn, x, y, w, h, 0, 0, 16 ,0, "num"); x+=xgap;
+globChanIn = numSlide("Chan", "All", "1", globChanIn, x, y, w, h, 0, 0, 16 ,0, "num"); x+=xgap*1.05;
+
+gfx_x = x;
+
+//Input Monitor
+inputMon>0.3?(inputMon-=0.02); 
+gfx_set(inputMon,inputMon,0.3); 
+gfx_rect(gfx_x,y-gfx_texth,value*0.02*gfx_texth,gfx_texth); 
+gfx_drawstr(inputType); x+=xgap; 
+
+         w = gfx_texth*3;
+      xgap = gfx_texth*5;
+
+rowRoute   = numSlide("☰#", "None",  "All", rowRoute, x, y, w, h, 1, 0, findLargest(row, dispOuts)+1 , -1, "num"); x+=xgap;
+
+         w = gfx_texth*2.5;
+      xgap = gfx_texth*4  ;
+
+thru       = button(  " THRU"   , x ,y, w, h, thru     ); x+=xgap;
+globTrans  = numSlide("Trans", "-48", "-47", globTrans, x, y, w, h, 48, 24,  72,-48, "num"); x+=xgap*1.5;
+PCenable   = button("   PC"     , x ,y, w, h, PCenable ); x+=xgap;
+PCresend   = button(   "PCΔresend", x ,y, w, h, PCresend ); x+=xgap*1.5;
+enableCCs  = button(  " ⦿⦿⦿"   , x ,y, w, h, enableCCs); x+=xgap;
+
+drawKeyboard(gfx_texth*3.0, gfx_texth*1.9);
+
+//Draw Section Labels
+gfx_set(0.6);
+gfx_y = gfx_texth * 5.4;
+gfx_x = gfx_texth * 4;
+gfx_drawstr("--- In ---");         gfx_x = gfx_x + gfx_texth*2.4;
+gfx_drawstr("--- Filter ---");     gfx_x = gfx_texth * 18  ;
+gfx_drawstr("--- Notes ---");      gfx_x = gfx_texth * 26.5;
+gfx_drawstr("- Program Change -"); gfx_x = gfx_texth * 37.5;
+gfx_drawstr("--- Out ---");
+
+y = gfx_texth * 6.4;
+Yadd = 0;
+
+//Draw parameters for each row
+g=0; e=0; loop(dispOuts,
+
+  gfx_setfont(1, "Tahoma Bold", SIZE);
+  x       = gfx_texth / 2  ;
+  y      += gfx_texth * 1.5*(Yadd*0.1+1);
+  w       = gfx_texth * 1.5;
+  h       = gfx_texth      ;
+  xgap    = gfx_texth * 2.8;
+  xgaplus = gfx_texth      ;
+
+  setgfx = $xaaa;
+
+    //Row #
+    row[g]  = numSlide(   "#",   "∀",  "1",    row[g], x, y, w, h,  floor(g/rowPreset)+1, 0, noOfOuts, 0, "num"); x += xgap;
+
+    //Input Bus & Channel
+    w = gfx_texth*2.4;
+     inBus[g]  = numSlide( "Bus", "^  ",  "1",  inBus[g], x, y, w, h, 0, 0, 16, 0, "num"); x += xgap;
+    inChan[g]  = numSlide("Chan", "^  ",  "1", inChan[g], x, y, w, h, 0, 0, 16, 0, "num"); x += xgap+xgaplus;
+
+    //Filter
+    w=gfx_texth*1.4; xgap = gfx_texth*1.8;
+    filter[g] ~= (-button("  ♪", x, y, w, h, filter[g]&4)~filter[g])&4; x += xgap;
+    filter[g] ~= (-button("CC" , x, y, w, h, filter[g]&2)~filter[g])&2; x += xgap;
+    filter[g] ~= (-button("PW" , x, y, w, h, filter[g]&1)~filter[g])&1; x += xgap+xgaplus;
+
+    //Note range & Transpose
+    w = gfx_texth*2.4; xgap = gfx_texth*2.8;
+    minNote[g] = numSlide(  "Min",   "0",  "1", minNote[g], x, y, w, h,   0, 0, 127,  0,"note"); x+= xgap;
+    maxNote[g] = numSlide(  "Max",   "0",  "1", maxNote[g], x, y, w, h, 127, 0, 127,  0,"note"); x+= xgap;
+      trans[g] = numSlide("Trans", "-48","-48",   trans[g], x, y, w, h,  48, 0,  96,-48, "num"); x+= xgap + xgaplus;
+
+     w=gfx_texth*1.4; xgap = gfx_texth*1.8;
+     rowOnPC[g] = button("", x,y, w, h, rowOnPC[g] ); x+= xgap;
+
+    //Program Changes
+    w = gfx_texth*2.4; xgap = gfx_texth*2.8;
+    PCenable && rowOnPC[g] ? (
+       bankMSB[g] = numSlide("MSB",  "0",  "1", bankMSB[g], x, y, w, h,  0, 0, 127 ,0, "num"); x+= xgap;
+       bankLSB[g] = numSlide("LSB",  "0",  "1", bankLSB[g], x, y, w, h,  0, 0, 127 ,0, "num"); x+= xgap;
+          prog[g] = numSlide("Prog", "0",  "1",    prog[g], x, y, w, h,  0, 0, 127 ,0, "num"); x+= xgap + xgaplus;
+
+    ):(numSlide("MSB",  "0",  "1", bankMSB[g], x, y, w, h,  0, 0, 127 ,0, "num"); x += xgap;
+       numSlide("LSB",  "0",  "1", bankLSB[g], x, y, w, h,  0, 0, 127 ,0, "num"); x += xgap;
+       numSlide("Prog", "0",  "1",    prog[g], x, y, w, h,  0, 0, 127 ,0, "num"); x += xgap + xgaplus;
+    );
+
+   //Out Bus & Channel
+    outBus[g] = numSlide(  "Bus", "OFF",  "1",  outBus[g], x, y, w  , h, g>0?0:1, 0,  16 ,0,  "num"); x+= xgap;
+   outChan[g] = numSlide( "Chan",   "0",  "1", outChan[g], x, y, w  , h,       1, 1,  16 ,0,  "num"); x+= xgap;
+
+   //Output Monitor
+   outputMon[g]>0.3 ? outputMon[g]-=0.04;// : outputMon[g]=0.3;
+   gfx_set(outputMon[g], outputMon[g], 0.3); gfx_circle(x+gfx_texth/2, y+gfx_texth/2, w/6, 1);
+
+
+   //Draw Row Greyout rectangles
+   rowRoute!=1 && rowRoute-1!=row[g] && !row[g]==0 ? (
+     !PCresend ? w=gfx_texth*25 : w = gfx_texth*36;
+     gfx_set(0.16, 0.16, 0.16, 0.85);
+     gfx_rect(0, y, w, gfx_texth*1.5);
+     gfx_rect(gfx_texth*36, y, gfx_texth*6.4, gfx_texth*1.5);
+   );
+   !PCenable || !rowOnPC[g]? (gfx_set(0.16, 0.16, 0.16, 0.85); gfx_rect(gfx_texth*27.4, y, gfx_texth*9, gfx_texth*1.5)); //PC greyout
+
+   w = gfx_texth*2.4;
+
+   //Draw CC's
+  enableCCs && isRow(g) ? (
+    setgfx = $x464;
+    Yadd   = 4;
+    x      = gfx_texth *12;
+    xgap   = gfx_texth*4.4;
+    y     += gfx_texth*1.4;
+
+    gfx_gradrect(      0, y-gfx_texth*0.4, gfx_w/2, gfx_texth*1.8, 0, 0, 0, 0    , 0, 0, 0,  0.5/gfx_w);
+    gfx_gradrect(gfx_w/2, y-gfx_texth*0.4, gfx_w/2, gfx_texth*1.8, 0, 0, 0, 0.25, 0, 0, 0, -0.5/gfx_w);
+
+
+    CC1[g] =numSlide(CCsend1, "0",  "1",    CC1[g] , x, y, w, h, 64, 0, 128 ,0, "CC"); x += xgap;
+    CC2[g] =numSlide(CCsend2, "0",  "1",    CC2[g] , x, y, w, h, 64, 0, 128 ,0, "CC"); x += xgap;
+    CC3[g] =numSlide(CCsend3, "0",  "1",    CC3[g] , x, y, w, h, 64, 0, 128 ,0, "CC"); x += xgap;
+    CC4[g] =numSlide(CCsend4, "0",  "1",    CC4[g] , x, y, w, h, 64, 0, 128 ,0, "CC"); x += xgap;
+    CC5[g] =numSlide(CCsend5, "0",  "1",    CC5[g] , x, y, w, h, 64, 0, 128 ,0, "CC"); x += xgap;
+    CC6[g] =numSlide(CCsend6, "0",  "1",    CC6[g] , x, y, w, h, 64, 0, 128 ,0, "CC"); x += xgap;
+  ):Yadd = 0;
+
+  drawLabel = 0;
+
+  g += 1;
+);
+
+
+//SETTINGS
+gfx_setfont(1,"Tahoma Bold",14);
+disable = 0;
+
+settings ? (
+  gfx_set(0,0,0,0.6);
+  gfx_rect(0,0,gfx_w,gfx_h);
+  gfx_gradrect(gfx_w-gfx_texth*10, 0, gfx_texth*10, gfx_h,0.0,0,0,0,0,0,0,0.01);
+  drawLabel = 1; 
+  x = gfx_w-gfx_texth*2; 
+  y = 100;
+  rowPreset  = numSlide( "#/#", "0",  "1", rowPreset, gfx_w-gfx_texth*2, y, gfx_texth*2, gfx_texth*2,  2,  1, dispOuts, 0, "num");
+  FONT_SIZE_FIXED =  button("FIX", x ,gfx_y+gfx_texth*6, gfx_texth*6, 20, FONT_SIZE_FIXED);
+  FONT_SIZE_FIXED != 0 ? (FONT_SIZE = numSlide( "_|" , "0", "1",  FONT_SIZE, gfx_w-gfx_texth*2, gfx_y+gfx_texth*6, gfx_texth*2, gfx_texth*2, 14, 10, 60, 0, "num"); );
+  rowPreset != _rowPreset ? (
+    g=0; loop(noOfOuts,
+      memset(row+g, floor(g/rowPreset)+1, 1);
+      g += 1;
+    );
+    _rowPreset = rowPreset;
+    ); 
+  );
+  
+settings = button("", gfx_w-gfx_texth*2 ,gfx_texth, w, 20, settings);
+
+!hover ? mouse_wheel = 0;
+
+//Bottom Right Decoration
+gfx_set(1); gfx_x=gfx_w-36; gfx_y=gfx_h-14;
+gfx_setfont(1, "Verdana", 12); gfx_drawstr("TJA");
+gfx_line(gfx_w, gfx_h- 5, gfx_w- 5, gfx_h);
+gfx_line(gfx_w, gfx_h-10, gfx_w-10, gfx_h);
+gfx_line(gfx_w, gfx_h-15, gfx_w-15, gfx_h);
+gfx_set(1); gfx_roundrect(0,-1,gfx_w-1,gfx_h,0); //White Border
+
+//Mem debug
+0?(
+  squ = floor(allNoteWidth);
+  g = 0;
+  gfx_y=0;
+  loop(32,
+    gfx_x = 0;
+    loop(128,
+      gfx_r = 0[g]%2;
+      gfx_g = 0[g]%16;
+      gfx_b = 0[g]%128;
+      gfx_rect(gfx_w-gfx_x-squ,gfx_h-gfx_y-squ,squ,squ);
+      g += 1;
+      gfx_x+=squ;
+    );
+    gfx_y+=squ;
+  );
+);

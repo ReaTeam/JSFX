@@ -1,0 +1,338 @@
+desc: Blipper
+author: mrelwood
+version: 1.3
+about:
+  Blipper - Tone generator, blip generator, periodic passthrough plugin.
+
+  Blipper is created for testing purposes. You can generate tuned sine tones from a wide range of frequencies/keys, and adjust them to be periodicly cut with or without a fade. Or instead of the tone you can pass through whatever is playing on the track already. You can also set a full passthrough volume to skip the blipping altogether.
+
+  The plugin was created to test and measure compressor and reverb times and responses.
+
+desc:Blipper - Blip Generator 1.3  [mrelwood]
+
+// License: GPL - http://www.gnu.org/licenses/gpl.html
+
+
+//slider2:0<0,3,1{100Hz,440Hz,442Hz,1000Hz}>Tone
+slider1:0<0,1,1{Internal,Passthrough}>Source
+slider2:0<0,12,1>Tone
+slider3:0<-3,3,1>Octave
+slider4:500<50,2000,10>Repeat length (ms)
+slider5:50<1,100,1>Blip length (%)
+slider6:10<0,100,1>Fade length (%)
+slider9:-60<-60,0,1>Blip Volume
+slider10:-60<-60,0,1>Dry Bypass Volume
+
+@init
+
+
+conti = 0;
+function bliplen()(
+//  bliplen = ceil( (srate/1000*slider5)/hzlen) * hzlen;
+//  bliplen = ceil( (srate/1000*replen*(slider5/100))/hzlen) * hzlen;
+  bliplen = ceil(replen*(slider5/100) / hzlen) *hzlen;
+  
+);
+
+function hzini()(
+  hz = hznew;
+  hzlen = srate/hz;
+  bliplen();  
+);
+
+
+function blip()
+  instance( out)(
+  
+  pos += 1;
+  vertpos = sin(pos/hzlen * 2* ($pi) );
+  
+  conti == 0 ? (
+
+  //  (pos += 1) >= hzlen ? ( pos = vertpos = 0 );
+    (pos) >= (bliplen -fadelen) ? (
+      stop = 1;
+    );
+    
+    (stop == 1) && (fade > 0) && (fadelen > 0) ? (
+      fade -= 1/fadelen;
+      fade <= 0 ? (
+        fade = 0;
+      );
+    );
+  
+    (stop == 0) && (fade < 1) ? (
+      (fadelen > 0) ? (
+        fade += 1/fadelen;
+      ):(
+        fade = 1;
+      );
+    );
+  ):(
+    stop == 1 ? (
+      vertpos < 0 ? stop = 2;
+    ):
+    stop == 2 ? (
+    
+      vertpos >= 0 ? (
+        hzini();
+        stop = 0;
+      );
+    );
+    
+//    vertpos == 0 ? pos = 0;
+  );
+      
+  fade > 1 ? fade = 1;
+  
+//  fade = 0;
+
+  out = max(0, fade) *vertpos;
+  
+);
+
+sinner = 0;
+
+function blipass()
+  instance()(
+  fadelen < 1 ? fadelen = 1;
+  (cnt) > (bliplen) ? (
+    fadelen < srate/1000 * 2 ? (
+      sign(in) != sign(inold) ? (
+        fade -= 1/fadelen;
+        
+        p=0;
+      );
+    ):(
+      fade -= .00001;
+    );
+    fade < 1 && fade > 0 ? (
+      sinner == 1 ? fade = sin(asin(fade) - (1/fadelen*1.57)) :
+      fade -= 1/fadelen;
+    );
+    fade < 0 ? fade = 0;
+  ):(
+    fade <= 1 ? (
+      fadelen < srate/1000 * 2 ? (
+        sign(in) != sign(inold) ? (
+          fade += 1/fadelen;
+        );
+        fade > 0 && fade < 1 ? (
+          sinner == 1 ? fade = sin(asin(fade) + (1/fadelen*1.57)) :
+          fade += 1/fadelen;
+        );
+
+      ):(
+        fade += 1/fadelen;
+      );
+    );
+    fade > 1 ? fade = 1;
+  );
+);
+
+
+
+@slider
+
+/*
+slider2 == 0 ? hz = 100 :
+slider2 == 1 ? hz = 440 :
+slider2 == 2 ? hz = 442 :
+slider2 == 3 ? hz = 1000 ;
+*/
+
+pass = slider1;
+tone = slider2;
+oct = 2^slider3;
+
+// ?  hznew = 440 *oct : 
+/*
+tone == -24 ?  (hznew = 110; oct = -24;) : 
+//tone == -12 ?  hznew = 220 : 
+//tone == 12 ?  hznew = 880 : 
+tone == 24 ?  (hznew = 1760; oct = -24;) : 
+
+tone <= -12 ? (
+  hznew = 220;
+  oct = -12;
+):
+tone >= 12 ? (
+  hznew = 880;
+  oct = -12;
+):
+*/
+hznew = 440 * oct;
+tone != 0 ? (
+  loop(abs(tone),
+    tone > 0 ? hznew *= 2^(1/12) :
+    tone < 0 ? hznew /= 2^(1/12) ;
+  );
+);
+replen == 0 ? hzini();
+replen = floor(srate/1000*slider4 /hzlen)*hzlen;
+//fadelen = srate/1000* max(.01,slider6);
+//fadelen = floor(srate/1000*slider4 /hzlen) * hzlen;
+bliplen();
+fadelen = bliplen * (slider6/100) /2;
+slider9 == -60 ? outvol = 0 : outvol = 2^(slider9/6);
+slider10 == -60 ? dryvol = 0 : dryvol = 2^(slider10/6);
+
+pass == 0 && bliplen >= replen && fadelen == 0 ? conti = 1 : conti = 0;
+
+
+@block
+//go == 0 ? pos = vertpos = 0;
+hz == 0 || hzlen == 0 ? (
+  fade = 0;
+  hzini();
+);
+  
+pass == 0 ? (
+  (conti == 1) && (hz != hznew) ? stop = 1 : 
+  (fade == 0) && (hz != hznew) ? (
+    fade = 0;
+    hzini();
+    fadelen > 0 ? fade += (1/fadelen) : ( fade = 1);
+    stop = 0;
+  );
+);
+
+
+@sample
+
+dryL = spl0;
+dryR = spl1;
+
+(cnt += 1) > replen ? (
+  pos = vertpos = cnt = 0;
+);
+
+
+inold = in;
+in = (inL = spl0) + (inR = spl1);
+
+pass == 0 ? (
+  conti == 1 ? (
+      
+  //  bliplen = replen = hzlen;
+    fade = 1;
+    spl0 = blip();
+  //  pos > bliplen ? pos = cnt = 0;
+
+  ):(
+    cnt < (bliplen+fadelen*0) ? (
+//      p=0;
+      spl0 = blip();
+    ):(
+      spl0 = pos = vertpos = stop = fade = 0;
+    );
+    
+  );
+
+  spl0 *= outvol;
+  spl1 = spl0;
+
+):(
+
+  blipass();
+  spl0 *= fade;
+  spl1 *= fade;
+);
+
+/*
+spl2 = sign(inold);
+spl3 = sign(in);
+spl2 = in;
+spl3 = fade;
+
+*/
+
+//spl2 = vertpos/1;
+//spl3 = -abs(pos/bliplen);
+
+spl0 += dryL * dryvol;
+spl1 += dryR * dryvol;
+
+
+
+@gfx
+
+gfx_x = 30;
+gfx_y = 10;
+
+gfx_setfont(2,"Trebuchet MS",sz = 14,'');
+gfx_setfont(1,"Trebuchet MS",sz = 20,'');
+//gfx_setfont(1,"Arial",sz = 20,'i');
+//gfx_setfont(1,"Verdana",sz = 18,'i');
+//gfx_setfont(1,"Lucida Grande",sz = 18,'i');
+//gfx_setfont(1,"Apple SD Gothic Neo",sz = 20,'i');
+/*
+hznew_ = 50;
+while(gfx_x < gfx_w * 0.9)(
+  hznew_ *= 1.5;
+*/
+  collog = max(0, (log(hznew)-4) / 5);
+  colcur_gr = (sin(collog*6.28 -1)/2+.5) ;
+  colcur_bl = (sin(collog*3.14 -1)/2+.5)^2;
+  colcur_rd = sin(collog*6.28 +.5)/2+.5 + collog *.3;
+  colcur_a = 1-colcur_gr*.3;
+  
+  gfx_set(colcur_rd,colcur_gr,colcur_bl,colcur_a);
+  gfx_drawnumber(floor(hznew*10+.5)/10,1);
+  gfx_drawstr(" Hz");
+  
+  gfx_x += 30;
+  gfx_drawstr("= ");
+  gfx_drawnumber(ceil(srate/hznew) ,0);
+  gfx_drawstr(" spls");
+
+  gfx_x += 30;
+  gfx_drawstr("= ");
+  gfx_drawnumber(floor(1000/hznew *100+.5)/100 ,2);
+  gfx_drawstr(" ms");
+/*
+  gfx_x += 10;
+);
+*/
+
+function xy(x, y)(
+  x != "_" ? gfx_x = x;
+  y != "_" ? gfx_y = y;
+);
+
+function mtr(in, lbl)
+  instance(x y w h hh)(
+  x = gfx_x;
+  y = gfx_y;
+  h = sz *1.5;
+  w = sz;
+  gfx_rect(x,y,w,h ,0);
+  
+  gfx_rect(x+2,y+2 +(1-in)*(h-4), w-4,in*(h-4));
+  
+  
+  xy(gfx_x+w*.5,gfx_y+h);
+  gfx_setfont(2);
+  gfx_drawstr(lbl,257,gfx_x,gfx_y);
+  gfx_x += w;
+);
+
+
+
+xy(30,gfx_y += sz*2);
+gfx_set(gr=.9,gr,gr,1);
+
+mtr(blip.out,"Blip");
+
+
+
+
+
+
+
+
+
+
+
+
+

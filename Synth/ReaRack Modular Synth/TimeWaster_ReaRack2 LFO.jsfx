@@ -1,0 +1,532 @@
+version: 2.0.2
+desc:ReaRack2 - LFO
+noindex:   true
+author:    Malcolm Smith
+           Copyright(C) 2017 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
+license:   LGPL - http://www.gnu.org/licenses/lgpl.html
+
+about:     LFO module ReaRack modular JSFX synth system.
+
+changelog: Version 2.0.1 (13/10/2021) Fixed scaling error for random step output.
+           Version 2.0.1 ( 9/02/2018) Some output CC values were > 127, fixed.
+           Version 2.0.0 (15/10/2017) Initial version 2 release.
+
+slider1:smodp=0<0,1,1{Frequency,Pulse width}>Modulation Target
+slider2:sccIn=0<0,64,1{Off,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv}>CC Input
+slider3:mrange=1<0,1,0.001>Modulation Range
+
+slider5:sccout=21<0,63,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv}>CC Output
+slider6:schanout=1<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Ouput Channel
+slider7:reso=128<1,128,1>CC Output LSB Resolution
+
+slider9:syncval=0<0,11,1{Off,32,16,8,4,2,1,1/2,1/4,1/8,1/16,1/32,1/64}>Sync (Off/Beats per Cycle)
+slider10:tupval=0<0,2,1{Off,Duplet,Triplet}>Tuplet
+slider11:sfreqval=1<0,50,0.01>Frequency (sync off)
+
+slider13:shape=0<0,2,1{Triangle,Sine/Pulse,Random Step}>Wave Shape
+slider14:spw=0<-1,1,0.01>Pulse Width
+
+slider16:sedge1=0.5<1,0,0.001>Shape - Edge 1
+slider17:sedge2=0.5<0,1,0.001>Shape - Edge 2
+
+slider19:sphase=0<-0.5,0.5,0.001>Phase Position
+
+slider21:lev1=1<0,1,0.001>Output Limit 1
+slider22:lev2=0<0,1,0.001>Output Limit 2
+
+slider24:sclass=0<0,3,1{None,Master,Slave}>Class
+slider25:sgroup=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Group
+// Hidden sliders (for storing parameter values in project)
+slider30:freqccmsb=-1<-1,100,1>-
+slider31:pwccmsb=-1<-1,100,1>-
+slider32:smodrange=1<0,1,0.001>-
+slider33:spwrange=1<0,1,0.001>-
+
+options:gmem=ReaRack
+
+in_pin:none
+out_pin:none
+
+@init
+fxn = 140;
+freqcclsb = freqccmsb+32;
+pwcclsb = pwccmsb+32;
+freqval = sfreqval;
+  
+tupval == 0 ? tuplet = 1:
+tupval == 1 ? tuplet = (2/3):
+tupval == 2 ? tuplet = (3/2);
+  
+tau = $pi+$pi;
+(syncval == 0) ? (     
+        freq = freqval;
+        )
+        :
+        (
+        freq = ((2^(syncval-6))/(60/tempo))*tuplet;
+        );
+inbeatpos = beat_position - floor(beat_position);
+x = freq % inbeatpos;
+prephase = 0; 
+
+bufflen = 500;
+offset = 0;
+  
+@slider
+
+slidermove = 1;
+
+@block
+
+sclass == 2 ? slidermove  = gmem[group+fxn+15];
+
+slidermove == 1 ?
+(
+// Update modulation input sliders to previously set values on target selection.
+smodp == 0 && ccinnum != 0 ? //Frequency
+  (
+  sccIn = freqccmsb <= 31 ? freqccmsb+1:freqccmsb - 31;
+  mrange = smodrange;
+  );
+smodp == 1 && ccinnum != 1 ? //Pulse Width
+  (
+  sccIn = pwccmsb <= 31 ? pwccmsb+1:pwccmsb - 31; 
+  mrange = spwrange;
+  );
+//Set modulation values
+smodp == 0 ? //Frequency
+  (
+  freqccmsb = sccIn <= 32 ? sccIn-1:sccIn + 31;
+  freqcclsb = freqccmsb+32;
+  smodrange = mrange;
+  ccinnum = 0;
+  );
+smodp == 1 ? //Pulse Width
+  (
+  pwccmsb = sccIn <= 32 ? sccIn-1:sccIn + 31;
+  pwcclsb = pwccmsb+32;
+  spwrange = mrange;
+  ccinnum = 1;
+  );
+
+//Store slider values
+group = sgroup*1000;
+sclass == 1 ? (
+  gmem[group+fxn+0] = syncval;
+  gmem[group+fxn+1] = tupval;
+  gmem[group+fxn+2] = sfreqval;
+  gmem[group+fxn+3] = shape;
+  gmem[group+fxn+4] = spw;
+  gmem[group+fxn+5] = sedge1;
+  gmem[group+fxn+6] = sedge2;
+  gmem[group+fxn+7] = sphase;
+  gmem[group+fxn+8] = lev1;
+  gmem[group+fxn+9] = lev2;
+  gmem[group+fxn+10] = smodp;
+  gmem[group+fxn+11] = sccIn;
+  gmem[group+fxn+12] = mrange;
+  gmem[group+fxn+13] = sccout;
+  gmem[group+fxn+14] = schanout;
+  gmem[group+fxn+15] = slidermove;
+);
+
+// Retrieve slider values
+sclass == 2 ? ( 
+  syncval    = gmem[group+fxn+0];
+  tupval     = gmem[group+fxn+1];
+  sfreqval   = gmem[group+fxn+2];
+  shape      = gmem[group+fxn+3];
+  spw        = gmem[group+fxn+4];
+  sedge1     = gmem[group+fxn+5];
+  sedge2     = gmem[group+fxn+6];
+  sphase     = gmem[group+fxn+7];
+  lev1       = gmem[group+fxn+8];
+  lev2       = gmem[group+fxn+9];
+  smodp      = gmem[group+fxn+10];
+  sccIn      = gmem[group+fxn+11];
+  mrange     = gmem[group+fxn+12];
+  sccout     = gmem[group+fxn+13];
+  schanout   = gmem[group+fxn+14];
+);
+
+  outccmsb = sccout <=31 ? sccout:sccout + 32;
+  outcclsb = outccmsb+32;
+  chanout = schanout-1;
+  freqval = max(sfreqval,0.01);
+  modlev1 = 50*(max(smodrange,0.01));
+  modlev = modlev1 - freqval;
+  pwlev = (2*spwrange-1) - spw;
+  tedge1 = (3-3*abs(2*sedge1-1))^3;
+  tedge2 = (3-3*abs(2*sedge2-1))^3;
+  phase = sphase*tau;
+  phaseadj = phase-prephase;
+  phaseshift = 1;
+  
+  tupval == 0 ? tuplet = 1:
+  tupval == 1 ? tuplet = (2/3):
+  tupval == 2 ? tuplet = (3/2);
+  
+  modstatus = $xB0|chanout;
+
+slidermove = 0;
+); // end if slidermove
+
+(syncval == 0) ? (     
+      freq = freqval;
+      )
+      :
+      (
+      freq = ((2^(syncval-4))/(60*4/tempo))*tuplet;
+      );
+      
+memset(0,-2,samplesblock+samplesblock); 
+
+////////////////////////Get modulation CC messages////////
+while (midirecv(offsetin, msg1, msg2, msg3))
+( 
+  // Extract message type and channel
+  status = msg1 & $xF0;
+  // Extract message type and channel
+     status == $xB0 ?
+      (
+          msg2 == freqccmsb ? modvalmsb = msg3;
+          msg2 == freqcclsb ? modvallsb = msg3;
+          msg2 == pwccmsb   ? pwvalmsb  = msg3;
+          msg2 == pwcclsb   ? pwvallsb  = msg3;
+          msg2 == freqccmsb || msg2 == freqcclsb? 
+         (
+         // Frequency modulation
+          modval = (modvalmsb/127.9921875)+(modvallsb/16384);
+          offsetin[0] = modval;        
+          );
+          // Pulse width modulation
+          msg2 == pwccmsb || msg2 == pwcclsb? 
+         (
+          pwval = (pwvalmsb/127.9921875)+(pwvallsb/16384);
+          offsetin[0+samplesblock] = pwval;        
+          );
+      );
+    // Pass through
+    midisend(offsetin, msg1, msg2, msg3);
+);
+// Update frequency rate
+count = 0;
+while(count < samplesblock) (
+count[0] > -2 ?
+  (
+  modvalspl = count[0];
+  modlevspl = modvalspl * modlev; 
+  );
+modfreqspl = freq + modlevspl;
+freqccmsb == -1 ? modfreqspl = freq;
+adj = (tau*modfreqspl/srate);
+
+count[0+samplesblock] > -2 ?
+  (
+  pwvalspl = count[0+samplesblock];
+  pwlevspl = pwvalspl * pwlev;
+  );
+modpwspl = spw + pwlevspl;
+pwccmsb == -1 ? modpwspl = spw;
+pw = (1+modpwspl) * $pi;
+k = 1+modpwspl;
+l = 1-abs(modpwspl);
+kpi = k*$pi;
+p = (k*($pi/2))-((1-sedge1)*((l*$pi)/2));
+q = (k*($pi/2))+((1-sedge1)*((l*$pi)/2));
+u = tau-((k*($pi/2))+((1-sedge2)*((l*$pi)/2)));
+v = tau-((k*($pi/2))-((1-sedge2)*((l*$pi)/2)));
+  
+// Generate waveforms and send out MIDI
+
+(shape == 0) ? (
+  // triangle
+  x <= pw ?
+    ( 
+    sedge1 == 0.5 ? y = x/pw;
+    sedge1 > 0.5 ?  y = (sqrt(((1+tedge1)^2+tedge1^2)-((1/kpi)*x-(1+tedge1))^2))-tedge1;
+    sedge1 < 0.5 ?  y = 1-(sqrt(((1+tedge1)^2+tedge1^2)-((1/kpi)*(x-kpi)+(1+tedge1))^2))+tedge1;
+    ):
+    (
+    sedge2 == 0.5 ? y = (tau-x)/(tau-pw);
+    sedge2 > 0.5 ?  y = (sqrt(((1+tedge2)^2+tedge2^2)-((1/((2-k)*$pi))*(x-tau)+(1+tedge2))^2))-tedge2;
+    sedge2 < 0.5 ?  y = 1-(sqrt(((1+tedge2)^2+tedge2^2)-((1/((2-k)*$pi))*((tau-x)-(tau-kpi))+(1+tedge2))^2))+tedge2;    
+    );
+    y *= (lev1-lev2);
+    y += lev2;
+):
+
+(shape == 1) ? (
+  // sine/pulse
+  x <= p           ? y = 0;
+  x >  p && x <  q ? y = (1-cos((x-p)*(1/((1-sedge1)*l))))/2;
+  x >= q && x <= u ? y = 1;
+  x >  u && x <  v ? y = (1-cos((v-x)*(1/((1-sedge2)*l))))/2;
+  x >= v           ? y = 0;
+  y *= (lev1-lev2);
+  y += lev2;
+):
+
+(
+//Random step
+  x >= pw && step == 1 ?
+    (
+     x1 = 10;
+     step = 2;
+     );
+  x < x1 ?
+  (
+  y = rand(1);
+  y *= (lev1-lev2);
+  y += lev2;
+  );
+  x1 = x;
+);
+ 
+//Send CC message
+ccval = y * 127.9921875;
+ccvalmsb = floor(ccval);
+ccvallsb = floor(floor((ccval-ccvalmsb)*reso)*(128/reso));
+
+chanout == -1 ?
+  (
+   n = 0;
+   loop(16,
+   preccvalmsb != ccvalmsb ? midisend(count,$xB0+n,outccmsb,ccvalmsb); // Only send messages if values have changed
+   preccvallsb != ccvallsb ? midisend(count,$xB0+n,outcclsb,ccvallsb);
+   n += 1;
+  );
+):(
+   preccvalmsb != ccvalmsb ? midisend(count,modstatus,outccmsb,ccvalmsb);
+   preccvallsb != ccvallsb ? midisend(count,modstatus,outcclsb,ccvallsb);
+);
+ /////////////// Store previous values ////////////
+preccval != ccval ? presentcc = preccval; // Required for random step @gfx
+preccval = ccval;     
+preccvalmsb = ccvalmsb;
+preccvallsb = ccvallsb;
+count += 1;
+
+//////////Buffer results for graphics////////////////////////////
+buffinc = floor(((x/tau)*bufflen)+0.5);
+(buffinc+samplesblock+samplesblock)[0] = y;
+// Increment counters
+
+phaseshift == 1 ?
+(
+x=x+adj+phaseadj;
+prephase = phase;
+phaseshift = 0;
+):(
+x=x+adj;
+);
+x >= tau ?
+  (
+   x -= tau;
+   step = 1;
+  );
+); //end loop
+
+@gfx 500 150
+xmin = 25;
+xrng = 160;
+xmax = xmin + xrng;
+ymin = 25;
+yrng = 80;
+ymax = ymin+yrng;
+xg = x;
+mxmin = xmax+80;
+mxrng = 100;
+myrng = 6;
+gfx_r = 0;
+gfx_g = 1;
+gfx_b = 0;
+gfx_a = 1;
+gpos = 0;
+// Draw waveform
+while (gpos <= bufflen)(
+  gbuff = gpos/bufflen;
+  gbuff >= (xg/tau) ? cweight = gbuff-(xg/tau):cweight = 1+(gbuff-(xg/tau));
+  wx = xmin+(160)*(gpos/bufflen);
+  wy = ymax-80*(gpos+samplesblock+samplesblock)[0];
+ 
+  gweight1 = 0.25+0.75*cweight;
+  gweight2 = gweight1;
+  gfx_x = wx;
+  gfx_y = wy;
+  gfx_setpixel(0,gweight1,0);
+  gfx_y = wy+1;
+  gfx_setpixel(0,gweight2,0);
+  gfx_y = wy-1;
+  gfx_setpixel(0,gweight2,0);
+  gfx_x = wx-1;
+  gfx_setpixel(0,gweight2,0);
+  gfx_y = wy;
+  gfx_setpixel(0,gweight2,0);
+  gfx_y = wy+1;
+  gfx_setpixel(0,gweight2,0);
+  gfx_x = wx+1;
+  gfx_setpixel(0,gweight2,0);  
+  gfx_y = wy;
+  gfx_setpixel(0,gweight2,0);
+  gfx_y = wy-1;
+  gfx_setpixel(0,gweight2,0);
+  gfx_x = wx;
+  gfx_y = wy;
+  gfx_setpixel(0,gweight1,0);
+
+  gpos+=1;
+);
+// Draw missing vertical lines for pulse wave
+shape == 1 ?
+(
+p == q ?
+  (
+  (p/tau) >= (xg/tau) ? cweightp = (p/tau)-(xg/tau):cweightp = 1+((p/tau)-(xg/tau));
+  gfx_r = 0;
+  gfx_g = 0.25+0.75*cweightp;
+  gfx_b = 0;
+  gfx_y = ymax-lev1*yrng;
+  gfx_x = (xmin-1)+xrng*(p/tau);
+  gfx_lineto(gfx_x,ymax-lev2*yrng);
+  gfx_x = xmin+xrng*(p/tau);
+  gfx_lineto(gfx_x,ymax-lev1*yrng);
+  gfx_x = (xmin+1)+xrng*(p/tau);
+  gfx_lineto(gfx_x,ymax-lev2*yrng);
+  );
+
+u == v ?
+  (
+  (u/tau) >= (xg/tau) ? cweightu = (u/tau)-(xg/tau):cweightu = 1+((u/tau)-(xg/tau));
+  gfx_r = 0;
+  gfx_g = 0.25+0.75*cweightu;
+  gfx_b = 0;
+  gfx_y = ymax-lev1*yrng;
+  gfx_x = (xmin-1)+xrng*(u/tau);
+  gfx_lineto(gfx_x,ymax-lev2*yrng);
+  gfx_x = xmin+xrng*(u/tau);
+  gfx_lineto(gfx_x,ymax-lev1*yrng);
+  gfx_x = (xmin+1)+xrng*(u/tau);
+  gfx_lineto(gfx_x,ymax-lev2*xrng);  
+  );
+);
+// Text
+gfx_r = 1;
+gfx_b = 1;
+gfx_g = 1;
+gfx_a = 0.7;
+gfx_x=67;
+gfx_y=8;
+gfx_drawstr("Waveform");
+gfx_x=mxmin+38;
+gfx_y=8;
+gfx_drawstr("Modulation");
+gfx_x=mxmin+38;
+gfx_y=23;
+gfx_drawstr("Target  CC");
+
+gfx_x = 5;
+gfx_y = ymax+10;
+gfx_drawstr("Frequency = ");
+gfx_drawnumber(modfreqspl,2);
+gfx_drawstr(" Hz");
+freqccmsb > -1 ?
+(
+gfx_x = 5;
+gfx_y = ymax+25;
+gfx_drawstr("Freq. mod. range = ");
+gfx_drawnumber(freqval,2);
+gfx_drawstr(" to ");
+gfx_drawnumber(modlev1,2);
+gfx_drawstr(" Hz");
+);
+gfx_x = 5;
+gfx_y = ymax+40;
+
+gfx_drawstr("Pulse Width = ");
+gfx_drawnumber(modpwspl,2);
+pwccmsb > -1 ?
+(
+gfx_x = 5;
+gfx_y = ymax+55;
+gfx_drawstr("P.W. mod. range = ");
+gfx_drawnumber(spw,2);
+gfx_drawstr(" to ");
+gfx_drawnumber(pwlev+spw,2);
+);
+
+// Draw frame lines
+gfx_r = 1;
+gfx_g = 0;
+gfx_b = 0;
+gfx_a = 0.5;
+gfx_x = xmin;
+gfx_y = ymin;
+gfx_lineto(xmax,gfx_y);
+gfx_x = xmin;
+gfx_y = ymax;
+gfx_lineto(xmax,gfx_y);
+
+// Draw phase offset line
+phase >= 0 ?
+(  
+  gfx_x = xmin+(xrng/2)*(phase/$pi);
+  gfx_y = ymin;
+  gfx_lineto(gfx_x,ymax);
+  ):(  
+    gfx_x = xmax+(xrng/2)*(phase/$pi);
+    gfx_y = ymin;
+    gfx_lineto(gfx_x,ymax);
+    );
+
+// Draw level text
+gfx_a =1;
+gfx_x = xmin-12;
+gfx_y = ymin-3;
+gfx_drawstr("1");
+gfx_x = xmin-12;
+gfx_y = ymax-5;
+gfx_drawstr("0");
+
+// Draw limit lines
+gfx_r = 1;
+gfx_g = 0;
+gfx_a = 0.5;
+gfx_x = xmin;
+gfx_y = ymax-lev1*yrng;
+gfx_lineto(xmax,gfx_y);
+gfx_x = xmin;
+gfx_y = ymax-lev2*yrng;
+gfx_lineto(xmax+25,gfx_y);
+gfx_a = 1;
+gfx_x = xmax+5;
+gfx_y = (ymax-5)-lev1*yrng;
+gfx_drawstr("L1");
+gfx_x = xmax+30;
+gfx_y = (ymax-5)-lev2*yrng;
+gfx_drawstr("L2");
+
+// Modulation Indicators
+gfx_r = 1;
+gfx_g = 0;
+// Frequency
+smodp == 0 ? gfx_a = 1: gfx_a = 0.5;
+gfx_x = xmax+80;
+gfx_y = ymin+15;
+gfx_drawstr("  Frequency  ");
+freqccmsb <  0 ? gfx_drawstr("--"):
+freqccmsb < 10 ? (gfx_drawstr("0");
+gfx_drawnumber(freqccmsb,0)):
+gfx_drawnumber(freqccmsb,0);
+// Pulse width
+smodp == 1 ? gfx_a = 1: gfx_a = 0.5;
+gfx_x = xmax+80;
+gfx_y = ymin+30;
+gfx_drawstr("Pulse Width  ");
+pwccmsb <  0 ? gfx_drawstr("--"):
+pwccmsb < 10 ? (gfx_drawstr("0");
+gfx_drawnumber(pwccmsb,0)):
+gfx_drawnumber(pwccmsb,0);
+
+
+

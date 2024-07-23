@@ -1,0 +1,197 @@
+desc: Legato control
+version: 0.3
+author: mbncp
+link: http://forum.cockos.com/showthread.php?p=176566
+changelog:
+  April 18 2008
+  + initial release
+about:
+  - Holds each note until next note is pressed.  
+	(mod of ix MIDI_Latch)  
+	
+  Pressing the same note will turn it off  
+  Legato: Trigger the new one before turning off the previous one  
+  Note Holding can be turned off also via another CC  
+  In this case it still plays mono and legato can still be switched on or off  
+	
+	
+slider1:0<0,16,1>Input Channel ( 0 = Any )
+slider2:0<0,1,1{OFF, ON}>Legato
+slider3:-1<-2,127,1> CC to Control Legato (-2: learn, -1: none, CC0-CC127 )
+slider4:0<-1,127,1> CC Channel to Control Legato (-1: learn, 0: Any, Chn 1-16 )
+slider5:1<0,1,1{On, Off}>Note Hold
+slider6:-1<-2,127,1> CC to control Note Hold (-2: learn, -1: none, CC0-CC127 )
+slider7:0<-1,127,1> CC Channel for the Note Hold CC (-1: learn, 0: Any, Chn 1-16 )
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+@init
+last = 0;
+lastchannel = 0;
+legato = 0;
+statNoteOff = $x80;
+statNoteOn = $x90;
+cc1learn = 0;
+cc2learn = 0;
+/////////////////////////////////////////////////////////////////////////////////////////////////
+@slider
+inChannel = slider1;
+legato = slider2;
+legatoCC = slider3;
+legatoCCChn = slider4;
+bypass = slider5;
+bypasCC = slider6;
+bypassCCChn = slider7;
+
+cc1learn = slider3 == -2 ? 1 : 0;
+cc1learn|= slider4 == -1 ? 2 : 0;
+cc2learn = slider6 == -2 ? 1 : 0;
+cc2learn|= slider7 == -1 ? 2 : 0;
+/////////////////////////////////////////////////////////////////////////////////////////////////
+@block
+midirecv(offset,msg1,msg23) ?
+(
+	while
+	(
+		status = msg1 & $xF0;
+		channel = msg1 & $x0F;
+		status > $x9F ? // not a note
+		(
+			status == $xB0 ? // CC
+			(
+				cc1learn ?
+				(
+					cc1learn & 1 ?
+					(
+						legatoCC = msg23 & $x7f;
+						slider3 = legatoCC;
+					);
+					cc1learn & 2 ?
+					(
+						legatoCCChn = (msg1 & $x0F) +1 ;
+						slider4 = legatoCCChn;
+					);
+					cc1learn = 0;
+				)
+				:
+				(
+					cc2learn ?
+					(
+						cc2learn & 1 ?
+						(
+							bypassCC = msg23 & $x7f;
+							slider6 = bypassCC;
+						);
+						cc2learn & 2 ?
+						(
+							bypassCCChn = (msg1 & $x0F)+1;
+							slider7 = bypassCCChn;
+						);
+						cc2learn = 0;
+					)
+					:
+					(
+						msg23 & $x7F == legatoCC && (legatoCCChn == 0 || channel == legatoCCChn-1) ?
+						(
+							legato = msg23 >= $x4000 ? 1 : 0;
+							slider2 != legato ? slider2 = legato;
+						)
+						:
+						(
+							msg23 & $x7F == bypassCC && (bypassCCChn == 0 || channel == bypassCCChn-1) ?
+							(
+								bypass = msg23 >= $x4000 ? 1 : 0;
+								slider5 != bypass ?
+								(
+									slider5 = bypass;
+									bypass && last ? 
+									(
+										midisend(offset,statNoteOff + lastchannel, last);
+										last = 0;
+									);
+								);
+							)
+							:
+							(
+								midisend(offset,msg1,msg23);
+							);
+						);
+					);
+				);
+			)
+			:
+			midisend(offset,msg1,msg23);
+		)
+		:
+		(	// Note On/Off
+			inChannel == 0 || channel == inChannel-1 ?
+			(
+				bypass ?
+				(
+					status == statNoteOn && msg23 & $x7F00 ?
+					(
+						last?
+						(
+							legato?
+							(
+								midisend(offset,msg1,msg23);
+								midisend(offset,statNoteOff + lastchannel, last);
+							)
+							:
+							(
+								midisend(offset,statNoteOff + lastchannel, last);
+								midisend(offset,msg1,msg23);
+							);
+						)
+						:
+						(
+							midisend(offset,msg1,msg23);
+						);
+						last = msg23 & $x7F;
+						lastchannel = channel;
+					)
+					:
+					(
+						midisend(offset,msg1,msg23);
+						last = 0;
+					);
+				)
+				:
+    			status == statNoteOn && msg23 & $x7F00 ?
+				(
+					msg23 & $x7F == last ? // same note ? turn it off
+					(
+						midisend(offset,statNoteOff + lastchannel, last);
+						last = 0;
+					)
+					:
+					(
+						last?
+						(
+							legato?
+							(
+								midisend(offset,msg1,msg23);
+								midisend(offset,statNoteOff + lastchannel, last);
+							)
+							:
+							(
+								midisend(offset,statNoteOff + lastchannel, last);
+								midisend(offset,msg1,msg23);
+							);
+						)
+						:
+						(
+							midisend(offset,msg1,msg23);
+						);
+						last = msg23 & $x7F;
+						lastchannel = channel;
+					);
+				);
+			)
+			:
+			(
+				midisend(offset,msg1,msg23); //Not on our channel, pass thru
+			);	
+		);
+		midirecv(offset,msg1,msg23);
+	);
+);

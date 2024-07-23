@@ -1,0 +1,241 @@
+desc: MIDI note-banked CC multiplier
+author: Kevin Morrison (ThrashJazzAssassin)
+version: 0.1.2
+changelog: Increase max bank size to 64
+about:
+  Modifies control change (CC) inputs depending on which MIDI note has been pressed. 
+  MIDI notes switch between banks and each bank outputs a unique set of CCs.
+
+slider2: bank0note=9<0,127,1{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>-Note to trigger Bank1 (Default C1)
+slider3:  numBanks=4<2,127,1{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>-# of Banks
+slider4:  banksize=8<1, 64,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64}>-Bank Size (# physical knobs/sliders)
+slider7:     lowcc=0<0, 15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>-Lowest Input CC Channel
+slider8:   highcc=15<0, 15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>-Highest Input CC Channel
+slider9:  firstCC=41<0,100,1{1,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>-First CC
+slider10:CCoffset=41<0,126,1{1,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>-CC out offset
+slider11:    latch=1<0,  1,1{Off, On}>-Latch
+slider12:    CCbus=0<0, 15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>-CC Output MIDI Bus
+slider13:     bank=0<0,127,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>-Bank Select
+slider14: vertIncr=0<0,  1,1{Off, On}>-Vertical Increment
+
+@init
+ext_noinit  =1;
+ext_midi_bus=1;
+// statusbytes
+statNoteOn  = $x90;
+statNoteOff = $x80;
+statCC      = $xB0;
+noteStr=" C-2 C#-2 D-2  D#-2 E-2  F-2  F#-2 G-2  G#-2 A-2  A#-2 B-2  C-1  C#-1 D-1  D#-1 E-1  F-1  F#-1 G-1  G#-1 A-1  A#-1 B-1  C0   C#0  D0   D#0  E0   F0   F#0  G0   G#0  A0   A#0  B0   C1   C#1  D1   D#1  E1   F1   F#1  G1   G#1  A1   A#1  B1   C2   C#2  D2   D#2  E2   F2   F#2  G2   G#2  A2   A#2  B2   C3   C#3  D3   D#3  E3   F3   F#3  G3   G#3  A3   A#3  B3   C4   C#4  D4   D#4  E4   F4   F#4  G4   G#4  A4   A#4  B4   C5   C#5  D5   D#5  E5   F5   F#5  G5   G#5  A5   A#5  B5   C6   C#6  D6   D#6  E6   F6   F#6  G6   G#6  A6   A#6  B6   C7   C#7  D7   D#7  E7   F7   F#7  G7   G#7  A7   A#7  B7   C8   C#8  D8   D#8  E8   F8   F#8  G8";
+
+input=0;
+l=256; memset(l,1,256);
+
+function isNoteOn      ()(noteStatus==statNoteOn && msg3);
+function isNoteOff     ()(noteStatus==statNoteOff || (noteStatus==statNoteOn && msg3==0));
+function isCC          ()(noteStatus==statCC);
+function isBankSwitcher()(channel==noteChan-1 && msg2>=bank0note && msg2<bank0note+numBanks);
+function bankFeedback  ()(
+  midisend(0, statNoteOff+noteChan-1, lastnote);
+  !lastvel ? lastvel = 127;
+  midisend(0,statNoteOn+noteChan-1,bank0note+bank,lastvel);
+  lastnote = bank0note+bank;
+);
+
+@block
+latch && noteChan && lastnote!=bank0note+bank ? bankFeedback();
+
+while (midirecv(offset,msg1,msg2,msg3)) (
+  noteStatus = msg1&$xF0;
+  channel    = msg1&$x0F;
+
+  isCC() ? (
+    channel>=lowcc && channel<=highcc && msg2>=firstCC && msg2<firstCC+banksize? (
+      midi_bus=CCbus;
+      input[msg2-firstCC]=1; //For input mon
+      !vertIncr? msg2=CCoffset+(bank*banksize)+msg2-firstCC:msg2=CCoffset+bank+((numBanks)*(msg2-firstCC));
+    );
+    midisend(offset,msg1,msg2,msg3);
+  )
+
+  :isNoteOn() ? (
+    isBankSwitcher() || noteChan==0 ? (                     //Is it a bank switcher?
+      bank = msg2 - bank0note;                              //Set bank
+      latch ? (                                             //Is Latch enabled?
+        midisend(offset, statNoteOn+noteChan-1, lastnote,0); //send note off to last stored note
+        lastnote = msg2;                                    //store new note 
+        lastvel  = msg3;
+      );
+    ); 
+    midisend(offset,msg1,msg2,msg3);  
+  )
+
+  :isNoteOff() && !(isBankSwitcher() && latch) ? midisend(offset,msg1,msg2,msg3)
+  
+  :midisend(offset,msg1,msg2,msg3);
+);
+
+@gfx 300 440
+hover = 0;
+
+function isOver(x,y,w,h) (
+  mouse_x>=x && mouse_x<=x+w && mouse_y>=y && mouse_y<=y+h
+);
+
+function isOver2(_x, _y, x, y, w, h) (
+  _x>=x && _x<=x+w && _y>=y && _y<=y+h
+);
+
+function hex3tocolour(hex, plus) (
+  red = ((hex&$xf00)/$xf00)+plus;
+  grn = ((hex&$x0f0)/$xf0)+plus;
+  blu = ((hex&$x00f)/$xf)+plus;
+  gfx_set(red,grn,blu);
+);
+
+function button(name, x, y, w, h, clicked) (
+  gfx_set(1); gfx_x=x; gfx_y=y-12; gfx_drawstr(name);
+  hex3tocolour($x678,0);  
+
+  !mouse_cap ? allow=1;
+
+  isOver(x,y,w,h) && !dragMode ? gfx_set(0.3,0.5,0.5);
+
+  clicked ? gfx_set(0.3,0.7,0.9);
+  allow && mouse_cap==1 && isOver(x,y,w,h) && !dragMode? (
+    allow=0;
+    !clicked?clicked=1:clicked?clicked =0;
+  );
+  gfx_rect(x,y,w,h);
+  gfx_gradrect(x,y+h,w,6, 0,0,0,0.3, 0,0,0,0, 0,0,0,-0.05);       //Shadow Vert
+  gfx_gradrect(x+w,y,6,h, 0,0,0,0.3, 0,0,0,-0.05, 0,0,0,0);       //Shadow Hor
+  gfx_gradrect(x+w,y+h,6,6, 0,0,0,0.3, 0,0,0,-0.04, 0,0,0,-0.04); //Shadow Corner
+  clicked;
+);
+
+function numSlide(label, num, sldr, x, y, w, h, mini, maxi, shape, colour) (
+
+  hex3tocolour(colour,0);  
+
+  isOver(x,y,w,h) ? hover = 1;
+
+  mouse_cap==0 ? dragMode = 0;
+
+  dragMode && isOver2(_x,_y,x,y,w,h) ? (
+    hex3tocolour(colour,0.2); 
+    mouse_y!=_mouse_y ? (
+      Mchng = _mouse_y-mouse_y;
+      abs(Mchng) > 10 ? (
+        num += floor((Mchng/10)+0.5);
+        _mouse_y = mouse_y;
+      );
+    );
+
+  ):!dragMode && isOver(x,y,w,h) ? (
+    hex3tocolour(colour,0.1); 
+    mouse_cap==1 ? (
+      _mouse_y = mouse_y;
+      _x = mouse_x;
+      _y = mouse_y;
+      dragMode = 1;
+    ):_mouse_wheel != mouse_wheel ? (
+      diff = (mouse_wheel-_mouse_wheel)/120;
+      mouse_cap == 4 ? diff*=12;
+      num += diff;
+      _mouse_wheel = mouse_wheel = 0;
+    );
+  );
+
+  gfx_x=x; gfx_y=y;
+  shape==0?(
+    gfx_rect(x,y,w,h); 
+    gfx_gradrect(x,y+h,w,6, 0,0,0,0.3, 0,0,0,0, 0,0,0,-0.05);       //Shadow Vert
+    gfx_gradrect(x+w,y,6,h, 0,0,0,0.3, 0,0,0,-0.05, 0,0,0,0);       //Shadow Hor
+    gfx_gradrect(x+w,y+h,6,6, 0,0,0,0.3, 0,0,0,-0.04, 0,0,0,-0.04); //Shadow Corner
+  ):shape==1?
+    gfx_circle(x+w/2,y+h/2,w/2,1);
+  num<mini?num=mini:num>maxi?num=maxi;
+  gfx_set(0);
+  gfx_drawstr(strcpy_fromslider(#, slider(sldr)),5,x+w,y+h); //param value
+
+  //Draw parameter label
+  gfx_x=x; gfx_y=y-12; gfx_set(1); gfx_drawstr(label);
+  num;
+);
+
+//////////////////
+///Start Drawing//
+//////////////////
+ 
+y=0;
+gfx_set(0.1); gfx_rect(0,0,gfx_w,gfx_h);                        //Bottom Background
+gfx_set(0.2); gfx_rect(0,0,gfx_w,y+107);                        //Mid Background
+gfx_set(0.3); gfx_rect(0,0,gfx_w, y+45);                        //Top Background
+gfx_gradrect(0,y,gfx_w,6, 0,0,0,0.3, 0,0,0,0, 0,0,0,-0.05);     //Shadow
+gfx_gradrect(0, y+45,gfx_w,6, 0,0,0,0.3, 0,0,0,0, 0,0,0,-0.05); //Shadow
+gfx_gradrect(0,y+107,gfx_w,6, 0,0,0,0.3, 0,0,0,0, 0,0,0,-0.05); //Shadow
+gfx_set(1,1,1,0.2); gfx_rect(66,y,2,gfx_h);                     //vert Divider line
+//In
+x=12; y+=20; h=20; colour=$xac9;
+noteChan = numSlide(     "ChanIn", noteChan, 1, x, y, 35, h,  0,  16 ,0, colour); x+=66; colour=$xbb8;
+bank     = numSlide(       "Bank",     bank,13, x, y, 35, h,  0,numBanks-1 ,0, colour); x+=48;
+numBanks = numSlide(        "  #", numBanks, 3, x, y, 35, h,  2, 127 ,0, colour); x+=48;
+banksize = numSlide(      "ooo->", banksize, 4, x, y, 35, h,  1,  64 ,0, colour); x+=58; colour=$xac9;
+lowcc    = numSlide( " <CC Chan>",    lowcc, 7, x, y, 35, h,  0,  15 ,0, colour); x+=48;
+highcc   = numSlide(           "",   highcc, 8, x, y, 35, h,  0,  15 ,0, colour); x+=58;
+CCbus    = numSlide(      "CCBus",    CCbus,12, x, y, 35, h,  0,  15 ,0, $x9bb); x+=58;
+vertIncr =   button(       "Vert", x, y, w, h, vertIncr);
+
+//Note Bank switchers - squares on left
+x=15; y+=50; w=38; h=26;
+latch = button("Latch", x, y, w, h, latch);
+y+=60;
+bank0note = numSlide("Trig", bank0note, 2, x-3,y-3,w+6,h+6, 0,127, 0, colour); //Note Slider
+g=0;loop(numBanks,
+  bank==g ? gfx_set(1) : gfx_set(0.4);
+  gfx_rect(x,y+(g*36),w,h);
+  gfx_x=x+1; gfx_y=y+(g*36)+8; gfx_set(0); 
+  //gfx_drawstr(sprintf(#,"%d",bank0note+g),5,gfx_x+24,gfx_y+12);
+  gfx_drawstr(strcpy_substr(#,noteStr, (bank0note*5)+(g*5), 5),2,gfx_x+34,gfx_y+12);
+  g+=1;
+);
+
+//Knobs
+x=80; y-=76;
+//Hardware CC-In Knobs
+gfx_x=x; gfx_y=y; gfx_set(1); gfx_drawstr("Hardware CC In");
+firstCC = numSlide("", firstCC, 2, x-3,y+10,30+6,30+6, 0,127 ,1, colour);
+gx=0; loop(banksize,
+  gfx_x=gx*36+x+15; gfx_y=y+28;
+  input[gx]?l[gx]=0.8:l[gx]>0.6?(l[gx]-=0.01); gfx_set(l[gx],l[gx],0.6); gfx_circle(gfx_x,gfx_y,15,1); //Input monitor
+  input[gx]=0;
+  gfx_set(  0); gfx_x-=10; gfx_y-=3; gfx_drawstr(sprintf(#,"%d",firstCC+gx),1,gfx_x+22,gfx_y+30);
+  gx+=1;
+);
+
+//Output Knobs
+y+=4;
+gfx_x=x; gfx_y=y+56; gfx_set(1); gfx_drawstr("Generated CC Out");
+CCoffset = numSlide("", CCoffset, 2, x-3,y+67,30+6,30+6, 0,127 ,1, colour); //CC offset Slider
+
+gy=0; loop(numBanks,
+  gx=0;loop(banksize, //Draw Knobs
+    gfx_x=gx*36+x+15; gfx_y=gy*36+y+85;
+    bank==gy ? gfx_set(0.8) : gfx_set(0.4); //Highlight current bank
+    gfx_circle(gfx_x,gfx_y,15,1);
+    gx+=1;
+  );
+  
+  gx=0;loop(banksize, //Draw Numbers
+    gfx_x=gx*36+x+15; gfx_y=gy*36+y+85;
+    gfx_set(0); gfx_x-=11; gfx_y-=3; 
+    !vertIncr? (
+      gfx_drawstr(sprintf(#,"%d",(banksize*gy)+CCoffset+gx),1,gfx_x+22,gfx_y+30);
+    ):gfx_drawstr(sprintf(#,"%d",(numBanks*gx)+CCoffset+gy),1,gfx_x+22,gfx_y+30);
+    gx+=1;
+  );
+gy+=1;
+);
+
+!hover ? _mouse_wheel = mouse_wheel = 0;
+gfx_set(1); gfx_x=gfx_w-30; gfx_y=gfx_h-14; gfx_drawstr("TJA");
+gfx_set(1); gfx_rect(0,-1, gfx_w-1, gfx_h-1,0);               //1px White Border

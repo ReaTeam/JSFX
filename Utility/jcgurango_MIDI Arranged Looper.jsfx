@@ -1,0 +1,137 @@
+desc: Pre-Arranged MIDI Looper
+author: JC Gurango
+version: 0.1
+about:
+  # Pre-Arranged MIDI Looper
+  Loops MIDI based on a pre-arranged record and loop position. For example, you can have it automatically start recording at beat 4, and finish record at beat 8, and have that automatically loop throughout beats 8 - 20.
+
+  ## Options
+  - Record Start (Beats) - The position at which you'd like to start recording.
+  - Record End (Beats) -The position at which you'd like to end recording.
+  - Recording - Indicator slider for when the plugin is recording. 0 = not recording, 1 = recording.
+  - Playing - Indicator slider for when the plugin is looping. 0 = not looping, 1 = looping.
+  - Playback Start - The position (in beats) at which you'd like to begin loop playback.
+  - Playback End - The position (in beats) at which you'd like to end loop playback.
+  - Prebuffer Size - The amount of beats before the start of recording that the plugin will still accept MIDI messages. These message positions will be moved to the start of each clip loop. Useful when you can't time it exactly to the start and for things like piano sustain pedals which you might step on before you actually start playing.
+  - Has MIDI - Indicator for whether or not the plugin has MIDI data saved.1 = has MIDI data.
+
+desc:Pre-Arranged MIDI Looper
+slider1:4<0, 65535, 0.125>Record Start (Beats)
+slider2:8<0, 65535, 0.125>Record End (Beats)
+slider3:0<0, 1, 1>Recording
+slider4:0<0, 1, 1>Playing
+slider5:8<0, 65535, 0.125>Playback Start
+slider6:20<0, 65535, 0.125>Playback End
+slider7:0.5<0, 65535, 0.125>Prebuffer Size
+slider8:0<0, 1, 1>Has MIDI
+
+@init
+// Keeps track of the current block position.
+block_position=0;
+
+// Tracks the value of is_record_midi to reset tracks.
+last_is_record_midi=0;
+
+@serialize
+// Variables for the main buffer for recording and playback.
+// The absolute size of the buffer.
+file_var(0, buff_current_size);
+
+// Position (in blocks) of each message in the buffer.
+buff_block_position=1000;
+
+// offset buffer.
+buff_offset=2000;
+
+// msg1 buffer.
+buff_msg1=3000;
+
+// msg2 buffer.
+buff_msg2=4000;
+
+// msg3 buffer.
+buff_msg3=5000;
+
+i = 0;
+loop(5000, file_var(0, 1000[i]); i += 1);
+
+@block
+slider8=current_buffer_size>0;
+block_offset=slider1*blocks_per_beat;
+
+// Check if we're either playing or recording.
+is_recording=(play_state==5);
+is_playing=(play_state==1 || is_recording);
+is_record_midi=is_recording && beat_position >= (slider1 - slider7) && beat_position < slider2;
+is_play_midi=(is_playing || (is_playing && !is_recording)) && beat_position >= slider5 && beat_position < slider6;
+
+slider3=is_record_midi;
+slider4=is_play_midi;
+
+// Work out how many samples per beat.
+// srate = sample rate (i.e. how many samples/second)
+// tempo = beats per minute
+samples_per_beat=(1 / (tempo / 60)) * srate;
+
+// Work out how many blocks per beat.
+blocks_per_beat=samples_per_beat/samplesblock;
+
+block_position==0 ? (
+  // Work out the actual block position.
+  block_position=blocks_per_beat*beat_position;
+);
+
+is_record_midi && !last_is_record_midi ? (
+  buff_current_size=0;
+);
+
+while (midirecv(offset,msg1,msg2,msg3)) (
+  is_record_midi ? (
+    // Record the message to the buffer.
+    buff_block_position[buff_current_size]=max(0, block_position-block_offset);
+    test=(block_position-block_offset);
+    buff_offset[buff_current_size]=offset;
+    buff_msg1[buff_current_size]=msg1;
+    buff_msg2[buff_current_size]=msg2;
+    buff_msg3[buff_current_size]=msg3;
+    buff_current_size += 1;
+  );
+
+  // Passthrough.
+  is_record_midi || !is_playing ? (
+    midisend(offset,msg1,msg2,msg3);
+  );
+);
+
+is_play_midi || (!is_recording && beat_position >= (slider1 - slider7) && beat_position < slider2) ? (
+  // Normalize.
+  repeat_length=(slider2-slider1)*blocks_per_beat;
+  playback_block_position=(block_position-(slider5 * blocks_per_beat));
+
+  while (playback_block_position < 0) (
+    playback_block_position += repeat_length;
+  );
+
+  playback_block_position = playback_block_position % repeat_length;
+
+  (playback_block_position<last_playback_block_position) ? (
+    // There's been a loop!
+    playback_buffer_index=0;
+  );
+
+  while (playback_buffer_index < buff_current_size && buff_block_position[playback_buffer_index] < playback_block_position) (
+    midisend(buff_offset[playback_buffer_index], buff_msg1[playback_buffer_index], buff_msg2[playback_buffer_index], buff_msg3[playback_buffer_index]);
+
+    // Increment the buffer index.
+    playback_buffer_index += 1;
+  );
+
+  last_playback_block_position=playback_block_position;
+);
+
+is_playing ? (
+  block_position += 1;
+);
+
+last_is_record_midi=is_record_midi;
+

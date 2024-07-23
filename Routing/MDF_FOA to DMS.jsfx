@@ -1,0 +1,28 @@
+desc:FOA to DoubleMidSide
+author: Michael Fewkes
+version: 1.0
+changelog: Initial release
+about: Decodes first order ambisonic recodrings into double mid side recordings (loose vertical)
+
+slider1:0<0,1,1{FuMa,AmbiX}>input Order
+slider2:0<0,1,1{Front Side Rear,Front Rear Side}>Output Order
+
+@init
+
+@slider
+
+@sample
+
+slider1 == 0 ? chanW = spl0 * 1.4142135623730951 : chanW = spl0; // 2^(3/6) to increase by 3dB, written in decimal
+slider1 == 0 ? chanX = spl1 : chanX = spl3;
+slider1 == 0 ? chanY = spl2 : chanY = spl1;
+slider1 == 0 ? chanZ = spl3 : chanZ = spl2;
+
+front = (chanW + chanX)/2;
+side = chanY;
+rear = (chanW - chanX)/2;
+
+spl0 = front;
+slider2 == 0 ? spl1 = side : spl1 = rear;
+slider2 == 0 ? spl2 = rear : spl2 = side;
+spl3 = 0;

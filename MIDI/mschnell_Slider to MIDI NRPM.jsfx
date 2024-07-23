@@ -1,0 +1,77 @@
+desc: Slider to MIDI NRPM
+author: Michael Schnell (mschnell@bschnell.de)
+version: 1.0
+changelog: initial release
+about:
+  ## Description
+
+  Sends an RPM message according to the channel and Parameter No setting whenever the Value value slider is modified manually or by automation
+
+  Compress: don't send messages for partial values that did not change
+
+  Reset Parameter No: After sending a message sequence set parameter No to 0 to free CC # 6 and #38 for normal use
+
+
+slider1:0<0,16,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Channel
+slider2:0<0,16383,1>Parameter No
+slider3:0<0,16383,1>Parameter Value
+slider4:1<0,127,1{No,only CC 6 & 38,All}>Compress
+slider5:1<0,127,1{No,Yes}>Reset parameter No
+
+@init
+  cc    = 0xB0;
+  mes12 =  99;  // NRPM MSB 
+  mes22 =  98;  // NRPM LSB 
+  mes12x= 101;  //  RPM MSB 
+  mes22x= 100;  //  RPM LSB 
+  mes3xx= 127;  // Parameter NULL
+  mes32 =   6;  // Data Entry MSB
+  mes42 =  38;  // Data Entry LSB 
+  old   =  -1;
+  mes13old = -1;
+  mes23old = -1;
+  mes33old = -1;
+  mes43old = -1;
+  ch = -1;
+  
+@slider
+  ch != slider1 ? (
+    ch = slider1;
+    old = -1;
+    mes13old = -1;
+    mes23old = -1;
+    mes33old = -1;
+    mes43old = -1;
+  );
+  mesx1 = cc + slider1;
+  mes13 = (slider2 >> 7) & 0x7F;
+  mes23 = slider2 & 0x7F;
+  mes33 = (slider3 >> 7) & 0x7F;
+  mes43 = slider3 & 0x7F;
+  new   = slider3;
+
+@block
+  old != new ? ( 
+    slider4 ? (
+      mes13old != mes13 ? midisend(0,mesx1,mes12,mes13);
+      mes23old != mes23 ? midisend(0,mesx1,mes22,mes23);
+      mes33old != mes33 ? midisend(0,mesx1,mes32,mes33);
+      mes43old != mes43 ? midisend(0,mesx1,mes42,mes43);
+      slider4 > 1 ? (
+        mes13old = mes13;
+        mes23old = mes23;
+      );  
+      mes33old = mes33;
+      mes43old = mes43;
+     ) : ( 
+      midisend(0,mesx1,mes12,mes13);
+      midisend(0,mesx1,mes22,mes23);
+      midisend(0,mesx1,mes32,mes33);
+      midisend(0,mesx1,mes42,mes43);
+    );
+    slider5 ? (
+      midisend(0,mesx1,mes12x,mes3xx);
+      midisend(0,mesx1,mes22x,mes3xx);    
+    );
+    old = new;
+  );

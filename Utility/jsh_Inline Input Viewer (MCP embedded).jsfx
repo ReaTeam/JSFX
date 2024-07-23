@@ -1,0 +1,248 @@
+desc: Inline Input Viewer (MCP embedded)
+author: JSH
+version: 1.0
+changelog: Initial Release
+about:
+  Inline Input Viewer shows you the incomming waveform and midi data and is used as embedded view in the mcp.
+
+  LMB: switch between mono and stereo view
+  RMB: switch between midi and Audioview
+
+  Within the script you can Change a few Options:
+
+  -Clip hold Time
+  -Waveform Time Zoom (how much you see of the waveform at the same time)
+  -Clear Color (Background Color of the FX to match your theme.
+
+
+//Author: JSH Johannes Hubner 
+//Date: 09.12.2019
+//Version: 1.0
+desc:JSH Inline Input Viewer (MCP embedded)
+//Embedded Scope and Midi Monitor
+
+//==============================================================================
+@init
+//==============================================================================
+//Options
+ext_noinit = 1.0;
+/////////
+//MESS HERE WITH THE SETTINGS
+/////////
+
+//change the background to fit theme    r    g          b      0-255
+clear_color =                           48 + 48 * 256 + 48 * 65536;
+
+//change the time zoom // does zoom in samples, not actually time
+time_zoom_factor = 1000;
+clip_hold_time = 5000;
+
+/////////
+//STOP MESSING  Exept the @GFX where you set the Ratio
+/////////
+
+spl_number = 1000;
+spl_clip = 1500;   //array start
+spl_buffer = 2000; //array start
+
+
+midi_index = 0;
+midi_buffer = 1000;
+
+time_zoom = 0;
+
+
+view_mono = 0;
+view_midi = 0;
+
+//==============================================================================
+@sample
+//==============================================================================
+
+view_midi == 0 ? ( // Dont do this if in Midi Mode to improve performance
+
+  //is it clipping? for each channel
+  spl0 >= 1 ? spl_clip[0] = clip_hold_time : spl_clip[0] = spl_clip[0] - 1;
+  spl1 >= 1 ? spl_clip[1] = clip_hold_time : spl_clip[1] = spl_clip[1] - 1;
+  
+  //zoom the samples
+  time_zoom == 0 ? (
+    
+    //Move the samples one buffer space back for each channel
+    index = spl_number;
+    loop(spl_number-1,
+    
+      spl_buffer[index]            = spl_buffer[index-1];
+      spl_buffer[index+spl_number] = spl_buffer[index+spl_number-1];
+       
+      index -= 1; 
+      );
+      
+    //Store the samples within the buffer and offset them at clipping to Store the clipped state
+    spl_clip[0] >= 1 ? spl_buffer[index]            = spl0 + 5 : spl_buffer[index]            = spl0;
+    spl_clip[1] >= 1 ? spl_buffer[index+spl_number] = spl1 + 5 : spl_buffer[index+spl_number] = spl1;
+  
+    );
+      
+  //Zoom time reached?
+  time_zoom += 1;
+  time_zoom >= time_zoom_factor ? time_zoom = 0;
+  
+  
+  );
+
+
+//==============================================================================
+@block
+//==============================================================================
+
+view_midi == 1 ? (
+
+  //receive the midi
+  while (midirecv(offset,msg1,msg2,msg3)) ( 
+    
+    //move the events one buffer slot back
+    index = 100;
+    loop(100,
+      midi_buffer[index] = midi_buffer[index-1];
+      index -= 1;
+      );
+    
+    //store the midi
+    midi_buffer[0] = msg1 + (msg2 << 8) + (msg3 << 16);
+    
+    midi_index += 1;
+    midi_index > 100 ? midi_index = 0;
+    
+    //Pass through the midi
+    midisend(offset,msg1,msg2,msg3);
+    );
+  );
+
+//==============================================================================
+@serialize
+//==============================================================================
+
+file_mem(0,0,100);
+
+//==============================================================================
+@gfx 10 15  // Sets the Ratio of the UI in MCP and TCP
+//==============================================================================
+
+
+//Store the height to optimize the Sample Buffer
+spl_number = gfx_h;
+
+gfx_clear = clear_color;
+
+///////////////////////
+//FUNCTIONS
+///////////////////////
+
+//Combine the RGBA values into a function
+function rgba(r,g,b,a)(
+  gfx_r = r;
+  gfx_g = g;
+  gfx_b = b;
+  gfx_a = a;
+  );
+  
+  
+function draw_sample(index2,x,y,size)local(clip)(
+  
+  //draw only samples non Zero
+  spl_buffer[index2] != 0 ? ( rgba(0.5,0.5,0.5,1.0); ):( rgba(0.0,0.0,0.0,0.0); );
+  
+  //show Clipping
+  spl_buffer[index2] >= 1 ? (
+    rgba(0.8,0.2,0.2,1.0);
+    clip = 5;
+    ):(
+    clip = 0;
+    );
+
+  gfx_line(x - ((spl_buffer[index2]-clip) * (gfx_w/2 - 2) * size), y, x + ((spl_buffer[index2]-clip) * (gfx_w/2 - 2) * size), y);
+
+  );  
+
+///////////////////////
+//FUNCTIONS END
+///////////////////////  
+  
+//Draw the Waveforms if in Audio Mode
+view_midi == 0 ? (
+  gfx_x = 5;gfx_y = 5;
+  rgba(0.6,0.6,0.6,1.0);
+  gfx_drawStr("Audio");
+  
+  
+  i = 0;
+  loop(gfx_h,
+    view_mono == 0 ? ( //stereo draw spl0 and spl1
+      draw_sample(i           ,gfx_w/2-gfx_w/4,i+20,0.5);
+      draw_sample(i+spl_number,gfx_w/2+gfx_w/4,i+20,0.5);
+      ):( // Mono Mode just draw spl0
+      draw_sample(i           ,gfx_w/2,i+20,1.0);
+      );
+    i += 1;
+    );
+    
+  ):( // Else Draw the Midi Stuff
+  
+  gfx_x = 5;gfx_y = 5;
+  rgba(0.6,0.6,0.6,1.0);
+  gfx_drawStr("Midi");
+  
+  //draw the MIDI Stuff
+  i = 0;
+  loop(floor((gfx_h-20)/25),
+    
+    midi_buffer[i] != 0 ? (
+      midi_data = midi_buffer[i];
+      
+      type = midi_data & 0x0000f0;
+      channel = (midi_data & 0x00000f) + 1;
+      msb = (midi_data & 0x00ff00) >> 8;
+      lsb = (midi_data & 0xff0000) >> 16;
+      
+      rgba(0.6,0.6,0.6,1.0);
+  
+      gfx_x = 5;gfx_y = 20+25*i;
+      type == 144 ? gfx_drawStr("N-On");
+      type == 128 ? gfx_drawStr("N-Off");
+      type == 176 ? gfx_drawStr("CC");
+      
+      //gfx_drawNumber(type,0);
+  
+      gfx_x = gfx_w/2+13;gfx_y = 20+25*i;
+      gfx_drawNumber(channel,0);
+  
+      gfx_x = 5;gfx_y = 30+25*i;
+      gfx_drawStr("M");
+      gfx_drawNumber(msb,0);
+      
+      gfx_x = gfx_w/2+5;gfx_y = 30+25*i;
+      gfx_drawStr("L");
+      gfx_drawNumber(lsb,0);
+      
+      );
+    
+    i += 1;
+    );
+  
+  );
+  
+
+
+//Simple Mouse Input
+mouse_cap == 1 && gui_clicked == 0 ? ( 
+  view_mono == 0 ? view_mono = 1 : view_mono = 0;
+  gui_clicked = 1;
+  );
+  
+mouse_cap == 2 && gui_clicked == 0 ? ( 
+  view_midi == 0 ? view_midi = 1 : view_midi = 0;
+  gui_clicked = 1;
+  );
+  
+mouse_cap == 0 ? gui_clicked = 0;

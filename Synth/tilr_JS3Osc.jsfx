@@ -1,0 +1,598 @@
+desc: JS3Osc
+author: tilr
+version: 1.1
+changelog:
+  Normalize slider values
+  Remove clicking from vol and phase_offset knobs
+  Replace zdf with rbj filters
+provides:
+  tilr_JS3Osc/3o.adsr.jsfx-inc
+  tilr_JS3Osc/3o.array.jsfx-inc
+  tilr_JS3Osc/3o.gfxlib.jsfx-inc
+  tilr_JS3Osc/3o.mouselib.jsfx-inc
+  tilr_JS3Osc/3o.rbj_filter.jsfx-inc
+screenshot: https://raw.githubusercontent.com/tiagolr/js3osc/master/doc/ss.png
+about:
+  # JS3Osc
+
+  Polyphonic synth based of IL 3xOsc.
+
+  Features:
+  * Polyphonic voicing
+  * Filter, pitch and amplitude envelopes per voice
+  * Three oscillators with 6 wave types
+  * Oscillator phase stereo detuning and offset
+
+desc:JS3Osc
+tags: synth, instrument
+
+slider1:maxpoly=16<2, 32, 1>-Polyphony
+
+slider2:osc1_vol=80<0, 100, .01>-Osc1 Volume
+slider3:osc1_wave=0<0, 5, 1{Sine,Triangle,Saw,Square,Pulse,Noise}>-Osc1 Wave
+slider4:_osc1_phase_offset=0<-100,100,1>-Osc1 Phase Offset
+slider5:osc1_phase_det=0<-100, 100, 1>-Osc1 Phase Detune
+slider6:osc1_coarse=0<-24, 24, 1>-Osc1 Coarse
+slider7:osc1_fine=0<-99, 99, 1>-Osc1 Fine
+slider8:_osc1_pan=0<-100, 100, 1>-Osc1 Pan
+slider9:osc1_inv=0<0, 1, 1{No, Yes}>-Osc1 Invert phase
+
+slider11:osc2_vol=80<0, 100, .01>-Osc2 Volume
+slider12:osc2_wave=0<0, 5, 1{Sine,Triangle,Saw,Square,Pulse,Noise}>-Osc2 Wave
+slider13:_osc2_phase_offset=0<-100,100,1>-Osc2 Phase Offset
+slider14:osc2_phase_det=0<-100, 100, 1>-Osc2 Phase Detune
+slider15:osc2_coarse=-12<-24, 24, 1>-Osc2 Coarse
+slider16:osc2_fine=0<-99, 99, 1>-Osc2 Fine
+slider17:_osc2_pan=0<-100, 100, 1>-Osc2 Pan
+slider18:osc2_inv=0<0, 1, 1{No, Yes}>-Osc2 Invert phase
+
+slider20:osc3_vol=80<0, 100, .01>-Osc3 Volume
+slider21:osc3_wave=0<0, 5, 1{Sine,Triangle,Saw,Square,Pulse,Noise}>-Osc3 Wave
+slider22:_osc3_phase_offset=0<-100,100,1>-Osc3 Phase Offset
+slider23:osc3_phase_det=0<-100, 100, 1>-Osc3 Phase Detune
+slider24:osc3_coarse=-24<-24, 24, 1>-Osc3 Coarse
+slider25:osc3_fine=0<-99, 99, 1>-Osc3 Fine
+slider26:_osc3_pan=0<-100, 100, 1>-Osc3 Pan
+slider27:osc3_inv=0<0, 1, 1{No, Yes}>-Osc3 Invert phase
+
+slider30:env_att=5<1, 10000, 1:log>-Attack
+slider31:env_dec=1<1, 10000, 1:log>-Decay
+slider32:_env_sus=100<0, 100, 1>-Sustain
+slider33:env_rel=500<1, 10000, 1:log>-Release
+
+slider35:pitch_amt=0<-24,24,0.1>-Pitch amount
+slider36:pitch_att=1<1, 10000, 1:log>-Pitch Attack
+slider37:pitch_dec=600<1, 10000, 1:log>-Pitch Decay
+slider38:pitch_sus=0<0, 100, 1>-Pitch Sustain
+slider39:pitch_rel=500<1, 10000, 1:log>-Pitch Release
+
+slider40:filter_shape=0<0,3,1{Off,Low Pass,Band Pass,High Pass}>-Filter shape
+slider41:filter_freq=10000<20, 22000, 1:log>-Filter frequency
+slider42:filter_q=0.70<0.01, 40, 0.01:log>-Filter Q
+slider43:filter_adsr_amt=0<-100, 100, 1>-Filter ASDR amt.
+slider44:filter_att=1<1, 10000, 1:log>-Filter Attack
+slider45:filter_dec=100<1, 10000, 1:log>-Filter Decay
+slider46:filter_sus=0<0, 100, 1>-Filter Sustain
+slider47:filter_rel=500<1, 10000, 1:log>-Filter Release
+
+slider50:_rand_phase=0<0,100,1>-Rand phase
+
+import 3o.adsr.jsfx-inc
+import 3o.array.jsfx-inc
+import 3o.rbj_filter.jsfx-inc
+import 3o.mouselib.jsfx-inc
+import 3o.gfxlib.jsfx-inc
+
+options:gfx_hz=60 no_meter
+
+@init
+
+gfx_sel_envelope = 0;
+
+poly.array_init(0, 128, 9); // [note, velocity, freq, phase-left, phase-right, ph2l, ph2r, ph3l, ph3r]
+envelope = 2000; // 128 * 7 buffer for keys adsr
+remove_ptrs.array_init(4000, 128, 1);
+pitch_env = 5000; // 128 * 7 buffer for pitch adsr
+filter_arr_l = 6000; // 128 * 11 buffer for filters one per key left channel
+filter_arr_r = 8000; // 128 * 11 buffer for filters one per key right channel
+filter_env = 10000; // 128 * 7 buffer for filter adsr
+
+function wrap(number) (number <= 1 ? number : number - 1;);
+function sine_wave(cycle) (sin(cycle * 2 * $pi););
+function tri_wave(cycle) (
+  cycle < 0 ? (
+    4 * cycle + 2 - 1;
+  ) : (
+    cycle > 0.5
+      ? 4 * cycle - 2 - 1
+      : -4 * cycle + 2 - 1;
+  );
+);
+function saw_wave(cycle) (
+  cycle < 0
+  ? cycle * -2 - 1
+  : cycle * -2 + 1;
+);
+function square_wave(cycle) (
+  cycle < 0 ? (
+    cycle < -0.5 ? -1 : 1;
+  ) : (
+    cycle < 0.5 ? -1 : 1;
+  );
+);
+function pulse_wave(cycle) (
+  cycle < 0 ? (
+    cycle < -0.25 ? -1 : 1;
+  ) : (
+    cycle < 0.25 ? -1 : 1;
+  );
+);
+function make_noise() (rand(2) - 1;);
+function db2gain (db) local (val) (
+  val = 10^(db / 20);
+  val <= 0.001 ? 0 : val;
+);
+function normalize_vol_slider(val) ( val * 60 / 100 - 60 );
+function round(in) (floor(in + 0.5 * sign(in)););
+function note2freq(n) (440 * pow(2, (n - 69) / 12););
+function freq2note(f) ( round(12*(log(f/440)/log(2))+69); );
+
+function rc_set(rc)
+  instance(a) (
+    a = 1 / (rc * srate + 1);
+);
+function rc_lp(sample)
+  instance(lp, a) (
+    lp += a * (sample - lp);
+);
+function smooth()
+  instance (lp, smooth) (
+    lp = smooth;
+    smooth = this.rc_lp(this);
+);
+
+function make_wave(wave, cycle) (
+  wave == 0 ? sine_wave(cycle)
+    : wave == 1 ? tri_wave(cycle)
+    : wave == 2 ? saw_wave(cycle)
+    : wave == 3 ? square_wave(cycle)
+    : wave == 4 ? pulse_wave(cycle)
+    : make_noise();
+);
+
+function copy_filter_coefs (f1, f2) (
+  f2[0] = f1[0]; // a1
+  f2[1] = f1[1]; // a2
+  f2[2] = f1[2]; // b0
+  f2[3] = f1[3]; // b1
+  f2[4] = f1[4]; // b2
+);
+
+function on_slider() (
+  osc1_gain = db2gain(normalize_vol_slider(osc1_vol));
+  osc1_st_det = pow(2, osc1_phase_det / 1200); // stereo detune
+  osc1_fine_det = pow(2, osc1_fine / 1200);
+  osc1_coarse_det = pow(2, (osc1_coarse|0) / 12);
+  osc1_pan = _osc1_pan / 100;
+  osc1_phase_offset = _osc1_phase_offset / 100;
+
+  osc2_gain = db2gain(normalize_vol_slider(osc2_vol));
+  osc2_st_det = pow(2, osc2_phase_det / 1200);
+  osc2_fine_det = pow(2, osc2_fine / 1200);
+  osc2_coarse_det = pow(2, (osc2_coarse|0) / 12);
+  osc2_pan = _osc2_pan / 100;
+  osc2_phase_offset = _osc2_phase_offset / 100;
+
+  osc3_gain = db2gain(normalize_vol_slider(osc3_vol));
+  osc3_st_det = pow(2, osc3_phase_det / 1200);
+  osc3_fine_det = pow(2, osc3_fine / 1200);
+  osc3_coarse_det = pow(2, (osc3_coarse|0) / 12);
+  osc3_pan = _osc3_pan / 100;
+  osc3_phase_offset = _osc3_phase_offset / 100;
+
+  env_sus = normalize_vol_slider(_env_sus);
+  rand_phase = _rand_phase / 100;
+);
+
+// init slider smoothing
+osc1_gain.rc_set(0.0033);
+osc1_gain.smooth = db2gain(normalize_vol_slider(osc1_vol));
+osc2_gain.rc_set(0.0033);
+osc2_gain.smooth = db2gain(normalize_vol_slider(osc2_vol));
+osc3_gain.rc_set(0.0033);
+osc3_gain.smooth = db2gain(normalize_vol_slider(osc3_vol));
+
+osc1_phase_offset.rc_set(0.0033);
+osc1_phase_offset.smooth = _osc1_phase_offset / 100;
+osc2_phase_offset.rc_set(0.0033);
+osc2_phase_offset.smooth = _osc2_phase_offset / 100;
+osc3_phase_offset.rc_set(0.0033);
+osc3_phase_offset.smooth = _osc3_phase_offset / 100;
+
+@slider
+
+on_slider();
+
+@block
+
+while (midirecv(offset, msg1, note, vel)) (
+  event = msg1 & 0xF0;
+  channel = msg1 & 0x0F;
+
+  // Note on
+  event == 0x90 && vel ? (
+
+    // remove note if it is already playing
+    note_repeat = 0;
+    ptr = poly.array_find(note);
+    ptr >= 0 ? (
+      note_repeat = 1;
+      last_phase_1l = ptr[3];
+      last_phase_1r = ptr[4];
+      last_phase_2l = ptr[5];
+      last_phase_2r = ptr[6];
+      last_phase_3l = ptr[7];
+      last_phase_3r = ptr[8];
+      poly.array_remove(ptr);
+    );
+
+    // if polyphony is full and not mono remove first element
+    poly.size == maxpoly && maxpoly != 0 ? (
+      poly.array_remove(poly.array_first());
+    );
+
+    ptr = poly.array_add();
+    ptr[0] = note;
+    ptr[1] = vel / 127;
+    ptr[2] = note2freq(note) / srate;
+    ptr[3] = note_repeat ? last_phase_1l : rand_phase * (rand() - 0.5); // osc start phase left
+    ptr[4] = note_repeat ? last_phase_1r : rand_phase * (rand() - 0.5); // osc start phase right
+    ptr[5] = note_repeat ? last_phase_2l : rand_phase * (rand() - 0.5); // osc 2 start phase left
+    ptr[6] = note_repeat ? last_phase_2r : rand_phase * (rand() - 0.5); // osc 2
+    ptr[7] = note_repeat ? last_phase_3l : rand_phase * (rand() - 0.5); // osc 3
+    ptr[8] = note_repeat ? last_phase_3r : rand_phase * (rand() - 0.5); // osc 3
+
+    env = envelope + note * 7;
+    adsr_seta(env_att * 0.001, env);
+    adsr_setd(env_dec * 0.001, env);
+    adsr_sets(exp(log(10)/20 * env_sus), env);
+    adsr_setr(env_rel * 0.001, env);
+    adsr_a(vel / 127, env);
+
+    env = pitch_env + note * 7;
+    adsr_seta(pitch_att * 0.001, env);
+    adsr_setd(pitch_dec * 0.001, env);
+    adsr_sets(pitch_sus / 100, env);
+    adsr_setr(pitch_rel * 0.001, env);
+    adsr_a(1, env);
+
+    env = filter_env + note * 7;
+    adsr_seta(filter_att * 0.001, env);
+    adsr_setd(filter_dec * 0.001, env);
+    adsr_sets(filter_sus / 100, env);
+    adsr_setr(filter_rel * 0.001, env);
+    adsr_a(1, env);
+  );
+
+  // Note off
+  event == 0x80 || (event == 0x90 && !vel) ? (
+    ptr = poly.array_find(note);
+    ptr >= 0 ? (
+      adsr_r(envelope + note * 7);
+      adsr_r(pitch_env + note * 7);
+      adsr_r(filter_env + note * 7);
+    );
+  );
+
+  // All notes off
+  event == 0xB0 && note == 123 ? (
+    poly.array_clear();
+  );
+
+  midisend(offset, msg1, note, vel);
+);
+
+@sample
+
+osc1_gain.smooth();
+osc2_gain.smooth();
+osc3_gain.smooth();
+osc1_phase_offset.smooth();
+osc2_phase_offset.smooth();
+osc3_phase_offset.smooth();
+
+remove_ptrs.array_clear();
+ptr = poly.array_first();
+while(ptr >= 0) ( // for each note/voice
+  out_l = 0;
+  out_r = 0;
+  envbuf = envelope + ptr[0] * 7;
+  env_state = adsr_process(envbuf);
+  pitch_amt ? (
+    pitchbuf = pitch_env + ptr[0] * 7;
+    adsr_process(pitchbuf);
+    osc_pitch_det = pow(2, pitchbuf[0] * (pitch_amt | 0) / 12);
+  ) : (
+    osc_pitch_det = 1;
+  );
+
+  // OSC1
+  osc1_vol > -60 ? (
+    osc_det = osc1_coarse_det * osc1_fine_det * osc_pitch_det;
+    ptr[3] = wrap(ptr[3] + ptr[2] * osc1_st_det * osc_det); // phase left
+    ptr[4] = wrap(ptr[4] + ptr[2] / osc1_st_det * osc_det); // phase right
+    wave_l = make_wave(osc1_wave, wrap(ptr[3] + osc1_phase_offset.smooth * 0.25));
+    wave_r = make_wave(osc1_wave, wrap(ptr[4] - osc1_phase_offset.smooth * 0.25));
+    out_l += wave_l * (1 - osc1_pan) * envbuf[] * osc1_gain.smooth * (osc1_inv ? -1 : 1);
+    out_r += wave_r * (1 + osc1_pan) * envbuf[] * osc1_gain.smooth * (osc1_inv ? -1 : 1);
+  );
+
+  // OSC2
+  osc2_vol > -60 ? (
+    osc_det = osc2_coarse_det * osc2_fine_det * osc_pitch_det;
+    ptr[5] = wrap(ptr[5] + ptr[2] * osc2_st_det * osc_det); // phase left
+    ptr[6] = wrap(ptr[6] + ptr[2] / osc2_st_det * osc_det); // phase right
+    wave_l = make_wave(osc2_wave, wrap(ptr[5] + osc2_phase_offset.smooth * 0.25));
+    wave_r = make_wave(osc2_wave, wrap(ptr[6] - osc2_phase_offset.smooth * 0.25));
+    out_l += wave_l * (1 - osc2_pan) * envbuf[] * osc2_gain.smooth * (osc2_inv ? -1 : 1);
+    out_r += wave_r * (1 + osc2_pan) * envbuf[] * osc2_gain.smooth * (osc2_inv ? -1 : 1);
+  );
+
+  // OSC3
+  osc3_vol > -60 ? (
+    osc_det = osc3_coarse_det * osc3_fine_det * osc_pitch_det;
+    ptr[7] = wrap(ptr[7] + ptr[2] * osc3_st_det * osc_det); // phase left
+    ptr[8] = wrap(ptr[8] + ptr[2] / osc3_st_det * osc_det); // phase right
+    wave_l = make_wave(osc3_wave, wrap(ptr[7] + osc3_phase_offset.smooth * 0.25));
+    wave_r = make_wave(osc3_wave, wrap(ptr[8] - osc3_phase_offset.smooth * 0.25));
+    out_l += wave_l * (1 - osc3_pan) * envbuf[] * osc3_gain.smooth * (osc3_inv ? -1 : 1);
+    out_r += wave_r * (1 + osc3_pan) * envbuf[] * osc3_gain.smooth * (osc3_inv ? -1 : 1);
+  );
+
+  // Apply filter
+  filter_shape != 0 ? (
+    filterbuf = filter_env + ptr[0] * 7; // envelope buffer
+    adsr_process(filterbuf);
+    multiplier = pow(20000/filter_freq, filterbuf[0] * filter_adsr_amt / 100);
+
+    filterbuf_l = filter_arr_l + ptr[0] * 11; // filter buffer left
+    filterbuf_r = filter_arr_r + ptr[0] * 11; // filter buffer left
+
+    filter_shape == 1 ? (
+      rbj_lp(filterbuf_l, filter_freq * multiplier, filter_q);
+    ) : filter_shape == 2 ? (
+      rbj_bp(filterbuf_l, filter_freq * multiplier, filter_q);
+    ) : (
+      rbj_hp(filterbuf_l, filter_freq * multiplier, filter_q);
+    );
+    copy_filter_coefs(filterbuf_l, filterbuf_r);
+    out_l = rbj_df1(filterbuf_l, out_l);
+    out_r = rbj_df1(filterbuf_r, out_r);
+  );
+
+  spl0 += out_l;
+  spl1 += out_r;
+
+  // mark note for deletion
+  env_state == 0 ? (
+    p = remove_ptrs.array_add();
+    p[0] = ptr[0];
+  );
+
+  ptr = poly.array_next(ptr);
+);
+
+// remove notes that finished adsr
+ptr = remove_ptrs.array_first();
+while(ptr >= 0) (
+  p = poly.array_find(ptr[0]);
+  p >= 0 ? poly.array_remove(p);
+  ptr = remove_ptrs.array_next(ptr);
+);
+
+@gfx 440 380
+
+gfx_clear = COLOR_BG;
+mouse.update_mouse_state();
+
+set_color(0x666666);
+gfx_x = 20; gfx_y = 20;
+gfx_drawstr("OSC1");
+
+gfx_setfont(1,"Arial", 14);
+set_color(osc1_inv ? COLOR_ACTIVE : 0x666666);
+gfx_x = 60; gfx_y = 16;
+gfx_drawstr("Ø");
+gfx_setfont(0);
+mouse.left_click && mouse_in_rect(60, 10, 10, 20) ? (
+  osc1_inv = !osc1_inv;
+);
+
+shape_name = osc1_wave == 0 ? "Sine"
+  : osc1_wave == 1 ? "Tri"
+  : osc1_wave == 2 ? "Saw"
+  : osc1_wave == 3 ? "Sqr"
+  : osc1_wave == 4 ? "Pls"
+  : "Nois";
+draw_button(80, 20, 40, shape_name, 0);
+mouse.left_click && mouse_in_rect(80, 20 - 2, 40, 10 + 2) ? (
+  gfx_x = 80; gfx_y = 30;
+  choice = gfx_showmenu("Sine|Triangle|Saw|Square|Pulse|Noise");
+  choice > 0 ? slider(3) = choice - 1;
+  on_slider();
+);
+
+draw_knob(20, 40, 2, "Vol", 80, 0, 100, 0, 0, sprintf(#, "%i %%", slider(2)));
+draw_knob(80, 40, 4, "Ph Off", 0, -100, 100, 0, 1, sprintf(#, "%i", slider(4)));
+draw_knob(140, 40, 5, "Ph Det", 0, -100, 100, 0, 1, sprintf(#, "%i", slider(5)));
+draw_knob(200, 40, 6, "Coarse", 0, -24, 24, 0, 1, sprintf(#, "%i", slider(6)));
+draw_knob(260, 40, 7, "Fine", 0, -99, 99, 0, 1, sprintf(#, "%i", slider(7)));
+draw_knob(320, 40, 8, "Pan", 0, -100, 100, 0, 1, sprintf(#, "%i", slider(8)));
+
+set_color(0x666666);
+gfx_x = 20; gfx_y = 110;
+gfx_drawstr("OSC2");
+
+gfx_setfont(1,"Arial", 14);
+set_color(osc2_inv ? COLOR_ACTIVE : 0x666666);
+gfx_x = 60; gfx_y = 110-4;
+gfx_drawstr("Ø");
+gfx_setfont(0);
+mouse.left_click && mouse_in_rect(60, 100, 10, 20) ? (
+  osc2_inv = !osc2_inv;
+);
+
+shape_name = osc2_wave == 0 ? "Sine"
+  : osc2_wave == 1 ? "Tri"
+  : osc2_wave == 2 ? "Saw"
+  : osc2_wave == 3 ? "Sqr"
+  : osc2_wave == 4 ? "Pls"
+  : "Nois";
+draw_button(80, 110, 40, shape_name, 0);
+mouse.left_click && mouse_in_rect(80, 110 - 2, 40, 10 + 2) ? (
+  gfx_x = 80; gfx_y = 120;
+  choice = gfx_showmenu("Sine|Triangle|Saw|Square|Pulse|Noise");
+  choice > 0 ? slider(12) = choice - 1;
+  on_slider();
+);
+
+draw_knob(20, 130, 11, "Vol", 80, 0, 100, 0, 0, sprintf(#, "%i %%", slider(11)));
+draw_knob(80, 130, 13, "Ph Off", 0, -100, 100, 0, 1, sprintf(#, "%i", slider(13)));
+draw_knob(140,130, 14, "Ph Det", 0, -100, 100, 0, 1, sprintf(#, "%i", slider(14)));
+draw_knob(200,130, 15, "Coarse", 0, -24, 24, 0, 1, sprintf(#, "%i", slider(15)));
+draw_knob(260,130, 16, "Fine", 0, -99, 99, 0, 1, sprintf(#, "%i", slider(16)));
+draw_knob(320,130, 17, "Pan", 0, -100, 100, 0, 1, sprintf(#, "%i", slider(17)));
+
+set_color(0x666666);
+gfx_x = 20; gfx_y = 200;
+gfx_drawstr("OSC3");
+
+gfx_setfont(1,"Arial", 14);
+set_color(osc3_inv ? COLOR_ACTIVE : 0x666666);
+gfx_x = 60; gfx_y = 200-4;
+gfx_drawstr("Ø");
+gfx_setfont(0);
+mouse.left_click && mouse_in_rect(60, 190, 10, 20) ? (
+  osc3_inv = !osc3_inv;
+);
+
+shape_name = osc3_wave == 0 ? "Sine"
+  : osc3_wave == 1 ? "Tri"
+  : osc3_wave == 2 ? "Saw"
+  : osc3_wave == 3 ? "Sqr"
+  : osc3_wave == 4 ? "Pls"
+  : "Nois";
+draw_button(80, 200, 40, shape_name, 0);
+mouse.left_click && mouse_in_rect(80, 200 - 2, 40, 10 + 2) ? (
+  gfx_x = 80; gfx_y = 210;
+  choice = gfx_showmenu("Sine|Triangle|Saw|Square|Pulse|Noise");
+  choice > 0 ? slider(21) = choice - 1;
+  on_slider();
+);
+
+draw_knob(20, 220, 20, "Vol", 80, 0, 100, 0, 0, sprintf(#, "%i %%", slider(20)));
+draw_knob(80, 220, 22, "Ph Off", 0, -100, 100, 0, 1, sprintf(#, "%i", slider(22)));
+draw_knob(140,220, 23, "Ph Det", 0, -100, 100, 0, 1, sprintf(#, "%i", slider(23)));
+draw_knob(200,220, 24, "Coarse", 0, -24, 24, 0, 1, sprintf(#, "%i", slider(24)));
+draw_knob(260,220, 25, "Fine", 0, -99, 99, 0, 1, sprintf(#, "%i", slider(25)));
+draw_knob(320,220, 26, "Pan", 0, -100, 100, 0, 1, sprintf(#, "%i", slider(26)));
+
+set_color(0x666666);
+gfx_x = 20; gfx_y = 290;
+gfx_drawstr("ENVELOPE");
+
+draw_button(100, 290, 60, "Amp", gfx_sel_envelope == 0);
+mouse.left_click && mouse_in_rect(100,290-2, 60, 10+2) ? (
+  gfx_sel_envelope = 0;
+);
+draw_button(160, 290, 60, "Pitch", gfx_sel_envelope == 1);
+mouse.left_click && mouse_in_rect(160,290-2, 60, 10+2) ? (
+  gfx_sel_envelope = 1;
+);
+draw_button(220, 290, 60, "Filter", gfx_sel_envelope == 2);
+mouse.left_click && mouse_in_rect(220,290-2, 60, 10+2) ? (
+  gfx_sel_envelope = 2;
+);
+
+gfx_sel_envelope == 0 ? ( // AMP
+  draw_knob(80, 310, 30, "Att", 1, 1, 10000, 1, 0, sprintf(#, "%i ms", slider(30)));
+  draw_knob(140,310, 31, "Dec", 1, 1, 10000, 1, 0, sprintf(#, "%i ms", slider(31)));
+  draw_knob(200,310, 32, "Sus", 100, 0, 100, 0, 0, sprintf(#, "%i", slider(32)));
+  draw_knob(260,310, 33, "Rel", 1, 1, 10000, 1, 0, sprintf(#, "%i ms", slider(33)));
+)
+: gfx_sel_envelope == 1 ? ( // PITCH
+  draw_knob(20, 310, 35, "Amt", 0, -24, 24, 0, 1, sprintf(#, "%i", slider(35)));
+  draw_knob(80, 310, 36, "Att", 1, 1, 10000, 1, 0, sprintf(#, "%i ms", slider(36)));
+  draw_knob(140,310, 37, "Dec", 1, 1, 10000, 1, 0, sprintf(#, "%i ms", slider(37)));
+  draw_knob(200,310, 38, "Sus", 100, 0, 100, 0, 0, sprintf(#, "%i", slider(38)));
+  draw_knob(260,310, 39, "Rel", 1, 1, 10000, 1, 0, sprintf(#, "%i ms", slider(39)));
+)
+: gfx_sel_envelope == 2 ? ( // FILTER
+  draw_knob(20, 310, 43, "Amt", 0, -100, 100, 0, 1, sprintf(#, "%i", slider(43)));
+  draw_knob(80, 310, 44, "Att", 1, 1, 10000, 1, 0, sprintf(#, "%i ms", slider(44)));
+  draw_knob(140,310, 45, "Dec", 1, 1, 10000, 1, 0, sprintf(#, "%i ms", slider(45)));
+  draw_knob(200,310, 46, "Sus", 100, 0, 100, 0, 0, sprintf(#, "%i", slider(46)));
+  draw_knob(260,310, 47, "Rel", 1, 1, 10000, 1, 0, sprintf(#, "%i ms", slider(47)));
+);
+
+set_color(0x666666);
+gfx_x = 320; gfx_y = 290;
+gfx_drawstr("FILTER");
+gfx_line(310, 290, 310, 350);
+
+shape_name = filter_shape == 0 ? "Off"
+  : filter_shape == 1 ? "LP"
+  : filter_shape == 2 ? "BP"
+  : "HP";
+draw_button(380, 290, 40, shape_name, 0);
+mouse.left_click && mouse_in_rect(380, 290 - 2, 40, 10 + 2) ? (
+  gfx_x = 380; gfx_y = 300;
+  choice = gfx_showmenu("Off|Low Pass|Band Pass|High Pass");
+  choice > 0 ? filter_shape = choice - 1;
+  on_slider();
+);
+
+draw_knob(320, 310, 41, "Freq", 10000, 20, 22000, 1, 0, sprintf(#, "%i Hz", slider(41)));
+draw_knob(380, 310, 42, "Q", 0.70, 0.01, 40, 1, 0, sprintf(#, "%.1f", slider(42)));
+
+set_color(0x666666);
+gfx_line(370, 20, 370, 260);
+gfx_x = 380; gfx_y = 20;
+gfx_drawstr("PHASE");
+
+draw_knob(380, 40, 50, "Rand", 0, 0, 100, 0, 0, sprintf(#, "%i %%", slider(50)));
+
+function on_knob_move (nslider, slider_min, slider_max, slider_is_log, factor) (
+  factor *= mouse.control ? 0.05 : 1;
+  slider_is_log ? (
+    slider(nslider) = slider(nslider) * pow(100, -factor * 0.01);
+  ) : (
+    inc = (slider_max - slider_min) / 100 * -factor;
+    slider(nslider) += inc;
+  );
+
+  slider(nslider) > slider_max ? slider(nslider) = slider_max;
+  slider(nslider) < slider_min ? slider(nslider) = slider_min;
+  on_slider();
+  sliderchange(slider(nslider));
+  slider_automate(slider(nslider));
+);
+
+wheelknob_nslider ? (
+  on_knob_move(wheelknob_nslider, wheelknob_min, wheelknob_max, wheelknob_is_log, mouse.wheel * -7);
+);
+
+selknob_nslider && mouse.left && mouse.dy != 0 ? (
+  on_knob_move(selknob_nslider, selknob_min, selknob_max, selknob_is_log, mouse.dy);
+);
+
+doubleclk_nslider ? (
+  on_slider();
+  sliderchange(slider(doubleclk_nslider));
+  slider_automate(slider(doubleclk_nslider));
+  doubleclk_nslider = 0;
+);
+
+gfx_setcursor(selknob_nslider ? 32511 : 0);
+!mouse.wheel ? wheelknob_nslider = 0;
+!mouse.left ? selknob_nslider = 0;

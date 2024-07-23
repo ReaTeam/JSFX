@@ -1,0 +1,746 @@
+desc: MIDI Note Repeater [Default Key Map B1 - A4]
+author: Will Develop
+version: 2.0.1
+link:
+  Forum thread https://forum.cockos.com/showthread.php?p=2239428#post2239428
+  My Website https://will-records.tk/
+screenshot: MIDI_Note_Repeater_interface.png https://will-records.tk/site/img/site_projekte_will_develop/MIDI_Note_Repeater_interface.png
+about:
+  # MIDI Note Repeater [Default Key Map B1 - A4]
+
+  This is a Modification from the MIDI Note Repeater. Used scripts MIDI Arpeggiator, rye_MIDI_FilterNotesIndividually.
+  The Script is for making snare and hi-hats rolls.
+
+
+  # Parameters:
+  - Root Note: This MIDI note will be sent to the instrument at the end.
+  - Root MIDI Channel: The MIDI note is sent on this channel. All = the same as the input channel
+  - Root MIDI Length: This parameter controls the length of the MIDI note sent to the instrument
+  - Root MIDI Length Sync to Beat: This parameter does the same as the Root MIDI Length, only the rate is rasterized to the beat
+  - Oneshot-Rate: Controls the repeat time for the One-Shot-Key
+  - Oneshot-Rate Sync to Beat: Controls the repeat time for the One-Shot-Key in Beats (useful for MIDI-learn and Automation)
+  - Start Trigger Zone: At this note, the trigger notes begin
+
+
+  # Default Key Map:
+
+  B1 -> Oneshot
+
+  **straight:**
+  - C2->1/4    
+  - D2->1/8
+  - E2->1/16
+  - F2->1/32
+  - G2->1/64
+  - A2->1/128
+
+  **triplet:**
+  - C3->1/4
+  - D3->1/8
+  - E3->1/16
+  - F3->1/32
+  - G3->1/64
+  - A3->1/128 
+
+  **dotted:**
+  - C4->1/4
+  - D4->1/8
+  - E4->1/16
+  - F4->1/32
+  - G4->1/64
+  - A4->1/128
+
+slider1:48<-0,127,1{0: C-1,1: C#-1,2: D-1,3: D#-1,4: E-1,5: F-1,6: F#-1,7: G-1,8: G#-1,9: A-1,10: Bb-1,11: B-1,12: C0,13: C#0,14: D0,15: D#0-1,16: E0,17: F0,18: F#0,19: G0,20: G#0,21: A0,22: Bb0,23: B0,24: C1,25: C#1,26: D1,27: D#1,28: E1,29: F1,30: F#1,31: G1,32: G#1,33: A1,34: Bb1,35: B1,36: C2,37: C#2,38: D2,39: D#2,40: E2,41: F2,42: F#2,43: G2,44: G#2,45: A2,46: Bb2,47: B2,48: C3,49: C#3,50: D3,51: D#3,52: E3,53: F3,54: F#3,55: G3,56: G#3,57: A3,58: Bb3,59: B3,60: C4,61: C#4,62: D4,63: D#4,64: E4,65: F4,66: F#4,67: G4,68: G#4,69: A4,70: Bb4,71: B4,72: C5,73: C#5,74: D5,75: D#5,76: E5,77: F5,78: F#5,79: G5,80: G#5,81: A5,82: Bb5,83: B5,84: C6,85: C#6,86: D6,87: D#6,88: E6,89: F6,90: F#6,91: G6,92: G#6,93: A6,94: Bb6,95: B6,96: C7,97: C#7,98: D7,99: D#7,100: E7,101: F7,102: F#7,103: G7,104: G#7,105: A7,106: Bb7,107: B7,108: C8,109: C#8,110: D8,111: D#8,112: E8,113: F8,114: F#8,115: G8,116: G#8,117: A8,118: Bb8,119: B8,120: C9,121: C#9,122: D9,123: D#9,124: E9,125: F9,126: F#9,127: G9}>Root Note
+slider2:0<-1,15,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Root MIDI Channel
+slider3:0.5<0.01,1,0.001>Root MIDI Note Length
+slider4:0<0,18,1{Off,1/4,1/8,1/16,1/32,1/64,1/128,1/4 Triplet,1/8 Triplet,1/16 Triplet,1/32 Triplet,1/64 Triplet,1/128 Triplet,1/4 Dotted,1/8 Dotted,1/16 Dotted,1/32 Dotted,1/64 Dotted,1/128 Dotted}>Root MIDI Length Sync To Beat
+slider5:0.000<0.000,48.000,0.001>Oneshot Rate
+slider6:0<0,18,1{Off,1/4,1/8,1/16,1/32,1/64,1/128,1/4 Triplet,1/8 Triplet,1/16 Triplet,1/32 Triplet,1/64 Triplet,1/128 Triplet,1/4 Dotted,1/8 Dotted,1/16 Dotted,1/32 Dotted,1/64 Dotted,1/128 Dotted}>Oneshot Rate Sync To Beat
+slider7:35<-0,127,1{0: C-1,1: C#-1,2: D-1,3: D#-1,4: E-1,5: F-1,6: F#-1,7: G-1,8: G#-1,9: A-1,10: Bb-1,11: B-1,12: C0,13: C#0,14: D0,15: D#0-1,16: E0,17: F0,18: F#0,19: G0,20: G#0,21: A0,22: Bb0,23: B0,24: C1,25: C#1,26: D1,27: D#1,28: E1,29: F1,30: F#1,31: G1,32: G#1,33: A1,34: Bb1,35: B1,36: C2,37: C#2,38: D2,39: D#2,40: E2,41: F2,42: F#2,43: G2,44: G#2,45: A2,46: Bb2,47: B2,48: C3,49: C#3,50: D3,51: D#3,52: E3,53: F3,54: F#3,55: G3,56: G#3,57: A3,58: Bb3,59: B3,60: C4,61: C#4,62: D4,63: D#4,64: E4,65: F4,66: F#4,67: G4,68: G#4,69: A4,70: Bb4,71: B4,72: C5,73: C#5,74: D5,75: D#5,76: E5,77: F5,78: F#5,79: G5,80: G#5,81: A5,82: Bb5,83: B5,84: C6,85: C#6,86: D6,87: D#6,88: E6,89: F6,90: F#6,91: G6,92: G#6,93: A6,94: Bb6,95: B6,96: C7,97: C#7,98: D7,99: D#7,100: E7,101: F7,102: F#7,103: G7,104: G#7,105: A7,106: Bb7,107: B7,108: C8,109: C#8,110: D8,111: D#8,112: E8,113: F8,114: F#8,115: G8,116: G#8,117: A8,118: Bb8,119: B8,120: C9,121: C#9,122: D9,123: D#9,124: E9,125: F9,126: F#9,127: G9}>Start Trigger Zone
+
+in_pin:none
+out_pin:none
+
+@init 
+notelist=0;
+notecnt=0;
+lastnote=-1;
+pbincpos=0;
+pbnotepos=0;
+
+filter_inChannel = -1;
+
+rate = 0; //repeat-rate (is used in the formula)
+
+//////////////////////////////////
+//signal state of the individual trigger_notes (NoteOff = 0  NoteOn = 1)
+noteon_noteoff = 0;
+noteon_noteoff_trigger_note1 = 0;
+noteon_noteoff_trigger_note2 = 0;
+noteon_noteoff_trigger_note3 = 0;
+noteon_noteoff_trigger_note4 = 0;
+noteon_noteoff_trigger_note5 = 0;
+noteon_noteoff_trigger_note6 = 0;
+noteon_noteoff_trigger_note7 = 0;
+noteon_noteoff_trigger_note8 = 0;
+noteon_noteoff_trigger_note9 = 0;
+noteon_noteoff_trigger_note10 = 0;
+noteon_noteoff_trigger_note11 = 0;
+noteon_noteoff_trigger_note12 = 0;
+noteon_noteoff_trigger_note13 = 0;
+noteon_noteoff_trigger_note14 = 0;
+noteon_noteoff_trigger_note15 = 0;
+noteon_noteoff_trigger_note16 = 0;
+noteon_noteoff_trigger_note17 = 0;
+noteon_noteoff_trigger_note18 = 0;
+noteon_noteoff_trigger_note19 = 0;
+///////////////////////////////////
+///////////////////////////////////
+//save 
+save_note = 0; //stores the note, for the allocation of the repetition rate (value: 1-19)
+restore_note = 0; //saves the save_note variable, to reset (value: 1-19)
+
+first_note = 0; //indicates which note was pressed first (value: 1-19)
+second_note = 0; //indicates which note was pressed second (value: 1-19)
+///////////////////////////////////
+
+@slider 
+root_midi_note = slider1; //this note value is sent out
+
+root_midi_channel = (slider2-1); //this channel value is sent out
+
+root_midi_note_length = slider3; //the max length of the root_midi_note
+root_midi_note_length<0?root_midi_note_length=0:root_midi_note_length>1?root_midi_note_length=1;
+
+root_midi_note_length_stb = slider4; //the max length of the root_midi_note in beats
+
+
+oneshot_rate = slider5; //repeat-rate of one shot note
+oneshot_rate_stb = slider6; //repeat-rate at fixed values
+  
+start_trigger_zone = slider7+1; //this value is calculated plus the trigger notes (is the new value for the trigger_zone)
+
+@block
+lastnotecnt=notecnt;
+
+trigger_note1 = -1 + start_trigger_zone; //35 -- old note-value
+trigger_note2 = 0 + start_trigger_zone; //36
+trigger_note3 = 2 + start_trigger_zone; //38
+trigger_note4 = 4 + start_trigger_zone; //40
+trigger_note5 = 5 + start_trigger_zone; //41
+trigger_note6 = 7 + start_trigger_zone; //43
+trigger_note7 = 9 + start_trigger_zone; //45
+trigger_note8 = 12 + start_trigger_zone; //48
+trigger_note9 = 14 + start_trigger_zone; //50
+trigger_note10 = 16 + start_trigger_zone; //52
+trigger_note11 = 17 + start_trigger_zone; //53
+trigger_note12 = 19 + start_trigger_zone; //55
+trigger_note13 = 21 + start_trigger_zone; //57
+trigger_note14 = 24 + start_trigger_zone; //60
+trigger_note15 = 26 + start_trigger_zone; //62
+trigger_note16 = 28 + start_trigger_zone; //64
+trigger_note17 = 29 + start_trigger_zone; //65
+trigger_note18 = 31 + start_trigger_zone; //67
+trigger_note19 = 33 + start_trigger_zone; //69
+
+while (
+midirecv(ts,msg1,msg23) ? 
+(
+  c=(msg1&15)+1; //MIDI channel of the received MIDI note
+  m=msg1&240; //message of the received MIDI note
+  note=msg23&127; //noten-value of the received MIDI note
+  
+  filter_status = msg1 & $xF0;
+  filter_channel = msg1 & $x0F;
+  filter_ourChannel = (filter_channel == filter_inChannel || filter_inChannel == -1); 
+  filter_ourEvent = (filter_status == $x90 || filter_status == $x80); // note-ons and note-offs
+  filter_ourNote = (note == trigger_note1 || note == trigger_note2 || note == trigger_note3 || note == trigger_note4 || note == trigger_note5 || note == trigger_note6 || note == trigger_note7 || note == trigger_note8 || note == trigger_note9 || note == trigger_note10 || note == trigger_note11 || note == trigger_note12 || note == trigger_note13 || note == trigger_note14 || note == trigger_note15 || note == trigger_note16 || note == trigger_note17 || note == trigger_note18 || note == trigger_note19); 
+
+  ////////////////////////////////////////////////////////////         
+  ////////////////////////////////////////////////////////////
+  //filters the correct notes, according to the trigger_notes values
+  !filter_ourChannel ? filter_send = 1 : // let it pass unaffected
+      ( // else
+      
+        !filter_ourEvent ? filter_send = 1 : // let it pass unaffected
+        ( // else
+        
+          // it's one of our events on one of our channels
+        
+          filter_ourNote ? filter_send = 1 : filter_send = 0; //this is in the Filter Script the pass function (mode variable)
+        
+        );  // end our event or not
+      );  // end our channel or not        
+       
+      // have decided send or not
+      filter_send ?
+      (
+        
+        //slider2 abfrage
+        root_midi_channel == -1 ?(
+          channel = c-1;
+        ):(
+          channel = (slider2-1);
+        );        
+        
+        ////////////////////////////////////
+        //each trigger_note is assigned a save value (1-19) (and the rest is for better playability)
+        //trigger_note1 oneshot
+        m == 9*16 && note == trigger_note1? 
+        (
+          noteon_noteoff_trigger_note1 = 1;
+          restore_note = save_note;
+          save_note = 1;
+          first_note == 0? first_note = 1;
+          first_note !== 0? second_note = 1;
+        );
+        m == 8*16 && note == trigger_note1?
+        (
+          noteon_noteoff_trigger_note2 = 0;
+          first_note == 1? first_note = 0;
+          second_note == 1?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );
+        
+        
+        //trigger_note2
+        m == 9*16 && note == trigger_note2? 
+        (
+          noteon_noteoff_trigger_note2 = 1;
+          restore_note = save_note;
+          save_note = 2;
+          first_note == 0? first_note = 2;
+          first_note !== 0? second_note = 2;
+        );
+        m == 8*16 && note == trigger_note2?
+        (
+          noteon_noteoff_trigger_note2 = 0;
+          first_note == 2? first_note = 0;
+          second_note == 2?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );
+        
+        
+        //trigger_note3
+        m == 9*16 && note == trigger_note3? 
+        (
+          noteon_noteoff_trigger_note3 = 1;
+          restore_note = save_note;
+          save_note = 3;
+          first_note == 0? first_note = 3;
+          first_note !== 0? second_note = 3;
+        );
+        m == 8*16 && note == trigger_note3?
+        (
+          noteon_noteoff_trigger_note3 = 0;
+          first_note == 3? first_note = 0;
+          second_note == 3?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );
+
+
+        //trigger_note4
+        m == 9*16 && note == trigger_note4? 
+        (
+          noteon_noteoff_trigger_note4 = 1;
+          restore_note = save_note;
+          save_note = 4;
+          first_note == 0? first_note = 4;
+          first_note !== 0? second_note = 4;
+        );
+        m == 8*16 && note == trigger_note4?
+        (
+          noteon_noteoff_trigger_note4 = 0;
+          first_note == 4? first_note = 0;
+          second_note == 4?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );
+
+
+        //trigger_note5
+        m == 9*16 && note == trigger_note5? 
+        (
+          noteon_noteoff_trigger_note5 = 1;
+          restore_note = save_note;
+          save_note = 5;
+          first_note == 0? first_note = 5;
+          first_note !== 0? second_note = 5;
+        );
+        m == 8*16 && note == trigger_note5?
+        (
+          noteon_noteoff_trigger_note5 = 0;
+          first_note == 5? first_note = 0;
+          second_note == 5?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );
+ 
+ 
+        //trigger_note6
+        m == 9*16 && note == trigger_note6? 
+        (
+          noteon_noteoff_trigger_note6 = 1;
+          restore_note = save_note;
+          save_note = 6;
+          first_note == 0? first_note = 6;
+          first_note !== 0? second_note = 6;
+        );
+        m == 8*16 && note == trigger_note6?
+        (
+          noteon_noteoff_trigger_note6 = 0;
+          first_note == 6? first_note = 0;
+          second_note == 6?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        ); 
+
+
+        //trigger_note7
+        m == 9*16 && note == trigger_note7? 
+        (
+          noteon_noteoff_trigger_note7 = 1;
+          restore_note = save_note;
+          save_note = 7;
+          first_note == 0? first_note = 7;
+          first_note !== 0? second_note = 7;
+        );
+        m == 8*16 && note == trigger_note7?
+        (
+          noteon_noteoff_trigger_note7 = 0;
+          first_note == 7? first_note = 0;
+          second_note == 7?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        ); 
+        
+        
+        //trigger_note8
+        m == 9*16 && note == trigger_note8? 
+        (
+          noteon_noteoff_trigger_note8 = 1;
+          restore_note = save_note;
+          save_note = 8;
+          first_note == 0? first_note = 8;
+          first_note !== 0? second_note = 8;
+        );
+        m == 8*16 && note == trigger_note8?
+        (
+          noteon_noteoff_trigger_note8 = 0;
+          first_note == 8? first_note = 0;
+          second_note == 8?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );     
+ 
+ 
+        //trigger_note9
+        m == 9*16 && note == trigger_note9? 
+        (
+          noteon_noteoff_trigger_note9 = 1;
+          restore_note = save_note;
+          save_note = 9;
+          first_note == 0? first_note = 9;
+          first_note !== 0? second_note = 9;
+        );
+        m == 8*16 && note == trigger_note9?
+        (
+          noteon_noteoff_trigger_note9 = 0;
+          first_note == 9? first_note = 0;
+          second_note == 9?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );             
+ 
+ 
+        //trigger_note10
+        m == 9*16 && note == trigger_note10? 
+        (
+          noteon_noteoff_trigger_note10 = 1;
+          restore_note = save_note;
+          save_note = 10;
+          first_note == 0? first_note = 10;
+          first_note !== 0? second_note = 10;
+        );
+        m == 8*16 && note == trigger_note10?
+        (
+          noteon_noteoff_trigger_note10 = 0;
+          first_note == 10? first_note = 0;
+          second_note == 10?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );                            
+
+
+        //trigger_note11
+        m == 9*16 && note == trigger_note11? 
+        (
+          noteon_noteoff_trigger_note11 = 1;
+          restore_note = save_note;
+          save_note = 11;
+          first_note == 0? first_note = 11;
+          first_note !== 0? second_note = 11;
+        );
+        m == 8*16 && note == trigger_note11?
+        (
+          noteon_noteoff_trigger_note11 = 0;
+          first_note == 11? first_note = 0;
+          second_note == 11?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );                                  
+
+
+        //trigger_note12
+        m == 9*16 && note == trigger_note12? 
+        (
+          noteon_noteoff_trigger_note12 = 1;
+          restore_note = save_note;
+          save_note = 12;
+          first_note == 0? first_note = 12;
+          first_note !== 0? second_note = 12;
+        );
+        m == 8*16 && note == trigger_note12?
+        (
+          noteon_noteoff_trigger_note12 = 0;
+          first_note == 12? first_note = 0;
+          second_note == 12?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );                                         
+
+
+        //trigger_note13
+        m == 9*16 && note == trigger_note13? 
+        (
+          noteon_noteoff_trigger_note13 = 1;
+          restore_note = save_note;
+          save_note = 13;
+          first_note == 0? first_note = 13;
+          first_note !== 0? second_note = 13;
+        );
+        m == 8*16 && note == trigger_note13?
+        (
+          noteon_noteoff_trigger_note13 = 0;
+          first_note == 13? first_note = 0;
+          second_note == 13?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );                                        
+  
+  
+        //trigger_note14
+        m == 9*16 && note == trigger_note14? 
+        (
+          noteon_noteoff_trigger_note14 = 1;
+          restore_note = save_note;
+          save_note = 14;
+          first_note == 0? first_note = 14;
+          first_note !== 0? second_note = 14;
+        );
+        m == 8*16 && note == trigger_note14?
+        (
+          noteon_noteoff_trigger_note14 = 0;
+          first_note == 14? first_note = 0;
+          second_note == 14?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );    
+                                                
+        
+        //trigger_note15
+        m == 9*16 && note == trigger_note15? 
+        (
+          noteon_noteoff_trigger_note15 = 1;
+          restore_note = save_note;
+          save_note = 15;
+          first_note == 0? first_note = 15;
+          first_note !== 0? second_note = 15;
+        );
+        m == 8*16 && note == trigger_note15?
+        (
+          noteon_noteoff_trigger_note15 = 0;
+          first_note == 15? first_note = 0;
+          second_note == 15?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );                                    
+        
+        
+        //trigger_note16
+        m == 9*16 && note == trigger_note16? 
+        (
+          noteon_noteoff_trigger_note16 = 1;
+          restore_note = save_note;
+          save_note = 16;
+          first_note == 0? first_note = 16;
+          first_note !== 0? second_note = 16;
+        );
+        m == 8*16 && note == trigger_note16?
+        (
+          noteon_noteoff_trigger_note16 = 0;
+          first_note == 16? first_note = 0;
+          second_note == 16?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );                            
+        
+        
+        //trigger_note17
+        m == 9*16 && note == trigger_note17? 
+        (
+          noteon_noteoff_trigger_note17 = 1;
+          restore_note = save_note;
+          save_note = 17;
+          first_note == 0? first_note = 17;
+          first_note !== 0? second_note = 17;
+        );
+        m == 8*16 && note == trigger_note17?
+        (
+          noteon_noteoff_trigger_note17 = 0;
+          first_note == 17? first_note = 0;
+          second_note == 17?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );                                    
+        
+        
+        //trigger_note18
+        m == 9*16 && note == trigger_note18? 
+        (
+          noteon_noteoff_trigger_note18 = 1;
+          restore_note = save_note;
+          save_note = 18;
+          first_note == 0? first_note = 18;
+          first_note !== 0? second_note = 18;
+        );
+        m == 8*16 && note == trigger_note18?
+        (
+          noteon_noteoff_trigger_note18 = 0;
+          first_note == 18? first_note = 0;
+          second_note == 18?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );                                       
+        
+        
+        //trigger_note19
+        m == 9*16 && note == trigger_note19? 
+        (
+          noteon_noteoff_trigger_note19 = 1;
+          restore_note = save_note;
+          save_note = 19;
+          first_note == 0? first_note = 19;
+          first_note !== 0? second_note = 19;
+        );
+        m == 8*16 && note == trigger_note19?
+        (
+          noteon_noteoff_trigger_note19 = 0;
+          first_note == 19? first_note = 0;
+          second_note == 19?
+          (
+            second_note = 0;
+            save_note = restore_note;
+          );
+        );                                   
+        
+        //////////////////////////////////
+   
+        (m == 9*16 && msg23>=256) ? 
+        (
+          notelist[note] < 0.001 ? (
+            notelist[note]=((msg23/256.0)|0);
+            notecnt+=1;
+          );
+        ) : (m == 8*16 || m == 9*16) ? (
+          notelist[note] > 0.001 ? (
+            lastnote==note ? (
+              midisend(ts,8*16+channel,root_midi_note); // send note off
+              lastnote=-1;
+            );
+                
+            notecnt-=1;
+            notelist[note]=0.0; 
+          );
+        ) : (
+          midisend(ts,msg1,msg23); 
+        );
+        bla=1;
+        
+        notecnt < 1 && note>=0 ?
+                (
+                  midisend(0,8*16+channel,root_midi_note); // send note off
+                  lastnote=-1;
+                );   
+              );
+    
+    1; // make this 'if midirecv then..' conditional return 1 so that 'while' continues until no midi message is received
+    
+  ); // end if midirecv
+); // end while             
+      
+spos=0;
+dinc=1/srate*(tempo/60)*rate; //calculates the position of the next note
+
+notecnt > 0 && !lastnotecnt ? 
+  (
+    pbincpos=1;
+    pbnotepos=0;
+    pbvarpos=1000;
+  );
+ 
+@sample
+
+///////////////////////////////
+//OR condition: for the variable noteon_noteoff to be 1, at least one noteon_noteoff_trigger must be at 1
+noteon_noteoff_trigger_note19 == 1 || noteon_noteoff_trigger_note18 == 1 || noteon_noteoff_trigger_note17 == 1 || noteon_noteoff_trigger_note16 == 1 || noteon_noteoff_trigger_note15 == 1 || noteon_noteoff_trigger_note14 == 1 || noteon_noteoff_trigger_note13 == 1 || noteon_noteoff_trigger_note12 == 1 || noteon_noteoff_trigger_note12 == 1 || noteon_noteoff_trigger_note11 == 1 || noteon_noteoff_trigger_note10 == 1 || noteon_noteoff_trigger_note9 == 1 || noteon_noteoff_trigger_note8 == 1 || noteon_noteoff_trigger_note7 == 1 || noteon_noteoff_trigger_note6 == 1 || noteon_noteoff_trigger_note5 == 1 || noteon_noteoff_trigger_note4 == 1 || noteon_noteoff_trigger_note3 == 1 || noteon_noteoff_trigger_note2 == 1 || noteon_noteoff_trigger_note3 == 1? noteon_noteoff = 1: noteon_noteoff = 0;
+
+//////////////////////////////
+/////////////////////////////
+
+//Root MIDI Length assignment to the Beat
+root_midi_note_length_stb == 0? root_midi_note_length = slider3;
+root_midi_note_length_stb == 1? root_midi_note_length = 1;
+root_midi_note_length_stb == 2? root_midi_note_length = 0.5;
+root_midi_note_length_stb == 3? root_midi_note_length = 0.25;
+root_midi_note_length_stb == 4? root_midi_note_length = 0.13;
+root_midi_note_length_stb == 5? root_midi_note_length = 0.06;
+root_midi_note_length_stb == 6? root_midi_note_length = 0.03;
+root_midi_note_length_stb == 7? root_midi_note_length = 0.67;
+root_midi_note_length_stb == 8? root_midi_note_length = 0.22;
+root_midi_note_length_stb == 9? root_midi_note_length = 0.17;
+root_midi_note_length_stb == 10? root_midi_note_length = 0.08;
+root_midi_note_length_stb == 11? root_midi_note_length = 0.04;
+root_midi_note_length_stb == 12? root_midi_note_length = 0.02;
+root_midi_note_length_stb == 13? root_midi_note_length = 1.50;
+root_midi_note_length_stb == 14? root_midi_note_length = 0.75;
+root_midi_note_length_stb == 15? root_midi_note_length = 0.38;
+root_midi_note_length_stb == 16? root_midi_note_length = 0.19;
+root_midi_note_length_stb == 17? root_midi_note_length = 0.09;
+root_midi_note_length_stb == 18? root_midi_note_length = 0.05;
+
+
+//Trigger notes are set to the appropriate rate values
+save_note == 2? rate = 1;
+save_note == 3? rate = 2;
+save_note == 4? rate = 4;
+save_note == 5? rate = 8;
+save_note == 6? rate = 16;
+save_note == 7? rate = 32;
+save_note == 8? rate = 1.5;
+save_note == 9? rate = 3.0;
+save_note == 10? rate = 6.0;
+save_note == 11? rate = 12;
+save_note == 12? rate = 24;
+save_note == 13? rate = 48;
+save_note == 14? rate = 0.665;
+save_note == 15? rate = 1.33;
+save_note == 16? rate = 2.66;
+save_note == 17? rate = 5.32;
+save_note == 18? rate = 10.64;
+save_note == 19? rate = 21.28;
+
+//the values for the oneshot grid
+save_note == 1? 
+(
+  oneshot_rate_stb == 0? rate = oneshot_rate;
+  oneshot_rate_stb == 1? rate = 1;
+  oneshot_rate_stb == 2? rate = 2;
+  oneshot_rate_stb == 3? rate = 4;
+  oneshot_rate_stb == 4? rate = 8;
+  oneshot_rate_stb == 5? rate = 16;
+  oneshot_rate_stb == 6? rate = 32;
+  oneshot_rate_stb == 7? rate = 1.5;
+  oneshot_rate_stb == 8? rate = 3.0;
+  oneshot_rate_stb == 9? rate = 6.0;
+  oneshot_rate_stb == 10? rate = 12;
+  oneshot_rate_stb == 11? rate = 24;
+  oneshot_rate_stb == 12? rate = 48;
+  oneshot_rate_stb == 13? rate = 0.665;
+  oneshot_rate_stb == 14? rate = 1.33;
+  oneshot_rate_stb == 15? rate = 2.66;
+  oneshot_rate_stb == 16? rate = 5.32;
+  oneshot_rate_stb == 17? rate = 10.64;
+  oneshot_rate_stb == 18? rate = 21.28;
+);
+/////////////////////////
+  
+pbincpos+=dinc;
+notecnt > 0 && pbincpos >= root_midi_note_length ? (
+  lastnote>=0 ? 
+  (
+    midisend(spos,8*16+channel,root_midi_note); // send note off
+    lastnote=-1;
+  );   
+);
+notecnt > 0 &&   pbincpos >= 1.0 ?
+(
+  pbincpos-=1;
+  // calc new lastnote
+  !diralt ? 
+  ( 
+    pbvarpos+=1;
+    pbvarpos > nvar || !notelist[pbnotepos] ? 
+    (
+      pbvarpos=0;
+      // next note
+      cnt=0;
+      while
+      (
+        cnt+=1;
+        pbnotepos += 1;
+        pbnotepos > 127? pbnotepos=0 : pbnotepos<0 ? pbnotepos=127;
+        notelist[pbnotepos] > 0.001 ? 
+        (
+          pbnotepos >= 0 && pbnotepos < 128 ? (
+            lastnote=pbnotepos;
+            midisend(spos,9*16+channel,root_midi_note+notelist[pbnotepos]*256); // send note on
+          );
+          tmp=0;
+        )     
+        : cnt < 128;
+      );
+    );
+  );
+);
+
+//spos+=1;

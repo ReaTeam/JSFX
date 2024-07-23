@@ -1,0 +1,40 @@
+desc: MIDI Velocity Filter
+author: Will-Develop
+version: 1.0
+link:
+  My Website http://will-records.tk/
+  Forum https://forum.cockos.com/showthread.php?p=2297585#post2297585
+about: This script only passes through notes that are in the set velocity range.
+
+
+
+slider1:min_vel=0<-0,127,1>Min Velocity
+slider2:max_vel=127<-0,127,1>Max Velocity
+
+in_pin:none
+out_pin:none
+
+@init
+
+NOTE_OFF = 8;
+NOTE_ON = 9;
+
+was_filtered = 1024;  // array for storing which notes are filtered
+
+@block
+
+  while (
+    input = midirecv(mpos, msg1, msg23);
+    input? (
+
+      vel=(msg23/256)|0;
+      
+      vel >= min_vel && vel <= max_vel?(
+        midisend(mpos, msg1, msg23);
+      ):
+      (
+        midisend(mpos, $x80, msg23);
+      );
+  
+    )
+  );

@@ -1,0 +1,71 @@
+desc:Volume utility +-10db (sample accurate automation)
+version: 1.0
+author: Cockos, mod by nofish
+link: http://forum.cockos.com/member.php?u=6870
+changelog:
+  version 1.0
+  + initial release
+about:
+  simple volume adjustment utility
+  modded from Cockos "Volume/Pan Smoother v5" JS
+  I like to use this one for volume automation instead of Reaper's native volume envelope because
+  - I rarely make changes > +- 10db so it gives me more 'resolution' in the envelope
+  - Reaper's fader are kept free for trim adjustments
+  
+//tags: utility gain stereo
+
+slider1:0<-10,10,0.1>Volume (dB)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+
+AMP_dB_i=1/8.68588963806504;
+
+db=slider1; // initialize here but not in @slider for playback start
+
+@slider
+
+ddb=0.0;
+
+@block
+
+cnt=0;
+ddb=0.0;
+
+db_chg_splpos=slider_next_chg(1, tgtdb);
+db_chg_splpos > 0 ? 
+(
+  db=slider1;
+) : (
+  tgtdb = slider1;
+  db_chg_splpos = samplesblock;
+);
+
+ddb=(tgtdb-db)/db_chg_splpos;
+
+
+@sample
+
+cnt == db_chg_splpos ? 
+(
+  ddb=0.0;
+  db_chg_splpos=slider_next_chg(1, tgtdb);
+  db_chg_splpos > cnt ? 
+  (
+    ddb=(tgtdb-db)/(db_chg_splpos-cnt);
+  );
+);
+
+
+adj=exp(db*AMP_DB_i);
+
+spl0 *= adj;
+spl1 *= adj;
+
+db += ddb;
+cnt += 1;
+

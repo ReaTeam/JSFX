@@ -1,0 +1,228 @@
+desc: Loudener
+author: Samuele Pizzi
+version: 1.2
+provides:
+  Loudener_gfx/bg.png
+  Loudener_gfx/handle.png
+  Loudener_gfx/button_off.png
+  Loudener_gfx/button_on.png
+screenshot: GUI Example https://imgur.com/a/hM4leza
+donation: Donate via PayPal https://www.paypal.com/paypalme/samuelepizzi
+changelog:
+  Changed waveshaping function with the updated version from the folks at Cockos Forums, super accurate
+  Minor optimizations
+about:
+  # Loudener
+  ### A Sonnox Oxford Inflator-inspired distortion plugin that increases loudness without sacrificing dynamic range
+
+  Author: Samuele Pizzi
+  ---
+  Many thanks to:
+   - Edoardo "TheEdoRan" Ranghieri
+   - "tviler" from GearSpace
+   - "chmaha" from Cockos Forums
+   - "RCJacH" from Cockos Forums
+   - "sai'ke" from Cockos Forums
+   - "Zeno" from Cockos Forums
+
+//input_db
+slider1:0<-6,12,0.1>-Input (dB)
+//effect
+slider2:100<0,100,0.1>-Effect (%)
+//clip
+slider3:1<0,1,1{OFF,ON}>-Clip 0 dB
+//curve
+slider4:0<-50,50,0.1>-Curve
+//output_db
+slider5:0<-12,0,0.1>-Output (dB)
+
+//slider:multiband=0<0,1,1{OFF,ON}>Band Split
+
+in_pin:Left Input
+in_pin:Right Input
+out_pin:Left Output
+out_pin:Right Output
+
+filename:0,loudener_gfx/bg.png
+filename:1,loudener_gfx/handle.png
+filename:2,loudener_gfx/button_off.png
+filename:3,loudener_gfx/button_on.png
+
+@init
+//db to gain conversion
+last_gain = exp(0.11512925464970229 * slider1);
+olast_gain = exp(0.11512925464970229 * slider5);
+
+//waveshaping function
+function waveShape(spln) (
+  in = abs(spln * last_gain);
+  clip ? (
+    //clip is on, limit input to 1.0
+    in = in > 1.0 ? 1.0 : in;
+  );
+  in_2 = in * in;
+  in_3 = in_2 * in;
+  out = (in >= 2.0) ? (
+    0.0
+  ) : (in > 1.0) ? (
+    2.0 * in - in_2
+  ) : (
+    a * in + b * in_2 + c * in_3 - d * (in_2 - 2.0 * in_3 + in_2 * in_2)
+  );
+  out = sign(spln) * out * wet_gain + min(max(spln * dry_gain, -2 * dry_gain), 2 * dry_gain);
+  out = clip ? max(-1, min(out, 1)) : out;
+  out * olast_gain
+);
+
+function process_sliders() (
+  clip = slider3;
+  //slider db to gain conversion on slider change
+  next_gain = exp(0.11512925464970229 * slider1);
+  onext_gain = exp(0.11512925464970229 * slider5);
+  //evaluate waveshape coefficient on slider change
+  curvepct = slider4 * 0.01;
+  a = 1.5 + curvepct;
+  b = -(curvepct + curvepct);
+  c = curvepct - 0.5;
+  d = 0.0625 - curve * 0.0025 + (curve * curve) * 0.000025;
+  //wet-dry gain on effect slider change
+  wet_gain = slider2 * 0.01;
+  dry_gain = 1 - wet_gain;
+);
+
+@slider
+//gain sliders value check
+slider1 = min(max(slider1, -6),12);
+slider5 = min(max(slider5, -12),0);
+//assigning values to gui sliders
+s1.value = slider1;
+s2.value = slider2;
+s3.checked = slider3;
+s4.value = slider4;
+s5.value = slider5;
+//process slider values in plugin parameters
+process_sliders();
+
+@block
+//gain difference
+d_gain = (next_gain - last_gain)/samplesblock;
+od_gain = (onext_gain - olast_gain)/samplesblock;
+
+@sample
+spl0 = waveShape(spl0);
+spl1 = waveShape(spl1);
+//gain difference
+last_gain += d_gain;
+olast_gain += od_gain;
+
+@gfx 640 420
+gfx_x = gfx_y = 0;
+gfx_blit(0,1,0);
+
+function draw_slider(x,y,w,h,f,t,s,d,unit,title) (
+  //change detecion
+  this.value.temp != this.value ? (
+    _sliderDirty = 1;
+    this.value.temp = this.value;
+  );
+  
+  //knob parameters
+  this.knob.h = 44; //the actual handle height
+  this.knob.hh = this.knob.h * 0.5;
+  this.range = abs(f - t);
+  
+  //mouse logic
+  mouse_x >= x && mouse_x <= x+w && mouse_y >= y && mouse_y <= y+h && !this.disabled ? (
+    !mouse_cap ? this.hasEntered = 1;
+    mouse_cap ? this.hasClicked = 1;
+    this.hasEntered && this.hasClicked ? this.canChange = 1;
+    ) : (
+    this.hasEntered = this.hasClicked = 0;
+  );
+  !mouse_cap ? (this.canChange = 0; this.init_x = 0;);
+  
+  //process
+  this.canChange ? (
+    this.knob.input = -(mouse_y - y - h + this.knob.hh);
+    this.init_y = 0;
+    this.knob.input.normalized = (this.knob.input / (h-this.knob.hh+2));
+    this.value.rect = this.range * this.knob.input.normalized;
+    this.step = 1/s;
+    this.value.rect = ceil(this.value.rect * this.step) / this.step;
+    this.value = this.value.rect + f;
+    
+    mouse_cap & 4 ? this.value = d;
+  );
+  
+  this.value = max(min(this.value,t),f);
+  this.knob.pos = (this.range - this.value + f ) / (this.range) * (h-this.knob.h);
+  
+  //knob  
+  gfx_y = y+this.knob.pos-8; gfx_x = x;
+  gfx_blit(1,1,0);
+  
+  //title
+  gfx_r = gfx_g = gfx_b = 1;
+  this.str1 = title;
+  gfx_measurestr(this.str1,this.str1.w,this.str1.h);
+  gfx_y = y - this.str1.h - 5; gfx_x = x + (w * 0.5) - (this.str1.w * 0.5);
+  gfx_drawstr(this.str1);
+  
+  //readout
+  !this.hidereadout ? (
+    gfx_r = gfx_g = gfx_b = 1;
+    this.str2 = strcat(sprintf(#,"%.1f",this.value),unit);
+    gfx_measurestr(this.str2,this.str2.w,this.str2.h);
+    gfx_y = y + h - 7; gfx_x = x + (w * 0.5) - (this.str2.w * 0.5);
+    gfx_drawstr(this.str2);
+  );
+  
+  this.value;
+);
+
+function draw_checkbox(x,y,w,h) (
+  //change detecion
+  this.checked.temp != this.checked ? (
+    _sliderDirty = 1;
+    this.checked.temp = this.checked;
+  );
+
+  //mouse logic
+  mouse_x >= x && mouse_x <= x+w && mouse_y >= y && mouse_y <= y+h && !this.disabled ? (
+    !mouse_cap ? this.hasEntered = 1;
+    mouse_cap ? this.hasClicked = 1;
+    this.hasEntered && this.hasClicked ? this.canChange = 1;
+  ) : (
+    this.hasEntered = this.hasClicked = this.canChange = 0;
+  );
+  !mouse_cap ? (this.canChange = 0;);
+
+  this.canChange ? (
+    this.checked = 1-this.checked;
+    this.hasEntered = this.hasClicked = this.canChange = 0;
+  );
+  
+  //checked
+  this.checked ? (
+    gfx_x = x; gfx_y = y;
+    gfx_blit(3,1,0);  
+  ) : ( 
+    gfx_x = x; gfx_y = y;
+    gfx_blit(2,1,0);    
+  );
+    
+  this.checked; 
+);
+
+gfx_setfont(1,"Calibri",22);
+sld_y = 78;
+slider1 = s1.draw_slider(90,sld_y,45,290,-6,12,0.1,0," dB","");
+slider2 = s2.draw_slider(194,sld_y,45,290,0,100,0.1,100," %","");
+slider3 = s3.draw_checkbox(275,185,88,62);
+slider4 = s4.draw_slider(402,sld_y,45,290,-50,50,0.1,0,"","");
+slider5 = s5.draw_slider(506,sld_y,45,290,-12,0,0.1,0," dB","");
+
+_sliderDirty ? (
+  process_sliders();  
+  _sliderDirty = 0;
+);

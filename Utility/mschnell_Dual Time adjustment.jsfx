@@ -1,0 +1,197 @@
+desc: Dual Time adjustment +/- Delay
+author: Michael Schnell (mschnell@bschnell.de)
+version: 2.1
+changelog: Fix: Loading the plugin with Dual mode resulted in equal delay for both channels due to some weird way Reaper calls @slider multiple times
+donation: United Nations Foundation http://www.unfoundation.org/
+about:
+  ## Description
+
+  Apply a positive or negative delay to up to two audio channel in a track and optionally to Midi
+
+     modes:
+   - Stereo: All Sliders are coupled
+   - Dual: Two channels with two coupled sliders each 
+
+  Midi delay: defines if or if not also Midi input to this channel should be handled 
+
+
+  ## Acknowlages: 
+
+    Audio part based on "Channel Time Delayer [LOSER]" by Michael Gruhn, 2007
+
+    Midi positive delay part based on Cockos "Midi Delay"
+
+// (C) 2007, Michael Gruhn, 2019, Michael Schnell, 2018, Paweł Łyżwa
+
+// NO WARRANTY IS GRANTED. THIS PLUG-IN IS PROVIDED ON AN "AS IS" BASIS, WITHOUT
+// WARRANTY OF ANY KIND. NO LIABILITY IS GRANTED, INCLUDING, BUT NOT LIMITED TO,
+// ANY DIRECT OR INDIRECT,  SPECIAL,  INCIDENTAL OR CONSEQUENTIAL DAMAGE ARISING
+// OUT OF  THE  USE  OR INABILITY  TO  USE  THIS PLUG-IN,  COMPUTER FAILTURE  OF
+// MALFUNCTION INCLUDED.  THE USE OF THE SOURCE CODE,  EITHER  PARTIALLY  OR  IN
+// TOTAL, IS ONLY GRANTED,  IF USED IN THE SENSE OF THE AUTHOR'S INTENTION,  AND
+// USED WITH ACKNOWLEDGEMENT OF THE AUTHOR. FURTHERMORE IS THIS PLUG-IN A  THIRD
+// PARTY CONTRIBUTION,  EVEN IF INCLUDED IN REAPER(TM),  COCKOS INCORPORATED  OR
+// ITS AFFILIATES HAVE NOTHING TO DO WITH IT.  LAST BUT NOT LEAST, BY USING THIS
+// PLUG-IN YOU RELINQUISH YOUR CLAIM TO SUE IT'S AUTHOR, AS WELL AS THE CLAIM TO
+// ENTRUST SOMEBODY ELSE WITH DOING SO.
+
+slider1:0<-100,100,0.01>Delay L (ms)
+slider2:0<-100,100,0.01>Delay R (ms)
+slider3:0<-1000,1000,1>Delay L (spls)
+slider4:0<-1000,1000,1>Delay R (spls)
+slider5: 1<0,1,1{Stereo,Dual}>Mode
+slider6:22<-10,30,1>°C (1 bar)
+slider7: 0<0,1,1{No,Average L/R}>Midi delay
+//slider7: 0<0,2,1{No,only negative,negative and positive}>Midi delay   //positive Midi delay not yet implemented
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+s1 = 0;
+s2 = 0;
+s3 = 0;
+s4 = 0;
+
+midi_delay = 0;
+//midi_buf   = 0;
+buf_l=buf_r=0;
+buf_hdr    = 3; // position, length (incl header), bus
+max_ram    = __memtop();
+
+
+@slider
+!slider5 ? (
+  slider1 != s1 ? (
+    slider2 = slider1;
+   ) :  slider2 != s2 ? (
+    slider1 = slider2;
+   ) :  slider3 != s3 ? (
+    slider4 = slider3;
+   ) :  slider4 != s4 ? (
+    slider3 = slider4;
+  );
+);
+slider1 != s1 ? (
+  s =  floor(slider1 / 1000 * srate+0.5);
+  slider3 = s;
+ ) : slider3 != s3 ? (
+  s = floor((slider3 * 100000 / srate)+0.5)/100;
+  slider1 = s;
+);  
+slider2 != s2 ? (
+  s =  floor(slider2 / 1000 * srate+0.5);
+  slider4 = s;
+ ) : slider4 != s4 ? (
+  s = floor((slider4 * 100000 / srate)+0.5)/100;
+  slider2 = s;
+);  
+s1 = slider1;
+s2 = slider2;
+s3 = slider3;
+s4 = slider4;
+midi_delay = (s3 + s4) / 2;  
+
+s3 >= 0 && s4 >= 0 ? (
+  buflL = s3;
+  buflR = s4 + buflL+1;
+ ):(
+  s3 <= s4 ?  (
+    buflL = 0 ;
+    buflR = (s4-s3) + buflL+1;
+   ):(
+    buflL = (s3-s4);
+    buflR = buflL+1;
+  );
+//pdc_delay = floor(min( -min(slider1,slider2)/1000 * srate,500000));
+  pdc_delay = min(-min(s3,s4),50000);
+  pdc_bot_ch=0;
+  pdc_top_ch=2;
+);
+
+
+pdc_midi   = (slider7 && (midi_delay < 0) ) ? 1 : 0;
+midi_delay = (slider7 && (midi_delay > 0) ) ? midi_delay : 0;
+delay_samples = floor(midi_delay + 0.5);
+midi_buf = buflR+1;
+
+
+@sample
+bufLpos[0] = spl0 ;
+bufLpos = bufLpos + 1 ;
+bufLpos >= buflL ? bufLpos = 0;
+
+bufRpos[0] = spl1 ;
+bufRpos = bufRpos + 1 ;
+bufRpos >= buflR ? bufRpos = buflL+1;
+
+spl0 = bufLpos[0] ; 
+spl1 = bufRpos[0] ;
+
+
+
+@block
+midi_delay ? (
+
+
+  delay_sc = (delay_samples + samplesblock);
+  delay_isc = 1.0 / delay_sc;
+
+// process incoming events
+  while((l=midirecv_buf(offs,buf_r+midi_buf+buf_hdr,max_ram-(buf_r+midi_buf)-buf_hdr))>0) (
+//    (bus<0 || midi_bus == bus) &&                                             Here we always use all buses
+//    (chan<0 || (l <= 3 && (fb=buf_r[buf_hdr])<0xf0 && (fb&0xf) == chan)) ? (  And all channels
+//    buf_r[buf_hdr])<0xf0 ? (
+      buf_r[midi_buf+0] = (delay_samples+offs) * delay_isc;
+      buf_r[midi_buf+1] = buf_hdr + l;
+      buf_r[midi_buf+2] = midi_bus;
+      buf_r += buf_hdr + l;
+//     ) : (
+//      midisend_buf(offs,buf_r+buf_hdr,l);
+//    );
+  );
+
+// process outgoing events
+  rd = buf_l;
+  while (rd<buf_r) (
+    rd==buf_l && (offs=floor(rd[midi_buf+0]*delay_sc+0.5)) < samplesblock ? (
+      midi_bus=rd[midi_buf+2];
+      l = rd[midi_buf+1];
+      midisend_buf(max(offs,0),rd+buf_hdr+midi_buf,l-buf_hdr);
+      buf_l = (rd += l);
+    ) : (
+      rd[midi_buf+0] -= samplesblock * delay_isc;
+      rd += rd[midi_buf+1];
+    );
+  );
+
+// compact buf if needed
+  buf_l >= buf_r ? (
+    buf_l=buf_r=0;
+  ) : (
+    buf_l > max(1024,buf_r*.5) ? (
+      (buf_r-=buf_l) > 0 ? memcpy(midi_buf,buf_l+midi_buf,buf_r) : buf_r=0;
+      buf_l=0; 
+    );
+  );
+
+
+);
+
+@gfx 650 150   
+  gfx_r=gfx_g=gfx_b=0.95; gfx_a=1;
+  gfx_x=gfx_y=0;
+  gfx_rectto(gfx_w,gfx_h);
+  gfx_setfont(2,#font,15);
+  gfx_r=gfx_g=gfx_b=0;
+  gfx_x=gfx_y=10;
+  _s = 0.1*(331.5 + 0.6*slider6);             // cm per second
+  _l = _s * slider1;
+  _r = _s * slider2;
+  #_t= sprintf(#,"L    %0.1f cm", _l);
+  gfx_drawstr(#_t);
+  gfx_x = gfx_w - 100;
+  #_t= sprintf(#,"R    %0.1f cm",_r);
+  gfx_drawstr(#_t);

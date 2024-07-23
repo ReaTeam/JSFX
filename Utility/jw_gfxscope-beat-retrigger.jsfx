@@ -1,0 +1,520 @@
+desc: Oscilloscope w/ beat retrigger
+author: jwhiting
+version: 1.1
+changelog: Increase time window
+about:
+  # Oscilloscope with beat retrigger
+
+  This is exactly the same as the default Cockos oscilloscope meter that comes with Reaper, but with an additional retrigger mode called "beat." This stabilizes the oscilloscope such that the far right edge is always the last sample of the beat that just finished. It is especially useful for designing EDM kick drums and observing kick/bass phase interaction patterns in real-time. Be sure to zoom correctly so that you can see the entire beat in the scope, as the initial zoom setting may not capture it.
+
+//tags: analysis scope meter
+//author: Cockos, modifications by Josh Whiting (github.com/jwhiting) commented with JW initials
+/*
+Copyright (C) 2007 Cockos Incorporated
+License: LGPL - http://www.gnu.org/licenses/lgpl.html
+*/
+
+slider1:view_msec=8000<1,16000,1>-view size (ms)
+slider2:view_maxdb=0<-450,36,.1>-vzoom
+slider3:view_retrig=0<0,4,1{instant,beat,any,ascending,descending}>-retrig // JW added 'beat'
+
+in_pin:left input
+in_pin:right input
+options:no_meter
+
+@init
+gfx_ext_retina=1;
+ext_nodenorm=1;
+recpos=0;
+gfx_clear=-1;
+g_maxlen_ms=16000;
+histsize=((srate*2.0*g_maxlen_ms/1000)|0)*2;
+g_hold=-1;
+need_view_update=1;
+beatpos=0; // JW
+
+@block 
+g_hold<0?need_view_update=1;
+
+// JW {{{
+// each block, set us up for computing the beat number per sample
+// this code is adapted from a very old post on the cockos forums
+// https://forum.cockos.com/showthread.php?t=13495
+WhyAddThis = 0.97902 / (srate * ( 60 / tempo ) );
+beats_per_sample = ( tempo / 60 ) / srate;
+offset = 0;
+beatposition = beat_position;
+samples_per_beat = srate / (tempo / 60);
+// }}}
+
+@sample
+g_hold<0 ? (
+  recpos[0]=spl0;
+  recpos[1]=spl1;
+  recpos = (recpos+2) >= histsize ? 0 : (recpos+2);
+);
+
+// JW {{{
+// compute the current beat number
+intbeat = floor( beatposition + WhyAddThis + ( offset * beats_per_sample ) );
+intbeat != previntbeat ? (
+  // when the beat number changes, stash the sample position in the buffer.
+  beatpos = recpos + floor(2 * samples_per_beat);
+  beatpos >= histsize ? beatpos -= histsize;
+  // copy the memory for the just-finished beat to the upcoming beat so the
+  // right edge of the scope is more useful, instead of seeing old history
+  // looping around
+  copyToPos = recpos;
+  copyFromPos = recpos - (samples_per_beat * 2);
+  // todo: if the beat length is longer than histsize contains, this is a
+  // problem
+  copyFromPos < 0 ? copyFromPos += histsize;
+  copied = 0;
+  while (
+    copyToPos[0]=copyFromPos[0];
+    copyToPos[1]=copyFromPos[1];
+    copyToPos = (copyToPos+2) >= histsize ? 0 : (copyToPos+2);
+    copyFromPos = (copyFromPos+2) >= histsize ? 0 : (copyFromPos+2);
+    copied += 1;
+    copied < samples_per_beat;
+  );
+);
+previntbeat = intbeat;
+offset += 1;
+// }}}
+
+@gfx 640 400
+gfx_ext_retina>1 ? gfx_setfont(1,"Arial",16*gfx_ext_retina,'b') : gfx_setfont(0);
+
+gfx_getchar(); // request mouse_cap to be set even when mouse button not down
+
+function color1() ( gfx_r=0.5; gfx_g=1.0; gfx_b=0.5; );
+function color2() ( gfx_r=1.0; gfx_g=0.5; gfx_b=1.0; );
+
+function draw_button(xp, yp, str) 
+  instance(w,h,x,y) 
+  globals(gfx_r,gfx_g,gfx_b,gfx_x,gfx_y) 
+(
+  gfx_measurestr(str, w, h);
+  xp -= w+3;
+  x=xp;
+  y=yp;
+  gfx_set(0,0,.75);
+  w+=3;
+  h+=3;
+  gfx_rect(x,y,w,h);
+  gfx_set(0,.5,1);
+  gfx_line(x,y,x+w,y);
+  gfx_line(x+w,y,x+w,y+h);
+  gfx_line(x,y+h,x+w,y+h);
+  gfx_line(x,y,x,y+h);
+  h+=1;
+  w+=1;
+  gfx_x=xp+2; gfx_y=yp+2;
+  gfx_drawstr(str);
+  gfx_x = xp;
+);
+function hit_button(xp,yp,cm) 
+  instance(w,h,x,y) 
+  globals(cap_mode, cap_last_x, cap_last_y) 
+( 
+  xp>=x&&yp>=y&&xp<x+w&&yp<y+h ? (
+    cap_last_x = xp;
+    cap_last_y = yp;
+    cap_mode=cm;
+  );
+);
+
+function drag_slider(x, y, z, dx)
+  globals(mouse_y, cap_last_y, cap_drag)
+(
+  x = min(max(x + dx * (cap_last_y-mouse_y),y),z);
+  cap_last_y=mouse_y;
+  cap_drag=1;
+  x;
+);
+
+function drag_slider_precise(x, y, z, dx)
+  globals(mouse_cap)
+(
+  (mouse_cap & 4) ? dx *= 0.1;
+  drag_slider(x, y, z, dx);
+);
+
+function cycle_slider(x, y, z, dx)
+  globals(last_mouse_cap)
+(
+  (last_mouse_cap & 16) ? x -= dx : x += dx;
+  y > z ? ( dx=y; y=z; z=dx; );
+  x > z ? y : x < y ? z : x;
+);
+
+
+(mouse_cap & 1) ? (
+   !(last_mouse_cap & 1) ? (  
+     cap_mode == 1 && !cap_drag && cap_timer < 12 ? (
+       view_maxdb = 0;
+       cap_mode=0;
+       need_view_update=1;      
+       slider_automate(view_maxdb);
+     ) : (
+      cap_mode = cap_drag = cap_timer = 0;     
+      length_button.hit_button(mouse_x,mouse_y,2)||
+      vzoom_button.hit_button(mouse_x,mouse_y,1)||
+      hold_button.hit_button(mouse_x,mouse_y,3)||
+      retrig_button.hit_button(mouse_x,mouse_y,4);
+      
+      cap_mode == 3 ? g_hold_needadj=1;
+      
+      cap_mode == 0 && mouse_y >= 40 ? (
+        cap_mode = 100;
+        cap_last_y=mouse_y;
+        cap_last_x=mouse_x;
+        
+        (mouse_cap&8) ? (
+          g_hold < 0 ? (
+            g_hold_needadj=1;
+            g_hold=0;
+          ) : g_hold=-1;
+        );
+      );
+    );
+  );
+  
+  cap_last_y != mouse_y ? (
+    (cap_mode == 1 || cap_mode==100) ? (
+      cap_mode == 100 && (mouse_cap&16) ? (
+        g_hold >= 0 ? ovhold = g_hold + (gfx_w-mouse_x)*view_msec*0.001/gfx_w*srate;
+        view_msec = min(g_maxlen_ms,max(0.125,exp(drag_slider_precise(log(view_msec), log(0.125), log(g_maxlen_ms),-0.02))));
+        slider_automate(view_msec);
+        g_hold >= 0 ? (
+          // zoom at mouse cursor
+          g_hold = ovhold - (gfx_w-mouse_x)*view_msec*0.001/gfx_w*srate;
+          g_hold  > histsize*.5-viewsize_spls ? g_hold = histsize*.5-viewsize_spls : g_hold < 0 ? g_hold=0;  
+        );
+      ) : (
+        view_maxdb = drag_slider_precise(view_maxdb, -450, 36, -0.2);
+        need_view_update=1;      
+        slider_automate(view_maxdb);
+      );
+    );
+    cap_mode == 2 ? (
+      view_msec = min(g_maxlen_ms,max(0.125,exp(drag_slider_precise(log(view_msec), log(0.125), log(g_maxlen_ms),-0.02))));
+      slider_automate(view_msec);
+      need_view_update=1;
+    );
+    cap_mode == 4 ? (
+      view_retrig = drag_slider(view_retrig,0,4,0.03); // JW 3 -> 4
+      slider_automate(view_retrig);
+      need_view_update=1;
+    );
+  );
+  cap_mode == 3 || (cap_mode == 100&&g_hold>=0) ? (
+    dx = mouse_x-cap_last_x + (cap_mode == 3 ? (mouse_y-cap_last_y)*0.2);
+    dx ? (
+      cap_drag=1;
+      g_hold += dx * viewsize_spls/gfx_w;
+      g_hold  > histsize*.5-viewsize_spls ? g_hold = histsize*.5-viewsize_spls;
+      cap_last_x = mouse_x;
+      cap_last_y = mouse_y;
+      need_view_update=1;
+    );
+    g_hold < 0 ? g_hold=0;
+  );
+) : (
+  g_hold_needadj=0;
+  cap_mode == 3 && !cap_drag ? (
+    g_hold=-1;
+    cap_mode=0;
+  );
+  cap_mode == 4 && !cap_drag ? (
+    view_retrig = cycle_slider(view_retrig, 0.0, 4.0, 1.0); // JW 3 -> 4
+    old_w=0;
+    slider_automate(view_retrig); 
+    cap_mode=0;
+  );
+);
+
+cap_mode && cap_timer < 12 ? cap_timer += 1;
+last_mouse_cap = mouse_cap;
+
+function format_time_msec(a) (
+  abs(a) < 1000 ? 
+    sprintf(#,"%.02fms",a + 0.005) : 
+    sprintf(#,"%.02fs",a*0.001 + 0.005);
+);
+
+function format_time_msec_hz(b)(
+  b > 1 ? 
+    b > 250 ? 
+      sprintf(#,"%.02fs",b*0.001 + 0.005) : 
+    sprintf(#,"%d Hz",1000/b+0.5) : 
+  sprintf(#,"%.1f kHz",1/b + 0.05); 
+); 
+
+mouse_wheel ? (
+  (mouse_cap&8) ? (
+    view_maxdb = min(36,max(-450,view_maxdb*exp(-mouse_wheel*0.0003)));
+    slider_automate(view_maxdb);
+  ) : (mouse_cap&16) ? (
+    g_hold += mouse_wheel*(1/(120.0*8.0)) * viewsize_spls;
+    g_hold  > histsize*.5-viewsize_spls ? g_hold = histsize*.5-viewsize_spls : g_hold < 0 ? g_hold=0;  
+  ) : (
+    g_hold >= 0 ? ovhold = g_hold + (gfx_w-mouse_x)*view_msec*0.001/gfx_w*srate;
+    view_msec = min(16000,max(1,view_msec*exp(-mouse_wheel*0.0003)));
+    slider_automate(view_msec);
+    g_hold >= 0 ? (
+      // zoom at mouse cursor
+      g_hold = ovhold - (gfx_w-mouse_x)*view_msec*0.001/gfx_w*srate;
+      g_hold  > histsize*.5-viewsize_spls ? g_hold = histsize*.5-viewsize_spls : g_hold < 0 ? g_hold=0;  
+    );
+  );
+  mouse_wheel=0;
+  need_view_update=1;
+);
+
+// only update if new fft data is there or if the size changed
+need_view_update || view_maxdb != view_maxdb_last || old_w != gfx_w || old_h!=gfx_h? (
+  view_maxdb_last = view_maxdb;
+  need_view_update=0;
+  old_w=gfx_w; old_h=gfx_h;
+
+  gfx_r=gfx_g=gfx_b=0; gfx_a=1;
+  gfx_x=gfx_y=0;
+  gfx_rectto(gfx_w,gfx_h);
+
+
+  scope_h = ((gfx_h-gfx_texth*2-6-4)*0.5)|0;
+  scope_ycent = gfx_h - scope_h - gfx_texth - 4;
+  sc= exp(-view_maxdb*(log(10)/20)) * scope_h;
+  
+  // draw horz grid
+  gfx_r=gfx_g=gfx_b=0.6;
+  gfx_a=1.0;
+  gfx_line(0,scope_ycent,gfx_w,scope_ycent);
+
+  i=0;
+  v=view_maxdb;
+  ly = scope_h+20*gfx_ext_retina;
+  while (
+    a = floor(exp(v*(log(10)/20))*sc+0.5);
+    a > 24 ? (
+      a < ly ? (
+        gfx_a=.25;
+        gfx_line(0,scope_ycent-a,gfx_w,scope_ycent-a);
+        gfx_line(0,scope_ycent+a,gfx_w,scope_ycent+a);
+        gfx_x=0; gfx_y=scope_ycent+a+2; 
+        v!=view_maxdb ? (
+          sprintf(#tmp,"%+.1fdB",v);
+          gfx_a=.5;
+          gfx_drawstr(#tmp);
+          gfx_x=0; gfx_y=scope_ycent-a-2-gfx_texth; 
+          gfx_drawstr(#tmp);
+        );
+        ly=a - gfx_texth-20;
+      );
+      v = floor(v*(1/3)-1)*3;
+      i=1;
+      1;
+    );
+  );
+
+  // draw vert grid
+  v=gfx_w - 72*gfx_ext_retina;
+  while(
+    gfx_a=0.25;
+    gfx_line(v,gfx_texth+8,v,gfx_h);
+    a = view_msec - view_msec * v / gfx_w;
+    
+    gfx_a=0.5;
+    gfx_x = v + 2; gfx_y = gfx_texth+12;
+    gfx_drawstr(sprintf(#,"%d",a*srate*0.001+0.5));
+    
+    g_hold > 0 ? (
+      gfx_x=v+2;
+      gfx_y += gfx_texth+2;
+      gfx_drawstr(sprintf(#,"-%d",a*srate*0.001 + g_hold + 0.5));
+    );
+    
+    g_hold > 0 ? (
+      gfx_x=v+2;
+      gfx_y = gfx_h - gfx_texth*3 - 4;
+      gfx_drawstr(format_time_msec(-a-(g_hold*1000/srate)));
+    );
+    
+    gfx_x = v + 2; 
+    gfx_y = gfx_h - gfx_texth*2 - 2;
+    a <= 250 ? gfx_drawstr(format_time_msec_hz(a));    
+        
+    gfx_x = v + 2; gfx_y = gfx_h - gfx_texth;
+    gfx_drawstr(format_time_msec(a));
+    
+    v -= 72*gfx_ext_retina;
+    v > 24*gfx_ext_retina;
+  );
+
+  viewsize_spls = (view_msec*srate*0.001)|0;
+  viewadv = gfx_w/viewsize_spls;
+  
+  rdptr = recpos - viewsize_spls*2 - 2;
+  rdptr < 0 ? rdptr += histsize;
+  (g_hold_needadj ? (g_hold>0) : (g_hold>=0)) && g_hold < histsize*0.5 ? (
+    rdptr -= (g_hold|0)*2;
+    rdptr < 0 ? rdptr += histsize;
+  ) : view_retrig == 1.0 ? ( // JSW added, this is the beat retrig mode {{{
+    rdptr = beatpos - viewsize_spls*2;
+    rdptr < 0 ? rdptr += histsize;
+    // }}}
+  ) : view_retrig >= 2.0 ? ( // JW 1->2
+    rdptr2 = recpos - 2;
+    rdptr2 < 0 ? rdptr2 += histsize;
+    pos = 0;
+    ll = rdptr2[0]; lr=rdptr2[1];
+    while(
+      pos < viewsize_spls ? (
+        rdptr2 -= 2;
+        rdptr2 < 0 ? rdptr2 += histsize;
+        l = rdptr2[0]; r=rdptr2[1];
+  
+        ((view_retrig|0)==3 ? ((l>=0) && (ll<0) || ((r>=0) && (lr<0))) : // JW 2->3
+        (view_retrig|0)==4 ? ((l<=0) && (ll>0) || ((r<=0) && (lr>0))) : // JW 3->4
+        ((l<0) != (ll<0) || (r<0) != (lr<0))) ? (
+          g_hold == 0 && g_hold_needadj ? g_hold = pos+1;
+          rdptr=rdptr2 + 2 - viewsize_spls*2;
+          rdptr < 0 ? rdptr += histsize;
+          0;
+        ):(lr=r; ll=l; pos+=1; );
+      );    
+    );
+  );
+  
+  g_hold_needadj=0;
+  
+  rdptr >= histsize ? rdptr -= histsize;
+  x=0;
+  viewadv < 1 ? (
+   // multiple samples per pixel
+    lx=0;
+    i=0;
+    minl=maxl=rdptr[0]; minr=maxr=rdptr[1];
+    (rdptr+=2) >= histsize ? rdptr=0;
+    loop(viewsize_spls,
+      tx=(x|0);
+      tx>lx?(
+        minl = min(max(-1,(scope_ycent+0.5-minl*sc)|0),gfx_h+2);
+        maxl = min(max(-1,(scope_ycent+0.5-maxl*sc)|0),gfx_h+2);
+        minr = min(max(-1,(scope_ycent+0.5-minr*sc)|0),gfx_h+2);
+        maxr = min(max(-1,(scope_ycent+0.5-maxr*sc)|0),gfx_h+2);
+        
+        gfx_a=0.25;
+        color1();
+        maxl-1 > scope_ycent ? gfx_line(lx,maxl-1,lx,scope_ycent) : 
+        minl+1 < scope_ycent ? gfx_line(lx,minl+1,lx,scope_ycent);
+  
+        color2();
+        maxr-1 > scope_ycent ? gfx_line(lx,maxr-1,lx,scope_ycent) : 
+        minr+1 < scope_ycent ? gfx_line(lx,minr+1,lx,scope_ycent);
+             
+        color1();
+        gfx_a=.6;
+        gfx_line(lx,minl,lx,maxl);
+        color2();
+        gfx_line(lx,minr,lx,maxr);
+  
+        minl=maxl=rdptr[0]; 
+        minr=maxr=rdptr[1];
+        lx=tx;
+      ) : (
+        minl=min(minl,v = rdptr[0]); maxl=max(maxl,v);
+        minr=min(minr,v2 = rdptr[1]); maxr=max(maxr,v2);
+      );
+      (rdptr+=2) >= histsize ? rdptr=0;
+      x+=viewadv;
+    );
+    // last pixel
+    minl = min(max(-1,(scope_ycent+0.5-minl*sc)|0),gfx_h+2);
+    maxl = min(max(-1,(scope_ycent+0.5-maxl*sc)|0),gfx_h+2);
+    minr = min(max(-1,(scope_ycent+0.5-minr*sc)|0),gfx_h+2);
+    maxr = min(max(-1,(scope_ycent+0.5-maxr*sc)|0),gfx_h+2);
+    color1();
+    gfx_a=0.35;
+    maxl-1 > scope_ycent ? gfx_line(lx,maxl-1,lx,scope_ycent) : 
+    minl+1 < scope_ycent ? gfx_line(lx,minl+1,lx,scope_ycent);
+  
+    color2();
+    maxr-1 > scope_ycent ? gfx_line(lx,maxr-1,lx,scope_ycent) : 
+    minr+1 < scope_ycent ? gfx_line(lx,minr+1,lx,scope_ycent);
+        
+    gfx_a=.6;
+    color1();
+    gfx_line(lx,minl,lx,maxl);
+    color2();
+    gfx_line(lx,minr,lx,maxr);  
+    
+  ) : ( 
+    maxval=scope_h+64;
+    // multiple pixels per sample
+    i=viewsize_spls&1;
+    loop(viewsize_spls,
+      x1 = x|0;
+      x2 = (x+=viewadv)|0;
+      
+      viewadv<3 ? (
+        color1();
+        
+        loop(2,
+          v = (rdptr[0] * sc)|0;
+          
+          gfx_a=.25;
+          v < 0 ? (
+            v < -maxval ? v=-maxval;
+            gfx_rect(x1,scope_ycent,x2-x1,-v)
+          ) : (
+            v > maxval ? v=maxval;
+            gfx_rect(x1,scope_ycent-v,x2-x1,v);      
+          );
+          gfx_a=.6;
+          gfx_rect(x1,scope_ycent-v,x2-x1,1);
+  
+          rdptr+=1;
+          color2();
+        );
+      
+      ) : (
+        color1();
+        
+        loop(2,
+          gfx_a=(i&1) ? 0.25:0.125;
+          v = (rdptr[0] * sc)|0;
+          v < 0 ? (
+            v < -maxval ? v=-maxval;
+            gfx_rect(x1,scope_ycent,x2-x1,-v) 
+          ) : (
+            v > maxval ? v=maxval;
+            gfx_rect(x1,scope_ycent-v,x2-x1,v);      
+          );
+          gfx_a=0.6;
+          gfx_rect(x1,scope_ycent-v,x2-x1,1);
+          rdptr+=1;
+          color2();
+          i+=1;
+        );
+        i+=1;
+      );
+      rdptr >= histsize ? rdptr=0;
+    );
+  );
+  
+  hold_button.draw_button(gfx_w,0, g_hold>=0 ? sprintf(#,"hold: -%d samples",g_hold+0.5) : "hold");
+  
+  length_button.draw_button(gfx_x-8, 0, sprintf(#,"length: %s",  format_time_msec_hz(view_msec)) );
+  
+  vzoom_button.draw_button(gfx_x-8, 0, sprintf(#,"range: %+.1fdB",view_maxdb));
+  
+  retrig_button.draw_button(gfx_x-8, 0, sprintf(#,"retrig: %s",(view_retrig|0)==1?"beat" : // JW added 'beat'
+    (view_retrig|0)==1?"any":
+    (view_retrig|0)==2?"ascend":
+    (view_retrig|0)==3?"descend":
+    "instant"));
+);
+

@@ -1,0 +1,994 @@
+desc: EQ1979
+author: Belles Ondes
+version: 0.95
+changelog:
+  - Improved modeling of HPF and Low Shelf filter responses
+  - 10Hz parameter smoothing on Low, Mid and High frequency gain parameters for automation-safe operation
+screenshot: GUI https://github.com/D4p0up/eq1979/raw/main/eq1979.png
+about:
+  #EQ1979
+
+  Frequency accurate modeling of a Neve 1073 filter stage combined with an input gain-compensated saturation.
+
+  Designed by cascading ~30 peq/butterworth filters to reproduce frequency response, bumps and drops of the original console strip.
+  Input saturation based on "arctan" modeling, which is gain-compensated. Includes additional independant gain trimming.
+
+  Controls :
+  - Left mouse button to change knob value, right mouse button resets control.
+  - Frequency bands for Mid and Low and gain trimming is done using mouse wheel.
+
+// ==================
+// Version Beta 0.95
+// ==================
+// Frequency accurate modeling of a Neve 1073 filter stage combined with an input gain-compensated saturation.
+// Designed by cascading ~30 peq/butterworth filters to reproduce frequency response, bumps and drops of 
+// the original console strip.
+// Input saturation based on "arctan" modeling, which is gain-compensated. Includes additional independant gain trimming.
+// Controls :
+// - Left mouse button to change knob value, right mouse button resets control.
+// - Frequency bands for Mid and Low and gain trimming is done using mouse wheel.
+//
+// Filter methods are derived from Oliver Belanger's COOKDSP library
+// Copyright (c) - 2014 - Olivier Belanger
+//
+slider1:gain_db=0<-24,24,0.5>-Trim Gain (dB)
+slider2:c_hpf_gain=0<-16,16,1>-High frequency shelf Gain (dB)
+slider3:c_mpf_gain=0<-18,18,1>-Mid frequency shelf gain (dB)
+slider4:mpf_cut=0<0,6,1{Off,0.36kHz,0.7kHz,1.6kHz,3.2kHz,4.8kHz,7.2kHz}>-Mid frequency (Hz)
+slider5:c_lpf_gain=0<-16,16,1>-Low frequency gain (dB)
+slider6:lpf_cut=0<0,4,1{Off,35Hz,60Hz,110Hz,220Hz}>-Low frequency shelf (Hz)
+slider7:hpf_cut=0<0,4,1{Off,50Hz,80Hz,160Hz,300Hz}>-Input Highpass frequency (Hz)
+slider8:sat_amount=1<0,100,0.1>-Saturation Amount (%)
+slider9:eq_enable=1<0,1,1>-Eq enable (On/Off)
+slider10:phase_enable=0<0,1,1>-Inver phase (On/Off)
+ 
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+ 
+options: no_meter
+
+@init
+last_gain = 10^(gain_db/20);
+
+// Miscelaneous Inits
+pi=3.141592;
+e=2.71828;
+bgcolor=104+127*256+150*65536; //That cute vintage blue
+protec=0; //mouse protection, 0 = Available
+
+// Filtered parameters inits
+// High Shelf Smoothing
+fparam=10;
+hpf_gain=c_hpf_gain;
+mpf_gain=c_mpf_gain;
+lpf_gain=c_lpf_gain;
+
+
+
+// =============================================
+// LOP - Copyright (c) - 2014 - Olivier Belanger
+// =============================================
+function lop(freq)
+(
+  this.y0 = 0;
+  this.ny = srate * 0.49;
+  freq < 0.1 ? freq = 0.1 : freq > this.ny ? freq = this.ny;
+  this.freq = freq; 
+  this.c = exp(-2 * $pi * this.freq / srate);
+);
+
+function lop_set_freq(freq)
+(
+  freq < 0.1 ? freq = 0.1 : freq > this.ny ? freq = this.ny;
+  this.freq = freq; 
+  this.c = exp(-2 * $pi * this.freq / srate);
+);
+
+function lop_do(signal)
+(
+  this.y0 = signal + (this.y0 - signal) * this.c;
+  this.y0;
+);
+
+// =============================================
+// HIP - Copyright (c) - 2014 - Olivier Belanger
+// =============================================
+function _hip_compute_coeffs()
+(
+ this.b1 = exp(-2 * $pi * this.freq / srate);
+ this.a0 = (1 + this.b1) / 2;
+ this.a1 = -this.a0;
+);
+
+function hip(freq)
+(
+ this.x0 = this.y0 = 0;
+ this.ny = srate * 0.49;
+ freq < 0.1 ? freq = 0.1 : freq > this.ny ? freq = this.ny;
+ this.freq = freq;
+ this._hip_compute_coeffs();
+);
+
+function hip_set_freq(freq)
+(
+ freq < 0.1 ? freq = 0.1 : freq > this.ny ? freq = this.ny;
+ this.freq = freq;
+ this._hip_compute_coeffs();
+);
+
+function hip_do(signal)
+(
+ this.y0 = signal * this.a0 + this.x0 * this.a1 + this.y0 * this.b1;
+ this.x0 = signal;
+ this.y0;
+);
+
+// ================================================
+// BUT_LP - Copyright (c) - 2014 - Olivier Belanger
+// ================================================
+function _butlp_compute_coeffs(freq)
+(
+ freq < 1.0 ? freq = 1.0 : freq > this.ny ? freq = this.ny;
+ this.freq = freq;
+ c_ = 1.0 / tan(this.pioversr * this.freq);
+ c2_ = c_ * c_;
+ this.a0 = this.a2 = 1.0 / (1.0 + this.sqrt2 * c_ + c2_);
+ this.a1 = 2.0 * this.a0;
+ this.b1 = this.a1 * (1.0 - c2_);
+ this.b2 = this.a0 * (1.0 - this.sqrt2 * c_ + c2_);
+);
+
+function butlp(freq)
+(
+ this.x1 = this.x2 = this.y1 = this.y2 = 0.0;
+ this.pioversr = $pi / srate;
+ this.sqrt2 = sqrt(2.0);
+ this.ny = srate * 0.49;
+ this._butlp_compute_coeffs(freq);
+);
+
+function butlp_set_freq(freq)
+(
+ this._butlp_compute_coeffs(freq);
+);
+
+function butlp_do(signal)
+(
+ tmp_ = this.a0 * signal + this.a1 * this.x1 + this.a2 * this.x2 - this.b1 * this.y1 - this.b2 * this.y2;
+ this.x2 = this.x1; this.x1 = signal; this.y2 = this.y1; this.y1 = tmp_;
+ tmp_;
+);
+
+// ================================================
+// BUT_HP - Copyright (c) - 2014 - Olivier Belanger
+// ================================================
+function _buthp_compute_coeffs(freq)
+(
+ freq < 1.0 ? freq = 1.0 : freq > this.ny ? freq = this.ny;
+ this.freq = freq;
+ c_ = tan(this.pioversr * this.freq);
+ c2_ = c_ * c_;
+ this.a0 = this.a2 = 1.0 / (1.0 + this.sqrt2 * c_ + c2_);
+ this.a1 = -2.0 * this.a0;
+ this.b1 = 2.0 * this.a0 * (c2_ - 1.0);
+ this.b2 = this.a0 * (1.0 - this.sqrt2 * c_ + c2_);
+);
+ 
+function buthp(freq)
+(
+ this.x1 = this.x2 = this.y1 = this.y2 = 0.0;
+ this.pioversr = $pi / srate;
+ this.sqrt2 = sqrt(2.0);
+ this.ny = srate * 0.49;
+ this._buthp_compute_coeffs(freq);
+);
+ 
+function buthp_set_freq(freq)
+(
+ this._buthp_compute_coeffs(freq);
+);
+ 
+function buthp_do(signal)
+(
+ tmp_ = this.a0 * signal + this.a1 * this.x1 + this.a2 * this.x2 - this.b1 * this.y1 - this.b2 * this.y2;
+ this.x2 = this.x1; this.x1 = signal; this.y2 = this.y1; this.y1 = tmp_;
+ tmp_;
+);
+ 
+// ================================================
+// EQ - Copyright (c) - 2014 - Olivier Belanger
+// ================================================
+function _eq_compute_peak_coeffs()
+(
+ amul_ = this.alpha * this.a;
+ adiv_ = this.alpha / this.a;
+ this.b0 = 1.0 + amul_;
+ this.b1 = this.a1 = -2.0 * this.c;
+ this.b2 = 1.0 - amul_;
+ this.a0 = 1 + adiv_;
+ this.a2 = 1 - adiv_;
+);
+ 
+function _eq_compute_ls_coeffs()
+(
+ sqrt2a_ = sqrt(this.a * 2.0) * this.alpha;
+ amin1c_ = (this.a - 1.0) * this.c;
+ aadd1c_ = (this.a + 1.0) * this.c;
+ this.b0 = this.a * ((this.a + 1.0) - amin1c_ + sqrt2a_);
+ this.b1 = 2.0 * this.a * ((this.a - 1.0) - aadd1c_);
+ this.b2 = this.a * ((this.a + 1.0) - amin1c_ - sqrt2a_);
+ this.a0 = (this.a + 1.0) + amin1c_ + sqrt2a_;
+ this.a1 = -2.0 * ((this.a - 1.0) + aadd1c_);
+ this.a2 = (this.a + 1.0) + amin1c_ - sqrt2a_;
+);
+ 
+function _eq_compute_hs_coeffs()
+(
+ sqrt2a_ = sqrt(this.a * 2.0) * this.alpha;
+ amin1c_ = (this.a - 1.0) * this.c;
+ aadd1c_ = (this.a + 1.0) * this.c;
+ this.b0 = this.a * ((this.a + 1.0) + amin1c_ + sqrt2a_);
+ this.b1 = -2.0 * this.a * ((this.a - 1.0) + aadd1c_);
+ this.b2 = this.a * ((this.a + 1.0) + amin1c_ - sqrt2a_);
+ this.a0 = (this.a + 1.0) - amin1c_ + sqrt2a_;
+ this.a1 = 2.0 * ((this.a - 1.0) - aadd1c_);
+ this.a2 = (this.a + 1.0) - amin1c_ - sqrt2a_;
+);
+ 
+function _eq_compute_vars(freq q boost)
+(
+ freq <= 1 ? freq = 1 : freq > this.ny ? freq = this.ny;
+ this.freq = freq;
+ q < 0.1 ? q = 0.1;
+ this.q = q;
+ this.boost = boost;
+ this.a = pow(10, boost/40);
+ w0 = this.twopi * this.freq / srate;
+ this.c = cos(w0);
+ this.alpha = sin(w0) / (2 * this.q);
+ this.type == 0 ? this._eq_compute_peak_coeffs() :
+ this.type == 1 ? this._eq_compute_ls_coeffs() :
+ this.type == 2 ? this._eq_compute_hs_coeffs();
+);
+ 
+function eq(freq q boost type)
+(
+ this.x1 = this.x2 = this.y1 = this.y2 = 0.0;
+ this.twopi = $pi * 2;
+ this.ny = srate * 0.49;
+ type < 0 ? type = 0 : type > 2 ? type = 2;
+ this.type = type;
+ this._eq_compute_vars(freq, q, boost);
+);
+ 
+function eq_set_freq(freq)
+(
+ freq != this.freq ? this._eq_compute_vars(freq, this.q, this.boost);
+);
+ 
+function eq_set_q(q)
+(
+ q != this.q ? this._eq_compute_vars(this.freq, q, this.boost);
+);
+ 
+function eq_set_boost(boost)
+(
+ boost != this.boost ? this._eq_compute_vars(this.freq, this.q, boost);
+);
+ 
+function eq_set_type(type)
+(
+ type != this.type ? (
+ type < 0 ? type = 0 : type > 2 ? type = 2;
+ this.type = type;
+ this._eq_compute_vars(this.freq, this.q, this.boost);
+ );
+);
+ 
+function eq_do(signal)
+(
+ tmp_ = (this.b0 * signal + this.b1 * this.x1 + this.b2 * this.x2 - this.a1 * this.y1 - this.a2 * this.y2) / this.a0;
+ this.x2 = this.x1; this.x1 = signal; this.y2 = this.y1; this.y1 = tmp_;
+ tmp_;
+);
+ 
+// EQ1979 Filters Inits Section
+//====================================================
+// Frequency response hardware emulation
+//====================================================
+// Input HPF Hardware Emulation Filter
+f_in_1.hip(12);
+f_in_2.hip(12);
+// Input Sharp LF highpass Filter
+f_SLF_1.buthp(50);
+f_SLF_2.buthp(50);
+f_SLF_3.buthp(50);
+f_SLF_4.buthp(50);
+f_SLF_5.eq(50,0.5,0,0);
+f_SLF_6.eq(50,0.5,0,0);
+f_SLF_7.eq(50,0.5,0,0);
+f_SLF_8.eq(50,0.5,0,0);
+// Output Hardware Sharp high freqency lowpass Filter
+f_HLF_1.butlp(20843);
+f_HLF_2.butlp(20843);
+f_HLF_3.butlp(20843);
+f_HLF_4.butlp(20843);
+// Emulation of the static mid bump
+f_bump_1.eq(850, 0.5,.38,0);
+f_bump_2.eq(850, 0.5,.38,0);
+// Emulation of the static smooth HF drop
+f_drop_1.eq(18300, 0.3,-0.8,0);
+f_drop_2.eq(18300, 0.3,-0.8,0);
+ 
+//====================================================
+// High Shelf
+//====================================================
+// Datasheet : 12k Shelving at +-16dB
+f_HF_1.eq(2000, 0.35, hpf_gain, 2);
+f_HF_2.eq(2000, 0.35, hpf_gain, 2);
+// Emulation of the eq counter mid bump
+f_HF_bump_1.eq(820, 0.45,-2,0);
+f_HF_bump_2.eq(820, 0.45,-2,0);
+ 
+//====================================================
+// Mid Peak filter
+//====================================================
+// Emulation of the eq counter mid bump
+f_MF_bump_1.eq(380, 0.25,1,0);
+f_MF_bump_2.eq(380, 0.25,1,0);
+// Main MID Filter peak
+f_MF_1.eq(380, 0.5,0,0);
+f_MF_2.eq(380, 0.5,0,0);
+ 
+//====================================================
+// Low Peak filter
+//====================================================
+// Emulation of the natural filter low bump when activated
+f_LF_bump_1.eq(80, 0.25,0.5,0);
+f_LF_bump_2.eq(80, 0.25,0.5,0);
+// Emulation of the natural filter low drop when activated
+f_LF_drop_1.eq(240, 0.5,-0.5,0);
+f_LF_drop_2.eq(240, 0.5,-0.5,0);
+// Main Low Filter peak
+f_LF_1.eq(80, 0.5,0,0);
+f_LF_2.eq(80, 0.5,0,0);
+ 
+//====================================================
+// Parameters filters
+//====================================================
+// lpf filtering of parameters that can be externally modulated
+f_pHF.lop(fparam); 
+f_pMF.lop(fparam); 
+f_pLF.lop(fparam); 
+ 
+//========================================================
+// Functions called to update filters on parameter changes
+//========================================================
+function gain_update() (
+ next_gain=10^(gain_db/20);
+);
+ 
+function sat_update() (
+ sat_S=10*exp((2*(sat_amount/10)-20)/e);
+ atan_S=atan(sat_S);
+ sat_trim=(1-0.5*atan_S);
+ //sat_trim=0.83333+0.166666*cos(pi*sat_S/10);
+);
+ 
+function hpf_update() (
+ hpf_cut==1 ? (f_hpf_cut=34;f_hpf_b1=46;f_hpf_g1=1.1;f_hpf_q1=1.6;f_hpf_b2=78;f_hpf_g2=-0.3;f_hpf_q2=0.7;);
+ hpf_cut==2 ? (f_hpf_cut=64;f_hpf_b1=76;f_hpf_g1=2.4;f_hpf_q1=1.2;f_hpf_b2=110;f_hpf_g2=-1.6;f_hpf_q2=0.7;);
+ hpf_cut==3 ? (f_hpf_cut=132;f_hpf_b1=160;f_hpf_g1=2.2;f_hpf_q1=1.9;f_hpf_b2=302;f_hpf_g2=-0.5;f_hpf_q2=1;);
+ hpf_cut==4 ? (f_hpf_cut=270;f_hpf_b1=330;f_hpf_g1=2.4;f_hpf_q1=1.6;f_hpf_b2=665;f_hpf_g2=-0.4;f_hpf_q2=0.7;);
+ 
+ f_SLF_1.buthp(f_hpf_cut);
+ f_SLF_2.buthp(f_hpf_cut);
+ f_SLF_3.buthp(f_hpf_cut);
+ f_SLF_4.buthp(f_hpf_cut);
+ f_SLF_5.eq_set_freq(f_hpf_b1);
+ f_SLF_6.eq_set_freq(f_hpf_b1);
+ f_SLF_7.eq_set_freq(f_hpf_b2);
+ f_SLF_8.eq_set_freq(f_hpf_b2);
+ f_SLF_5.eq_set_q(f_hpf_q1);
+ f_SLF_6.eq_set_q(f_hpf_q1);
+ f_SLF_7.eq_set_q(f_hpf_q2);
+ f_SLF_8.eq_set_q(f_hpf_q2);
+ f_SLF_5.eq_set_boost(f_hpf_g1);
+ f_SLF_6.eq_set_boost(f_hpf_g1);
+ f_SLF_7.eq_set_boost(f_hpf_g2);
+ f_SLF_8.eq_set_boost(f_hpf_g2);
+);
+ 
+function HF_update() (
+ f_HF_1.eq_set_boost(hpf_gain);
+ f_HF_2.eq_set_boost(hpf_gain);
+ f_HF_bump_1.eq_set_boost(hpf_gain*-3.5/18);
+ f_HF_bump_2.eq_set_boost(hpf_gain*-3.5/18);
+);
+ 
+function MF_update() (
+ mpf_cut==1 ? f_mpf_cut=380;
+ mpf_cut==2 ? f_mpf_cut=700;
+ mpf_cut==3 ? f_mpf_cut=1600;
+ mpf_cut==4 ? f_mpf_cut=3200;
+ mpf_cut==5 ? f_mpf_cut=6800;
+ mpf_cut==6 ? f_mpf_cut=12200;
+ f_MF_bump_1.eq_set_freq(f_mpf_cut);
+ f_MF_bump_2.eq_set_freq(f_mpf_cut);
+ // Mid Main filter cut frequency
+ mpf_cut==1 ? f_mpf_main=358;
+ mpf_cut==2 ? f_mpf_main=750;
+ mpf_cut==3 ? f_mpf_main=1590;
+ mpf_cut==4 ? f_mpf_main=3200;
+ mpf_cut==5 ? f_mpf_main=5800-600*abs(mpf_gain)/18;//5200
+ mpf_cut==6 ? f_mpf_main=9400-2130*abs(mpf_gain)/18;//7270
+ f_MF_1.eq_set_freq(f_mpf_main);
+ f_MF_2.eq_set_freq(f_mpf_main);
+ // Mid Main filter Q
+ mpf_cut==1 ? f_mpf_q=0.22+abs(mpf_gain/60);
+ mpf_cut==2 ? f_mpf_q=0.22+abs(mpf_gain/55);
+ mpf_cut==3 ? f_mpf_q=0.22+abs(mpf_gain/60);
+ mpf_cut==4 ? f_mpf_q=0.22+abs(mpf_gain/72);
+ mpf_cut==5 ? f_mpf_q=0.22+abs(mpf_gain/35);
+ mpf_cut==6 ? f_mpf_q=0.22+abs(mpf_gain/32);
+ f_MF_1.eq_set_q(f_mpf_q);
+ f_MF_2.eq_set_q(f_mpf_q);
+ // Boost
+ f_MF_1.eq_set_boost(mpf_gain);
+ f_MF_2.eq_set_boost(mpf_gain);
+);
+ 
+function LF_update() (
+ // Bump Freq
+ lpf_cut==1 ? f_lpf_cut=35;
+ lpf_cut==2 ? f_lpf_cut=80;
+ lpf_cut==3 ? f_lpf_cut=130;
+ lpf_cut==4 ? f_lpf_cut=240;
+ f_LF_bump_1.eq_set_freq(f_lpf_cut);
+ f_LF_bump_2.eq_set_freq(f_lpf_cut);
+ f_LF_bump_1.eq_set_boost(0.5+lpf_cut/8);
+ f_LF_bump_2.eq_set_boost(0.5+lpf_cut/8);
+ // Drop Freq
+ lpf_cut==1 ? f_lpf_cut=240;
+ lpf_cut==2 ? f_lpf_cut=420;
+ lpf_cut==3 ? f_lpf_cut=540;
+ lpf_cut==4 ? f_lpf_cut=1000;
+ f_LF_drop_1.eq_set_freq(f_lpf_cut+abs(lpf_gain*5));
+ f_LF_drop_2.eq_set_freq(f_lpf_cut+abs(lpf_gain*5));
+ f_LF_drop_1.eq_set_boost(-0.5-lpf_cut/11-lpf_gain/(2.6+2/lpf_cut));
+ f_LF_drop_2.eq_set_boost(-0.5-lpf_cut/11-lpf_gain/(2.6+2/lpf_cut));
+ // LOW Main filter cut frequency
+ lpf_cut==1 ? f_lpf_main=30;
+ lpf_cut==2 ? f_lpf_main=32;
+ lpf_cut==3 ? f_lpf_main=50;
+ lpf_cut==4 ? f_lpf_main=80;
+ f_LF_1.eq_set_freq(f_lpf_main);
+ f_LF_2.eq_set_freq(f_lpf_main);
+ // LOW Main filter Q
+ lpf_cut==1 ? f_lpf_q=0.22;
+ lpf_cut==2 ? f_lpf_q=0.12;
+ lpf_cut==3 ? f_lpf_q=0.12;
+ lpf_cut==4 ? f_lpf_q=0.12;
+ f_LF_1.eq_set_q(f_lpf_q);
+ f_LF_2.eq_set_q(f_lpf_q);
+ // Boost
+ f_LF_1.eq_set_boost(lpf_gain);
+ f_LF_2.eq_set_boost(lpf_gain);
+);
+ 
+@slider
+//====================================================
+// Gain and Saturation Amount (Red Knob)
+//====================================================
+// Gain Trim
+gain_update();
+// Saturation parameters - https://www.desmos.com/calculator/hmaieq6af3
+sat_update();
+//====================================================
+// Input Sharp filter (Blue Knob)
+//====================================================
+hpf_update();
+//====================================================
+// High Shelf (#1 Grey Knob)
+//====================================================
+HF_update();
+//====================================================
+// Mid Peak filter (#2 Grey Knob)
+//====================================================
+MF_update();
+//====================================================
+// Low Peak filter (#3 Grey Knob)
+//====================================================
+LF_update();
+ 
+@block
+d_gain = (next_gain - last_gain)/samplesblock;
+HF_update();
+MF_update();
+LF_update();
+
+ 
+@sample
+// High Shelf Smoothing
+hpf_gain = f_pHF.lop_do(c_hpf_gain);
+mpf_gain = f_pMF.lop_do(c_mpf_gain);
+lpf_gain = f_pLF.lop_do(c_lpf_gain);
+
+
+// Gain Trimming
+spl0 *= last_gain;
+spl1 *= last_gain;
+last_gain += d_gain;
+
+// Phase
+phase_enable ? (
+spl0 *= -1;
+spl1 *= -1;
+);
+ 
+// Saturation
+sat_amount ? (
+spl0 = sat_trim*atan(spl0*sat_S)/atan_S;
+spl1 = sat_trim*atan(spl1*sat_S)/atan_S;
+);
+ 
+// Input HPF Hardware Emulation Filter
+spl0 = f_in_1.hip_do(spl0);
+spl1 = f_in_2.hip_do(spl1);
+
+eq_enable ? ( 
+// Input Sharp LF Filter
+hpf_cut ? (
+spl0 = f_SLF_1.buthp_do(spl0);
+spl0 = f_SLF_3.buthp_do(spl0);
+spl1 = f_SLF_2.buthp_do(spl1);
+spl1 = f_SLF_4.buthp_do(spl1);
+spl0 = f_SLF_5.eq_do(spl0);
+spl1 = f_SLF_6.eq_do(spl1);
+spl0 = f_SLF_7.eq_do(spl0);
+spl1 = f_SLF_8.eq_do(spl1);
+);
+ 
+// Mid bump HW emulation
+spl0 = f_bump_1.eq_do(spl0);
+spl1 = f_bump_2.eq_do(spl1);
+ 
+// HF drop HW emulation
+spl0 = f_drop_1.eq_do(spl0);
+spl1 = f_drop_2.eq_do(spl1);
+ 
+// High Pass Shelf
+spl0 = f_HF_1.eq_do(spl0);
+spl1 = f_HF_2.eq_do(spl1);
+// Mid bump HW emulation
+spl0 = f_HF_bump_1.eq_do(spl0);
+spl1 = f_HF_bump_2.eq_do(spl1);
+ 
+// Mid Filter
+// Mid bump HW emulation
+mpf_cut ? (
+spl0 = f_MF_bump_1.eq_do(spl0);
+spl1 = f_MF_bump_2.eq_do(spl1);
+spl0 = f_MF_1.eq_do(spl0);
+spl1 = f_MF_2.eq_do(spl1);
+);
+ 
+// Low Filter
+lpf_cut ? (
+spl0 = f_LF_bump_1.eq_do(spl0);
+spl1 = f_LF_bump_2.eq_do(spl1);
+spl0 = f_LF_drop_1.eq_do(spl0);
+spl1 = f_LF_drop_2.eq_do(spl1);
+spl0 = f_LF_1.eq_do(spl0);
+spl1 = f_LF_2.eq_do(spl1);
+);
+
+ );
+//Output LPF 
+spl0 = f_HLF_1.butlp_do(spl0);
+spl0 = f_HLF_3.butlp_do(spl0);
+spl1 = f_HLF_2.butlp_do(spl1);
+spl1 = f_HLF_4.butlp_do(spl1);
+ 
+@gfx 820 200
+gfx_clear=bgcolor;
+//===========================================================================
+// HMI control - Mouse handling
+//===========================================================================
+input_m=mouse_cap;
+// Reset mouse handling
+input_m==0 ? (last_y=mouse_y;delta_y=0;protec=0;);
+// Bouton 1
+input_m==1 ? (
+ ((mouse_x<175)&&(protec==0))||(protec==1) ? (
+ //====== Red Saturation
+ protec=1;
+ delta_y+=last_y-mouse_y;
+ last_y=mouse_y;
+ delta_y!=0 ? (
+ sat_amount+=delta_y/6;
+ delta_y=0;
+ sat_amount>100 ? sat_amount=100;
+ sat_amount<0 ? sat_amount=0;
+ sliderchange(slider8);
+ sat_update();
+ );
+ );
+ ((mouse_x>175)&&(mouse_x<325)&&(protec==0))||(protec==2) ? (
+ // ====== High Shelf
+ protec=2;
+ delta_y+=last_y-mouse_y;
+ last_y=mouse_y;
+ delta_y!=0 ? (
+ c_hpf_gain+=delta_y/8;
+ delta_y=0;
+ c_hpf_gain>16 ? c_hpf_gain=16;
+ c_hpf_gain<-16 ? c_hpf_gain=-16;
+ sliderchange(slider2);
+ HF_update();
+ );
+ ); 
+ ((mouse_x>325)&&(mouse_x<475)&&(protec==0))||(protec==3) ? (
+ protec=3;
+ delta_y+=last_y-mouse_y;
+ last_y=mouse_y;
+ delta_y!=0 ? (
+ c_mpf_gain+=delta_y/8;
+ delta_y=0;
+ c_mpf_gain>18 ? c_mpf_gain=18;
+ c_mpf_gain<-18 ? c_mpf_gain=-18;
+ sliderchange(slider3);
+ MF_update();
+ );
+ ); 
+ ((mouse_x>475)&&(mouse_x<625)&&(protec==0))||(protec==4) ? (
+ protec=4;
+ delta_y+=last_y-mouse_y;
+ last_y=mouse_y;
+ delta_y!=0 ? (
+ c_lpf_gain+=delta_y/8;
+ delta_y=0;
+ c_lpf_gain>16 ? c_lpf_gain=16;
+ c_lpf_gain<-16 ? c_lpf_gain=-16;
+ sliderchange(slider5);
+ LF_update();
+ );
+ );     
+ ((mouse_x>625)&&(mouse_x<775)&&(protec==0))||(protec==5) ? (
+ protec=5;
+ delta_y+=last_y-mouse_y;
+ last_y=mouse_y;
+ abs(delta_y)>20 ? (
+ hpf_cut+=sign(delta_y);
+ delta_y=0;
+ hpf_cut>4 ? hpf_cut=4;
+ hpf_cut<0 ? hpf_cut=0;
+ sliderchange(slider7);
+ // HPF Stage update
+ hpf_update();
+ );
+ );
+ (mouse_x>775)&&(mouse_y>70)&&(mouse_y<90)&&(protec==0) ? (
+ protec=6;
+ eq_enable ? eq_enable=0:eq_enable=1;
+ sliderchange(slider9);
+ );
+ (mouse_x>775)&&(mouse_y>100)&&(mouse_y<120)&&(protec==0) ? (
+ protec=6;
+ phase_enable ? phase_enable=0:phase_enable=1;
+ sliderchange(slider10);
+ );
+ );
+ 
+// Molette
+ mouse_wheel!=0 ? (
+ mouse_x<175 ? (
+ gain_db+=sign(mouse_wheel)/2;
+ delta_y=0;
+ gain_db>24 ? gain_db=24;
+ gain_db<-24 ? gain_db=-24;
+ sliderchange(slider1);
+ gain_update(););
+ (mouse_x>325)&&(mouse_x<475) ? (
+ mpf_cut+=sign(mouse_wheel);
+ delta_y=0;
+ mpf_cut>6 ? mpf_cut=6;
+ mpf_cut<0 ? mpf_cut=0;
+ sliderchange(slider4);
+ MF_update();
+ );
+ (mouse_x>475)&&(mouse_x<625) ? (
+ lpf_cut+=sign(mouse_wheel);
+ delta_y=0;
+ lpf_cut>4 ? lpf_cut=4;
+ lpf_cut<0 ? lpf_cut=0;
+ sliderchange(slider6);
+ LF_update();
+ );
+ (mouse_x>625)&&(mouse_x<775) ? (
+ hpf_cut+=sign(mouse_wheel);
+ delta_y=0;
+ hpf_cut>4 ? hpf_cut=4;
+ hpf_cut<0 ? hpf_cut=0;
+ sliderchange(slider7);
+ hpf_update();
+ 
+ );
+ mouse_wheel=0;
+ ); 
+ 
+// Bouton 2
+input_m==2? (
+ (mouse_x>gfx_w-10)&&(mouse_y>gfx_h-10)&&(delta_y==0)&&(protec==0) ? (
+ slider_show(1023,-1);
+ protec=7;
+ w=1;
+ );
+ 
+ mouse_x<175 ? (
+ mouse_y < 50 ? (
+ gain_db=0;
+ sliderchange(slider1);
+ gain_update();
+ ) : (
+ sat_amount=0;
+ sliderchange(slider8);
+ sat_update();
+ );
+ );
+ (mouse_x>175)&&(mouse_x<325) ? (
+ c_hpf_gain=0;
+ sliderchange(slider2);
+ HF_update();
+ );
+ (mouse_x>325)&&(mouse_x<475) ? (
+ mouse_y < 150 ? (
+ c_mpf_gain=0;
+ sliderchange(slider3);
+ MF_update();
+ ) : (
+ mpf_cut=0;
+ sliderchange(slider4);
+ MF_update(););
+ );
+ (mouse_x>475)&&(mouse_x<625) ? (
+ mouse_y < 150 ? (
+ c_lpf_gain=0;
+ sliderchange(slider5);
+ LF_update();
+ ) : (
+ lpf_cut=0;
+ sliderchange(slider6);
+ LF_update(););
+ );
+ (mouse_x>625)&&(mouse_x<775) ? (
+ hpf_cut=0;
+ sliderchange(slider7);
+ hpf_update();
+ );
+ );
+ 
+//===========================================================================
+// Buttons
+//===========================================================================
+gfx_setfont(1, "Monospace", 19); 
+// eq
+eq_enable ? (gfx_r=0.9;gfx_g=0.9;gfx_b=0.9;):(gfx_r=0.4;gfx_g=0.4;gfx_b=0.4;);
+gfx_measurestr("EQ",w,h);
+gfx_rect(770,70,40,h);
+gfx_r=0.2;gfx_g=0.2;gfx_b=0.2;
+gfx_x=790-w/2;gfx_y=70;
+gfx_drawstr("EQ");
+// phi
+phase_enable ? (gfx_r=0.9;gfx_g=0.9;gfx_b=0.9;):(gfx_r=0.4;gfx_g=0.4;gfx_b=0.4;);
+gfx_measurestr("POL",w,h);
+gfx_rect(770,100,40,h);
+gfx_r=0.2;gfx_g=0.2;gfx_b=0.2;
+gfx_x=790-w/2;gfx_y=100;
+gfx_drawstr("POL");
+ 
+//===========================================================================
+// Red Gain Knob
+//===========================================================================
+diam=100;
+pos_x=100;
+pos_y=100;
+gfx_r=0.3;gfx_g=0.3;gfx_b=0.3;
+gfx_circle(pos_x,pos_y,diam/2,fill=1);
+gfx_r=0.9;gfx_g=0;gfx_b=0;
+gfx_triangle(pos_x-0.2*diam/2,pos_y-diam/2,pos_x-0.2*diam/2,pos_y+diam/2,pos_x+0.2*diam/2,pos_y+diam/2,pos_x+0.2*diam/2,pos_y-diam/2);
+gfx_circle(pos_x,pos_y,r=0.8*diam/2,fill=1);
+gfx_r=0;gfx_g=0;gfx_b=0;
+gfx_circle(pos_x,pos_y,r=0.6*diam/2,fill=0);
+gfx_r=1;gfx_g=1;gfx_b=1;
+gfx_triangle(pos_x-0.01*diam/2,pos_y+0.6*diam/2,pos_x-0.01*diam/2,pos_y+diam/2,pos_x+0.01*diam/2,pos_y+diam/2,pos_x+0.01*diam/2,pos_y+0.6*diam/2);
+// Rotation de la zone pixels
+gfx_blit(-1, 1,0.2*pi+1.6*pi*(sat_amount)/100, pos_x-diam/2-4, pos_y-diam/2-4, diam+8, diam+8, pos_x-diam/2-4, pos_y-diam/2-4);
+// Serigraphy
+gfx_r=0.9;gfx_g=0.9;gfx_b=0.9;
+gfx_circle(pos_x+cos(0.3*pi)*1.2*diam/2,pos_y+sin(0.3*pi)*1.2*diam/2,4, fill=1);
+gfx_circle(pos_x+cos(0.7*pi)*1.2*diam/2,pos_y+sin(0.7*pi)*1.2*diam/2,4, fill=1);
+gfx_circle(pos_x+cos(-0.5*pi)*1.2*diam/2,pos_y+sin(-0.5*pi)*1.2*diam/2,4, fill=1);
+gfx_arc(pos_x,pos_y,1.2*diam/2, 0.05*pi, 0.75*pi);
+gfx_arc(pos_x,pos_y,1.2*diam/2, -0.05*pi, -0.75*pi);
+gfx_setfont(1, "Arial", 20);
+gfx_measurestr("Drive",w,h);
+gfx_x=pos_x-w/2;gfx_y=pos_y-diam*0.85;gfx_drawstr("Drive");
+gfx_setfont(1, "Arial", 14);
+gfx_measurestr("100%",w,h);
+gfx_x=pos_x+cos(0.3*pi)*1.2*diam/2-w/2+h;gfx_y=pos_y+sin(0.3*pi)*1.2*diam/2+h/2;gfx_drawstr("100%");
+gfx_measurestr("0",w,h);
+gfx_x=pos_x+cos(0.7*pi)*1.2*diam/2-w/2-h;gfx_y=pos_y+sin(0.7*pi)*1.2*diam/2+h/2;gfx_drawstr("0");
+// Gain Trim
+gfx_r=0.9;gfx_g=0.3;gfx_b=0.3;
+gfx_circle(pos_x+cos((0.7+1.6*(gain_db+0.01+24)/48)*pi)*1.2*diam/2,pos_y+sin((0.7+1.6*(gain_db+0.01+24)/48)*pi)*1.2*diam/2,4, fill=1);
+gfx_arc(pos_x,pos_y,1.2*diam/2,0.05*pi*sign(gain_db) , 0.8*pi*gain_db/24);
+gfx_setfont(1, "Arial", 14);
+gfx_r=0.9;gfx_g=0.0;gfx_b=0.0;
+gfx_x=pos_x-w/2-5;fx_y=pos_y+diam*0.55;gfx_drawnumber(gain_db,1);
+ 
+//===========================================================================
+// Grey High Shelf Knob
+//===========================================================================
+diam=100;
+pos_x=250;
+pos_y=100;
+gfx_r=0.3;gfx_g=0.3;gfx_b=0.3;
+gfx_circle(pos_x,pos_y,diam/2,fill=1);
+gfx_r=0.6;gfx_g=0.6;gfx_b=0.6;
+gfx_circle(pos_x,pos_y,r=0.8*diam/2,fill=1);
+gfx_r=0;gfx_g=0;gfx_b=0;
+gfx_circle(pos_x,pos_y,r=0.6*diam/2,fill=0);
+gfx_r=1;gfx_g=1;gfx_b=1;
+gfx_triangle(pos_x-0.01*diam/2,pos_y+0.6*diam/2,pos_x-0.01*diam/2,pos_y+diam/2,pos_x+0.01*diam/2,pos_y+diam/2,pos_x+0.01*diam/2,pos_y+0.6*diam/2);
+// Rotation de la zone pixels
+gfx_blit(-1, 1,0.2*pi+1.6*pi*(hpf_gain+16)/32, pos_x-diam/2-4, pos_y-diam/2-4, diam+8, diam+8, pos_x-diam/2-4, pos_y-diam/2-4);
+// Serigraphy
+gfx_r=0.9;gfx_g=0.9;gfx_b=0.9;
+gfx_circle(pos_x+cos(0.3*pi)*1.2*diam/2,pos_y+sin(0.3*pi)*1.2*diam/2,4, fill=1);
+gfx_circle(pos_x+cos(0.7*pi)*1.2*diam/2,pos_y+sin(0.7*pi)*1.2*diam/2,4, fill=1);
+gfx_circle(pos_x+cos(-0.5*pi)*1.2*diam/2,pos_y+sin(-0.5*pi)*1.2*diam/2,4, fill=1);
+gfx_arc(pos_x,pos_y,1.2*diam/2, 0.05*pi, 0.75*pi);
+gfx_arc(pos_x,pos_y,1.2*diam/2, -0.05*pi, -0.75*pi);
+gfx_setfont(1, "Arial", 20);
+gfx_measurestr("High",w,h);
+gfx_x=pos_x-w/2;gfx_y=pos_y-diam*0.85;gfx_drawstr("High");
+gfx_setfont(1, "Arial", 14);
+gfx_measurestr("+16",w,h);
+gfx_x=pos_x+cos(0.3*pi)*1.2*diam/2-w/2+h;gfx_y=pos_y+sin(0.3*pi)*1.2*diam/2+h/2;gfx_drawstr("+16");
+gfx_measurestr("-16",w,h);
+gfx_x=pos_x+cos(0.7*pi)*1.2*diam/2-w/2-h;gfx_y=pos_y+sin(0.7*pi)*1.2*diam/2+h/2;gfx_drawstr("-16");
+ 
+//===========================================================================
+// Grey Mid Freq Knob
+//===========================================================================
+diam=100;
+pos_x=400;
+pos_y=100;
+gfx_r=0.3;gfx_g=0.3;gfx_b=0.3;
+gfx_circle(pos_x,pos_y,diam/2,fill=1);
+gfx_r=0.6;gfx_g=0.6;gfx_b=0.6;
+gfx_circle(pos_x,pos_y,r=0.8*diam/2,fill=1);
+gfx_r=0;gfx_g=0;gfx_b=0;
+gfx_circle(pos_x,pos_y,r=0.6*diam/2,fill=0);
+gfx_r=1;gfx_g=1;gfx_b=1;
+gfx_triangle(pos_x-0.01*diam/2,pos_y+0.6*diam/2,pos_x-0.01*diam/2,pos_y+diam/2,pos_x+0.01*diam/2,pos_y+diam/2,pos_x+0.01*diam/2,pos_y+0.6*diam/2);
+// Rotation de la zone pixels
+gfx_blit(-1, 1,0.2*pi+1.6*pi*(mpf_gain+18)/36, pos_x-diam/2-4, pos_y-diam/2-4, diam+8, diam+8, pos_x-diam/2-4, pos_y-diam/2-4);
+// Serigraphy
+gfx_r=0.8;gfx_g=0.8;gfx_b=0.8;
+i=0;loop(7, gfx_circle(pos_x+cos((0.3+0.4*i/6)*pi)*diam/2,pos_y+sin((0.3+0.4*i/6)*pi)*diam/2,1, fill=1); i+=1;);
+gfx_r=0.9;gfx_g=0.9;gfx_b=0.9;
+gfx_circle(pos_x+cos(0.3*pi)*1.2*diam/2,pos_y+sin(0.3*pi)*1.2*diam/2,4, fill=1);
+gfx_circle(pos_x+cos(0.7*pi)*1.2*diam/2,pos_y+sin(0.7*pi)*1.2*diam/2,4, fill=1);
+gfx_circle(pos_x+cos(-0.5*pi)*1.2*diam/2,pos_y+sin(-0.5*pi)*1.2*diam/2,4, fill=1);
+gfx_arc(pos_x,pos_y,1.2*diam/2, 0.05*pi, 0.75*pi);
+gfx_arc(pos_x,pos_y,1.2*diam/2, -0.05*pi, -0.75*pi);
+gfx_circle(pos_x+cos((0.3+0.4*mpf_cut/6)*pi)*diam/2,pos_y+sin((0.3+0.4*mpf_cut/6)*pi)*diam/2,3, fill=1);
+gfx_setfont(1, "Arial", 20);
+gfx_measurestr("Mid",w,h);
+gfx_x=pos_x-w/2;gfx_y=pos_y-diam*0.85;gfx_drawstr("Mid");
+gfx_setfont(1, "Arial", 14);
+mpf_cut==0 ? (gfx_measurestr("Off",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("Off"););
+mpf_cut==1 ? (gfx_measurestr("360",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("360"););
+mpf_cut==2 ? (gfx_measurestr("700",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("700"););
+mpf_cut==3 ? (gfx_measurestr("1.6k",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("1.6k"););
+mpf_cut==4 ? (gfx_measurestr("3.2k",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("3.2k"););
+mpf_cut==5 ? (gfx_measurestr("4.8k",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("4.8k"););
+mpf_cut==6 ? (gfx_measurestr("7.2k",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("7.2k"););
+gfx_measurestr("+18",w,h);
+gfx_x=pos_x+cos(0.3*pi)*1.2*diam/2-w/2+h;gfx_y=pos_y+sin(0.3*pi)*1.2*diam/2+h/2;gfx_drawstr("+18");
+gfx_measurestr("-18",w,h);
+gfx_x=pos_x+cos(0.7*pi)*1.2*diam/2-w/2-h;gfx_y=pos_y+sin(0.7*pi)*1.2*diam/2+h/2;gfx_drawstr("-18");
+ 
+//===========================================================================
+// Grey Low Freq Knob
+//===========================================================================
+diam=100;
+pos_x=550;
+pos_y=100;
+gfx_r=0.3;gfx_g=0.3;gfx_b=0.3;
+gfx_circle(pos_x,pos_y,diam/2,fill=1);
+gfx_r=0.6;gfx_g=0.6;gfx_b=0.6;
+gfx_circle(pos_x,pos_y,r=0.8*diam/2,fill=1);
+gfx_r=0;gfx_g=0;gfx_b=0;
+gfx_circle(pos_x,pos_y,r=0.6*diam/2,fill=0);
+gfx_r=1;gfx_g=1;gfx_b=1;
+gfx_triangle(pos_x-0.01*diam/2,pos_y+0.6*diam/2,pos_x-0.01*diam/2,pos_y+diam/2,pos_x+0.01*diam/2,pos_y+diam/2,pos_x+0.01*diam/2,pos_y+0.6*diam/2);
+// Rotation de la zone pixels
+gfx_blit(-1, 1,0.2*pi+1.6*pi*(lpf_gain+16)/32, pos_x-diam/2-4, pos_y-diam/2-4, diam+8, diam+8, pos_x-diam/2-4, pos_y-diam/2-4);
+// Serigraphy
+gfx_r=0.8;gfx_g=0.8;gfx_b=0.8;
+i=0;loop(5, gfx_circle(pos_x+cos((0.3+0.4*i/4)*pi)*diam/2,pos_y+sin((0.3+0.4*i/4)*pi)*diam/2,1, fill=1); i+=1;);
+gfx_r=0.9;gfx_g=0.9;gfx_b=0.9;
+gfx_circle(pos_x+cos(0.3*pi)*1.2*diam/2,pos_y+sin(0.3*pi)*1.2*diam/2,4, fill=1);
+gfx_circle(pos_x+cos(0.7*pi)*1.2*diam/2,pos_y+sin(0.7*pi)*1.2*diam/2,4, fill=1);
+gfx_circle(pos_x+cos(-0.5*pi)*1.2*diam/2,pos_y+sin(-0.5*pi)*1.2*diam/2,4, fill=1);
+gfx_arc(pos_x,pos_y,1.2*diam/2, 0.05*pi, 0.75*pi);
+gfx_arc(pos_x,pos_y,1.2*diam/2, -0.05*pi, -0.75*pi);
+gfx_circle(pos_x+cos((0.3+0.4*lpf_cut/4)*pi)*diam/2,pos_y+sin((0.3+0.4*lpf_cut/4)*pi)*diam/2,3, fill=1);
+gfx_setfont(1, "Arial", 20);
+gfx_measurestr("Low",w,h);
+gfx_x=pos_x-w/2;gfx_y=pos_y-diam*0.85;gfx_drawstr("Low");
+gfx_setfont(1, "Arial", 14);
+lpf_cut==0 ? (gfx_measurestr("Off",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("Off"););
+lpf_cut==1 ? (gfx_measurestr("35",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("35"););
+lpf_cut==2 ? (gfx_measurestr("60",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("60"););
+lpf_cut==3 ? (gfx_measurestr("110",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("110"););
+lpf_cut==4 ? (gfx_measurestr("220",w,h); gfx_x=pos_x-w/2;gfx_y=pos_y+diam*0.55;gfx_drawstr("220"););
+gfx_measurestr("+18",w,h);
+gfx_x=pos_x+cos(0.3*pi)*1.2*diam/2-w/2+h;gfx_y=pos_y+sin(0.3*pi)*1.2*diam/2+h/2;gfx_drawstr("+16");
+gfx_measurestr("-18",w,h);
+gfx_x=pos_x+cos(0.7*pi)*1.2*diam/2-w/2-h;gfx_y=pos_y+sin(0.7*pi)*1.2*diam/2+h/2;gfx_drawstr("-16");
+ 
+//===========================================================================
+// Blue Bump Filter Knob
+//===========================================================================
+diam=100;
+pos_x=700;
+pos_y=100;
+gfx_r=0.3;gfx_g=0.3;gfx_b=0.3;
+gfx_circle(pos_x,pos_y,diam/2,fill=1);
+gfx_r=0;gfx_g=0;gfx_b=0.8;
+gfx_triangle(pos_x-0.2*diam/2,pos_y-diam/2,pos_x-0.2*diam/2,pos_y+diam/2,pos_x+0.2*diam/2,pos_y+diam/2,pos_x+0.2*diam/2,pos_y-diam/2);
+gfx_circle(pos_x,pos_y,r=0.8*diam/2,fill=1);
+gfx_r=0;gfx_g=0;gfx_b=0;
+gfx_circle(pos_x,pos_y,r=0.6*diam/2,fill=0);
+gfx_r=1;gfx_g=1;gfx_b=1;
+gfx_triangle(pos_x-0.01*diam/2,pos_y+0.6*diam/2,pos_x-0.01*diam/2,pos_y+diam/2,pos_x+0.01*diam/2,pos_y+diam/2,pos_x+0.01*diam/2,pos_y+0.6*diam/2);
+// Rotation de la zone pixels
+gfx_blit(-1, 1,-0.3*pi+0.6*pi*(hpf_cut)/4, pos_x-diam/2-4, pos_y-diam/2-4, diam+8, diam+8, pos_x-diam/2-4, pos_y-diam/2-4);
+// Serigraphy
+gfx_r=0.9;gfx_g=0.9;gfx_b=0.9;
+gfx_circle(pos_x+cos(0.2*pi)*1.2*diam/2,pos_y+sin(0.2*pi)*1.2*diam/2,4, fill=1);
+gfx_circle(pos_x+cos(0.2*pi+0.6*pi/4)*1.2*diam/2,pos_y+sin(0.2*pi+0.6*pi/4)*1.2*diam/2,4, fill=1);
+gfx_circle(pos_x+cos(0.2*pi+2*0.6*pi/4)*1.2*diam/2,pos_y+sin(0.2*pi+2*0.6*pi/4)*1.2*diam/2,4, fill=1);
+gfx_circle(pos_x+cos(0.2*pi+3*0.6*pi/4)*1.2*diam/2,pos_y+sin(0.2*pi+3*0.6*pi/4)*1.2*diam/2,4, fill=1);
+gfx_circle(pos_x+cos(0.2*pi+4*0.6*pi/4)*1.2*diam/2,pos_y+sin(0.2*pi+4*0.6*pi/4)*1.2*diam/2,4, fill=1);
+gfx_arc(pos_x,pos_y,1.2*diam/2, 0.75*pi, 0.8*pi);
+gfx_arc(pos_x,pos_y,1.2*diam/2, 0.90*pi, 0.95*pi);
+gfx_arc(pos_x,pos_y,1.2*diam/2, 1.05*pi, 1.1*pi);
+gfx_arc(pos_x,pos_y,1.2*diam/2, 1.20*pi, 1.25*pi);
+gfx_setfont(1, "Arial", 20);
+gfx_measurestr("Low",w,h);
+gfx_x=pos_x-w/2;gfx_y=pos_y-diam*0.75;gfx_drawstr("HPF");
+gfx_setfont(1, "Arial", 14);
+gfx_measurestr("Off",w,h);
+gfx_x=pos_x+cos(0.166*pi)*1.2*diam/2-w/2;gfx_y=pos_y+sin(0.166*pi)*1.2*diam/2+h/2+4;gfx_drawstr("Off");
+gfx_measurestr("50",w,h);
+gfx_x=pos_x+cos(0.3333*pi)*1.2*diam/2-w/2;gfx_y=pos_y+sin(0.333*pi)*1.2*diam/2+h/2;gfx_drawstr("50");
+gfx_measurestr("80",w,h);
+gfx_x=pos_x+cos(0.5*pi)*1.2*diam/2-w/2;gfx_y=pos_y+sin(0.5*pi)*1.2*diam/2+h/2;gfx_drawstr("80");
+gfx_measurestr("160",w,h);
+gfx_x=pos_x+cos(0.666*pi)*1.2*diam/2-w/2;gfx_y=pos_y+sin(0.666*pi)*1.2*diam/2+h/2;gfx_drawstr("160");
+gfx_measurestr("300",w,h);
+gfx_x=pos_x+cos(0.8333*pi)*1.2*diam/2-w/2;gfx_y=pos_y+sin(0.833*pi)*1.2*diam/2+h/2+4;gfx_drawstr("300");
+//===========================================================================
+// Global Text
+gfx_r=0.9;gfx_g=0.9;gfx_b=0.9;
+gfx_setfont(1, "Arial", 22);
+gfx_measurestr("EQ1979",w,h);
+gfx_x=820-w-10;gfx_y=10;
+gfx_drawstr("EQ1979");// 

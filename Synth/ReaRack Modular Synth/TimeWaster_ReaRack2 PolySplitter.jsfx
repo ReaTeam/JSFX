@@ -1,0 +1,146 @@
+version: 2.1.0
+desc:ReaRack2 - Poly Splitter
+noindex:   true
+author:    Malcom Smith
+           Copyright(C) 2017 and later, Malcolm Smith (username 'Time Waster' on REAPER forums).
+           
+License:   LGPL - http://www.gnu.org/licenses/lgpl.html
+
+about:     Poly splitter module for the ReaRack modular JSFX synth system.
+           Splits out overlapping notes onto sequential MIDI channels for polyphonic voicing.
+
+changelog: Version 2.1.0 (25/02/2018) Updated to accept note-on with velocity = 0 as note off.
+                                      Thanks to Robert Randolf for this update.
+           Version 2.0.0 (10/12/2017) Initial version 2 release.
+
+slider1:mychan=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Lowest MIDI Output Channel
+slider2:voices=15<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Number of Voices
+slider3:reldel=0<0,10,0.001>Release Time (seconds)
+slider39:sclass=0<0,2,1{Off,Slave}>Get Release Time from Master EG (Class)
+slider40:sgroup=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Group
+
+options:gmem=ReaRack
+
+in_pin:none
+out_pin:none
+
+@init
+//fxn = 250; // Reserved but not currently used in this module
+vc = 0;
+loop(16,
+  vc[256] = -1;
+  vc+=1;
+  );
+  
+@slider
+
+hichan = mychan+(voices);
+hichan > 15 ? hichan = 15;
+
+
+@block
+tcur = time_precise();
+group = sgroup*1000;
+sclass == 1 ? (
+  reldel = gmem[group+160+35]; // Get release time from Envelope Generator
+);
+
+while (midirecv(offset, msg1, msg2, msg3))
+/*
+   Memory allocation:
+   x[0]   store the current channel for each note (127 slots).
+   x[128] store the release time for each note (127 slots).
+   x[256] store the current note sending on the channel, or -1 if the channel is free (16 slots).
+   x[288] store the note on/note off flag for the channel (16 slots).
+*/
+
+// If the channel release time has been exceeded, free the channel
+(
+vc = 0;
+loop(16,
+  // set the current note to -1 if the release time has been exceeded and a note off has been recieved
+  vc[272] <= time_precise() && vc[288] == 0 ? vc[256] = -1;
+  vc+=1;
+  );
+
+  // Extract message type
+  status = msg1 & $xF0;
+  // Is it a note on event?
+  (status == $x90 && msg3 > 0)?
+  (
+  // Is the note currently playing in release mode?
+  msg2[128] > time_precise() ?
+    (
+    // If so, resend it on the same channel
+    midisend(offset, $x90+msg2[0], msg2, msg3);
+    (msg2[0])[288] = 1; // Set the note on flag to on
+    ):
+  //If not -
+  //Find next vacant channel
+  (
+  vchannel = mychan;
+  while (vchannel[256] > -1 && vchannel < hichan)
+    (
+    vchannel += 1;
+    vchannel == hichan && vchannel[256] > -1 ? overflo = 1 : overflo = 0;
+    );
+    // Send note on vacant channel
+    midisend(offset, $x90+vchannel, msg2, msg3);
+    msg2[0] = vchannel; // Record the channel the note is sending on
+    vchannel[256] = msg2; // Record the note that is sending on the channel
+    vchannel[288] = 1; // Set the channel's note on flag to on
+    );
+  )
+  :
+  (
+  // Is it a note off event?
+  (status == $x80 || (status == $x90 && msg3 == 0))?
+    (
+    // Pass through on apropriate channel
+     sendchannel = msg2[0];
+     midisend(offset, $x80+msg2[0], msg2, msg3);
+     msg2[128] = time_precise()+reldel; // Record the release time for the note
+     tdel = msg2[128];
+    (msg2[0])[272] = msg2[128]; // Record the release time for the channel
+    (msg2[0])[288] = 0; // Set the channel's note on flag to off
+    );
+  );
+  status != $x90 && status != $x80 ? midisend(offset, msg1, msg2, msg3);
+);
+
+@gfx 450 60
+
+gfx_r = 1;
+gfx_g = 1;
+gfx_b = 1;
+gfx_a = 0.7;
+gfx_x = 5;
+gfx_y = 10;
+
+gfx_drawstr("Channel:");
+
+achan = mychan;
+gfx_b = 0;
+gfx_a = 1;
+
+while(achan <= hichan)
+  (
+  achan[256] < 0 ?
+    (
+    gfx_r = 1;
+    gfx_g = 0;
+    ):(
+    gfx_r = 0;
+    gfx_g = 1;
+    );
+    achan == hichan && overflo == 1 ?
+    (
+    gfx_r = 1;
+    gfx_g = .5;
+    gfx_b = 0;
+    );
+  achan < 10 ? gfx_drawstr("  "):gfx_drawstr(" ");
+  gfx_drawnumber(achan+1,0);
+  achan +=1;
+  );
+

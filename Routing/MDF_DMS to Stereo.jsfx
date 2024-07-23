@@ -1,0 +1,51 @@
+desc:DoubleMidSide to Stereo
+author: Michael Fewkes
+version: 1.0
+changelog: Initial release
+about: Decodes double mid side recodrings into stereo recordings
+
+slider1:0<0,1,1{Front Side Rear,Front Rear Side}>Input Order
+slider2:0<0,2,1{Stereo Fold,Stereo Front,Stereo Rear}>Output Order
+slider4:0<-60,24,1>Front Mid Level (dB)
+slider5:0<-60,24,1>Front Side Level (dB)
+slider6:0<-1,1,0.01>Front Balance
+slider7:0<-60,24,1>Rear Mid Level (dB)
+slider8:0<-60,24,1>Rear Side Level (dB)
+slider9:0<-1,1,0.01>Rear Balance
+slider10:0<-1,1,0.01>Front Rear Balance(Fold only)
+
+@init
+
+@slider
+volFMw = 2^(slider4/6);
+volFSw = 2^(slider5/6);
+volRMw = 2^(slider7/6);
+volRSw = 2^(slider8/6);
+slider6 > 0 ? volL = 1.0 - slider6 : volL = 1.0;
+slider6 < 0 ? volR = 1.0 + slider6 : volR = 1.0;
+slider9 > 0 ? volLs = 1.0 - slider9 : volLs = 1.0;
+slider9 < 0 ? volRs = 1.0 + slider9 : volRs = 1.0;
+
+slider2 == 0 ? (volFb = (1.0 - slider10)/2; volRb = (1.0 + slider10)/2;) :
+slider2 == 1 ? (volFb = 1.0; volRb = 0;) :
+slider2 == 2 ? (volFb = 0; volRb = 1.0;);
+
+@sample
+front = spl0;
+slider1 == 0 ? side = spl1 : side = spl2;
+slider1 == 0 ? rear = spl2 : rear = spl1;
+
+frontM = front * volFMw;
+frontS = side * volFSw;
+rearM = rear * volRMw;
+rearS = side * volRSw;
+
+chanL = (frontM + frontS) * volL * volFb;
+chanR = (frontM - frontS) * volR * volFb;
+chanLs = (rearM + rearS) * volLs * volRb;
+chanRs = (rearM - rearS) * volRs * volRb;
+
+spl0 = chanL + chanLs;
+spl1 = chanR + chanRs;
+spl2 = 0;
+

@@ -1,0 +1,442 @@
+desc: JSDrumpad
+author: tilr
+version: 1.1
+changelog: Change rbj filters to svf for smooth interpolation
+provides:
+  tilr_JSDrumpad.jsfx.rpl
+  tilr_JSDrumpad/dp.envlib.jsfx-inc
+  tilr_JSDrumpad/dp.gfxlib.jsfx-inc
+  tilr_JSDrumpad/dp.mouselib.jsfx-inc
+  tilr_JSDrumpad/dp.svf_filter.jsfx-inc
+screenshot: https://raw.githubusercontent.com/tiagolr/JSDrumpad/master/doc/ss.png
+about:
+  # JSDrumpad
+
+  JSFX drumpad synth inspired by vsts like Microtonic and DSK Synthdrums.
+
+  Features:
+  * 1x OSC (Sine, Triangle, Saw, or Square wave)
+  * 1x Noise generator (Stereo or mono)
+  * 3x Envelopes (osc, pitch and noise)
+  * 2x Filter (Noise color/lp, LowPass, BandPass and HighPass)
+  * 1x Distortion (Tube)
+  * 1x Band EQ
+
+desc:JSDrumpad
+tags: drum synth, instrument
+author: TiagoLr
+
+import dp.envlib.jsfx-inc
+import dp.mouselib.jsfx-inc
+import dp.gfxlib.jsfx-inc
+import dp.svf_filter.jsfx-inc
+
+slider1:mix=-1<-1, 1, .01>-Mix (Osc - Noise)
+slider2:vol=-12<-90, 0, .01>-Volume
+slider3:pan=0<-1, 1, .01>-Pan
+slider4:distortion=0<0, 48, 0.1>-Drive Db
+
+slider5:osc_freq=440<20, 10000, 1:log>-Frequency (Hz)
+slider6:osc_wave=0<0, 3, 1{Sine,Triangle,Saw,Square}>-Wave
+slider7:osc_att=1<1, 5000, 1:log>-Attack
+slider8:osc_dec=70<1, 5000, 1:log>-Decay
+slider9:osc_shape=0<-1, 1, .01>-Shape
+
+slider10:pitch_amt=0<-1, 1, 0.01>-Pitch ammount
+slider11:pitch_att=1<1, 5000, 1:log>-Pitch attack
+slider12:pitch_dec=70<1, 5000, 1:log>-Pitch decay
+slider13:pitch_shape=0<-1, 1, 0.01>-Pitch shape
+slider14:pitch_track=0<0,1,1{No,Yes}>-Keyboard tracking
+
+slider15:noise_stereo=0<0, 1, 1{No,Yes}>-Stereo noise
+slider16:noise_cutoff=22050<20,22050,1:log>-Noise color
+slider17:noise_att=1<1,5000, 1:log>-Noise attack
+slider18:noise_dec=70<1,5000, 1:log>-Noise decay
+slider19:noise_shape=0<-1, 1, 0.01>-Noise shape
+
+slider20:filter_shape=0<0,3,1{Low Pass, Band Pass, High Pass}>-Filter shape
+slider21:filter_freq=22050<20, 22050, 1:log>-Filter frequency
+slider22:filter_q=0.70<0.01, 40, 0.01:log>-Filter Q
+slider23:filter_sel=0<1, 0, 1{Noise,Osc,Both}>-Filter target
+
+slider24:eq_freq=440<20, 22050, 1:log>-EQ frequency
+slider25:eq_gain=0<0, -18, 18>-EQ gain
+slider26:eq_q=0.70<0.01, 40, 0.01:log>-EQ Q
+
+slider27:vel_vol=0<0, 1, 0.01>-Velocity volume
+
+options:gfx_hz=60 no_meter
+
+@init
+
+osc_cycle = 0;
+note_on = 0;
+note_vel = 0;
+note_counter = 0;
+notes = 0;
+notes[0]="C";notes[1]="C#";notes[2]="D";notes[3]="D#";
+notes[4]="E";notes[5]="F";notes[6]="F#";notes[7]="G";
+notes[8]="G#";notes[9]="A";notes[10]="A#";notes[11]="B";
+
+function wrap(number) (number <= 1 ? number : number - 1;);
+function sine_wave(cycle) (sin(cycle * 2 * $pi););
+function tri_wave(cycle) ((cycle > 0.5 ? 4 * cycle - 2 : -4 * cycle + 2) - 1;);
+function saw_wave(cycle) (cycle * -2 + 1;);
+function square_wave(cycle) (cycle < 0.5 ? -1 : 1;);
+function make_noise(cycle) (rand(2) - 1;);
+function db2gain(db) (10^(db / 20););
+function round(in) (floor(in + 0.5 * sign(in)););
+function note2freq(n) (440 * pow(2, (n - 69) / 12););
+function freq2note(f) ( round(12*(log(f/440)/log(2))+69); );
+
+function make_wave(cycle) (
+  osc_wave == 0 ? sine_wave(cycle)
+    : osc_wave == 1 ? tri_wave(cycle)
+    : osc_wave == 2 ? saw_wave(cycle)
+      : square_wave(cycle)
+);
+
+function get_note_name() (
+  note = freq2note(osc_freq);
+  sprintf(#, "%s%i", notes[note % 12], floor(note / 12) - 1);
+);
+
+function envelope_refresh()
+local (shape, att_shape, dec_shape)
+(
+  shape = osc_shape + 1;
+  att_shape = shape > 1 ? 3.001 - shape : shape;
+  dec_shape = shape > 1 ? 2 - shape : 1.001 + shape;
+  envelope.zen_update(
+    0, // delay
+    osc_att, // attack
+    osc_dec, // decay
+    -90, // sustain
+    0, // release
+    att_shape, // attack shape
+    dec_shape, // decay shape
+    1, // release shape
+    100, // mix
+    0, // min
+    100 // max
+  );
+
+  shape = pitch_shape + 1;
+  att_shape = shape > 1 ? 3.001 - shape : shape;
+  dec_shape = shape > 1 ? 2 - shape : 1.001 + shape;
+  pitch_envelope.zen_update(0, pitch_att, pitch_dec, -90, 0, att_shape, dec_shape, 1, 100, 0, 100);
+
+  shape = noise_shape + 1;
+  att_shape = shape > 1 ? 3.001 - shape : shape;
+  dec_shape = shape > 1 ? 2 - shape: 1.001 + shape;
+  noise_envelope.zen_update(0, noise_att, noise_dec, -90, 0, att_shape, dec_shape, 1, 100, 0, 100);
+);
+
+// Parameter smoothing
+function rc_set(rc)
+  instance(a) (
+    a = 1 / (rc * srate + 1);
+);
+function rc_lp(sample)
+  instance(lp, a) (
+    lp += a * (sample - lp);
+);
+function smooth()
+  instance (lp, smooth) (
+    lp = smooth;
+    smooth = this.rc_lp(this);
+);
+
+tube.rc_set(0.0033);
+tube.smooth = db2gain(distortion);
+vel_mult.rc_set(0.0066);
+vel_mult.smooth = 1;
+
+// Distortion
+function tanh(x) (
+  x = exp(2*x);
+  (x - 1) / (x + 1);
+);
+dc = 0.05;
+tanh_dc = tanh(dc);
+function amp(x) (
+  tanh(this.smooth * x + dc) - tanh_dc;
+);
+
+//
+function on_slider() (
+  tube = db2gain(distortion);
+  gain = db2gain(vol);
+  noise_lowpass.svf_lp(noise_cutoff, 0.70, 12);
+  filter_shape == 0 ? (
+    noise_filter.svf_lp(filter_freq, filter_q, 1);
+  );
+  filter_shape == 1 ? (
+    noise_filter.svf_bp2(filter_freq, filter_q);
+  );
+  filter_shape == 2 ? (
+    noise_filter.svf_hp(filter_freq, filter_q, 1);
+  );
+  eq.svf_eq(eq_freq, eq_q, db2gain(eq_gain));
+  envelope_refresh();
+);
+
+noise_filter.svf_set_sample_rate(srate);
+noise_lowpass.svf_set_sample_rate(srate);
+eq.svf_set_sample_rate(srate);
+
+@slider
+
+on_slider();
+
+@block
+
+while (midirecv(offset, msg1, note, vel)) (
+  event = msg1 & 0xF0;
+  channel = msg1 & 0x0F;
+
+  event == 0x90 && vel > 0 ? ( // NOTEON
+    note_on = 1;
+    note_vel = vel / 127;
+    note_counter = 0;
+    note_freq = note2freq(note);
+    envelope.zen_trigger(1);
+    pitch_envelope.zen_trigger(1);
+    noise_envelope.zen_trigger(1);
+  );
+
+  midisend(offset, msg1, note, vel);
+);
+
+@sample
+
+last_play_state == 0 && play_state ? (
+  eq.svf_single_set_to_target();
+  noise_lowpass.svf_single_set_to_target();
+  noise_filter.svf_single_set_to_target();
+);
+last_play_state = play_state;
+
+note_on ? (
+  note_counter += 1 / srate * 1000;
+  note_counter > osc_att + osc_dec && note_counter > noise_att + noise_dec ? (
+    note_on = 0;
+    envelope.zen_release();
+    pitch_envelope.zen_release();
+    noise_envelope.zen_release();
+  );
+
+  envelope.zen_process();
+  pitch_envelope.zen_process();
+  noise_envelope.zen_process();
+
+  freq = pitch_track ? note_freq : osc_freq;
+  osc_cycle = wrap(osc_cycle + freq / srate * pow(16, pitch_amt * pitch_envelope.env));
+  wave_l = make_wave(osc_cycle) * envelope.env;
+  wave_r = wave_l;
+  noise_l = make_noise() * noise_envelope.env;
+  noise_r = noise_stereo ? make_noise() * noise_envelope.env : noise_l;
+
+  noise_cutoff < 22000 ? (
+    noise_lowpass.svf_tick();
+    noise_l = noise_lowpass.svf_svf0(noise_l);
+    noise_r = noise_lowpass.svf_svf1(noise_r);
+  );
+
+  mix < 0 ? (
+    noise_l *= 1 + mix;
+    noise_r *= 1 + mix;
+  );
+  mix > 0 ? (
+    wave_l *= 1 - mix;
+    wave_r *= 1 - mix;
+  );
+  pan < 0 ? (
+    noise_r *= 1 + pan;
+    wave_r *= 1 + pan;
+  );
+  pan > 0 ? (
+    noise_l *= 1 - pan;
+    wave_l *= 1 - pan;
+  );
+
+  signal_merged = 0;
+  (filter_shape == 0 && filter_freq < 22000) ||
+  (filter_shape == 1) ||
+  (filter_shape == 2 && filter_freq > 20) ?
+  (
+    noise_filter.svf_tick();
+    mult = filter_shape == 1 ? filter_q : 1;
+    filter_sel == 0 ? (
+      noise_l = noise_filter.svf_svf0(noise_l) * mult;
+      noise_r = noise_filter.svf_svf1(noise_r) * mult;
+      1;
+    );
+    filter_sel == 1 ? (
+      wave_l = noise_filter.svf_svf0(wave_l) * mult;
+      wave_r = noise_filter.svf_svf1(wave_r) * mult;
+    );
+    filter_sel == 2 ? (
+      outl = noise_filter.svf_svf0(wave_l + noise_l) * mult;
+      outr = noise_filter.svf_svf1(wave_r + noise_r) * mult;
+      signal_merged = 1;
+    );
+  );
+
+  !signal_merged ? (
+    outl = noise_l + wave_l;
+    outr = noise_r + wave_r;
+  );
+
+  distortion ? (
+    tube.smooth();
+    outl = tube.amp(outl);
+    outr = tube.amp(outr);
+  );
+
+  eq_gain ? (
+    eq.svf_tick();
+    outl = eq.svf_svf0(outl);
+    outr = eq.svf_svf1(outr);
+  );
+
+  vel_mult = min(note_vel + (1 - vel_vol), 1);
+  spl0 += outl * gain * vel_mult.smooth();
+  spl1 += outr * gain * vel_mult.smooth();
+);
+
+@gfx 700 280
+
+gfx_clear = 0x141618;
+mouse.update_mouse_state();
+
+set_color(0x666666);
+gfx_x = 20; gfx_y = 20;
+gfx_drawstr("MIX");
+
+draw_knob(20, 40, 1, "Mix", 0, -1, 1, 0, 1, sprintf(#, "%.2f", slider(1)));
+draw_knob(80, 40, 2, "Vol", -12, -90, 0, 0, 0, sprintf(#, "%.1f Db", slider(2)));
+draw_knob(20, 110, 3, "Pan", 0, -1, 1, 0, 1, sprintf(#, "%.2f", slider(3)));
+draw_knob(80, 110, 4, "Drive", 0, 0, 48, 0, 0, sprintf(#, "%.1f Db", slider(4)));
+
+set_color(0x666666);
+gfx_line(140, 40, 140, 170);
+gfx_x = 140; gfx_y = 20;
+gfx_drawstr(sprintf(#, "OSC %s", get_note_name()));
+
+draw_knob(160, 40, 5, "Freq", 440, 20, 10000, 1, 0, sprintf(#, "%i Hz", slider(5)));
+draw_knob(220, 40, 7, "Att", 1, 1, 5000, 1, 0, sprintf(#, "%i ms", slider(7)));
+draw_knob(160, 110, 8, "Dec", 70, 1, 5000, 1, 0, sprintf(#, "%i ms", slider(8)));
+draw_knob(220, 110, 9, "Shape", 0, -1, 1, 0, 1, sprintf(#, "%.2f", slider(9)));
+
+shape_name = osc_wave == 0 ? "Sin" : osc_wave == 1 ? "Tri" : osc_wave == 2 ? "Saw" : "Sqr";
+draw_button(220, 20, 40, shape_name, 0);
+mouse.left_click && mouse_in_rect(220, 20 - 2, 40, 10 + 2) ? (
+  gfx_x = 220; gfx_y = 30;
+  choice = gfx_showmenu("Sine|Triangle|Saw|Square");
+  choice > 0 ? slider(6) = choice - 1;
+);
+
+set_color(0x666666);
+gfx_line(280, 40, 280, 170);
+gfx_x = 280; gfx_y = 20;
+gfx_drawstr("PITCH");
+
+draw_knob(300, 40, 10, "Amt", 0, -1, 1, 0, 1, sprintf(#, "%.2f", slider(10)));
+draw_knob(360, 40, 11, "Att", 1, 1, 5000, 1, 0, sprintf(#, "%i ms", slider(11)));
+draw_knob(300, 110, 12, "Dec", 70, 1, 5000, 1, 0, sprintf(#, "%i ms", slider(12)));
+draw_knob(360, 110, 13, "Shape", 0, -1, 1, 0, 1, sprintf(#, "%.2f", slider(13)));
+
+draw_button(340, 20, 60, "KTrack", slider(14));
+mouse.left_click && mouse_in_rect(340, 20 - 2, 60, 10 + 2) ? (
+  slider(14) = !slider(14);
+);
+
+set_color(0x666666);
+gfx_line(420, 40, 420, 170);
+gfx_x = 420; gfx_y = 20;
+gfx_drawstr("NOISE");
+
+draw_knob(440, 40, 16, "Color", 22050, 20, 22050, 1, 0, sprintf(#, "%i Hz", slider(16)));
+draw_knob(500, 40, 17, "Att", 1, 1, 5000, 1, 0, sprintf(#, "%i ms", slider(17)));
+draw_knob(440, 110, 18, "Dec", 70, 1, 5000, 1, 0, sprintf(#, "%i ms", slider(18)));
+draw_knob(500, 110, 19, "Shape", 0, -1, 1, 0, 1, sprintf(#, "%.2f", slider(19)));
+
+draw_button(480, 20, 60, slider(15) ? "Stereo" : "Mono", slider(15));
+mouse.left_click && mouse_in_rect(480, 20 - 2, 60, 10 + 2) ? (
+  slider(15) = !slider(15);
+);
+
+set_color(0x666666);
+gfx_line(560, 40, 560, 170);
+gfx_x = 560; gfx_y = 20;
+gfx_drawstr("FILTER");
+
+draw_knob(580, 40, 21, "Freq", 22050, 20, 22050, 1, 0, sprintf(#, "%i Hz", slider(21)));
+draw_knob(640, 40, 22, "Q", 0.70, 0.01, 40, 1, 0, sprintf(#, "%.2f", slider(22)));
+
+shape_name = filter_shape == 0 ? "LP" : filter_shape == 1 ? "BP" : "HP";
+draw_button(640, 20, 40, shape_name, 0);
+mouse.left_click && mouse_in_rect(640, 20 - 2, 40, 10 + 2) ? (
+  gfx_x = 640; gfx_y = 30;
+  choice = gfx_showmenu("LP|BP|HP");
+  choice > 0 ? slider(20) = choice - 1;
+  on_slider();
+);
+
+filter_name = filter_sel == 0 ? "Noise" : filter_sel == 1 ? "Osc" : "Both";
+draw_button(630, 110, 50, filter_name, 0);
+mouse.left_click && mouse_in_rect(630, 110, 50, 10+2) ? (
+  gfx_x = 630; gfx_y = 120;
+  choice = gfx_showmenu("Filter noise|Filter osc|Filter both");
+  choice > 0 ? slider(23) = choice - 1;
+);
+
+set_color(0x666666);
+gfx_x = 20; gfx_y = 180;
+gfx_drawstr("VELOCITY");
+
+draw_knob(20, 200, 27, "Vol", 1, 0, 1, 0, 0, sprintf(#, "%.2f", slider(27)));
+
+set_color(0x666666);
+gfx_x = 140; gfx_y = 180;
+gfx_drawstr("EQ");
+
+draw_knob(160, 200, 24, "Freq", 440, 20, 22050, 1, 0, sprintf(#, "%i Hz", slider(24)));
+draw_knob(220, 200, 25, "Gain", 0, -18, 18, 0, 1, sprintf(#, "%.2f Db", slider(25)));
+draw_knob(280, 200, 26, "Q", 0.70, 0.01, 40, 1, 0, sprintf(#, "%.2f", slider(26)));
+
+function on_knob_move (nslider, slider_min, slider_max, slider_is_log, factor) (
+  factor *= mouse.control ? 0.05 : 1;
+  slider_is_log ? (
+    slider(nslider) = slider(nslider) * pow(100, -factor * 0.01);
+  ) : (
+    inc = (slider_max - slider_min) / 100 * -factor;
+    slider(nslider) += inc;
+  );
+
+  slider(nslider) > slider_max ? slider(nslider) = slider_max;
+  slider(nslider) < slider_min ? slider(nslider) = slider_min;
+  on_slider();
+  sliderchange(slider(nslider));
+  slider_automate(slider(nslider));
+);
+
+wheelknob_nslider ? (
+  on_knob_move(wheelknob_nslider, wheelknob_min, wheelknob_max, wheelknob_is_log, mouse.wheel * -7);
+);
+
+selknob_nslider && mouse.left && mouse.dy != 0 ? (
+  on_knob_move(selknob_nslider, selknob_min, selknob_max, selknob_is_log, mouse.dy);
+);
+
+doubleclk_nslider ? (
+  on_slider();
+  sliderchange(slider(doubleclk_nslider));
+  slider_automate(slider(doubleclk_nslider));
+  doubleclk_nslider = 0;
+);
+
+gfx_setcursor(selknob_nslider ? 32511 : 0);
+!mouse.wheel ? wheelknob_nslider = 0;
+!mouse.left ? selknob_nslider = 0;

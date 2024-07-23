@@ -1,0 +1,766 @@
+desc: JSModulator
+author: tilr
+version: 1.1
+changelog:
+  replace zdf with rbj filters
+  fix read wave sample rate
+  fix volume knobs clicking
+  next and prev wave buttons
+provides:
+  tilr_JSModulator/mod.array.jsfx-inc
+  tilr_JSModulator/mod.envlib.jsfx-inc
+  tilr_JSModulator/mod.fft_real_synth.jsfx-inc
+  tilr_JSModulator/mod.gfxlib.jsfx-inc
+  tilr_JSModulator/mod.mouselib.jsfx-inc
+  tilr_JSModulator/mod.osc.jsfx-inc
+  tilr_JSModulator/mod.wavetable.jsfx-inc
+  [data] tilr_JSModulator/Complex 2.wav
+  [data] tilr_JSModulator/Complex 3.wav
+  [data] tilr_JSModulator/Complex 4.wav
+  [data] tilr_JSModulator/Complex 5.wav
+  [data] tilr_JSModulator/Complex.wav
+  [data] tilr_JSModulator/Organ 2.wav
+  [data] tilr_JSModulator/Organ 3.wav
+  [data] tilr_JSModulator/Organ 4.wav
+  [data] tilr_JSModulator/Organ 5.wav
+  [data] tilr_JSModulator/Organ 6.wav
+  [data] tilr_JSModulator/Organ 7.wav
+  [data] tilr_JSModulator/Organ.wav
+  [data] tilr_JSModulator/Saw 2.wav
+  [data] tilr_JSModulator/Saw 3.wav
+  [data] tilr_JSModulator/Saw.wav
+  [data] tilr_JSModulator/Sine 2.wav
+  [data] tilr_JSModulator/Sine 3.wav
+  [data] tilr_JSModulator/Sine 4.wav
+  [data] tilr_JSModulator/Sine 5.wav
+  [data] tilr_JSModulator/Sine.wav
+  [data] tilr_JSModulator/Spectral.wav
+  [data] tilr_JSModulator/Square 2.wav
+  [data] tilr_JSModulator/Square.wav
+  [data] tilr_JSModulator/Stairs.wav
+  [data] tilr_JSModulator/Triangle.wav
+  tilr_JSModulator/mod.rbj_filter.jsfx-inc
+screenshot: https://raw.githubusercontent.com/tiagolr/jsmodulator/master/doc/ss.png
+about:
+  # JSModulator
+
+  Polyphonic FM synth with 4 operators
+
+  Features:
+  * 4 wavetable operators with additive synthesis
+  * FM matrix 4x4
+  * Global envelope and envelope per operator
+  * Operator harmonics and phase editor
+  * Filter per voice with envelope ADSR
+  * Envelope curve/tension controls
+
+desc:JSModulator
+tags: synth, instrument
+
+slider1:_vol=80<0, 100, 0.1>-Master Volume
+slider2:_vel=100<0, 100, 0.1>-Velocity
+slider3:_att=1<1, 5000, 1:log>-Attack
+slider4:_dec=1<1, 5000, 1:log>-Decay
+slider5:_sus=100<0, 100, 0.1>-Sustain
+slider6:_rel=500<0, 5000, 1:log>-Release
+slider7:_att_t=0<-100,100,1>-Attack Curve
+slider8:_dec_t=0<-100,100,1>-Decay Curve
+slider9:_rel_t=0<-100,100,1>-Release Curve
+
+slider20:_o1_vol=100<0,100,1>-Osc1 Vol
+slider21:_o1_pan=0<-100,100,0.01>-Osc1 Pan
+slider22:_o1_semi=0<-48, 48, 1>-Osc1 Semi
+slider23:_o1_fine=0<-99, 99, 1>-Osc1 Fine
+slider24:_o1_phase=0<0,100,1>-Osc1 Phase
+slider25:_o1_vel=100<0, 100, 0.1>-Osc1 Velocity
+slider26:_o1_att=1<1, 5000, 1:log>-Osc1 Attack
+slider27:_o1_dec=1<1, 5000, 1:log>-Osc1 Decay
+slider28:_o1_sus=100<0, 100, 0.1>-Osc1 Sustain
+slider29:_o1_rel=5000<0, 5000, 1:log>-Osc1 Release
+slider30:_o1_att_t=0<-100,100,1>-Osc1 Attack Curve
+slider31:_o1_dec_t=0<-100,100,1>-Osc1 Decay Curve
+slider32:_o1_rel_t=0<-100,100,1>-Osc1 Release Curve
+
+slider40:_o2_vol=0<0,100,1>-Osc2 Vol
+slider41:_o2_pan=0<-100,100,0.01>-Osc2 Pan
+slider42:_o2_semi=0<-48, 48, 1>-Osc2 Semi
+slider43:_o2_fine=0<-99, 99, 1>-Osc2 Fine
+slider44:_o2_phase=0<0,100,1>-Osc2 Phase
+slider45:_o2_vel=100<0, 100, 0.1>-Osc2 Velocity
+slider46:_o2_att=1<1, 5000, 1:log>-Osc2 Attack
+slider47:_o2_dec=1<1, 5000, 1:log>-Osc2 Decay
+slider48:_o2_sus=100<0, 100, 0.1>-Osc2 Sustain
+slider49:_o2_rel=5000<0, 5000, 1:log>-Osc2 Release
+slider50:_o2_att_t=0<-100,100,1>-Osc2 Attack Curve
+slider51:_o2_dec_t=0<-100,100,1>-Osc2 Decay Curve
+slider52:_o2_rel_t=0<-100,100,1>-Osc2 Release Curve
+
+slider60:_o3_vol=0<0,100,1>-Osc3 Vol
+slider61:_o3_pan=0<-100,100,0.01>-Osc3 Pan
+slider62:_o3_semi=0<-48, 48, 1>-Osc3 Semi
+slider63:_o3_fine=0<-99, 99, 1>-Osc3 Fine
+slider64:_o3_phase=0<0,100,1>-Osc3 Phase
+slider65:_o3_vel=100<0, 100, 0.1>-Osc3 Velocity
+slider66:_o3_att=1<1, 5000, 1:log>-Osc3 Attack
+slider67:_o3_dec=1<1, 5000, 1:log>-Osc3 Decay
+slider68:_o3_sus=100<0, 100, 0.1>-Osc3 Sustain
+slider69:_o3_rel=5000<0, 5000, 1:log>-Osc3 Release
+slider70:_o3_att_t=0<-100,100,1>-Osc3 Attack Curve
+slider71:_o3_dec_t=0<-100,100,1>-Osc3 Decay Curve
+slider72:_o3_rel_t=0<-100,100,1>-Osc3 Release Curve
+
+slider80:_o4_vol=0<0,100,1>-Osc4 Vol
+slider81:_o4_pan=0<-100,100,0.01>-Osc4 Pan
+slider82:_o4_semi=0<-48, 48, 1>-Osc4 Semi
+slider83:_o4_fine=0<-99, 99, 1>-Osc4 Fine
+slider84:_o4_phase=0<0,100,1>-Osc4 Phase
+slider85:_o4_vel=100<0, 100, 0.1>-Osc4 Velocity
+slider86:_o4_att=1<1, 5000, 1:log>-Osc4 Attack
+slider87:_o4_dec=1<1, 5000, 1:log>-Osc4 Decay
+slider88:_o4_sus=100<0, 100, 0.1>-Osc4 Sustain
+slider89:_o4_rel=5000<0, 5000, 1:log>-Osc4 Release
+slider90:_o4_att_t=0<-100,100,1>-Osc4 Attack Curve
+slider91:_o4_dec_t=0<-100,100,1>-Osc4 Decay Curve
+slider92:_o4_rel_t=0<-100,100,1>-Osc4 Release Curve
+
+slider100:_flt_type=0<0,3,1{Off,LP,BP,HP}>-Filter type
+slider101:_flt_freq=10000<20, 22000, 1:log>-Filter freq
+slider102:_flt_q=0.70<0.01, 40, 0.01:log>-Filter Q
+slider103:_flt_att=1<1, 5000, 1:log>-Filter Attack
+slider104:_flt_dec=500<1, 5000, 1:log>-Filter Decay
+slider105:_flt_sus=0<0, 100, 0.1>-Filter Sustain
+slider106:_flt_rel=500<1, 5000, 1:log>-Filter Release
+slider107:_flt_att_t=0<-100,100,1>-Filter Attack Curve
+slider108:_flt_dec_t=0<-100,100,1>-Filter Decay Curve
+slider109:_flt_rel_t=0<-100,100,1>-Filter Release Curve
+slider110:_flt_adsr_amt=0<-100, 100, 0.01>-Filter ASDR amt.
+
+slider240:_fm11=0<0,100,.1>-Fm11
+slider241:_fm12=0<0,100,.1>-Fm12
+slider242:_fm13=0<0,100,.1>-Fm13
+slider243:_fm14=0<0,100,.1>-Fm14
+
+slider244:_fm21=0<0,100,.1>-Fm21
+slider245:_fm22=0<0,100,.1>-Fm22
+slider246:_fm23=0<0,100,.1>-Fm23
+slider247:_fm24=0<0,100,.1>-Fm24
+
+slider248:_fm31=0<0,100,.1>-Fm31
+slider249:_fm32=0<0,100,.1>-Fm32
+slider250:_fm33=0<0,100,.1>-Fm33
+slider251:_fm34=0<0,100,.1>-Fm34
+
+slider252:_fm41=0<0,100,.1>-Fm41
+slider253:_fm42=0<0,100,.1>-Fm42
+slider254:_fm43=0<0,100,.1>-Fm43
+slider255:_fm44=0<0,100,.1>-Fm44
+
+import mod.array.jsfx-inc
+import mod.fft_real_synth.jsfx-inc
+import mod.osc.jsfx-inc
+import mod.wavetable.jsfx-inc
+import mod.envlib.jsfx-inc
+import mod.mouselib.jsfx-inc
+import mod.gfxlib.jsfx-inc
+import mod.rbj_filter.jsfx-inc
+
+options: gfx_hz=60 no_meter
+
+@serialize
+file_mem(0, osc1.buf, osc1.len + osc1.four.size * 4);
+file_mem(0, osc2.buf, osc2.len + osc2.four.size * 4);
+file_mem(0, osc3.buf, osc3.len + osc3.four.size * 4);
+file_mem(0, osc4.buf, osc4.len + osc4.four.size * 4);
+file_var(0, osc1.wavenum);
+file_var(0, osc2.wavenum);
+file_var(0, osc3.wavenum);
+file_var(0, osc4.wavenum);
+
+@init
+ext_noinit = 1;
+poly.array_init(1000, 127, 11); // [note, freq, ph1, ph2, ph3, ph4, signal1, signal2, signal3, signal4, note_repeat_flag]
+remove_notes.array_init(5000, 127, 1); // remove notes array
+envelope = 10000; // 18 * 127 - master envelope per key
+envelope_o1 = 15000; // 18 * 127
+envelope_o2 = 20000; // 18 * 127
+envelope_o3 = 25000; // 18 * 127
+envelope_o4 = 30000; // 18 * 127
+filter_arr_l = 35000; // 11 * 127 buffer for filters one per key left channel
+filter_arr_r = 40000; // 11 * 127 buffer for filters one per key right channel
+envelope_flt = 45000; // 18 * 127 buffer for filter adsr
+
+gfx_panel = 1; // 0 - Global, 1 - Op1, 2 - Op2 .... 5 - Filter
+gfx_panel_osc = 0; // 0 - Envelope - 1 harm, 2 - phase
+
+function db2gain (db) local (val) (
+  val = 10^(db / 20);
+  val <= 0.001 ? 0 : val;
+);
+function round(in) (floor(in + 0.5 * sign(in)););
+function note2freq(n) (440 * pow(2, (n - 69) / 12););
+function freq2note(f) ( round(12*(log(f/440)/log(2))+69); );
+// convert [0,100] scale to exponential [0,4]
+function normalizeFMSlider(val) ( 4 * (val/100) ^ 2; );
+function normalizeVolSlider(val) ( val * 60 / 100 - 60 );
+
+function rc_set(rc)
+  instance(a) (
+    a = 1 / (rc * srate + 1);
+);
+function rc_lp(sample)
+  instance(lp, a) (
+    lp += a * (sample - lp);
+);
+function smooth()
+  instance (lp, smooth) (
+    lp = smooth;
+    smooth = this.rc_lp(this);
+);
+
+function get_wavename(wavenum) (
+  wavenum == 0 ? "Sine"
+  : wavenum == 1 ? "Sine 2"
+  : wavenum == 2 ? "Sine 3"
+  : wavenum == 3 ? "Sine 4"
+  : wavenum == 4 ? "Triangle"
+  : wavenum == 5 ? "Saw"
+  : wavenum == 6 ? "Saw 2"
+  : wavenum == 7 ? "Saw 3"
+  : wavenum == 8 ? "Square"
+  : wavenum == 9 ? "Organ"
+  : wavenum == 10 ? "Organ 2"
+  : wavenum == 11 ? "Organ 3"
+  : wavenum == 12 ? "Organ 4"
+  : wavenum == 13 ? "Complex"
+  : wavenum == 14 ? "Complex 2"
+  : wavenum == 15 ? "Complex 3"
+  : wavenum == 16 ? "Complex 4"
+  : wavenum == 17 ? "Spectral"
+  : wavenum == 18 ? "Stairs"
+  : "";
+);
+
+function load_wave(osc*, wavenum) (
+  wavename = get_wavename(wavenum);
+  osc.wavenum = wavenum;
+  osc.open_file(sprintf(#, "tilr_JSModulator/%s.wav", wavename), osc.four);
+  osc.wave_init(osc.buf, osc.len);
+);
+
+function load_nextwave(osc*) (
+  wavenum = osc.wavenum;
+  wavenum += 1;
+  wavenum > 18 ? wavenum = 0;
+  load_wave(osc, wavenum);
+);
+
+function load_prevwave(osc*) (
+  wavenum = osc.wavenum;
+  wavenum -= 1;
+  wavenum < 0 ? wavenum = 18;
+  load_wave(osc, wavenum);
+);
+
+osc1.buf = 100000;
+load_wave(osc1, 0);
+
+osc2.buf = 200000;
+load_wave(osc2, 0);
+
+osc3.buf = 300000;
+load_wave(osc3, 0);
+
+osc4.buf = 400000;
+load_wave(osc4, 0);
+
+function on_slider() (
+  fm11 = normalizeFMSlider(_fm11);
+  fm12 = normalizeFMSlider(_fm12);
+  fm13 = normalizeFMSlider(_fm13);
+  fm14 = normalizeFMSlider(_fm14);
+
+  fm21 = normalizeFMSlider(_fm21);
+  fm22 = normalizeFMSlider(_fm22);
+  fm23 = normalizeFMSlider(_fm23);
+  fm24 = normalizeFMSlider(_fm24);
+
+  fm31 = normalizeFMSlider(_fm31);
+  fm32 = normalizeFMSlider(_fm32);
+  fm33 = normalizeFMSlider(_fm33);
+  fm34 = normalizeFMSlider(_fm34);
+
+  fm41 = normalizeFMSlider(_fm41);
+  fm42 = normalizeFMSlider(_fm42);
+  fm43 = normalizeFMSlider(_fm43);
+  fm44 = normalizeFMSlider(_fm44);
+
+  gain = db2gain(normalizeVolSlider(_vol));
+  sus = normalizeVolSlider(_sus);
+
+  o1_gain = db2gain(normalizeVolSlider(_o1_vol));
+  o1_pan = _o1_pan / 100;
+  o1_semi = pow(2, (_o1_semi|0) / 12);
+  o1_fine = pow(2, _o1_fine / 1200);
+  o1_sus = normalizeVolSlider(_o1_sus);
+
+  o2_gain = db2gain(normalizeVolSlider(_o2_vol));
+  o2_pan = _o2_pan / 100;
+  o2_semi = pow(2, (_o2_semi|0) / 12);
+  o2_fine = pow(2, _o2_fine / 1200);
+  o2_sus = normalizeVolSlider(_o2_sus);
+
+  o3_gain = db2gain(normalizeVolSlider(_o3_vol));
+  o3_pan = _o3_pan / 100;
+  o3_semi = pow(2, (_o3_semi|0) / 12);
+  o3_fine = pow(2, _o3_fine / 1200);
+  o3_sus = normalizeVolSlider(_o3_sus);
+
+  o4_gain = db2gain(normalizeVolSlider(_o4_vol));
+  o4_pan = _o4_pan / 100;
+  o4_semi = pow(2, (_o4_semi|0) / 12);
+  o4_fine = pow(2, _o4_fine / 1200);
+  o4_sus = normalizeVolSlider(_o4_sus);
+
+  flt_sus = normalizeVolSlider(_flt_sus);
+);
+
+// init slider smoothing
+gain.rc_set(0.0033);
+gain.smooth = db2gain(normalizeVolSlider(_vol));
+
+o1_gain.rc_set(0.0033);
+o1_gain.smooth = db2gain(normalizeVolSlider(o1_vol));
+o2_gain.rc_set(0.0033);
+o2_gain.smooth = db2gain(normalizeVolSlider(o2_vol));
+o3_gain.rc_set(0.0033);
+o3_gain.smooth = db2gain(normalizeVolSlider(o3_vol));
+o4_gain.rc_set(0.0033);
+o4_gain.smooth = db2gain(normalizeVolSlider(o4_vol));
+
+_flt_freq.rc_set(0.0033);
+_flt_freq.smooth = _flt_freq;
+
+function on_note(note) local (ptr, env) (
+  ptr = poly.array_add();
+  ptr[0] = note;
+  ptr[1] = note2freq(note) / srate;
+  ptr[2] = _o1_phase / 100;
+  ptr[3] = _o2_phase / 100;
+  ptr[4] = _o3_phase / 100;
+  ptr[5] = _o4_phase / 100;
+  ptr[10] = 0;
+
+  env = envelope + note * 18;
+  memset(env, 0, 18);
+  env_adsr(env, _att, _dec, sus, _rel, _att_t / 100, _dec_t / 100, _rel_t / 100);
+  env_a(env, min(vel / 127 + (1 - _vel / 100), 1));
+
+  env = envelope_o1 + note * 18;
+  memset(env, 0, 18);
+  env_adsr(env, _o1_att, _o1_dec, o1_sus, _o1_rel, _o1_att_t/100, _o1_dec_t/100, _o1_rel_t/100);
+  env_a(env, min(vel / 127 + (1 - _o1_vel / 100), 1));
+
+  env = envelope_o2 + note * 18;
+  memset(env, 0, 18);
+  env_adsr(env, _o2_att, _o2_dec, o2_sus, _o2_rel, _o2_att_t/100, _o2_dec_t/100, _o2_rel_t/100);
+  env_a(env, min(vel / 127 + (1 - _o2_vel / 100), 1));
+
+  env = envelope_o3 + note * 18;
+  memset(env, 0, 18);
+  env_adsr(env, _o3_att, _o3_dec, o3_sus, _o3_rel, _o3_att_t/100, _o3_dec_t/100, _o3_rel_t/100);
+  env_a(env, min(vel / 127 + (1 - _o3_vel / 100), 1));
+
+  env = envelope_o4 + note * 18;
+  memset(env, 0, 18);
+  env_adsr(env, _o4_att, _o4_dec, o4_sus, _o4_rel, _o4_att_t/100, _o4_dec_t/100, _o4_rel_t/100);
+  env_a(env, min(vel / 127 + (1 - _o4_vel / 100), 1));
+
+  env = envelope_flt + note * 18;
+  memset(env, 0, 18);
+  env_adsr(env, _flt_att, _flt_dec, flt_sus, _flt_rel, _flt_att_t/100, _flt_dec_t/100, _flt_rel_t/100);
+  env_a(env, 1);
+);
+
+function copy_filter_coefs (f1, f2) (
+  f2[0] = f1[0]; // a1
+  f2[1] = f1[1]; // a2
+  f2[2] = f1[2]; // b0
+  f2[3] = f1[3]; // b1
+  f2[4] = f1[4]; // b2
+);
+
+@slider
+
+on_slider();
+
+@block
+
+while (midirecv(offset, msg1, note, vel)) (
+  event = msg1 & 0xF0;
+
+  // Note on
+  event == 0x90 && vel ? (
+    // note repeat
+    // because this synth uses only one note per key
+    // key repeat triggers a fast release of the current note
+    // and retriggers the note once it completes
+    ptr = poly.array_find(note);
+    ptr >= 0 ? (
+      env_r(envelope + note * 18);
+      ptr[10] = 1; // note repeat flag
+    ) : (
+      on_note(note);
+    );
+  );
+
+  // Note off
+  event == 0x80 || (event == 0x90 && !vel) ? (
+    ptr = poly.array_find(note);
+    ptr >= 0 ? (
+      env_r(envelope + note * 18);
+      env_r(envelope_o1 + note * 18);
+      env_r(envelope_o2 + note * 18);
+      env_r(envelope_o3 + note * 18);
+      env_r(envelope_o4 + note * 18);
+      env_r(envelope_flt + note * 18);
+    );
+  );
+
+  // All notes off
+  event == 0xB0 && note == 123 ? (
+    poly.array_clear();
+  );
+
+  midisend(offset, msg1, note, vel);
+);
+
+@sample
+
+gain.smooth();
+o1_gain.smooth();
+o2_gain.smooth();
+o3_gain.smooth();
+o4_gain.smooth();
+_flt_freq.smooth();
+
+remove_notes.array_clear();
+ptr = poly.array_first();
+while(ptr >= 0) ( // for each note/voice
+  envbuf = envelope + ptr[0] * 18;
+  env_state = env_process(envbuf);
+
+  env_o1 = envelope_o1 + ptr[0] * 18;
+  env_o2 = envelope_o2 + ptr[0] * 18;
+  env_o3 = envelope_o3 + ptr[0] * 18;
+  env_o4 = envelope_o4 + ptr[0] * 18;
+
+  env_process(env_o1);
+  env_process(env_o2);
+  env_process(env_o3);
+  env_process(env_o4);
+
+  freq = ptr[1];
+  ph1 = ptr[2];
+  ph2 = ptr[3];
+  ph3 = ptr[4];
+  ph4 = ptr[5];
+  s1 = ptr[6];
+  s2 = ptr[7];
+  s3 = ptr[8];
+  s4 = ptr[9];
+
+  osc1.wave_sync(ph1 + s1 * fm11 + s2 * fm21 + s3 * fm31 + s4 * fm41);
+  osc1.wave_setdt(freq * o1_fine * o1_semi);
+  s1 = osc1.wave_spline3() * env_o1[];
+  ph1 += osc1.dt;
+  ph1 > 1 ? ph1 -= 1;
+
+  osc2.wave_sync(ph2 + s1 * fm12 + s2 * fm22 + s3 * fm32 + s4 * fm42);
+  osc2.wave_setdt(freq * o2_fine * o2_semi);
+  s2 = osc2.wave_spline3() * env_o2[];
+  ph2 += osc2.dt;
+  ph2 > 1 ? ph2 -= 1;
+
+  osc3.wave_sync(ph3 + s1 * fm13 + s2 * fm23 + s3 * fm33 + s4 * fm43);
+  osc3.wave_setdt(freq * o3_fine * o3_semi);
+  s3 = osc3.wave_spline3() * env_o3[];
+  ph3 += osc3.dt;
+  ph3 > 1 ? ph3 -= 1;
+
+  osc4.wave_sync(ph4 + s1 * fm14 + s2 * fm24 + s3 * fm34 + s4 * fm44);
+  osc4.wave_setdt(freq * o4_fine * o4_semi);
+  s4 = osc4.wave_spline3() * env_o4[];
+  ph4 += osc4.dt;
+  ph4 > 1 ? ph4 -= 1;
+
+  ptr[2] = ph1;
+  ptr[3] = ph2;
+  ptr[4] = ph3;
+  ptr[5] = ph4;
+  ptr[6] = s1;
+  ptr[7] = s2;
+  ptr[8] = s3;
+  ptr[9] = s4;
+
+  sl = s1 * o1_gain.smooth * (1 - o1_pan) + s2 * o2_gain.smooth * (1 - o2_pan) + s3 * o3_gain.smooth * (1 - o3_pan) + s4 * o4_gain.smooth * (1 - o4_pan);
+  sr = s1 * o1_gain.smooth * (1 + o1_pan) + s2 * o2_gain.smooth * (1 + o2_pan) + s3 * o3_gain.smooth * (1 + o3_pan) + s4 * o4_gain.smooth * (1 + o4_pan);
+
+  // Apply filter
+  _flt_type != 0 ? (
+    filterbuf = envelope_flt + ptr[0] * 18; // envelope buffer
+    env_process(filterbuf);
+    multiplier = pow(22000/_flt_freq.smooth, filterbuf[0] * _flt_adsr_amt / 100);
+
+    filterbuf_l = filter_arr_l + ptr[0] * 11; // filter buffer left
+    filterbuf_r = filter_arr_r + ptr[0] * 11; // filter buffer left
+
+    _flt_type == 1 ? (
+      rbj_lp(filterbuf_l, _flt_freq.smooth * multiplier, _flt_q);
+    ) : _flt_type == 2 ? (
+      rbj_bp(filterbuf_l, _flt_freq.smooth * multiplier, _flt_q);
+    ) : (
+      rbj_hp(filterbuf_l, _flt_freq.smooth * multiplier, _flt_q);
+    );
+    copy_filter_coefs(filterbuf_l, filterbuf_r);
+    sl = rbj_df1(filterbuf_l, sl);
+    sr = rbj_df1(filterbuf_r, sr);
+  );
+
+  spl0 += sl * gain.smooth * envbuf[];
+  spl1 += sr * gain.smooth * envbuf[];
+
+  // Note repeat, trigger fast release
+  ptr[10] ? (
+    envbuf[0] -= 0.01;
+    envbuf[0] < 0 ? (
+      envbuf[0] = 0;
+    )
+  );
+
+  // mark note for deletion
+  env_state == 0 ? (
+    p = remove_notes.array_add();
+    p[0] = ptr[0];
+  );
+
+  ptr = poly.array_next(ptr);
+);
+
+// remove notes that finished adsr
+ptr = remove_notes.array_first();
+while(ptr >= 0) (
+  p = poly.array_find(ptr[0]);
+  p >= 0 ? (
+    p[10] ? ( // Note repeat, release has finished, retrigger note
+      poly.array_remove(p);
+      on_note(ptr[0]);
+    ) : (
+      poly.array_remove(p);
+    );
+  );
+  ptr = remove_notes.array_next(ptr);
+);
+
+@gfx 760 240
+
+gfx_clear = COLOR_BG;
+mouse.update_mouse_state();
+
+draw_matrix(440, 30, 300, 200);
+
+draw_button(20, 20, 50, "Glb", gfx_panel == 0);
+draw_button(70, 20, 50, "OP 1", gfx_panel == 1);
+draw_button(120, 20, 50, "OP 2", gfx_panel == 2);
+draw_button(170, 20, 50, "OP 3", gfx_panel == 3);
+draw_button(220, 20, 50, "OP 4", gfx_panel == 4);
+draw_button(270, 20, 50, "Flt", gfx_panel == 5);
+
+mouse.left_click && mouse_in_rect(20,20-2,50,10+4) ? gfx_panel = 0;
+mouse.left_click && mouse_in_rect(70,20-2,50,10+4) ? gfx_panel = 1;
+mouse.left_click && mouse_in_rect(120,20-2,50,10+4) ? gfx_panel = 2;
+mouse.left_click && mouse_in_rect(170,20-2,50,10+4) ? gfx_panel = 3;
+mouse.left_click && mouse_in_rect(220,20-2,50,10+4) ? gfx_panel = 4;
+mouse.left_click && mouse_in_rect(270,20-2,50,10+4) ? gfx_panel = 5;
+
+// GLOBAL
+gfx_panel == 0 ? (
+  draw_knob(20,50, 1, "Vol", 100, 0, 100, 0, 0, sprintf(#, "%d", slider(1)), 0);
+  draw_knob(20,150, 2, "Vel", 100, 0, 100, 0, 0, sprintf(#, "%d", slider(2)), 0);
+  draw_knob(80,150, 3, "Att", 1, 1, 5000, 1, 0, sprintf(#, "%d", slider(3)), 0);
+  draw_knob(140,150, 4, "Dec", 1, 1, 5000, 1, 0, sprintf(#, "%d", slider(4)), 0);
+  draw_knob(200,150, 5, "Sus", 100, 0, 100, 0, 0, sprintf(#, "%d", slider(5)), 0);
+  draw_knob(260,150, 6, "Rel", 1, 1, 5000, 1, 0, sprintf(#, "%d", slider(6)), 0);
+  set_color(0x666666);
+  gfx_x = 20; gfx_y = 130;
+  gfx_drawstr("GLOBAL ENVELOPE");
+  gfx_x = 320;
+  gfx_drawstr("CURVE");
+  gfx_x = 320; gfx_y = 155;
+  gfx_drawstr("Att");
+  gfx_x = 320; gfx_y = 175;
+  gfx_drawstr("Dec");
+  gfx_x = 320; gfx_y = 195;
+  gfx_drawstr("Rel");
+  draw_number(350, 155, 40, 10, 7, 0, -100, 100);
+  draw_number(350, 175, 40, 10, 8, 0, -100, 100);
+  draw_number(350, 195, 40, 10, 9, 0, -100, 100);
+);
+
+// OPERATORS
+gfx_panel > 0 && gfx_panel < 5 ? (
+  wavebuf = gfx_panel == 1 ? osc1.buf : gfx_panel == 2 ? osc2.buf : gfx_panel == 3 ? osc3.buf : osc4.buf;
+  wavelen = gfx_panel == 1 ? osc1.len : gfx_panel == 2 ? osc2.len : gfx_panel == 3 ? osc3.len : osc4.len;
+  wavename = gfx_panel == 1 ? get_wavename(osc1.wavenum)
+           : gfx_panel == 2 ? get_wavename(osc2.wavenum)
+           : gfx_panel == 3 ? get_wavename(osc3.wavenum)
+           : get_wavename(osc4.wavenum);
+
+  draw_wave(20, 45, 80, 40, wavebuf, wavelen);
+  draw_button(20, 95, 80, wavename, 0);
+  mouse.left_click && mouse_in_rect(20, 95-2, 80, 10+4) ? (
+    gfx_x = 20; gfx_y = 105;
+    choice = gfx_showmenu("Sine|Sine 2|Sine 3|Sine 4|Triangle|Saw|Saw 2|Saw 3|Square|Organ|Organ 2|Organ 3|Organ 4|Complex|Complex 2|Complex 3|Complex 4|Spectral|Stairs");
+    choice > 0 ? (
+      gfx_panel == 1 ? load_wave(osc1, choice - 1);
+      gfx_panel == 2 ? load_wave(osc2, choice - 1);
+      gfx_panel == 3 ? load_wave(osc3, choice - 1);
+      gfx_panel == 4 ? load_wave(osc4, choice - 1);
+    );
+  );
+
+  set_color(COLOR_ACTIVE);
+  gfx_triangle(20+80+5, 95-2, 20+80+5+5, 95-2 + 5, 20+80+5, 105-2);
+  mouse.left_click && mouse_in_rect(20+80+5, 95-2, 5, 10) ? (
+    gfx_panel == 1 ? load_nextwave(osc1);
+    gfx_panel == 2 ? load_nextwave(osc2);
+    gfx_panel == 3 ? load_nextwave(osc3);
+    gfx_panel == 4 ? load_nextwave(osc4);
+  );
+  gfx_triangle(20-6, 95-2, 20-6-5, 95-2+5, 20-6, 105-2);
+  mouse.left_click && mouse_in_rect(20-6-5, 95-2, 5, 10) ? (
+    gfx_panel == 1 ? load_prevwave(osc1);
+    gfx_panel == 2 ? load_prevwave(osc2);
+    gfx_panel == 3 ? load_prevwave(osc3);
+    gfx_panel == 4 ? load_prevwave(osc4);
+  );
+
+  draw_knob(120,50, 22+(gfx_panel-1)*20, "Semi", 0, -48, 48, 0, 1, sprintf(#, "%d", slider(22+(gfx_panel-1)*20)), 0);
+  draw_knob(180,50, 23+(gfx_panel-1)*20, "Fine", 0, -99, 99, 0, 1, sprintf(#, "%d", slider(23+(gfx_panel-1)*20)), 0);
+  draw_knob(240,50, 24+(gfx_panel-1)*20, "Phase", 0, 0, 100, 0, 0, sprintf(#, "%d", slider(24+(gfx_panel-1)*20)), 0);
+
+  draw_button(20, 130, 50, "Env", gfx_panel_osc == 0);
+  mouse.left_click && mouse_in_rect(20,130-2, 50, 10+4) ? gfx_panel_osc = 0;
+  draw_button(70, 130, 50, "Harm", gfx_panel_osc == 1);
+  mouse.left_click && mouse_in_rect(70,130-2, 50, 10+4) ? gfx_panel_osc = 1;
+  draw_button(120, 130, 50, "Phase", gfx_panel_osc == 2);
+  mouse.left_click && mouse_in_rect(120,130-2, 50, 10+4) ? gfx_panel_osc = 2;
+
+  gfx_panel_osc == 0 ? (
+    draw_knob(20,150, 25+(gfx_panel-1)*20, "Vel", 100, 0, 100, 0, 0, sprintf(#, "%d", slider(25+(gfx_panel-1)*20)), 0);
+    draw_knob(80,150, 26+(gfx_panel-1)*20, "Att", 1, 1, 5000, 1, 0, sprintf(#, "%d", slider(26+(gfx_panel-1)*20)), 0);
+    draw_knob(140,150, 27+(gfx_panel-1)*20, "Dec", 1, 1, 5000, 1, 0, sprintf(#, "%d", slider(27+(gfx_panel-1)*20)), 0);
+    draw_knob(200,150, 28+(gfx_panel-1)*20, "Sus", 100, 0, 100, 0, 0, sprintf(#, "%d", slider(28+(gfx_panel-1)*20)), 0);
+    draw_knob(260,150, 29+(gfx_panel-1)*20, "Rel", 1, 1, 5000, 1, 0, sprintf(#, "%d", slider(29+(gfx_panel-1)*20)), 0);
+    set_color(0x666666);
+    //gfx_x = 20; gfx_y = 130;
+    //gfx_drawstr("ENVELOPE");
+    gfx_x = 320; gfx_y = 130;
+    gfx_drawstr("CURVE");
+    gfx_x = 320; gfx_y = 155;
+    gfx_drawstr("Att");
+    gfx_x = 320; gfx_y = 175;
+    gfx_drawstr("Dec");
+    gfx_x = 320; gfx_y = 195;
+    gfx_drawstr("Rel");
+    draw_number(350, 155, 40, 10, 30+(gfx_panel-1)*20, 0, -100, 100);
+    draw_number(350, 175, 40, 10, 31+(gfx_panel-1)*20, 0, -100, 100);
+    draw_number(350, 195, 40, 10, 32+(gfx_panel-1)*20, 0, -100, 100);
+  );
+
+  gfx_panel_osc > 0 ? (
+    mouse.left_click && mouse_in_rect(20, 150, 320, 60) ? (
+      edit_mode = 1;
+    );
+    edit_mode && !mouse.left ? (
+      edit_mode = 0;
+      gfx_panel == 1 ? resynthesize(osc1.buf, osc1.len, osc1.four)
+      : gfx_panel == 2 ? resynthesize(osc2.buf, osc2.len, osc2.four)
+      : gfx_panel == 3 ? resynthesize(osc3.buf, osc3.len, osc3.four)
+      : resynthesize(osc4.buf, osc4.len, osc4.four);
+    );
+    gfx_panel == 1 ? draw_harmonics(20, 150, 320, 60, osc1.four.coef+2 + harm_index*32*2, 32, gfx_panel_osc == 2)
+    : gfx_panel == 2 ? draw_harmonics(20, 150, 320, 60, osc2.four.coef+2 + harm_index*32*2, 32, gfx_panel_osc == 2)
+    : gfx_panel == 3 ? draw_harmonics(20, 150, 320, 60, osc3.four.coef+2 + harm_index*32*2, 32, gfx_panel_osc == 2)
+    : draw_harmonics(20, 150, 320, 60, osc4.four.coef+2 + harm_index*32*2, 32, gfx_panel_osc == 2)
+  );
+);
+
+gfx_panel == 5 ? (
+  flt_name = _flt_type == 0 ? "Off"
+    : _flt_type == 1 ? "LP"
+    : _flt_type == 2 ? "BP"
+    : "HP";
+  draw_button(20, 60, 80, flt_name, 0);
+  mouse.left_click && mouse_in_rect(20, 60-2, 80, 10+4) ? (
+    gfx_x = 20; gfx_y = 70;
+    choice = gfx_showmenu("Off|Low Pass|Band Pass|High Pass");
+    choice > 0 ? _flt_type = choice - 1;
+  );
+  draw_knob(120,50, 101, "Freq", 1000, 20, 22000, 1, 0, sprintf(#, "%d Hz", slider(101)), 0);
+  draw_knob(180,50, 102, "Q", 0.7, 0.01, 40, 1, 0, sprintf(#, "%.2f", slider(102)), 0);
+
+  draw_knob(20,150, 110, "Amt", 0, -100, 100, 0, 1, sprintf(#, "%d", slider(110)), 0);
+  draw_knob(80,150, 103, "Att", 1, 1, 5000, 1, 0, sprintf(#, "%d", slider(103)), 0);
+  draw_knob(140,150, 104, "Dec", 1, 1, 5000, 1, 0, sprintf(#, "%d", slider(104)), 0);
+  draw_knob(200,150, 105, "Sus", 100, 0, 100, 0, 0, sprintf(#, "%d", slider(105)), 0);
+  draw_knob(260,150, 106, "Rel", 1, 1, 5000, 1, 0, sprintf(#, "%d", slider(106)), 0);
+  set_color(0x666666);
+  gfx_x = 20; gfx_y = 130;
+  gfx_drawstr("FILTER ENVELOPE");
+  gfx_x = 320;
+  gfx_drawstr("CURVE");
+  gfx_x = 320; gfx_y = 155;
+  gfx_drawstr("Att");
+  gfx_x = 320; gfx_y = 175;
+  gfx_drawstr("Dec");
+  gfx_x = 320; gfx_y = 195;
+  gfx_drawstr("Rel");
+  draw_number(350, 155, 40, 10, 107, 0, -100, 100);
+  draw_number(350, 175, 40, 10, 108, 0, -100, 100);
+  draw_number(350, 195, 40, 10, 109, 0, -100, 100);
+);
+
+function on_knob_move (nslider, slider_min, slider_max, slider_is_log, factor) (
+  factor *= mouse.control ? 0.05 : 0.5;
+  slider_is_log ? (
+    slider(nslider) = slider(nslider) * pow(100, -factor * 0.01);
+  ) : (
+    inc = (slider_max - slider_min) / 100 * -factor;
+    slider(nslider) += inc;
+  );
+
+  slider(nslider) > slider_max ? slider(nslider) = slider_max;
+  slider(nslider) < slider_min ? slider(nslider) = slider_min;
+  on_slider();
+  sliderchange(slider(nslider));
+  slider_automate(slider(nslider));
+);
+
+wheelknob_nslider ? (
+  on_knob_move(wheelknob_nslider, wheelknob_min, wheelknob_max, wheelknob_is_log, mouse.wheel * -7);
+);
+
+selknob_nslider && mouse.left && mouse.dy != 0 ? (
+  on_knob_move(selknob_nslider, selknob_min, selknob_max, selknob_is_log, mouse.dy);
+);
+
+doubleclk_nslider ? (
+  on_slider();
+  sliderchange(slider(doubleclk_nslider));
+  slider_automate(slider(doubleclk_nslider));
+  doubleclk_nslider = 0;
+);
+
+gfx_setcursor(selknob_nslider ? 32511 : 0);
+!mouse.wheel ? wheelknob_nslider = 0;
+!mouse.left ? selknob_nslider = 0;

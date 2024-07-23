@@ -1,0 +1,53 @@
+desc: Inter Track Parameter Modulation
+author: mschnell
+version: 3.1
+changelog: use the Reaper v7   Compile-time user-configurable JSFX settings
+about:
+  ## Description 
+
+      Like "Macro Controller" you can install "Inter Track Parameter Modulation" anywhere in a track and use Reaper's "Parameter Modulation" functionality in the [Param] button menu to control any parameter of any other plugin in that track via a linear function with settable offset and gradient from one of the ten "Macro" sliders. Of course one slider can control as many parameters, as you like.
+
+      Additionally, when instances of "Inter Track Parameter Modulation" are installed in multiple tracks, those who feature the same "Transfer Bus" setting, are automatically synced. With that it's rather easy to link Parameters of plugins in multiple tracks.
+
+      As the sliders of course also can be controlled by parameters of other plugins in the same way, a rather direct link between plugins in multiple tracks can be done. 
+
+      As the JSFX Preprocessor is used, it is easy to change the count of Macro sliders using the Reaper v7   Compile-time user-configurable JSFX settings [+] -> Macros
+
+    ### Thanks: 
+
+      Based on "Macro Controller" by Reaper Blog
+
+options:gmem=Inter_Track_Parameter_Modulation
+
+config: nmac "Macros" 4 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
+<? Macro_Sliders = nmac ?>
+
+slider1:m=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Transfer Bus
+<? loop(
+  x=1;Macro_Sliders, 
+  xx = x + 1;
+  printf("slider%d:m%d=0.5<0,1>Macro %d\n",xx,x ,x);
+  x+=1); 
+?>
+
+@init
+<? printf("count = %d", Macro_Sliders) ?>;  // modify if nsliders is dynamic regarding instaces !!!!
+
+@slider
+  n = m*count;
+<? loop(
+  x=1;Macro_Sliders, 
+  printf("gmem[n+%d] = m%d;" ,x ,x);
+  x+=1); 
+?>
+
+
+@block
+<? loop(
+  x=1;Macro_Sliders, 
+  xx = x + 1;
+  printf("gmem[n+%d] != m%d ? (", x ,x);
+  printf("m%d = gmem[n+%d];", x ,x);
+  printf("slider_automate(slider%d););", xx);
+  x+=1); 
+?>

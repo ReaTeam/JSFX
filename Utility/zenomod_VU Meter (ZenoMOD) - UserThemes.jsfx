@@ -1,0 +1,12 @@
+desc: VU Meter (ZenoMOD) - UserThemes
+author: ZenoMOD
+version: 1.0
+metapackage: true
+provides:
+  zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 01.jsfx-inc
+  zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 02.jsfx-inc
+about:
+  VU Meter (ZenoMOD) - UserThemes
+
+  Two theme templates that work in conjunction with the VU Meter (ZenoMOD)
+

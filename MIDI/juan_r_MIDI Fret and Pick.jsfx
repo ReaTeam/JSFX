@@ -1,0 +1,267 @@
+desc: MIDI Fret and Pick
+author: Juan_R
+version: 1.03
+changelog: added options to make fretting notes play immediately
+about:
+  # MIDI Fret and pick (Juan_R)
+
+  Create two ranges on the keyboard:
+  The fretting range and the picking range.
+  Keys in the fretting range produce no note by themselves.
+  Keys in the picking range trigger the fretting notes, one by one, in their respective low-high order.
+  Triggering may happen for all picking keys, only white keys, or only black keys.
+  Keys in the picking range that would go beyond the highest fretted note ("idle"):
+  option to discard, recycle through the same fretted notes, recycle at ascending octaves, or mixed recycle+octaves.
+
+  This plugin is left-right hand agnostic: picking and fretting range can be on either side,
+  and even overlap, although in this case the results might not make too much sense.
+
+  The fretting range can be arbitrarily transposed, so that any range of notes can be reached,
+  no matter where the range actually is on the keyboard.
+
+// No audio input/output: this is a MIDI-only FX. Let Reaper know that.
+in_pin:none
+out_pin:none
+
+
+slider1:FRL=0<0,127,1{0: C-1,1: C#-1,2: D-1,3: D#-1,4: E-1,5: F-1,6: F#-1,7: G-1,8: G#-1,9: A-1,10: A#-1,11: B-1,12: C0,13: C#0,14: D0,15: D#0,16: E0,17: F0,18: F#0,19: G0,20: G#0,21: A0,22: A#0,23: B0,24: C1,25: C#1,26: D1,27: D#1,28: E1,29: F1,30: F#1,31: G1,32: G#1,33: A1,34: A#1,35: B1,36: C2,37: C#2,38: D2,39: D#2,40: E2,41: F2,42: F#2,43: G2,44: G#2,45: A2,46: A#2,47: B2,48: C3,49: C#3,50: D3,51: D#3,52: E3,53: F3,54: F#3,55: G3,56: G#3,57: A3,58: A#3,59: B3,60: C4,61: C#4,62: D4,63: D#4,64: E4,65: F4,66: F#4,67: G4,68: G#4,69: A4,70: A#4,71: B4,72: C5,73: C#5,74: D5,75: D#5,76: E5,77: F5,78: F#5,79: G5,80: G#5,81: A5,82: A#5,83: B5,84: C6,85: C#6,86: D6,87: D#6,88: E6,89: F6,90: F#6,91: G6,92: G#6,93: A6,94: A#6,95: B6,96: C7,97: C#7,98: D7,99: D#7,100: E7,101: F7,102: F#7,103: G7,104: G#7,105: A7,106: A#7,107: B7,108: C8,109: C#8,110: D8,111: D#8,112: E8,113: F8,114: F#8,115: G8,116: G#8,117: A8,118: A#8,119: B8,120: C9,121: C#9,122: D9,123: D#9,124: E9,125: F9,126: F#9,127: G9}>FRETTING range low
+slider2:FRH=59<0,127,1{0: C-1,1: C#-1,2: D-1,3: D#-1,4: E-1,5: F-1,6: F#-1,7: G-1,8: G#-1,9: A-1,10: A#-1,11: B-1,12: C0,13: C#0,14: D0,15: D#0,16: E0,17: F0,18: F#0,19: G0,20: G#0,21: A0,22: A#0,23: B0,24: C1,25: C#1,26: D1,27: D#1,28: E1,29: F1,30: F#1,31: G1,32: G#1,33: A1,34: A#1,35: B1,36: C2,37: C#2,38: D2,39: D#2,40: E2,41: F2,42: F#2,43: G2,44: G#2,45: A2,46: A#2,47: B2,48: C3,49: C#3,50: D3,51: D#3,52: E3,53: F3,54: F#3,55: G3,56: G#3,57: A3,58: A#3,59: B3,60: C4,61: C#4,62: D4,63: D#4,64: E4,65: F4,66: F#4,67: G4,68: G#4,69: A4,70: A#4,71: B4,72: C5,73: C#5,74: D5,75: D#5,76: E5,77: F5,78: F#5,79: G5,80: G#5,81: A5,82: A#5,83: B5,84: C6,85: C#6,86: D6,87: D#6,88: E6,89: F6,90: F#6,91: G6,92: G#6,93: A6,94: A#6,95: B6,96: C7,97: C#7,98: D7,99: D#7,100: E7,101: F7,102: F#7,103: G7,104: G#7,105: A7,106: A#7,107: B7,108: C8,109: C#8,110: D8,111: D#8,112: E8,113: F8,114: F#8,115: G8,116: G#8,117: A8,118: A#8,119: B8,120: C9,121: C#9,122: D9,123: D#9,124: E9,125: F9,126: F#9,127: G9}>FRETTING range high
+slider3:FRT=0<-88,88,1>Fretting range transpose
+slider4:PRL=60<0,127,1{0: C-1,1: C#-1,2: D-1,3: D#-1,4: E-1,5: F-1,6: F#-1,7: G-1,8: G#-1,9: A-1,10: A#-1,11: B-1,12: C0,13: C#0,14: D0,15: D#0,16: E0,17: F0,18: F#0,19: G0,20: G#0,21: A0,22: A#0,23: B0,24: C1,25: C#1,26: D1,27: D#1,28: E1,29: F1,30: F#1,31: G1,32: G#1,33: A1,34: A#1,35: B1,36: C2,37: C#2,38: D2,39: D#2,40: E2,41: F2,42: F#2,43: G2,44: G#2,45: A2,46: A#2,47: B2,48: C3,49: C#3,50: D3,51: D#3,52: E3,53: F3,54: F#3,55: G3,56: G#3,57: A3,58: A#3,59: B3,60: C4,61: C#4,62: D4,63: D#4,64: E4,65: F4,66: F#4,67: G4,68: G#4,69: A4,70: A#4,71: B4,72: C5,73: C#5,74: D5,75: D#5,76: E5,77: F5,78: F#5,79: G5,80: G#5,81: A5,82: A#5,83: B5,84: C6,85: C#6,86: D6,87: D#6,88: E6,89: F6,90: F#6,91: G6,92: G#6,93: A6,94: A#6,95: B6,96: C7,97: C#7,98: D7,99: D#7,100: E7,101: F7,102: F#7,103: G7,104: G#7,105: A7,106: A#7,107: B7,108: C8,109: C#8,110: D8,111: D#8,112: E8,113: F8,114: F#8,115: G8,116: G#8,117: A8,118: A#8,119: B8,120: C9,121: C#9,122: D9,123: D#9,124: E9,125: F9,126: F#9,127: G9}>PICKING range low
+slider5:PRH=127<0,127,1{0: C-1,1: C#-1,2: D-1,3: D#-1,4: E-1,5: F-1,6: F#-1,7: G-1,8: G#-1,9: A-1,10: A#-1,11: B-1,12: C0,13: C#0,14: D0,15: D#0,16: E0,17: F0,18: F#0,19: G0,20: G#0,21: A0,22: A#0,23: B0,24: C1,25: C#1,26: D1,27: D#1,28: E1,29: F1,30: F#1,31: G1,32: G#1,33: A1,34: A#1,35: B1,36: C2,37: C#2,38: D2,39: D#2,40: E2,41: F2,42: F#2,43: G2,44: G#2,45: A2,46: A#2,47: B2,48: C3,49: C#3,50: D3,51: D#3,52: E3,53: F3,54: F#3,55: G3,56: G#3,57: A3,58: A#3,59: B3,60: C4,61: C#4,62: D4,63: D#4,64: E4,65: F4,66: F#4,67: G4,68: G#4,69: A4,70: A#4,71: B4,72: C5,73: C#5,74: D5,75: D#5,76: E5,77: F5,78: F#5,79: G5,80: G#5,81: A5,82: A#5,83: B5,84: C6,85: C#6,86: D6,87: D#6,88: E6,89: F6,90: F#6,91: G6,92: G#6,93: A6,94: A#6,95: B6,96: C7,97: C#7,98: D7,99: D#7,100: E7,101: F7,102: F#7,103: G7,104: G#7,105: A7,106: A#7,107: B7,108: C8,109: C#8,110: D8,111: D#8,112: E8,113: F8,114: F#8,115: G8,116: G#8,117: A8,118: A#8,119: B8,120: C9,121: C#9,122: D9,123: D#9,124: E9,125: F9,126: F#9,127: G9}>PICKING range high
+slider6:APN=0<0,2,1{Black+White keys,White keys,Black keys}>Active picking keys
+slider7:IPK=0<0,2,1{Ignore,Cycle,Octave shift,Mixed cycle+octave}>Idle picking keys
+slider8:PFN=1<0,2,1{Never,Only if enough picking keys,Always}>Fretting keys trigger notes
+
+@slider
+
+// TODO: Check sanity of ranges (non overlapping)
+// TODO: gfx code for easy range input?
+// TODO: Save/load presets?
+
+
+@init
+// FrettedMap array, 1=>note is being fretted
+FrettedMap = 0;                                             // array location [0, 127] => end at 127
+FrettedMapSize = 128;                                       // array size for mem alloc
+
+// PickedMap array, remembers note_on number for each active picked note
+// to issue a note_off when appropriate
+PickedMap = FrettedMap + FrettedMapSize;                    // next array location
+PickedMapSize = 128;
+
+BlackKeys = PickedMap + PickedMapSize;                      // next array location
+BlackKeysSize = 12;
+
+LastMem = BlackKeys + BlackKeysSize;                        // Last mem location
+
+// Black Keys mod 12
+BlackKeys[1]                // C#
+    = BlackKeys[3]          // D#
+    = BlackKeys[6]          // F#
+    = BlackKeys[8]          // G#
+    = BlackKeys[10]         // A#
+    = 1;
+
+nFretted = 0;                                               // no fretted keys yet
+nPicked = 0;                                                // no picked keys yet
+
+function is_note(status) (
+    status == 0x90 || status == 0x80;
+);
+
+function is_not_note(status) (
+    status != 0x90 && status != 0x80;
+);
+
+function is_noteon(status, vel)     (
+    status == 0x90 && vel >     0;
+);
+
+function is_noteoff(status, vel) (
+    status == 0x80 || (status == 0x90 && vel == 0);
+);
+
+function is_valid(note_number)
+(
+    0 <= note_number && note_number <= 127;
+);
+
+function is_fret_range(notenum) (
+    notenum >= FRL && notenum <= FRH;
+);
+
+function is_pick_range(notenum) (
+    notenum >= PRL && notenum <= PRH;
+);
+
+function is_blackKey(notenum)(
+    BlackKeys[notenum % 12] == 1;
+);
+
+function is_whiteKey(notenum)(
+    BlackKeys[notenum % 12] == 0;
+);
+
+// return 0-based index of which fretted note to play
+// 0==first, 1==second, ... -1=invalid (play no note)
+function calc_pick_index(notenum)
+local(i small_offset result) (
+    (APN == 0) ?                                        // Black and white keys (all keys count)
+    (
+        notenum - PRL;
+    )
+    : (APN == 1) ?                                      // only white keys count
+    (
+        is_blackKey(notenum) ?
+        (
+            -1;                                         // invalid, shouldn't play
+        )
+        : (
+            result = -1;
+            result += floor((notenum - PRL) / 12) * 7;  // 7 white keys per whole octave
+            small_offset = (notenum - PRL) % 12;        // leftover distance < octave
+            i = 0;
+            while (i <= small_offset) (                 // count white keys in the leftover distance
+                result += is_whiteKey(PRL + i);
+                i +=1;
+            );
+            result;
+        );
+    )
+    : (APN == 2) ?                                      // only black keys count
+    (
+        is_whiteKey(notenum) ?
+        (
+            -1;                                         // invalid, shouldn't play
+        )
+        : (
+            result = -1;
+            result += floor((notenum - PRL) / 12) * 5;  // 5 black keys per octave
+            small_offset = (notenum - PRL) % 12;        // leftover distance < octave
+            i = 0;
+            while (i <= small_offset) (                 // count black keys in the leftover distance
+                result += is_blackKey(PRL + i);
+                i +=1;
+            );
+            result;
+        );
+    );
+);
+
+// function calc_note_from_index(k)
+// given an index value k (1-based), compute which of the fretted notes (if any) is to be played
+// function is divided into 4 parts + dispatcher
+// depending on option for idle picking keys: discard, recycle, recycle at octaves, mixed simple_recycle+octaves
+
+// IPK=0: discard idle picking keys
+function calc_note_from_index_simple(k)
+local (i nmatches found result) (
+    (k <= 0 || k > nFretted) ? -1                   // discard indices beyond nFretted (the number of fretted notes)
+    : // else, 0 < k <= nFretted
+    (
+        found = 0;                                  // not found yet
+        nmatches = 0;
+        i = FRL;
+        while (found == 0 && i <= FRH)              // let's count up to the k-th fretted note
+        (
+            (FrettedMap[i] == 1) ? nmatches += 1;
+            (nmatches == k) ? (
+                result = i;
+                found = 1;
+            );
+            i += 1;
+        );
+    result;
+    );
+);
+
+// IPK=1: recycle idle picking keys over same fretted notes
+function calc_note_from_index_cycle(k) (
+    (nFretted <= 0 || k <= 0) ? -1
+    :
+    calc_note_from_index_simple( ((k - 1) % nFretted) + 1);
+);
+
+// IPK=2: recycle, ascending octaves
+function calc_note_from_index_oct(k)(
+    (nFretted <= 0 || k <= 0) ? -1
+    :
+    calc_note_from_index_simple( ((k - 1) % nFretted) + 1) + 12 * floor ((k-1) / nFretted);
+);
+
+// IPK=3: mixed mode: repeat {recycle, then octave}
+function calc_note_from_index_mixoct(k)(
+    (nFretted <= 0 || k <= 0) ? -1
+    :
+    calc_note_from_index_simple( ((k - 1) % nFretted) + 1) + 12 * floor ((k-1) / (nFretted*2));
+);
+
+// dispatcher: function calc_note_from_index(k)
+function calc_note_from_index(k) (
+    (IPK == 0) ?    calc_note_from_index_simple(k)          // ignore indices beyond nFretted (ignore idle picking keys)
+    : (IPK == 1) ?  calc_note_from_index_cycle(k)           // cycle idle picking notes among fretted keys
+    : (IPK == 2) ?  calc_note_from_index_oct(k)             // octave shift idle picking keys
+    : (IPK == 3) ?  calc_note_from_index_mixoct(k);         // repeat, then octave shift, repeat, octave shift...
+);
+
+
+
+@block
+while (midirecv(offset, msg1, msg2, msg3))
+(
+    status = msg1 & 0xF0;
+    channel = msg1 & 0x0F;
+    is_not_note(status) ?
+        (midisend(offset, msg1, msg2, msg3))                                // non-note events go through immediately
+        // else, we have a note on/off event
+        :(
+            is_fret_range(msg2) ?
+            (
+                is_noteon(status, msg3) ?
+                (
+                    FrettedMap[msg2] = 1;
+                    nFretted += 1;
+                    // now play a note if the option PFN grants it
+                    (PFN == 2) ? (                                          // Play Fretted Notes == always?
+                        note_to_play = msg2 + FRT;
+                        is_valid(note_to_play) ? midisend(offset, msg1, note_to_play, msg3);
+                    )
+                    :(PFN == 1)? (                                          // Play Fretted Notes == if enough picking keys?
+                        (nFretted <= nPicked) ? (
+                            note_to_play = msg2 + FRT;
+                            is_valid(note_to_play) ? midisend(offset, msg1, note_to_play, msg3);
+                         );
+                    );
+                )
+                // else, it's a note_off
+                :(
+                    FrettedMap[msg2] = 0;
+                    nFretted -= 1;
+                    // release: play fretting note_off straight away after transposing
+                    note_to_play = msg2 + FRT;
+                    is_valid(note_to_play) ? midisend(offset, msg1, note_to_play, msg3);
+                );
+            ); // end is_fret_range(msg2)
+            is_pick_range(msg2) ?
+            (
+                is_noteon(status, msg2) ?                                   // note on: calculate the note to play
+                (
+                    nPicked += 1;
+                    pick_index = calc_pick_index(msg2);
+                    note_to_play = calc_note_from_index(pick_index + 1);    // 1-based vs. 0-based, hence the "+ 1"
+                    is_valid(note_to_play) ? (
+                        note_to_play += FRT;                                // transpose fretted range if needed
+                        is_valid(note_to_play) ? (
+                            midisend(offset, msg1, note_to_play, msg3);
+                            PickedMap[msg2] = note_to_play;                 // remember which note we played for this key
+                        );
+                    );
+                )
+                : (                                                         // note off: just turn off the already sounding note
+                    midisend(offset, status, PickedMap[msg2], msg3);
+                    nPicked -= 1;
+                );
+            ); // end is_pick_range(msg2)
+        ); // end else, we have a note on/off event
+); // while midirecv();

@@ -1,0 +1,115 @@
+desc:mod.osc.jsfx-inc
+
+@init
+
+function normalize_wave(buf, len)
+local (_min, _max, i)
+(
+  _min = 1;
+  _max = -1;
+  loop(i = 0; len,
+    _min = min(_min, buf[i]);
+    _max = max(_max, buf[i]);
+    i += 1;
+  );
+  loop(i = 0; len,
+    buf[i] = 2 * ((buf[i] - _min) / (_max - _min)) -1;
+    i += 1;
+  );
+);
+
+/*
+ * Normalizes wave only if it passes max amplitude
+ */
+function semi_normalize_wave(buf, len)
+local(_min, _max, i)
+(
+  _min = 1;
+  _max = -1;
+  loop(i = 0; len,
+    _min = min(_min, buf[i]);
+    _max = max(_max, buf[i]);
+    i += 1;
+  );
+  _min < -1 || _max > 1 ? (
+    loop(i = 0; len,
+      buf[i] = 2 * ((buf[i] - _min) / (_max - _min)) -1;
+      i += 1;
+    );
+  )
+);
+
+function stereo_to_mono_wave(buf, len) (
+  loop(i = 0; (len / 2) | 0,
+    buf[i] = (buf[i*2] + buf[i*2+1]) * 0.5;
+    i += 1;
+  );
+);
+
+/*
+ *  Convert wave into harmonics using FFT
+ */
+function synthesize(buf, len, four*)
+local (window)
+(
+  window = 512 >= len ? 512
+         : 1024 >= len ? 1024
+         : 2048 >= len ? 2048
+         : 4096;
+  four.four_init(buf, window);
+  four.four_fft();
+);
+
+/*
+ * Generate wavetable from FFT coeficients
+ */
+function resynthesize(buf, len, four*)
+(
+  four.four_setf(1);
+  four.four_update();
+  four.four_ifft();
+  semi_normalize_wave(buf, len); // correct signal strenght after summing frequencies
+);
+
+function render_sin(buf, size, gain)
+  local(x, dx)
+(
+  x = 0;
+  dx = 2*$pi / size;
+  loop(size,
+    buf[] = gain * sin(x);
+    buf += 1;
+    x += dx;
+  );
+);
+
+function open_file (filename, four*)
+instance(buf, len)
+local(filehandle, wavechn, wavesrate)
+(
+  filehandle=file_open(filename);
+  filehandle > 0 ? (
+    len = file_avail(filehandle);
+    file_riff(filehandle, wavechn, wavesrate);
+    file_rewind(filehandle);
+    wavesrate = wavesrate * (1024 / len);
+    file_riff(filehandle, wavechn='rqsr', wavesrate); // resample wave at 1024 length
+    wavechn ? (
+      len = file_avail(filehandle);
+      file_mem(filehandle, buf, len);
+    );
+    file_close(filehandle);
+    wavechn == 2 ? (
+      stereo_to_mono_wave(buf, len);
+      len = (len / 2) | 0;
+    );
+    normalize_wave(buf, len);
+    filename == "tilr_JSModulator/Sine.wav" ? (
+      // FIX - render a perfect sine wave as I couldn't
+      //       a perfect single cycle one, fixes flanging effects
+      render_sin(buf, len, 1);
+    );
+    synthesize(buf, len, four);
+    resynthesize(buf, len, four);
+  );
+);

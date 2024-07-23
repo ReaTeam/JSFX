@@ -1,0 +1,403 @@
+version: 2.0
+desc: Learningbaby
+author: Matt Horn
+links:
+    Forum Thread http://forum.cockos.com/showthread.php?p=1845408
+    Video demonstration/tutorial https://youtu.be/dMTiWafJFmg
+about:
+    # Learningbaby
+    The Learningbaby is a Sequencer Baby v2 that learns.
+    It will add incoming MIDI notes to the pattern.
+    
+    Video demonstration/tutorial [here](https://youtu.be/dMTiWafJFmg).
+    
+    **NOTE:** If you use automation to change the selected pattern, you will get incorrect results.
+    Change the "Next Pattern" during a loop and you'll get a correct transition.
+    
+    Features added to Sequencer Baby v2:
+    - Select between retriggering notes if sequenced on adjacent ticks and extending
+      (retriggering makes sense for drums, extending for everything else)
+    - Clear current pattern by just moving a slider
+    - Better automated pattern switching
+changelog:
+    - Added "Next Pattern" for better automation of pattern switching
+
+slider1:0<0,15,1{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}>Pattern
+slider2:0<0,15,1{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}>Next Pattern
+slider3:60<0,127,1>Note Start
+slider4:16<4,128,1>Sequence Length
+slider5:16<1,32,1>Number Of Notes
+slider6:1<0.125,4.0,.125>Rate
+slider7:0<0,1,1{Retrigger,Extend}>Repeat Note Behavior
+slider8:0<0,100,1>Clear
+
+in_pin:none
+out_pin:none
+
+/** INITIALIZE SOME STUFF **/
+@init
+// Length of the current tick list
+listlength=16;
+// # of notes that exist
+numnotes=16;
+// Last cycle's tick position
+lbeatpos=-1;
+// # of patterns that should exist
+npatterns=16;
+// Mouse state (-1=unpressed, 0=disabling, 1=enabling)
+mstate=-1;
+// Most recent note to preview
+lastpreviewsel=-1;
+// ???
+gfx_clear=-1;
+// ???
+ext_noinit=1;
+// Notes that are already on
+noteonstate=0;
+// Note we want to preview
+want_preview=-1;
+// Did we just quit wanting to preview a note?
+want_previewoff=0;
+
+/** REACT TO INPUT **/
+@slider
+// # of sequencer ticks to play every beat (quarter note) in the project
+rateadj = 4 * slider6;
+
+retrigger = !slider7;
+
+// Lowest MIDI note value
+basenote=slider3|0; 
+// Selected pattern, limited to reasonable values
+p=slider1|0;
+p<0?p=0:p>=npatterns?p=npatterns-1;
+
+// # of notes that exist
+numnotes=slider5|0;
+
+// # of ticks in sequence
+newsz=slider4|0;
+
+// If tick count changed, embiggen tick list
+newsz >= 1 && listlength != newsz ? (
+    x=0;
+
+    sparebuf = 1024*1024;
+    loop(npatterns,
+        newsz < listlength ? (
+            // decrease size
+            memcpy(sparebuf + x*1024, x*listlength, listlength); // save a copy of the full quality
+
+            x ? memcpy(x*newsz, x*listlength, newsz);
+        ) : (
+            // increase size
+            x < npatterns-1 ? memcpy((npatterns-1-x)*newsz,(npatterns-1-x)*listlength,listlength);
+
+            memcpy((npatterns-1-x)*newsz + listlength, sparebuf + (npatterns-1-x)*1024 + listlength,newsz-listlength);
+        );
+
+        x+=1;
+    );
+
+    listlength = newsz;
+);
+
+// Is the next pattern going to be different?
+nextchg=slider1 != slider2;
+// Next pattern, limited to reasonable values
+np=slider2|0;
+np<0?np=0:np>=npatterns?np=npatterns-1;
+
+// Specified pattern's tick list
+notelist=listlength*p;
+// Next pattern's tick list
+nextlist=listlength*np;
+
+// If clearing, clear
+slider8 > 0 ? (
+    i = 0;
+    loop(listlength,
+        notelist[i] = 0;
+        i += 1;
+    );
+    slider8 = 0;
+);
+
+/** DE/SERIALIZE CONFIG **/
+@serialize
+
+sersz = listlength*npatterns;
+file_avail(0) >= 0 ? (
+    // loading config, clear spare buf
+    memset(sparebuf,0,1024*1024);
+
+    // clear in case config is partial
+    memset(0, 0, sersz);
+    file_mem(0,0,sersz);
+) : (
+  // writing config, dont write trailing 0s 
+    while (
+        sersz[-1] == 0 ? (
+            (sersz -= 1) > 0;
+        );
+    );
+    file_mem(0,0,max(sersz,1)); // always write at least one 0
+);
+
+/** DO THE ACTUAL WORK **/
+@block
+
+// Beats per sample (delta of curbeatpos)
+dbeatpos = (tempo * 4.0 / (60.0 * ts_denom * srate));
+
+// MIDI input adapted from midi_transpose
+// While there's MIDI input to receive...
+while (
+    midirecv(offs, m1, m2, m3) ? (
+        // Usually we want to forward the event
+        forward = 1;
+        // Grab the MIDI event type
+        s = m1&$xF0;
+        noteOn = s == $x90;
+        // We only care about note-offs when retriggering
+        noteOff = (s == $x80 && !retrigger);
+        // If we're stopped (as opposed to paused)...
+        !play_state ? (
+            // We care about nothing
+            noteOn = 0;
+            noteOff = 0;
+        );
+        // If it's a note-on or note-off...
+        noteOn || noteOff ? (
+            // Find the beat position
+            bp = beat_position + (offs * dbeatpos * (play_state&1));
+            bp = bp * rateadj;
+            bp = floor(bp + 0.5);
+            rightlist = notelist;
+            nextchg && bp >= listlength ? (
+                rightlist = nextlist;
+            );
+            bp = bp % listlength;
+            // Find the note
+            nt = m2 - basenote;
+            // If it's valid...
+            (bp >= 0 && bp < listlength && nt >= 0 && nt < numnotes) ? (
+                // Make a mask
+                mask = 2^nt;
+                // Unless this is a note-off that would erase the note entirely...
+                (!(s == $x80 && (bp == 0 || !(rightlist[bp - 1] & mask)))) ? (
+                    // Set the note once always
+                    nlm=(rightlist[bp] & mask);
+                    s == $x80 && nlm ? rightlist[bp]-=mask;
+                    s == $x90 && !nlm ? rightlist[bp]+=mask;
+                    bp += 1;
+                    // Unless retriggering, set/clear the note forwards to the end of the pattern or the next note
+                    while (!retrigger && bp < listlength &&
+                        (bp == listlength - 1 || (s == $x80 ?
+                            rightlist[bp] & mask :
+                            !(rightlist[bp + 1] & mask)))) (
+                        nlm=(rightlist[bp] & mask);
+                        s == $x80 && nlm ? rightlist[bp]-=mask;
+                        s == $x90 && !nlm ? rightlist[bp]+=mask;
+                        bp += 1;
+                    );
+                );
+                // Set this note's current status
+                nom = (noteonstate & mask);
+                s == $x80 && nom ? noteonstate -= mask;
+                s == $x90 && !nom ? noteonstate += mask;
+                // Force the velocity to maximum for forwarding
+                m3 = 127;
+                // If we're going to retrigger the note right away, don't forward it
+                // retrigger ? forward = 0;
+            );
+        );
+        // Sometimes forward the thing
+        forward ? midisend(offs, m1, m2, m3);
+    );
+);
+
+// If we quit wanting to preview a note, send the MIDI note-off
+want_previewoff && last_preview >=0 ? (
+    midisend(0,$x80,last_preview+basenote);
+    last_preview=-1;
+);
+want_previewoff=0;
+
+// If we want to start previewing a note, send the MIDI note-on
+want_preview >=0 ?
+(
+    midisend(0,$x90,want_preview+basenote+127*256);
+    last_preview=want_preview;
+    want_preview=-1;
+);
+
+// Current beat position
+curbeatpos = beat_position;
+// Current sample position
+cursplpos=0;
+
+// For every sample until the next block...
+loop((play_state&1) ? samplesblock : 1,
+    // Tick position in sequenced pattern
+    beatpos=(play_state&1) ? (curbeatpos * rateadj)%listlength : -100;
+    // If we advanced to a new tick...
+    beatpos != lbeatpos || !(play_state&1) ? (
+        // If this should be a transition between patterns...
+        nextchg && beatpos == 0 ? (
+            // Switch to the new pattern for playback
+            notelist = nextlist;
+            // Update the Pattern selection
+            slider1 = slider2;
+            sliderchange(slider1);
+        );
+        // Current tick's note data, as a bitmask (which is smart)
+        a = (play_state&1) ? notelist[beatpos] : 0;
+        // MIDI note value matching least significant bit of a
+        npos=basenote;
+        // Note data of notes that were on during the last tick
+        wason=noteonstate;
+        // Reset the note data of notes that are already on
+        noteonstate=0;
+        // While there's still notes to handle...
+        while(
+            // If we need to turn the note off...
+            ((wason&1) && (retrigger || !(a&1))) ? (
+                // Turn the note off
+                midisend(cursplpos,$x80,npos);  
+            );
+            // If the note is on...
+            (a&1) ? (
+                // If we need to turn it on...
+                (!(wason&1) || retrigger) ? (
+                    // Turn the note on
+                    midisend(cursplpos,$x90,npos + 127*256);
+                );
+                // Remember that the note is on
+                noteonstate+=2^(npos-basenote);
+            );
+            // Move to the next note
+            npos+=1;
+            wason*=0.5;
+            (a*=0.5) >=1 || wason >= 1;
+        );
+        lbeatpos=beatpos;
+    );
+    // Advance sample and beat positions
+    cursplpos += 1;
+    curbeatpos += dbeatpos;
+);
+
+/** DO GRAPHICS STUFF **/
+@gfx 400 300
+
+// If anything changed...
+lgfx_w != gfx_w || lgfx_h != gfx_h || llistlength != listlength || lnumnotes != numnotes ? (
+    // Update everything
+    lgfx_w = gfx_w; lgfx_h = gfx_h;
+    llistlength = listlength;
+    lnumnotes = numnotes;
+    gfx_r=gfx_g=gfx_b=gfx_x=gfx_y=0;
+    gfx_rectto(gfx_w,gfx_h);
+);
+
+// Note at mouse position
+y = numnotes - 1 - (((mouse_y / gfx_h)*numnotes )|0);
+
+// If mouse2 is pressed...
+(mouse_cap&2) ? (
+    // If the preview note has changed...
+    y != lastpreviewsel && y >= 0 && y < numnotes ? (
+        // Update the preview note
+        lastpreviewsel>=0 ? want_previewoff=1;
+        want_preview=lastpreviewsel=y; 
+    );
+):(
+    // If mouse2 is not pressed, quit previewing
+    want_previewoff=1;
+    lastpreviewsel=-1;
+);
+
+// If mouse1 is pressed...
+(mouse_cap&1) ? ( 
+    // Tick at mouse position
+    x = ((mouse_x/gfx_w)*listlength)|0;
+    // If mouse is in a valid note and tick...
+    x >= 0 && x < listlength && y >= 0 && y < numnotes? (
+        // If the mouse is just now being pressed...
+        mstate<0 ? (
+            mask = 2^y;
+            nlm=(notelist[x] & mask);
+            mstate=nlm?0:1;
+            mstate==0 && nlm ? notelist[x]-=mask;
+            mstate==1 && !nlm ? notelist[x]+=mask;
+        ) : (
+            // Find how far the mouse moved
+            lcnt = max(abs(last_x-x),abs(last_y-y))|0;
+            // Find the deltas for tick and note
+            dx = (x-last_x)/lcnt;
+            dy = (y-last_y)/lcnt;
+            // If the mouse moved...
+            lcnt >= 1 ? loop(lcnt,
+                // Make changes to position
+                last_x += dx;
+                last_y += dy;
+                // Update note
+                mask = 2^(last_y|0);
+                nlm=(notelist[last_x|0] & mask);
+                mstate==0 && nlm ? notelist[last_x|0]-=mask;
+                mstate==1 && !nlm ? notelist[last_x|0]+=mask;
+            );
+        );
+        // Update last tick and note positions
+        last_x = x;
+        last_y = y;    
+    );
+) : (
+    // If the mouse was just released, update all the sliders
+    mstate >=0 ? sliderchange(-1);
+    // Set the mouse as unpressed
+    mstate=-1;
+);
+
+/** Draw the sequencer itself **/
+ly=0;
+
+notepos=0;
+loop(numnotes,
+
+    ty=((notepos+1)*gfx_h)/(numnotes);
+    lx=0;
+    xpos=0;
+    mask = 2^(numnotes-1-notepos);
+    cidx=(slider1&7);
+    gfx_a=1;
+
+    use_r=(cidx&1) ? 0.6 : 0.2;
+    use_g=(cidx&2) ? 0.6 : 0.2;
+    use_b=(cidx&4) ? 0.2 : 0.6;
+    cidx==3  ? use_r*=2;
+    cidx==4 ? use_g*=2;
+
+    loop(listlength,
+        tx = ((xpos+1)*gfx_w)/listlength;
+
+        sel=(notelist[xpos]&mask);
+
+        gfx_r=use_r; gfx_g=use_g; gfx_b=use_b;  
+
+        !(xpos % (ts_denom * slider6)) ? ( gfx_g=gfx_r; gfx_r=gfx_b; gfx_b=use_g;);
+
+        (lbeatpos == xpos || (play_state&2 && (beat_position * rateadj)%listlength == xpos)) ? ( gfx_r=gfx_g=gfx_b=sel?0.8:0.4; ) :
+            !sel ? (gfx_r*=0.55; gfx_g*=0.55; gfx_b*=0.55; );
+
+
+        gfx_x=lx; gfx_y=ly; gfx_rectto(tx,ty);
+
+        lx=tx+2;
+        xpos+=1;
+    );  
+
+    ly=ty+2;
+    notepos+=1;
+);

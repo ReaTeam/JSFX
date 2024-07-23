@@ -1,0 +1,77 @@
+desc: Multichannel Volume Trim
+//desc: Faders to trim 32-channels by same amount in stereo pairs
+//Version: 1.0.1
+//Changelog: fix slider 12 assigned to the wrong channels
+//Author: REAPER Blog
+//Links:
+// https://forum.cockos.com/showthread.php?t=205533
+// https://reaperblog.net/2018/04/multichannel-volume-trimming/
+
+slider1:dB1=0.0<-144.0, 18.0, 0.1>1/2 Volume (dB)
+slider2:dB2=0.0<-144.0, 18.0, 0.1>3/4 Volume (dB)
+slider3:dB3=0.0<-144.0, 18.0, 0.1>5/6 Volume (dB)
+slider4:dB4=0.0<-144.0, 18.0, 0.1>7/8 Volume (dB)
+slider5:dB5=0.0<-144.0, 18.0, 0.1>9/10 Volume (dB)
+slider6:dB6=0.0<-144.0, 18.0, 0.1>11/12 Volume (dB)
+slider7:dB7=0.0<-144.0, 18.0, 0.1>13/14 Volume (dB)
+slider8:dB8=0.0<-144.0, 18.0, 0.1>15/16 Volume (dB)
+slider9:dB9=0.0<-144.0, 18.0, 0.1>17/18 Volume (dB)
+slider10:dB10=0.0<-144.0, 18.0, 0.1>19/20 Volume (dB)
+slider11:dB11=0.0<-144.0, 18.0, 0.1>21/22 Volume (dB)
+slider12:dB12=0.0<-144.0, 18.0, 0.1>23/24 Volume (dB)
+slider13:dB13=0.0<-144.0, 18.0, 0.1>25/26 Volume (dB)
+slider14:dB14=0.0<-144.0, 18.0, 0.1>27/28 Volume (dB)
+slider15:dB15=0.0<-144.0, 18.0, 0.1>29/30 Volume (dB)
+slider16:dB16=0.0<-144.0, 18.0, 0.1>31/32 Volume (dB)
+
+@slider
+vol1 = 10 ^ (dB1 / 20);
+vol2 = 10 ^ (dB2 / 20);
+vol3 = 10 ^ (dB3 / 20);
+vol4 = 10 ^ (dB4 / 20);
+vol5 = 10 ^ (dB5 / 20);
+vol6 = 10 ^ (dB6 / 20);
+vol7 = 10 ^ (dB7 / 20);
+vol8 = 10 ^ (dB8 / 20);
+vol9 = 10 ^ (dB9 / 20);
+vol10 = 10 ^ (dB10 / 20);
+vol11 = 10 ^ (dB11 / 20);
+vol12 = 10 ^ (dB12 / 20);
+vol13 = 10 ^ (dB13 / 20);
+vol14 = 10 ^ (dB14 / 20);
+vol15 = 10 ^ (dB15 / 20);
+vol16 = 10 ^ (dB16 / 20);
+
+@sample
+spl0 *= vol1;
+spl1 *= vol1;
+spl2 *= vol2;
+spl3 *= vol2;
+spl4 *= vol3;
+spl5 *= vol3;
+spl6 *= vol4;
+spl7 *= vol4;
+spl8 *= vol5;
+spl9 *= vol5;
+spl10 *= vol6;
+spl11 *= vol6;
+spl12 *= vol7;
+spl13 *= vol7;
+spl14 *= vol8;
+spl15 *= vol8;
+spl16 *= vol9;
+spl17 *= vol9;
+spl18 *= vol10;
+spl19 *= vol10;
+spl20 *= vol11;
+spl21 *= vol11;
+spl22 *= vol12;
+spl23 *= vol12;
+spl24 *= vol13;
+spl25 *= vol13;
+spl26 *= vol14;
+spl27 *= vol14;
+spl28 *= vol15;
+spl29 *= vol15;
+spl30 *= vol16;
+spl31 *= vol16;

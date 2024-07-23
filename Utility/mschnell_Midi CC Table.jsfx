@@ -1,0 +1,366 @@
+desc: Midi CC Table
+author: Michael Schnell (mschnell@bschnell.de)
+version: 1.1
+changelog: Fix typos in description
+donation: United Nations Foundation http://www.unfoundation.org/
+about:
+  ## Description
+
+    The JSFX receives Midi CC messages with a Midi channel and CC # defined by the sliders in the GUI. The value of this message selects a row in the active configuration file and according to this, up to 32 Midi CC message with channel, CC # and CC value  as defined in that row are sent.
+
+    In "Map" mode, the messages defined in the appropriate row are sent whenever a fitting message is received. 
+    In "Configs" mode a row is selected according to the received message. Messages are only sent when the selection is changed. Now the "deselect" messages of the previously selected row are sent and after that the "select" messages of the newly selected row are sent.
+
+    You can define a "Delay" and a "No Delay" channel to send out messages in a sequenced way: If delay is not zero, the messages to the "No Delay" channel are sent at once, the other messages are sent after the delay time has passed. 
+    The main purpose of the Delay feature is using this plugin for configuration of plugins in a channel: the channel needs to be unmuted (by an appropriate ReaSctipt) before the plugins in that channel are ready to accept Midi Messages.
+
+    The slider "CC Table" selects the configuration file to be used. Same needs to be located in Reaper's "Data" folder (right besides "Effects") in a sub-folder "cc table", and needs to have the extension ".txt".
+
+    The slider "Function" selects the function mode to be "Map" or "Configs".
+
+    The slider "Input Channel" defines the Channel the messages to be adhered to are expected in. 
+
+    The slider "CC Input" defines the message # of the messages to be adhered to. 
+
+    The slider "No Delay Channel" defines the channel to be sent out without delay. (All other channels will be delayed)
+
+    The slider "Delay" defines the send delay in milliseconds. 
+
+
+  ## File format
+
+    Each line of the files defines a row in the mapping table. The first row will be accessed by a message with Value 0, the second row will be accessed by a message with Value 1, ...
+
+    Each line can define messages to be sent when the row is accessed, and optionally messages that will be sent when the row is deselected. The "select" messages are defined first, and after a "<" character the "deselect" messages are defined. 
+
+    Each message is defined by a block of characters, containing two or three decimal numbers). The message definitions are separated by (one or more) blanks.  
+
+    The message definitions start with the Midi channel followed by a colon (":"). The number after the colon defines the CC #. After the CC number optionally a "=" and a value definition can be set. if the "=" is missing, the value Zero is assumed. 
+
+    Any character after (and including) a "/" in a line will be ignored as a comment. 
+
+    Example:
+
+   1:1=1 1:1=2   // CC value 0
+
+   2:2=2  
+
+   // CC value 2 -> empty
+
+   // CC value 3 -> empty
+
+   3:3=1 3:3=2 3:3=3 3:3=4<10:11 // CC value 3 
+
+   15:127=127 7:7=2 7:7=3 7:7=4 7:7=5 7:7=6 7:7=7 7:7=8<16:124=125 9:9=9
+
+   15:127=127 7:7=2 7:7=3 7:7=4 7:7=5 7:7=6 7:7=7 7:7=8<16:124=125 9:9=9
+
+   <15:15=15 // CC value 7: only on leave
+
+  ## Graphics
+    The graphics will show as many of the rows in the mapping table as possible. Empty rows are not shown. 
+
+    If "deselect" messages are defined the fields for that row will contain two lines. 
+
+    The first column shows the CC to be received to select the row. The other columns how the messages to be sent. 
+
+    in "Configs" mode, the currently selected row is highlighted in yellow.
+
+slider1:/cc table:none:CC Table
+slider2:0<0,1,1{Map,Configs}>Function
+slider3:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Input Channel
+slider4:1<0,127,1{0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>CC Input
+slider5:0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>No Delay Channel
+slider6:0<0,1000,1>Delay (msec)
+
+@init
+
+//#font = "Courier New";
+//#font = "Liberation Mono";
+#font = "";  // Default
+
+q_size = 32;
+
+cols   = 32;
+cols3  = cols*3;
+cols23 = cols3*2;
+//cc_nr_i  = 0*rows;
+//cc_val_i = 1*rows;
+
+ssb = q_size;             // Spread sheet base
+
+q_    = 0;
+q_wr = 0;
+q_rd = 0;
+
+function slider_file_to_numbered_strings(slidernumber,offset)local(handle,lastvalue,lines) (
+//USE ONLY THE NUMBER OF THE SLIDER FOR "slidernumber"  - do not use "sliderx"
+  slider(slidernumber) != lastvalue ? reload=0;
+  
+  !reload ? (
+    handle=file_open(slider(slidernumber));
+    file_string(handle,offset);  
+    while( strlen(offset) && offset < 1023 )
+      ( offset+=1;
+        file_string(handle,offset);      
+      );
+    file_close(file);
+    lines=offset;
+    lastvalue=slider(slidernumber);
+    reload=1;
+  );
+  lines;
+); 
+  
+  
+  function queue_wr(inval) (
+    q_wr += 1;
+    q_wr >= q_size ? q_wr = 0;
+    q_[q_wr] = inval;
+  );
+  
+  function queue_rd() local (n) (
+    n = q_wr-q_rd;
+    n ? (
+      q_rd +=1;
+      q_rd >= q_size ? q_rd = 0;
+      q_[q_rd];
+     ) : (
+      -1;
+    );
+  );
+
+  function do_message(inval, nodelay, delay) local (ci, cj_p, cj_a, coli_p, coli_a, src_p, src_a, ch_p, ch_a, _ch_p, _ch_a)  (
+          ci = inval;
+          ci < row ? (
+            act = ci;
+            act != pre ? (
+              conf && (pre>=0) ? (                          // off messages of previous row
+                cj_p  = 0;
+                coli_p = pre * cols23 + cols3;
+                src_p = ssb + coli_p /*+ cj*3*/;
+                while (src_p[0] >= 0) ( 
+                  ch_p = src_p[0];
+                  nodelay ? (
+                    _ch_p = delay_ch == ch_p;
+                   ) : delay ? (
+                    _ch_p = delay_ch != ch_p;
+                   ) : (
+                    _ch_p = 0; 
+                  ); 
+                  _ch_p ?   midisend(offset, $xB0+src_p[0],  src_p[1],  src_p[2]); 
+                  cj_p += 1;
+                  src_p += 3;
+                );
+              );  
+              cj_a  = 0;
+              coli_a = ci * cols23;                          // on messages of new row
+              src_a = ssb + coli_a /*+ cj*3*/;
+              while (src_a[0] >= 0) ( 
+                ch_a = src_a[0];
+                nodelay ? (
+                  _ch_a = delay_ch == ch_a;
+                 ) : delay ? (
+                  _ch_a = delay_ch != ch_a;
+                 ) : (
+                  _ch_a = 0; 
+                ); 
+                _ch_a ? midisend(offset, $xB0+src_a[0],  src_a[1],  src_a[2]); 
+                cj_a += 1;
+                src_a += 3;
+              );
+            );  
+            delay && conf ? pre = act;
+          );
+  );
+
+  
+  
+  
+@slider
+  conf        = slider2;
+  inChannel   = slider3;
+  modcc       = slider4;
+  delay_ch    = slider5; 
+  delay       = slider6 / 1000;;
+  !delay ? delay_ch = -1;
+  dd = 0;
+  
+  act = -2;
+  pre = -1;
+  q_wr = 0;
+  q_rd = 0;
+
+  lines = slider_file_to_numbered_strings(1, 0);
+
+  row = 0; 
+  loop(lines, 
+    #s = strcpy(#, row);
+    o   = 0;
+    col = 0;
+    cc  = -1;
+    l   = strlen(#s);
+    src = ssb + row*cols23 + col*3;
+    src[0]     = -1;
+    src[cols3] = -1;
+    digit = 0;
+    while (o < l) (
+      c = '0';
+      j = 0;
+      while ((c >= '0') && (c <= '9')) (
+        digit = 1;
+        j *= 10;
+        j += c-'0';
+        c = str_getchar(#s, o, 'c');
+        o += 1;
+      );  
+      c == ':' ? (                           // Channel
+        digit ? src[0] = j-1;
+//        ___0 = j;
+       ) : c == '=' ? (                      // CC #
+        src[1] = j;       
+        cc = j;
+//        ___1 = j;
+       ) : (c == ' ') || (c == 13) || (c == '<') || (c == '/' || (o > l) )? (       // Value
+        cc >= 0 ? (
+          src[2] = j;
+//          ___2 = j;
+         ) : (
+          src[1] = j;
+//          ___1 = j;
+          src[2] = 0;
+//          ___2 = 0;
+        );  
+        src[0] >= 0 ? col += 1;
+        cc = -1;
+        src = ssb + row*cols23 + col*3;
+//        ___s = src; 
+        src[0] = -1;
+        c == '/' ? o = 999;              // abort line
+        c == '<' ? (
+          col = cols;                    // go on in this row
+          src = ssb + row*cols23 + col*3;   
+//          ___s1 = src; 
+//          c = '0';
+//          j = 0;
+//          src[0] = -1;      
+        );
+      );  
+    );
+    row+=1;
+  );
+  act = -1;
+  pre = -1;
+//  ___n  = 5*cols23;
+//  ___x  = ssb[___n];
+//  ___n1 = 5*cols23 + cols3;
+//  ___x1 = ssb[___n1];
+//  ___n2 = 5*cols23 + cols3 + 1;
+//  ___x2 = ssb[___n2];
+    
+
+@block
+  while (midirecv(offset, msg1, msg2, msg3)) (
+    midisend(offset, msg1, msg2, msg3); // pass through
+    status = msg1 & $xF0;      // Extract message type
+    channel = msg1 & $x0F;
+    channel == inChannel ? (   // Is it on our channel?
+      status == $xB0 ? (       // Is it a controller event?
+        msg2 == modcc ? (      // Is it the right CC?
+          queue_wr(msg3);
+          do_message(msg3, 1, 0);          
+          dd =srate / samplesblock * delay;
+          dd = floor(dd) + 1;            
+        );
+      );
+    );          
+  );  
+  dd > 0 ? (
+    dd -= 1;
+    !dd ? (
+      msg = queue_rd();
+      while (msg >= 0) (
+        do_message(msg, 0, 1);
+        msg = queue_rd();        
+      );  
+    );
+  );  
+  
+@gfx 650 450  
+  //display file
+  gfx_r=gfx_g=gfx_b=0; gfx_a=1;
+  gfx_x=gfx_y=0;
+  gfx_rectto(gfx_w,gfx_h);
+  
+  gfx_setfont(2,#font,18);
+  textw = gfx_texth * 0.6;
+  gfx_r=1;gfx_g=gfx_b=1;
+  xx = 10;
+  yy =10; 
+  gfx_x=xx;gfx_y=yy;
+  lines ? (
+    i  = 0;
+    rm = 0;
+    loop ( row,
+      i == act ? (
+        gfx_r=1;gfx_g=1;gfx_b=0;
+       ) : (
+        gfx_r=0.7;gfx_g=0.7;gfx_b=0.7;
+      ); 
+      ssb[i*cols23 /* + 0*3 + 0 */  ] >= 0 ? (
+        gfx_x=xx;
+        #t = sprintf(#, "%d", i);
+        gfx_drawstr(#t);
+        gfx_x = xx + 3*textw;
+        gfx_drawstr(">>");
+        j = 0;
+        srb = ssb + i*cols23;
+        while ((srb[0] >= 0) && (j < cols)) ( 
+          #t = sprintf(#, "%d:%d=%d  ", srb[0]+1, srb[1], srb[2]); 
+          gfx_x = xx + (6+9*j)*textw;
+          gfx_drawstr(#t);
+          j += 1;
+          srb += 3;
+        );   
+        gfx_y+=gfx_texth;      
+        rm < j ? rm = j;
+      );  
+      ssb[i*cols23 + cols3 /* + 0*3 + 0 */  ] >= 0 ? (
+        gfx_x=xx;
+        #t = sprintf(#, "%d", i);
+        gfx_drawstr(#t);
+        gfx_x = xx + 3*textw;
+        gfx_drawstr("<<");
+        j = 0;
+        srb = ssb + i*cols23 + cols3;
+        while ((srb[0] >= 0) && (j < cols)) ( 
+          #t1 = sprintf(#, "%d:%d=%d  ", srb[0]+1, srb[1], srb[2]); 
+          gfx_x = xx + (6+9*j)*textw;
+          gfx_drawstr(#t1);
+          j += 1;
+          srb += 3;
+        );  
+        gfx_y+=gfx_texth;
+        rm < j ? rm = j;
+      );  
+      (ssb[i*cols23] >= 0) ||  (ssb[i*cols23+cols3 ] >= 0) ?  (
+        gfx_x = 0;   
+        gfx_r=0.7;gfx_g=0.7;gfx_b=0.7;
+        gfx_y += 5;
+        gfx_lineto(gfx_w, gfx_y);
+        gfx_y += 5;
+      );  
+      i+=1;
+    );
+    yy = gfx_y - 5;;
+    j = 0;
+    gfx_r=0.7;gfx_g=0.7;gfx_b=0.7;
+    loop(rm, 
+      gfx_x = xx + (6+9*j)*textw -3;
+      gfx_y = 0;
+      gfx_lineto (gfx_x, yy;);
+      j += 1;
+    );
+   ) : ( 
+    gfx_drawstr("No appropriate *.txt file in   >>>>  .../REAPER/Data/CC table  <<<<");
+  );  

@@ -1,0 +1,616 @@
+desc: MIDI Varocity
+author: polgo
+version: 1.1
+changelog: Fixed note off problem
+screenshot: https://stash.reaper.fm/37351/polgo_MIDI_Varocity.png
+about:
+  # Varocity
+
+    Varocity offers tools and visual feedback to help shape random variations of incoming velocity values.
+
+    - Note/Velocity Min/Max: Limits for velocity and processing notes
+    - Vary Positive/Negative: Sets the upper and lower range of random variation
+    - Vary Dampen: Weight the variations towards the centre
+    - Vary Resolution: Space the output velocity to a specified resolution
+    - Vary Seed: 'Fix' the randomisation to the track time
+    - Vary Stepping/Max Step: Limit the velocity change possible from note to note
+
+    - Offset Velocity: Shift the output velocity with an envelope
+    - Offset Factor: Offset Velocity x Offset factor
+
+    - Fade Balance: Balances the offset and/or variation across the velocity range
+    - Fade effects Vary/Offset: What is influenced by the 'Fade Balance' slider
+
+    - Graphic blend out rate: Sets how long the markers on the display take to disappear
+
+
+
+slider1:inChannel=16<0,17,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,All}>Channel -+
+slider2:noteMin=0<0,127,1>Note Min -+
+slider3:noteMax=127<0,127,1>Note Max -+
+slider5:veloMin=0<0,127,1>Velocity Min -+
+slider6:veloMax=127<0,127,1>Velocity Max     -+
+
+slider10:varyPos=0<0,64,1>Vary Positive -+
+slider11:varyNeg=0<-64,0,1>Vary Negative -+
+
+slider14:varyDamp=0<0,10,1>Vary Dampen -+
+slider15:resolution=1<1,32,1>Vary Resolution -+
+slider16:seedStart=0<0,1000,1>Vary Seed (0 off) -+
+
+slider18:stepPerNOTE=0<0,2,1{OFF,Limit change Per note (Drums),Limits across all notes (Solos)}>Vary Stepping -+
+slider19:limitSTEPRANDOM=127<1,127,1>Vary Max Step -+
+
+slider22:offsetENV=0<-32,32>Offset Velocity (For Envelope) -+
+slider23:offsetENVFACTOR=1<0,4>Offset Factor -+
+slider24:offsetCONST=0<-127,127,1>Offset Constant -+
+
+slider33:fadeRamp=0<-50,50,1>Fade Balance -+
+slider34:fadeVaryOn=1<0,1,1{FALSE,TRUE}>Fade effects Vary -+
+slider35:fadeOffsOn=0<0,1,1{FALSE,TRUE}>Fade effects Offset -+
+
+slider40:blendRate=0.5<0,1>Graphic Blend Out Rate -+
+slider41:showDATA=1<0,2,1{OFF,ON,HELP}>Graphic Output -+
+
+in_pin:none
+out_pin:none
+
+@init
+
+ext_noinit = 1.0; startNoteOn = $x90; NOTE_ON = 9; NOTE_OFF = 8; AFTERTCH = 10;
+
+// CONSTANTS
+POINT_COUNT = 160; BAR_COUNT = 5;
+GRADIENT_H = 20; BLEND_RATE_FACT = 100;
+FADE_FAST = 1; FADE_MED = 0.06; FADE_SLOW = 0.03; FADE_SLOWER = 0.01; FADED_VARY_MID = 25;
+SHADE_OUT = 40; SHADE_IN = 60; SHADE_TOP_COUNT = 100;
+SEG_W = 4; SEG_H = 8; BRD_W = 35; BRD_H = 20; BAR_W = SEG_W * 127;
+BAR_NOTE = 1; BAR_VELO = 2; BAR_OFFS = 3; BAR_IN = 4; BAR_OUT = 5;
+STATE_OFF = 0; STATE_ON = 1; STATE_NEW = 2;
+//NOTE_OFF = 8; NOTE_ON = 9; NOTE_CC = 10;
+NOTE_OFF = $x80;
+NOTE_ON = $x90;
+// VARS
+g_seed = seedStart;
+g_beat = 0;
+g_helpY = 0;
+g_pointNext = 1;
+
+// ARRAYS
+a_noteLastVel = 20000; a_noteLastAdd = 30000; a_noteFade = 43000;
+a_velInFade = 44000; a_velOutFade = 45000;
+a_notesIn = 46000; a_notesOut = 47000; a_notesState = 47500;
+a_pointTop = 48000; a_pointBot = 49000; a_pointFade = 50000; a_pointNote = 51000;
+a_barPosY = 52000; a_barPosY[1] = 0 + BRD_H; a_barPosY[2] = 20 + BRD_H; a_barPosY[3] = 40 + BRD_H; a_barPosY[4] = 60 + BRD_H; a_barPosY[5] = 120 + BRD_H;
+
+function f_setColGry(_shade, _a)( gfx_a = _a; gfx_r = _shade; gfx_g = _shade; gfx_b = _shade; );
+function f_setColRed(_a)( gfx_a = _a; gfx_r = 0.6; gfx_g = 0.2; gfx_b = 0.2; );
+function f_setColCya(_a)( gfx_a = _a; gfx_r = 0.0; gfx_g = 0.7; gfx_b = 0.7; );
+function f_setColRdd(_a)( gfx_a = _a; gfx_r = 0.4; gfx_g = 0.2; gfx_b = 0.2; );
+function f_setColBlu(_a)( gfx_a = _a; gfx_r = 0.3; gfx_g = 0.4; gfx_b = 0.7; );
+function f_setColGrn(_a)( gfx_a = _a; gfx_r = 0.2; gfx_g = 0.6; gfx_b = 0.3; );
+function f_setColMag(_a)( gfx_a = _a; gfx_r = 0.6; gfx_g = 0.3; gfx_b = 0.6; );
+function f_setColYel(_a)( gfx_a = _a; gfx_r = 0.7; gfx_g = 0.6; gfx_b = 0.2; );
+function f_setColBlk(_a)( gfx_a = _a; gfx_r = 0.0; gfx_g = 0.0; gfx_b = 0.0; );
+function f_setColWht(_a)( gfx_a = _a; gfx_r = 1.0; gfx_g = 1.0; gfx_b = 1.0; );
+function f_limColour(_col)( _col > 1 ? (_col = 1); _col; );
+
+function f_drawHelp(_t1, _t2)(
+	gfx_setfont(1, "Arial", 14, 'b'); f_setColGry(0.75,1);
+	_x1 = 10; _x2 = 180; gfx_x = _x1; gfx_y = g_helpY;
+	gfx_printf(_t1); gfx_x = _x2; gfx_setfont(1, "Arial", 14); gfx_printf(_t2); g_helpY += 15;
+);
+
+function f_drawHelpAll()(
+	_space = 5; g_helpY = 10;
+	f_drawHelp("- Note / Velocity Min / Max:", "Limits for velocity and silencing notes");
+	f_drawHelp("- Velocity Limit / Cut:", "Remove or push velocity to min/max limits");
+	g_helpY += _space;
+	f_drawHelp("- Vary Positive / Negative:", "sets the upper and lower range of random variation");
+	f_drawHelp("- Vary Dampen:", "Increase to weight the variations towards the centre");
+	f_drawHelp("- Vary Resolution:", "Limit the output velocity to the specied resolution");
+	f_drawHelp("- Vary Seed:", "Fix the randomisation to the track time ");
+	f_drawHelp("- Vary Stepping / Max Step:", "Limit the amount of velocity change from note to note");
+	g_helpY += _space;
+	f_drawHelp("- Offset Velocity / Fact / Const:", "Shift the output velocity with an envelope" );
+	f_drawHelp("- Fade Balance:", "Balances the offeset and/or variation across the velocity range");
+	f_drawHelp("- Fade on Vary / Offset:", "What is influenced by the 'Fade Balance' slider");
+	//g_helpY += _space;
+	//f_drawHelp("- Graphic blend out rate:", "Sets how long the markers on the display take to disappear");
+);
+
+function f_getW(_mVal)( SEG_W * _mVal; );
+function f_getXpos(_mVal) local(_ret) ( _ret = BRD_W + f_getW(_mVal); _ret; );
+
+//unknown max or min
+function f_clamp(_val, _a, _b) local(_ret) (
+	//_a > _b?(	_min = _b;	_max = _a;	//):(_min = _a;	_max = _b;	);
+	_min = min(_a, _b);
+	_max = max(_a, _b);
+	_ret = max(_min, _val);  _ret = min(_ret, _max);
+	_ret;//_ret |= 0; // force integer
+);
+
+function f_randomGet() local(_ret) ( _ret = rand(1000) / 1000; _ret; );
+function f_sRandomSetSeed() ( g_seed = (g_beat * 100) + seedStart; );
+
+function f_sRandomGet() local(_ret) (
+	seedStart == 0 ? (
+		_ret = f_randomGet()
+	):(
+		_a = 2269; _c = 1; g_seed = ((_a * g_seed) + _c) % 10000; _ret = g_seed / 10000;
+	);     _ret;
+);
+
+function f_differ(_va1,_va2) local(_ret) (
+	_va1 <= _va2 ? ( _ret = (_va2 - _va1); );
+	_va1 >= _va2 ? ( _ret = 0-(_va1 - _va2); );
+	_ret;
+);
+
+function f_resolution(_res,_val) local(_ret) (
+
+	tResHalf = _res / 2;
+	tRem = _val % _res;
+	tFact = floor(_val / _res);
+	tRem > tResHalf ? (
+		_ret = (tFact+1) * _res;
+	):(
+		_ret = tFact * _res;
+	);
+	_ret;
+);
+
+function f_round(_val) local(_ret) (
+	tRem = _val % 1;
+	tRem < 0.5 ? ( _ret = floor(_val); ):( _ret = ceil(_val); ); _ret;
+);
+
+function f_getBlend(_fact, _curr, _total, _spike) local(_fact) (
+	_spikeFact = 0.99 + f_limColour( _spike * 0.1);
+	_totalfact = (_curr / _total);
+	_fact = _fact + ((_totalfact * _fact) + ((_totalfact ^ _spikeFact) * (_totalfact*_spike)));
+	_fact;
+);
+
+function f_setFadeColour(_col)(
+	gfx_r = f_limColour(0.3 + _col);
+	gfx_b = f_limColour(1.2 - _col);
+	gfx_g = f_limColour(0.2 + _col);
+	gfx_a = f_limColour(_col*3);
+);
+
+function f_drawNum(_x, _y, _but, _num, _just)(
+	gfx_x = _x; gfx_y = _y;
+	_just == 1 ? (
+		f_setColBlk(0);
+		gfx_drawnumber(_num,0);
+		gfx_x = 8+_x - (gfx_x - _x);
+	);
+	f_setColCya(1); gfx_drawnumber(_num,0);
+);
+
+function f_drawBar(_x, _y, _w, _h, _o)( _y += _o; _h -= (_o*2); gfx_rect(_x, _y, _w, _h); );
+
+
+@gfx 630 170
+
+gfx_mode = 0;
+showDATA != 1 ? (
+	showDATA == 0 ? (     f_setColBlk(1); gfx_rect(0, 0, 630, 170);     ):( f_drawHelpAll();     );
+):(
+	gfx_setfont(1, "Arial", 12, 'b');
+	gfx_w = (BRD_W ) + (127 * SEG_W) + 43;     gfx_h = 200;
+	it = 0;
+	loop(128,
+
+		a_notesState[it] == STATE_NEW ? (
+			a_notesState[it] = STATE_OFF;
+		):(
+			a_notesIn[it] > 0 ? (
+				a_noteFade[it] =     a_noteFade[it] + ( a_notesIn[it] + a_notesOut[it] * 0.2 );
+				a_noteFade[it] > SHADE_TOP_COUNT ? (a_noteFade[it] = SHADE_TOP_COUNT);
+
+				a_velInFade[a_notesIn[it]] = a_velInFade[a_notesIn[it]] + SHADE_IN;
+				a_velInFade[a_notesIn[it]] > SHADE_TOP_COUNT ? (a_velInFade[a_notesIn[it]] = SHADE_TOP_COUNT);
+
+				a_velOutFade[a_notesOut[it]] = a_velOutFade[a_notesOut[it]] + SHADE_OUT;
+				a_velOutFade[a_notesOut[it]] > SHADE_TOP_COUNT ? (a_velOutFade[a_notesOut[it]] = SHADE_TOP_COUNT);
+
+				a_pointNote[g_pointNext] = it;
+				a_pointTop[g_pointNext] = a_notesIn[it];
+				a_pointBot[g_pointNext] = a_notesOut[it];
+				a_pointFade[g_pointNext] = SHADE_TOP_COUNT;
+
+				g_pointNext = g_pointNext + 1;
+				g_pointNext > POINT_COUNT ? (g_pointNext = 1);
+
+				a_notesState[it] = STATE_ON;
+				a_notesIn[it] = 0;
+				a_notesOut[it] = 0;
+			);
+		);
+		it += 1;
+	);
+
+// velo in /out lines
+
+	gfx_mode = 1.0;
+	it = 0;
+	loop(POINT_COUNT,
+		a_pointFade[it] > 0 ? (
+			tFact = f_clamp( (1.2-(a_pointFade[it] * 0.01))*1.5,0,1);
+			f_setFadeColour(a_pointFade[it] * 0.01);
+			gfx_x = BRD_W + (SEG_W * 0.5) + (SEG_W * (a_pointTop[it]-1));
+			gfx_y = a_barPosY[BAR_IN] + SEG_H + 4;
+			gtx_offset = gfx_x + (SEG_W * ((a_pointBot[it]-1) - (a_pointTop[it]-1)) * tFact);
+			gty_offset = gfx_y + ((a_barPosY[BAR_OUT] - gfx_y - 4) * tFact);
+
+			gfx_lineto(gtx_offset, gty_offset);
+			a_pointFade[it] = a_pointFade[it] - f_getBlend(FADE_SLOWER * (blendRate*BLEND_RATE_FACT), a_pointFade[it], SHADE_TOP_COUNT, 9);
+		);
+		it += 1;
+	);
+	gfx_mode = 0;
+
+// blur lines
+	gfx_x = BRD_W;
+	gfx_y = a_barPosY[BAR_IN] + SEG_H + 4;
+	gfx_blurto(gfx_x+BAR_W, a_barPosY[BAR_OUT]- 4);
+
+// fade balance
+
+	fadeRamp != 0 ? (
+		fadedVaryXtra = 0;
+		fadedVaryAdjust = fadeRamp;
+		fadedVaryAdjust > 0 ? (
+			fadedVaryAdjust > FADED_VARY_MID ? (
+				fadedVaryXtra = 96 * ((fadedVaryAdjust - FADED_VARY_MID)/FADED_VARY_MID);
+				fadedVaryAdjust = FADED_VARY_MID;
+			);
+		);
+		fadedVaryAdjust < 0 ? (
+			fadedVaryAdjust < 0-FADED_VARY_MID ? (
+				fadedVaryXtra = 96 * ((abs(fadedVaryAdjust) - FADED_VARY_MID)/FADED_VARY_MID);
+				fadedVaryAdjust = 0-FADED_VARY_MID;
+			);
+		);
+
+		tHLtop = a_barPosY[BAR_IN] + SEG_H + 2;
+		tHLbot = a_barPosY[BAR_OUT] - 3;
+		tHLleft = f_getXpos(0);
+		tHLright = f_getXpos(127);
+
+		tHLy1 = tHLtop + ((tHLbot - tHLtop) * (abs(fadedVaryAdjust) / FADED_VARY_MID ));
+
+		fadedVaryAdjust >= 0 ? (
+			tHLx1 = f_getXpos(fadedVaryXtra);
+			tHLx2 = tHLright;
+			tHLx3 = tHLleft;
+		):(
+			tHLx1 = f_getXpos(127) - f_getW(fadedVaryXtra);
+			tHLx2 = tHLleft;
+			tHLx3 = tHLright;
+		);
+
+		f_setColBlk(0.5);
+		gfx_triangle(tHLx1,tHLy1,     tHLx2,tHLtop,     tHLx3,tHLtop,     tHLx3,tHLy1);
+
+		gfx_mode = 1.0;
+		f_setColRed(0.75);
+		gfx_line(tHLx1,tHLy1,tHLx2,tHLtop,0);
+	);
+
+// black gradient
+
+	gfx_mode = 0;
+	tm = 1/GRADIENT_H;
+	gfx_gradrect(BRD_W, a_barPosY[BAR_IN]+SEG_H+2,BAR_W, GRADIENT_H,0, 0, 0,1, 0, 0, 0, 0, 0, 0, 0, -tm);
+	gfx_gradrect(BRD_W, a_barPosY[BAR_OUT]-GRADIENT_H-2, BAR_W, GRADIENT_H,0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, tm);
+
+// vary bars
+
+	_start = f_getXpos(64);
+	_end = f_getXpos(64+varyPos);
+	_dif = abs(_start - _end);
+
+	f_setColGrn(0.75);
+	f_drawBar(_start, a_barPosY[BAR_VELO], _dif, SEG_H, 2);
+
+	_start = f_getXpos(64+varyNeg);
+	_end = f_getXpos(64);
+	_dif = abs(_end - _start);
+
+	f_setColBlu(0.75);
+	f_drawBar(_start, a_barPosY[BAR_VELO], _dif, SEG_H, 2);
+
+//     Offset
+
+	tOffset = (offsetENV * offsetENVFACTOR);
+	//tOffsetAll = tOffset + offsetCONST;
+	_start = f_getXpos(64);
+	_tO = f_clamp(tOffset,-64,64);
+	_end = f_getXpos(64+_tO);
+
+	_dif = abs(_start - _end);
+
+	tOffset < 0 ? (
+		f_setColMag(0.75);
+		f_drawBar(_end, a_barPosY[BAR_OFFS], _dif, SEG_H, 2);
+	):(
+		f_setColYel(0.75);
+		f_drawBar(_start, a_barPosY[BAR_OFFS], _dif, SEG_H, 2);
+	);
+
+// note min / max
+	f_setColRdd(1);
+	f_drawBar(f_getXpos(0), a_barPosY[BAR_NOTE], f_getW(noteMin-1), SEG_H, 2);
+	f_drawBar(f_getXpos(noteMax+1), a_barPosY[BAR_NOTE], f_getW(127-(noteMax+1)), SEG_H, 2);
+
+// velo min / max
+	f_setColRdd(1);
+	f_drawBar(f_getXpos(0), a_barPosY[BAR_OUT], f_getW(veloMin-1), SEG_H, 2);
+	f_drawBar(f_getXpos(veloMax+1), a_barPosY[BAR_OUT], f_getW(127-(veloMax+1)), SEG_H, 2);
+
+// note lights
+	gfx_mode = 1.0;
+	gfx_a = 1;
+	it = 0;
+	loop(128,
+		a_noteFade[it] > FADE_FAST ? (
+			a_noteFade[it] = a_noteFade[it] - f_getBlend(FADE_FAST, a_noteFade[it], SHADE_TOP_COUNT, 7);
+			gtColour = a_noteFade[it] * 0.01;
+			gfx_r = 0;
+			gfx_g = gtColour;
+			gfx_b = gtColour * 0.6;
+			f_drawBar(f_getXpos(it-1),a_barPosY[BAR_NOTE],SEG_W - 1,SEG_H-1, 0);
+		);
+		it += 1;
+	);
+
+// velocity lights
+	gfx_mode = 1.0;
+	gfx_a = 1;
+	it = 0;
+	loop(128,
+		a_velInFade[it] > 0 ? (
+			f_setFadeColour(a_velInFade[it] * 0.01);
+			f_drawBar(f_getXpos(it-1), a_barPosY[BAR_IN], SEG_W - 1, SEG_H-1, 0);
+			a_velInFade[it] = a_velInFade[it] - f_getBlend(FADE_MED * (blendRate*BLEND_RATE_FACT), a_velInFade[it], SHADE_TOP_COUNT, 9);
+		);
+		a_velOutFade[it] > 0 ? (
+			f_setFadeColour(a_velOutFade[it] * 0.01);
+			f_drawBar(f_getXpos(it-1), a_barPosY[BAR_OUT], SEG_W - 1, SEG_H - 1, 0);
+			a_velOutFade[it] = a_velOutFade[it] - f_getBlend(FADE_SLOW * (blendRate*BLEND_RATE_FACT), a_velOutFade[it], SHADE_TOP_COUNT, 2);
+		);
+		it += 1;
+	);
+	gfx_mode = 0;
+
+// text // bg lines
+
+	_x1 = BRD_W - 17;
+	_x2 = gfx_w - 35;
+	_xt = gfx_w - 10;
+	it = 1;
+	loop(5,
+		_y = a_barPosY[it];
+		_o = 0;
+		f_setColGry(0.4,1);
+		_x = f_getXpos(64) - (SEG_W/2);
+		gfx_line(_x,_y - _o,_x,_y + SEG_H + _o,0);
+		f_setColGry(0.2,1);
+		_x = f_getXpos(32) - (SEG_W/2);
+		gfx_line(_x,_y - _o,_x,_y + SEG_H + _o,0);
+		_x = f_getXpos(96) - (SEG_W/2);
+		gfx_line(_x,_y - _o,_x,_y + SEG_H + _o,0);
+		_x = f_getXpos(16) - (SEG_W/2);
+		gfx_line(_x,_y - _o,_x,_y + SEG_H + _o,0);
+		_x = f_getXpos(48) - (SEG_W/2);
+		gfx_line(_x,_y - _o,_x,_y + SEG_H + _o,0);
+		_x = f_getXpos(80) - (SEG_W/2);
+		gfx_line(_x,_y - _o,_x,_y + SEG_H + _o,0);
+		_x = f_getXpos(112) - (SEG_W/2);
+		gfx_line(_x,_y - _o,_x,_y + SEG_H + _o,0);
+		it += 1;
+	);
+
+	gfx_y = a_barPosY[BAR_NOTE] - 3;
+	f_drawNum(_x1, gfx_y, b_noteMin, noteMin, 1);
+	f_drawNum(_x2, gfx_y, b_noteMax, noteMax, 0);
+
+	gfx_y = a_barPosY[BAR_OUT] - 3;
+	f_drawNum(_x1, gfx_y, b_veloMin, veloMin, 1);
+	f_drawNum(_x2, gfx_y, b_veloMax, veloMax, 0);
+
+	gfx_y = a_barPosY[BAR_VELO] - 3;
+	f_drawNum(_x1, gfx_y, b_varyNeg, varyNeg, 1);
+	f_drawNum(_x2, gfx_y, b_varyPos, varyPos, 0);
+
+	gfx_y = a_barPosY[BAR_OFFS] - 3;
+	f_drawNum(_x2, gfx_y, b_varyPos, tOffset, 0);
+
+	f_setColGry(0.4, 1);
+
+	gfx_x = _xt+5;          gfx_y = a_barPosY[BAR_NOTE] - 3;
+	gfx_printf("NOTE");
+
+	_xo = 8;          gfx_x = _xt+5+_xo;     gfx_y = a_barPosY[BAR_IN] - 3;
+	gfx_printf("IN");
+
+	_xx = _xt + 10+_xo;     _yy = a_barPosY[BAR_IN] + SEG_H + 6;
+	gfx_line(_xx,_yy,_xx,_yy + SEG_H,0);
+	_yy += 30;
+	gfx_line(_xx,_yy,_xx,_yy + SEG_H,0);
+
+	gfx_x = _x2+9+_xo;     gfx_y = a_barPosY[BAR_IN] + ((a_barPosY[BAR_OUT] - a_barPosY[BAR_IN])/2) - 3;
+	gfx_printf("VELOCITY");
+
+	gfx_x = _xt+_xo;     gfx_y = a_barPosY[BAR_OUT] - 3;
+	gfx_printf("OUT");
+
+	gfx_x = _xt+4;     gfx_y = a_barPosY[BAR_VELO] - 3;
+	gfx_printf("VARY");
+
+	gfx_x = _xt;     gfx_y = a_barPosY[BAR_OFFS] - 3;
+	gfx_printf("OFFSET");
+
+	_o = 2;     _oo = 4;
+	f_setColGry(0.3,1);
+	gfx_rect(BRD_W-_o, a_barPosY[1]-_o, BAR_W+_oo, SEG_H+_oo, 0);
+	gfx_rect(BRD_W-_o, a_barPosY[2]-_o, BAR_W+_oo, SEG_H+_oo, 0);
+	gfx_rect(BRD_W-_o, a_barPosY[3]-_o, BAR_W+_oo, SEG_H+_oo, 0);
+	gfx_rect(BRD_W-_o, a_barPosY[4]-_o, BAR_W+_oo, SEG_H+_oo, 0);
+	gfx_rect(BRD_W-_o, a_barPosY[5]-_o, BAR_W+_oo, SEG_H+_oo, 0);
+);
+
+
+@block
+
+_b = floor(beat_position);
+
+play_state == 1 ?(
+	_b != g_beat ?(
+		f_sRandomSetSeed();
+		g_beat = _b;
+	);
+);
+
+while(midirecv(tsoffset, msg1, note, velocity) ? (
+
+	passthrough = 1;
+	process = 0;
+   event = msg1&$xF0;
+
+   event == NOTE_ON ? (
+		process = 1;
+	);
+
+	channel = msg1 & 0x0f;
+	channel != inChannel && inChannel != 16 ? ( process = 0;);
+	note < noteMin || note > noteMax ? (process = 0;);
+
+	process == 1 && passthrough == 1 ? (
+		a_notesState[note] = STATE_NEW;
+		offsetAll = (offsetENV * offsetENVFACTOR) + offsetCONST;
+
+		stepPerNOTE == 2 ? (
+			velocityLast == 0 ? (
+				velocityLast = velocity;
+			);
+		);
+
+		velocityIn = velocity;
+		varyFactNeg = 0;
+		varyFactorPos = 0;
+		varyAddNeg = 0;
+		varyAddPos = 0;
+		varyAdd = 0;
+
+// RANDOM
+		varyNeg < 0 ? (
+			varyFactNeg = f_sRandomGet();
+			varyDamp == 0 ? (
+				varyAddNeg = varyFactNeg * varyNeg;
+			):(
+				varyNeg2 = 0 - varyNeg;
+				dampenFact = 1.04 + (varyDamp *0.01);
+				t = dampenFact ^ varyNeg2;
+				varyAddNeg = varyNeg2 - floor(log((varyFactNeg * t) + 1)/log(dampenFact));
+				varyAddNeg = 0-varyAddNeg;
+			);
+		);
+
+		varyPos > 0 ? (
+			varyFactorPos = f_sRandomGet();
+			varyDamp == 0 ? (
+				varyAddPos = varyFactorPos * varyPos;
+			):(
+				dampenFact = 1.04 + (varyDamp *0.01);
+				t = dampenFact ^ varyPos;
+				varyAddPos = varyPos - floor(log((varyFactorPos * t) + 1)/log(dampenFact));
+			);
+		);
+
+		varyAdd = floor(varyAddNeg + varyAddPos);
+
+		fadedVaryXtra = 0;
+		fadedVaryAdjust = fadeRamp;
+		fadedVaryAdjust > 0 ? (
+			fadedVaryAdjust > FADED_VARY_MID ? (
+				fadedVaryXtra = 96 * ((fadedVaryAdjust - FADED_VARY_MID)/FADED_VARY_MID);
+				fadedVaryAdjust = FADED_VARY_MID;
+			);
+			fadedVaryIn = velocityIn - fadedVaryXtra;
+			fadedVaryIn < 0 ?(fadedVaryIn = 0);
+			fadedVaryFact = fadedVaryAdjust/FADED_VARY_MID;
+			fadedVaryVelFact = 1-(fadedVaryIn/(127-fadedVaryXtra));
+		);
+
+		fadedVaryAdjust < 0 ? (
+			fadedVaryAdjust < 0-FADED_VARY_MID ? (
+				fadedVaryXtra = 96 * ((abs(fadedVaryAdjust) - FADED_VARY_MID)/FADED_VARY_MID);
+				fadedVaryAdjust = 0-FADED_VARY_MID;
+			);
+			fadedVaryIn = (127-velocityIn) - (fadedVaryXtra);
+			fadedVaryIn < 0 ?(fadedVaryIn = 0);
+			fadedVaryFact = abs(fadedVaryAdjust)/FADED_VARY_MID;
+			fadedVaryVelFact = 1-(fadedVaryIn)/(127-fadedVaryXtra);
+		);
+
+		fadedVaryAdjust != 0 ? (
+			fadeOffsOn == 1 ? (
+				offsetAll = offsetAll - ceil(offsetAll * (fadedVaryFact * fadedVaryVelFact));
+			);
+			fadeVaryOn == 1 ? (
+				varyAdd = varyAdd - ceil(varyAdd * (fadedVaryFact * fadedVaryVelFact));
+			);
+		);
+
+		velocityIn = velocity + offsetAll;
+		velocityNew = f_clamp(velocityIn + varyAdd, veloMin, veloMax);
+		velocityNew = f_resolution(resolution,velocityNew);
+
+		stepPerNOTE == 1 ? (
+		// drum
+			varyDiff = f_differ(a_noteLastVel[note], velocityNew);
+			abs(varyDiff) > limitSTEPRANDOM ? (
+				varyDiff > 0 ? (
+					velocityNew = a_noteLastVel[note] + limitSTEPRANDOM;
+				):(
+					velocityNew = a_noteLastVel[note] - limitSTEPRANDOM;
+				);
+			);
+			a_noteLastVel[note] = velocityNew;
+
+		):stepPerNOTE == 2 ? (
+		// solo
+			varyDiff = f_differ(velocityLast, velocityNew);
+			abs(varyDiff) > limitSTEPRANDOM ? (
+				varyDiff > 0 ? (
+					velocityNew = velocityLast + limitSTEPRANDOM;
+				):(
+					velocityNew = velocityLast - limitSTEPRANDOM;
+				);
+			);
+			velocityLast = velocityNew;
+		);
+	);
+
+	passthrough == 1 ? (
+		velocityNew = f_round(velocityNew);
+		a_notesIn[note] = velocity;
+		a_notesOut[note] = velocityNew;
+		velocity = velocityNew;
+		event == NOTE_ON ? (
+			velocity > 0 ? (
+				midisend(tsoffset,msg1, note, velocity);
+			);
+		):(
+			midisend(tsoffset,msg1, note);
+		);
+	);
+
+   1; // Loop
+
+););

@@ -1,0 +1,178 @@
+desc: MIDI Glissando
+version: 0.1
+author: urtzurd (Urtzi Urdapilleta Roy)
+about:
+  Mono/poly MIDI chromatic glissando FX with adjustable note delay
+changelog:
+  Initial release
+
+slider1:1<1, 16, 1>MIDI Channel
+slider2:1<1, 16, 1>Polyphony
+slider3:50<10, 250, 1>Time (ms)
+
+in_pin:none
+out_pin:none
+
+// ----------------------------------------------------------------------------
+
+@init
+max_poly = 16;
+
+v_on    = max_poly * 0; // On/off status
+v_delay = max_poly * 1; // Current accumulated delay in seconds
+v_ckey  = max_poly * 3; // Current key
+v_tkey  = max_poly * 4; // Target key
+v_vel   = max_poly * 5; // Velocity used when the voice was triggered
+
+function initVoices() local(i) (
+  i = 0;
+  loop(max_poly,
+    v_on[i] = 0;
+    v_delay[i] = 0;
+    v_ckey[i] = -1;
+    v_tkey[i] = -1;
+    v_vel[i] = -1;
+    i += 1;
+  );
+);
+
+initVoices();
+
+// ----------------------------------------------------------------------------
+
+@slider
+cur_chn = slider1 - 1;
+slider2 < cur_poly ? (
+  // When reducing polyphony, send all notes off during the next block
+  sendAllNotesOff = 1;
+);
+cur_poly = slider2;
+delay_secs = slider3 / 1000;
+
+// ----------------------------------------------------------------------------
+
+@block
+secs_per_block = samplesblock / srate;
+sendAllNotesOff == 1 ? (
+  initVoices();
+  midisend(0, 0xB0 | cur_chn, 0x7B, 0x00);
+  sendAllNotesOff = 0;
+);
+
+function isNoteOn(msg1, msg2, msg3) local(msg_type, msg_chn) (
+  msg_type = msg1 >> 4;
+  msg_chn = msg1 & 0x0F;
+  msg_chn == cur_chn && msg_type == 9 && msg3 != 0;
+);
+
+function isNoteOff(msg1, msg2, msg3) local(msg_type, msg_chn) (
+  msg_type = msg1 >> 4;
+  msg_chn = msg1 & 0x0F;
+  msg_chn == cur_chn && (msg_type == 8 || (msg_type == 9 && msg3 == 0));
+);
+
+function sendNoteOn(offset, key, vel) (
+  midisend(offset, 0x90 | cur_chn, key, vel);
+);
+
+function sendNoteOff(offset, key) (
+  midisend(offset, 0x80 | cur_chn, key, 0x00);
+);
+
+function nextVoiceIndex(key) local(i, j, last, min_dist, cur_dist) (
+  // First try to find an unallocated voice, starting from the last one used
+  i = -1;
+  j = last % cur_poly;
+  loop(cur_poly,
+    v_on[j] == 0 && i == -1 ? (
+      i = j;
+    );
+    j = (j + 1) % cur_poly;
+  );
+
+  // If there are no unallocated voices, steal the nearest one
+  i == -1 ? (
+    i = 0;
+    j = 0;
+    min_dist = 128;
+    loop(cur_poly,
+      cur_dist = abs(v_ckey[j] - key);
+      cur_dist < min_dist ? (
+        min_dist = cur_dist;
+        i = j;
+      );
+      j += 1;
+    );
+  );
+
+  last = i;
+);
+
+function getVoiceIndex(key) local(i) (
+  i = 0;
+  while((v_tkey[i] != key || v_on[i] == 0) && i < cur_poly) (
+    i += 1;
+  );
+  i == cur_poly ? -1 : i;
+);
+
+function slideVoice(i) (
+  v_ckey[i] != v_tkey[i] ? (
+    v_ckey[i] += v_tkey[i] > v_ckey[i] ? 1 : -1;
+  );
+);
+
+// Process any incoming MIDI events
+while(midirecv(offset, msg1, msg2, msg3)) (
+  isNoteOn(msg1, msg2, msg3) ? (
+    v = nextVoiceIndex(msg2);
+
+    v_on[v] == 1 ? (
+      // Note stealing, send note off for the current key
+      sendNoteOff(offset, v_ckey[v]);
+    ) : (
+      v_on[v] = 1;
+    );
+
+    v_delay[v] = 0;
+    v_ckey[v] == -1 ? (
+      v_ckey[v] = msg2;
+    );
+    v_tkey[v] = msg2;
+    v_vel[v] = msg3;
+
+    slideVoice(v);
+    sendNoteOn(offset, v_ckey[v], v_vel[v]);
+  ) : (
+    isNoteOff(msg1, msg2, msg3) ? (
+      i = getVoiceIndex(msg2);
+      i != -1 ? (
+        v_on[i] = 0;
+        sendNoteOff(offset, v_ckey[i]);
+      );
+    ) : (
+      // Pass-through any other MIDI events
+      midisend(offset, msg1, msg2, msg3);
+    );
+  );
+);
+
+// Apply the glissando effect on the active voices
+i = 0;
+loop(cur_poly,
+  v_on[i] && v_ckey[i] != v_tkey[i] ? (
+    v_delay[i] + secs_per_block < delay_secs ? (
+      v_delay[i] += secs_per_block;
+    ) : (
+      offset = srate * (delay_secs - v_delay[i]);
+      getVoiceIndex(v_ckey[i]) == -1 ? (
+        // Only send note off if no other voice has reached the same key
+        sendNoteOff(offset, v_ckey[i]);
+      );
+      slideVoice(i);
+      sendNoteOn(offset, v_ckey[i], v_vel[i]);
+      v_delay[i] = 0;
+    )
+  );
+  i += 1;
+);
