@@ -1,7 +1,7 @@
 desc: MIDI Performer2
 author: Kevin Morrison (ThrashJazzAssassin)
-version: 0.6.5
-changelog: - Filter sustain pedal with note filter
+version: 0.6.6beta1
+changelog: -Add Sustain pedal filter
 link: Forum thread https://forum.cockos.com/showthread.php?t=216034
 screenshot: https://stash.reaper.fm/35134/performer.PNG
 about:
@@ -11,6 +11,7 @@ about:
 
   [CTRL]/Command : mousewheel shift by 12 (only if the fx window is focused).
   [Right click]: Return values to default
+
 
 slider1:  dispOuts=8<0, 128,  1>-Rows
 slider2: globBusIn=0<0, 128, 1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-,-}> -Global Bus In
@@ -234,7 +235,7 @@ memset(trans   ,  48, noOfOuts);
 memset(bankMSB ,   0, noOfOuts);
 memset(bankLSB ,   0, noOfOuts);
 memset(prog    ,   0, noOfOuts);
-memset(filter  ,   7, noOfOuts);
+memset(filter  , 127, noOfOuts);
 memset(outputMon,0.3, noOfOuts);
 memset(RowOnPC ,   1, noOfOuts);
 
@@ -365,7 +366,7 @@ while (midirecv(offset,msg1,msg2,msg3)) (
 
         ):isSusPedal() ? (
           
-          msg3 && isRow(i)  && isBussAndChannel(i) && outBus[i]-1>=0 && filter[i]&4 ? (  //Sustain pedal depressed?
+          msg3 && isRow(i)  && isBussAndChannel(i) && outBus[i]-1>=0 && filter[i]&8 ? (  //Sustain pedal depressed?
             susPedal[i]     = 1;                                          //Store sustain depression
             susPedalBus[i]  = outBus[i]-1;                                //Store Bus
             susPedalChan[i] = outChan[i]-1;                               //Store Channel
@@ -698,7 +699,7 @@ function drawKeyboard(y, h) (
 /////////////////////
 hover = 0;
 setgfx=$x999;
-SIZE = FONT_SIZE_FIXED ? FONT_SIZE : min(gfx_w/44, gfx_h/(9.1+dispOuts*1.5)); //Auto resize/fit
+SIZE = FONT_SIZE_FIXED ? FONT_SIZE : min(gfx_w/45.5, gfx_h/(9.1+dispOuts*1.5)); //Auto resize/fit
 
 gfx_getchar();
 gfx_setfont(1,"Tahoma Bold",SIZE);
@@ -783,6 +784,7 @@ g=0; e=0; loop(dispOuts,
     w=gfx_texth*1.4; xgap = gfx_texth*1.8;
     filter[g] ~= (-button("  ♪", x, y, w, h, filter[g]&4)~filter[g])&4; x += xgap;
     filter[g] ~= (-button("CC" , x, y, w, h, filter[g]&2)~filter[g])&2; x += xgap;
+    filter[g] ~= (-button("Sus" , x, y, w, h, filter[g]&8)~filter[g])&8; x += xgap;
     filter[g] ~= (-button("PW" , x, y, w, h, filter[g]&1)~filter[g])&1; x += xgap+xgaplus;
 
     //Note range & Transpose
@@ -817,12 +819,12 @@ g=0; e=0; loop(dispOuts,
 
    //Draw Row Greyout rectangles
    rowRoute!=1 && rowRoute-1!=row[g] && !row[g]==0 ? (
-     !PCresend ? w=gfx_texth*25 : w = gfx_texth*36;
+     !PCresend ? w=gfx_texth*27 : w = gfx_texth*38;
      gfx_set(0.16, 0.16, 0.16, 0.85);
      gfx_rect(0, y, w, gfx_texth*1.5);
-     gfx_rect(gfx_texth*36, y, gfx_texth*6.4, gfx_texth*1.5);
+     gfx_rect(gfx_texth*38, y, gfx_texth*6.4, gfx_texth*1.5);
    );
-   !PCenable || !rowOnPC[g]? (gfx_set(0.16, 0.16, 0.16, 0.85); gfx_rect(gfx_texth*27.4, y, gfx_texth*9, gfx_texth*1.5)); //PC greyout
+   !PCenable || !rowOnPC[g]? (gfx_set(0.16, 0.16, 0.16, 0.85); gfx_rect(gfx_texth*28.9, y, gfx_texth*9, gfx_texth*1.5)); //PC greyout
 
    w = gfx_texth*2.4;
 
@@ -853,7 +855,7 @@ g=0; e=0; loop(dispOuts,
 
 
 //SETTINGS
-gfx_setfont(1,"Tahoma Bold",14);
+gfx_setfont(1,"Tahoma Bold",26);
 disable = 0;
 
 settings ? (
