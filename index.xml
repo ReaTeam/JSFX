@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="f0777040996436e43ea185e7197d31935ffb66a5">
+<index version="1" name="ReaTeam JSFX" commit="1e18276ee8a78fc670e1bad075c983530a9fe282">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2421,6 +2421,10 @@ Add value slider]]></changelog>
       <version name="0.6.5" author="Kevin Morrison (ThrashJazzAssassin)" time="2024-06-14T21:54:33Z">
         <changelog><![CDATA[- Filter sustain pedal with note filter]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/ad473d2d8fed73db81b05284a88a36b1ec81c588/MIDI/TJA_MIDI%20Performer2.jsfx</source>
+      </version>
+      <version name="0.6.6beta1" author="Kevin Morrison (ThrashJazzAssassin)" time="2024-09-29T20:03:44Z">
+        <changelog><![CDATA[-Add Sustain pedal filter]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/1e18276ee8a78fc670e1bad075c983530a9fe282/MIDI/TJA_MIDI%20Performer2.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
