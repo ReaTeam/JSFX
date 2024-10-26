@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="1e18276ee8a78fc670e1bad075c983530a9fe282">
+<index version="1" name="ReaTeam JSFX" commit="be973f9b7104038382c78a3be21ed5bb98a036b6">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2223,6 +2223,33 @@ And a bit of source code cleaning.]]></changelog>
       <version name="0.9.2" author="Ben 'Talagan' Babut" time="2024-06-16T13:11:31Z">
         <changelog><![CDATA[- Feature : Added pass through option for MIDI Bus Routing]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/115ad3269c0873c9c9b989d31273ed6b8af37756/MIDI/talagan_MIDI%20Channel%20Matrix%20Router.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="talagan_MIDI Note Remapper.jsfx" type="effect" desc="MIDI Note Remapper">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 MIDI Note Remapper\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Purpose\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This JSFX allows to define a remapping for MIDI notes on a complete range from C-1 to G9. Each note can individually be remapped to another note, and, optionally, for each one, velocity may be forced, as well as off velocity.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This can be very helpful in front of some VSTs with complex keyswitch maps, or for drum maps. You can rearrange things to your will, remap multiple keys on the same key with different velocity attacks. An example among others is the UACC KS system by Spitfire, in front of which you may design your own KS layout and send each one of your KS to note C-1 with different input velocities.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 How to use\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Install in the FX chain (input or not), in the UI grid, click on a note that you want to remap. At the bottom of the window, you may then click on the target note, the target velocity, the target off velocity. This will popup context menus where you can chose the value you want.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 You can also right click on a note after having selected it to show a full context menu to perform the same actions.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The grid shows a quick preview of your whole mapping. It also gives some input feedback by highlighting a pressed key.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 MIDI Bus handling\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 A basic handling of MIDI Buses is offered : the plugin will only handle events from the "In" MIDI Bus, other buses are left untouched. You may set it to "ANY" to handle all MIDI Buses. You may also reroute one MIDI Bus to another one by changing the "Out" MIDI Bus.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 MIDI Channel handling\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Same remarks as for the MIDI Bus for the MIDI Channel.\par}
+}
+]]></description>
+        <link rel="donation">https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&amp;no_recurring=1&amp;currency_code=EUR</link>
+      </metadata>
+      <version name="0.4" author="Ben 'Talagan' Babut" time="2024-10-26T20:58:43Z">
+        <changelog><![CDATA[- First version.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/be973f9b7104038382c78a3be21ed5bb98a036b6/MIDI/talagan_MIDI%20Note%20Remapper.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI Poly Aftertouch CC Multiplexer.jsfx" type="effect" desc="MIDI Poly Aftertouch CC Multiplexer">
