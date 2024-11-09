@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="be973f9b7104038382c78a3be21ed5bb98a036b6">
+<index version="1" name="ReaTeam JSFX" commit="4765ee9eb08e55039beed8e3e8f40a8fa0fae025">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2250,6 +2250,10 @@ And a bit of source code cleaning.]]></changelog>
       <version name="0.4" author="Ben 'Talagan' Babut" time="2024-10-26T20:58:43Z">
         <changelog><![CDATA[- First version.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/be973f9b7104038382c78a3be21ed5bb98a036b6/MIDI/talagan_MIDI%20Note%20Remapper.jsfx</source>
+      </version>
+      <version name="0.5" author="Ben 'Talagan' Babut" time="2024-11-09T00:08:44Z">
+        <changelog><![CDATA[- Added option to switch between note names and note numbers in the UI]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/4765ee9eb08e55039beed8e3e8f40a8fa0fae025/MIDI/talagan_MIDI%20Note%20Remapper.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI Poly Aftertouch CC Multiplexer.jsfx" type="effect" desc="MIDI Poly Aftertouch CC Multiplexer">
