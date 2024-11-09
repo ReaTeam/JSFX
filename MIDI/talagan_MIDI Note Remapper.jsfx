@@ -1,13 +1,13 @@
 desc:MIDI Note Remapper
 author:Ben 'Talagan' Babut
-version: 0.4
+version: 0.5
 donation:
   https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
 screenshot:
 license:
   MIT (Do whatever you like with this code).
 changelog:
-  - First version.
+  - Added option to switch between note names and note numbers in the UI
 about:
   # MIDI Note Remapper
 
@@ -61,6 +61,8 @@ slider3: 0        <0,16,1>-Input Channel
 slider4: 0        <0,16,1>-Output Channel
 
 slider5: 0        <0,1,1>-Theme
+
+slider6: 0        <0,1,1>-Note display
 
 <?
   dbg = (DBG == 1)?(""):("-");
@@ -133,6 +135,12 @@ function setTheme(theme_num)
   slider_automate(1 << (SLIDER_THEME-1));
 );
 
+function setNoteDisplay(note_display)
+(
+  slider(SLIDER_NOTE_DISPLAY) = note_display;
+  slider_automate(1 << (SLIDER_NOTE_DISPLAY-1));
+);
+
 function midiBusInput()                   ( slider(SLIDER_MIDI_BUS_IN) );
 function midiBusOutput()                  ( slider(SLIDER_MIDI_BUS_OUT) );
 
@@ -140,6 +148,7 @@ function midiChanInput()                  ( slider(SLIDER_MIDI_CHAN_IN) );
 function midiChanOutput()                 ( slider(SLIDER_MIDI_CHAN_OUT) );
 
 function currentTheme()                   ( slider(SLIDER_THEME) );
+function currentNoteDisplay()             ( slider(SLIDER_NOTE_DISPLAY) );
 
 function roundi(valf) (
   floor(valf+0.5) | 0;
@@ -206,8 +215,11 @@ function instanceGlobalVarInit() (
   MIDI_CHAN_TOP       = 150;
   MIDI_CHAN_LEFT      = 600;
 
-  THEME_TOP           = 250;
+  THEME_TOP           = 300;
   THEME_LEFT          = 596;
+
+  NOTE_DISPLAY_TOP    = 260;
+  NOTE_DISPLAY_LEFT   = 580;
 
   // Indexes of sliders
   SLIDER_MIDI_BUS_IN      = 1;
@@ -215,6 +227,7 @@ function instanceGlobalVarInit() (
   SLIDER_MIDI_CHAN_IN     = 3;
   SLIDER_MIDI_CHAN_OUT    = 4;
   SLIDER_THEME            = 5;
+  SLIDER_NOTE_DISPLAY     = 6;
   SLIDER_NOTE_TO_CC_START = 10;
 );
 
@@ -586,7 +599,7 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("MIDI Note Remapper v0.4 by Benjamin 'Talagan' Babut");
+  gfx_drawstr("MIDI Note Remapper v0.5 by Benjamin 'Talagan' Babut");
 );
 
 // UI Draw Functions
@@ -972,6 +985,15 @@ function drawGridSquares(lpos, tpos, square_w, square_h)
       gfx_rgb(TH.GRID_HIGHLIGHT);
       gfx_rect(lpos + square_w + xi * square_w, tpos, square_w, square_h);
       gfx_rect(lpos, tpos + square_h + yi * square_h, square_w, square_h);
+
+      (currentNoteDisplay() == 1)?(
+        str = #;
+        sprintf(str, "%d", ni);
+        gfx_measurestr(str, str_w, str_h);
+
+        gfx_xy(lpos + square_w / 2 - str_w / 2, tpos + square_h / 2 - str_h / 2);
+        gfx_drawstr(str);
+      );
     );
 
     (mouse_click && in_rect)?(
@@ -1028,7 +1050,11 @@ function drawGridSquares(lpos, tpos, square_w, square_h)
       (tgt_note == ni)?(
         sprintf(str, "%s", "=")
       ):(
-        sprintf(str, "%s%d", noteName(tgt_note), noteOctava(tgt_note) );
+        (currentNoteDisplay() == 0)?(
+          sprintf(str, "%s%d", noteName(tgt_note), noteOctava(tgt_note) );
+        ):(
+          sprintf(str, "%d", tgt_note);
+        );
       );
 
       gfx_measurestr(str, str_w, str_h);
@@ -1138,6 +1164,12 @@ function drawOptionsPanel() (
   gfx_drawstr("Theme");
 
   drawSwitchButton(SLIDER_THEME,THEME_TOP,THEME_LEFT+70,"Light","Dark");
+
+  gfx_rgb(TH.TITLE);
+  gfx_xy(NOTE_DISPLAY_LEFT, NOTE_DISPLAY_TOP+4);
+  gfx_drawstr("Note display");
+
+  drawSwitchButton(SLIDER_NOTE_DISPLAY, NOTE_DISPLAY_TOP, NOTE_DISPLAY_LEFT+110, "Numbers", "Names");
 );
 
 function drawNoteEditionPane()
@@ -1161,7 +1193,15 @@ function drawNoteEditionPane()
     gfx_xy(NOTE_EDITION_PANE_LEFT, NOTE_EDITION_PANE_TOP);
     gfx_drawstr("Remap note ");
 
-    str = #; sprintf(str, "%s%d", noteName(g_selected_note),noteOctava(g_selected_note));
+    str = #;
+
+    (currentNoteDisplay() == 1)?(
+      sprintf(str, "%d", g_selected_note);
+    ):
+    (
+      sprintf(str, "%s%d", noteName(g_selected_note),noteOctava(g_selected_note));
+    );
+
     sw = 0; sh = 0; gfx_measurestr(str, sw, sh);
 
     gfx_rgb(TH.GRID_TGT_NOTE);
@@ -1195,8 +1235,13 @@ function drawNoteEditionPane()
       gfx_rect(irl+1,irt+1,irw-2,irh-2);
     );
 
+    str = #;
 
-    str = #; sprintf(str, "%s%d", noteName(ntgt),noteOctava(ntgt));
+    (currentNoteDisplay() == 1)?(
+      sprintf(str, "%d", ntgt);
+    ):(
+      sprintf(str, "%s%d", noteName(ntgt), noteOctava(ntgt));
+    );
     sw = 0; sh = 0; gfx_measurestr(str, sw, sh);
 
     gfx_rgb(TH.GRID_TGT_NOTE);
