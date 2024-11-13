@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="4765ee9eb08e55039beed8e3e8f40a8fa0fae025">
+<index version="1" name="ReaTeam JSFX" commit="de1faadd17ae962bf7436b312881af15b75cdfbf">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2245,6 +2245,8 @@ And a bit of source code cleaning.]]></changelog>
 {\pard \ql \f0 \sa180 \li0 \fi0 Same remarks as for the MIDI Bus for the MIDI Channel.\par}
 }
 ]]></description>
+        <link rel="website" href="https://forum.cockos.com/showthread.php?t=295480">Forum Thread</link>
+        <link rel="screenshot">https://stash.reaper.fm/49440/note_remapper.gif</link>
         <link rel="donation">https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&amp;no_recurring=1&amp;currency_code=EUR</link>
       </metadata>
       <version name="0.4" author="Ben 'Talagan' Babut" time="2024-10-26T20:58:43Z">
@@ -2254,6 +2256,11 @@ And a bit of source code cleaning.]]></changelog>
       <version name="0.5" author="Ben 'Talagan' Babut" time="2024-11-09T00:08:44Z">
         <changelog><![CDATA[- Added option to switch between note names and note numbers in the UI]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/4765ee9eb08e55039beed8e3e8f40a8fa0fae025/MIDI/talagan_MIDI%20Note%20Remapper.jsfx</source>
+      </version>
+      <version name="0.6" author="Ben 'Talagan' Babut" time="2024-11-13T10:42:30Z">
+        <changelog><![CDATA[- Poly AT messages are now remapped for coherency
+- [Bug Fix] Mapping was not applied to notes defining only a remapping for the off velocity]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/de1faadd17ae962bf7436b312881af15b75cdfbf/MIDI/talagan_MIDI%20Note%20Remapper.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI Poly Aftertouch CC Multiplexer.jsfx" type="effect" desc="MIDI Poly Aftertouch CC Multiplexer">
