@@ -1,0 +1,237 @@
+desc: MIDI Force Notes To Range
+author: Ben 'Talagan' Babut
+version: 0.5
+changelog:
+  - Initial version
+donation:
+  https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
+about:
+  With a specific note range defined, all notes that are outside that range will be remapped
+  inside of it by either adding octavi (if too low) or removing octavi (if too high)
+  until falling again into it.
+
+  This is more or less a port to JSFX of pizzmidi's midiForceToRange as requested on
+  the REAPER forum in this thread: https://forum.cockos.com/showthread.php?t=295480.
+
+  ATM, the script may be installed on a selected MIDI Bus (or any), and a selected MIDI Channel (or any).
+  and does not offer bus/chan routing (thus, it does not offer a passthrough option either).
+  Not sure yet if it's really useful.
+
+  Since multiple keys may be routed on the same note, the script implements a system to avoid
+  overlapping notes (successive Note ON events without Note OFF events in the between are not
+  allowed, so in that case a Note OFF event is inserted before the Note ON event).
+
+
+// 0 == ANY, Use only MIDI Bus 1 by default
+slider1: 1        <0,16,1{Any,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Input MIDI Bus
+// 0 == AS_INPUT, so copy input by default
+// slider2: 0        <0,16,1{As Input,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Output MIDI Bus
+
+// 0 == ANY, Use ANY
+slider3: 0        <0,16,1{Any,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Input MIDI Channel
+// 0 == AS_INPUT, so copy input by default
+// slider4: 0        <0,16,1{As Input,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Output MIDI Channel
+
+slider5: 0        <0,127, 1{Note 0 - C-1,Note 1 - C#-1 / Db-1,Note 2 - D-1,Note 3 - D#-1 / Eb-1,Note 4 - E-1,Note 5 - F-1,Note 6 - F#-1 / Gb-1,Note 7 - G-1,Note 8 - G#-1 / Ab-1,Note 9 - A-1,Note 10 - A#-1 / Bb-1,Note 11 - B-1,Note 12 - C0,Note 13 - C#0 / Db0,Note 14 - D0,Note 15 - D#0 / Eb0,Note 16 - E0,Note 17 - F0,Note 18 - F#0 / Gb0,Note 19 - G0,Note 20 - G#0 / Ab0,Note 21 - A0,Note 22 - A#0 / Bb0,Note 23 - B0,Note 24 - C1,Note 25 - C#1 / Db1,Note 26 - D1,Note 27 - D#1 / Eb1,Note 28 - E1,Note 29 - F1,Note 30 - F#1 / Gb1,Note 31 - G1,Note 32 - G#1 / Ab1,Note 33 - A1,Note 34 - A#1 / Bb1,Note 35 - B1,Note 36 - C2,Note 37 - C#2 / Db2,Note 38 - D2,Note 39 - D#2 / Eb2,Note 40 - E2,Note 41 - F2,Note 42 - F#2 / Gb2,Note 43 - G2,Note 44 - G#2 / Ab2,Note 45 - A2,Note 46 - A#2 / Bb2,Note 47 - B2,Note 48 - C3,Note 49 - C#3 / Db3,Note 50 - D3,Note 51 - D#3 / Eb3,Note 52 - E3,Note 53 - F3,Note 54 - F#3 / Gb3,Note 55 - G3,Note 56 - G#3 / Ab3,Note 57 - A3,Note 58 - A#3 / Bb3,Note 59 - B3,Note 60 - C4,Note 61 - C#4 / Db4,Note 62 - D4,Note 63 - D#4 / Eb4,Note 64 - E4,Note 65 - F4,Note 66 - F#4 / Gb4,Note 67 - G4,Note 68 - G#4 / Ab4,Note 69 - A4,Note 70 - A#4 / Bb4,Note 71 - B4,Note 72 - C5,Note 73 - C#5 / Db5,Note 74 - D5,Note 75 - D#5 / Eb5,Note 76 - E5,Note 77 - F5,Note 78 - F#5 / Gb5,Note 79 - G5,Note 80 - G#5 / Ab5,Note 81 - A5,Note 82 - A#5 / Bb5,Note 83 - B5,Note 84 - C6,Note 85 - C#6 / Db6,Note 86 - D6,Note 87 - D#6 / Eb6,Note 88 - E6,Note 89 - F6,Note 90 - F#6 / Gb6,Note 91 - G6,Note 92 - G#6 / Ab6,Note 93 - A6,Note 94 - A#6 / Bb6,Note 95 - B6,Note 96 - C7,Note 97 - C#7 / Db7,Note 98 - D7,Note 99 - D#7 / Eb7,Note 100 - E7,Note 101 - F7,Note 102 - F#7 / Gb7,Note 103 - G7,Note 104 - G#7 / Ab7,Note 105 - A7,Note 106 - A#7 / Bb7,Note 107 - B7,Note 108 - C8,Note 109 - C#8 / Db8,Note 110 - D8,Note 111 - D#8 / Eb8,Note 112 - E8,Note 113 - F8,Note 114 - F#8 / Gb8,Note 115 - G8,Note 116 - G#8 / Ab8,Note 117 - A8,Note 118 - A#8 / Bb8,Note 119 - B8,Note 120 - C9,Note 121 - C#9 / Db9,Note 122 - D9,Note 123 - D#9 / Eb9,Note 124 - E9,Note 125 - F9,Note 126 - F#9 / Gb9,Note 127 - G9}>Bottom Note
+slider6: 127      <0,127, 1{Note 0 - C-1,Note 1 - C#-1 / Db-1,Note 2 - D-1,Note 3 - D#-1 / Eb-1,Note 4 - E-1,Note 5 - F-1,Note 6 - F#-1 / Gb-1,Note 7 - G-1,Note 8 - G#-1 / Ab-1,Note 9 - A-1,Note 10 - A#-1 / Bb-1,Note 11 - B-1,Note 12 - C0,Note 13 - C#0 / Db0,Note 14 - D0,Note 15 - D#0 / Eb0,Note 16 - E0,Note 17 - F0,Note 18 - F#0 / Gb0,Note 19 - G0,Note 20 - G#0 / Ab0,Note 21 - A0,Note 22 - A#0 / Bb0,Note 23 - B0,Note 24 - C1,Note 25 - C#1 / Db1,Note 26 - D1,Note 27 - D#1 / Eb1,Note 28 - E1,Note 29 - F1,Note 30 - F#1 / Gb1,Note 31 - G1,Note 32 - G#1 / Ab1,Note 33 - A1,Note 34 - A#1 / Bb1,Note 35 - B1,Note 36 - C2,Note 37 - C#2 / Db2,Note 38 - D2,Note 39 - D#2 / Eb2,Note 40 - E2,Note 41 - F2,Note 42 - F#2 / Gb2,Note 43 - G2,Note 44 - G#2 / Ab2,Note 45 - A2,Note 46 - A#2 / Bb2,Note 47 - B2,Note 48 - C3,Note 49 - C#3 / Db3,Note 50 - D3,Note 51 - D#3 / Eb3,Note 52 - E3,Note 53 - F3,Note 54 - F#3 / Gb3,Note 55 - G3,Note 56 - G#3 / Ab3,Note 57 - A3,Note 58 - A#3 / Bb3,Note 59 - B3,Note 60 - C4,Note 61 - C#4 / Db4,Note 62 - D4,Note 63 - D#4 / Eb4,Note 64 - E4,Note 65 - F4,Note 66 - F#4 / Gb4,Note 67 - G4,Note 68 - G#4 / Ab4,Note 69 - A4,Note 70 - A#4 / Bb4,Note 71 - B4,Note 72 - C5,Note 73 - C#5 / Db5,Note 74 - D5,Note 75 - D#5 / Eb5,Note 76 - E5,Note 77 - F5,Note 78 - F#5 / Gb5,Note 79 - G5,Note 80 - G#5 / Ab5,Note 81 - A5,Note 82 - A#5 / Bb5,Note 83 - B5,Note 84 - C6,Note 85 - C#6 / Db6,Note 86 - D6,Note 87 - D#6 / Eb6,Note 88 - E6,Note 89 - F6,Note 90 - F#6 / Gb6,Note 91 - G6,Note 92 - G#6 / Ab6,Note 93 - A6,Note 94 - A#6 / Bb6,Note 95 - B6,Note 96 - C7,Note 97 - C#7 / Db7,Note 98 - D7,Note 99 - D#7 / Eb7,Note 100 - E7,Note 101 - F7,Note 102 - F#7 / Gb7,Note 103 - G7,Note 104 - G#7 / Ab7,Note 105 - A7,Note 106 - A#7 / Bb7,Note 107 - B7,Note 108 - C8,Note 109 - C#8 / Db8,Note 110 - D8,Note 111 - D#8 / Eb8,Note 112 - E8,Note 113 - F8,Note 114 - F#8 / Gb8,Note 115 - G8,Note 116 - G#8 / Ab8,Note 117 - A8,Note 118 - A#8 / Bb8,Note 119 - B8,Note 120 - C9,Note 121 - C#9 / Db9,Note 122 - D9,Note 123 - D#9 / Eb9,Note 124 - E9,Note 125 - F9,Note 126 - F#9 / Gb9,Note 127 - G9}>Top Note
+
+@init
+
+ext_midi_bus  = 1; // Have MIDI Bus support
+ext_noinit    = 1; // One and only one init
+
+// MIDI msg types
+MSG_NOTE_OFF              = 8;
+MSG_NOTE_ON               = 9;
+MSG_AT_POLY               = 10; // 0x0A
+MSG_CC                    = 11; // 0x0B
+
+SLIDER_MIDI_BUS_IN    = 1;
+SLIDER_MIDI_BUS_OUT   = 2;
+SLIDER_MIDI_CHAN_IN   = 3;
+SLIDER_MIDI_CHAN_OUT  = 4;
+SLIDER_NOTE_BOTTOM    = 5;
+SLIDER_NOTE_TOP       = 6;
+
+ANY                 = 0;
+AS_SRC              = 0;
+
+
+function malloc(msize)
+  local(ret)
+(
+  ret = MEM_PTR;
+  MEM_PTR += msize;
+  ret;
+);
+
+// Memory initialisation for this JSFX instance
+function instanceMemoryMapInit()
+  local(ci, ni)
+(
+  MEM_PTR       = 0;
+
+  // Allocate a buffer to memorize note states for each channel
+  NOTE_PRESSED  = malloc(128*16);
+  ni = 0;
+  ci = 0;
+  while(ci < 16) (
+    while(ni < 128) (
+      NOTE_PRESSED[ci][ni] = 0;
+      ni = ni+1;
+    );
+    ci = ci+1;
+  );
+
+  freembuf(MEM_PTR);
+);
+
+@serialize
+
+2;
+
+@block
+
+function midiBusInput()                   ( slider(SLIDER_MIDI_BUS_IN) );
+// function midiBusOutput()                  ( slider(SLIDER_MIDI_BUS_OUT) );
+
+function midiChanInput()                  ( slider(SLIDER_MIDI_CHAN_IN) );
+// function midiChanOutput()                 ( slider(SLIDER_MIDI_CHAN_OUT) );
+
+function bottomNote()                     ( slider(SLIDER_NOTE_BOTTOM) );
+function topNote()                        ( slider(SLIDER_NOTE_TOP) );
+
+function rangeTest(note)
+  local(b,t)
+(
+  b = bottomNote();
+  t = topNote();
+
+  (note >= b && note <=t)?(0):(
+  (note > t)?(1):(
+  (-1)));
+);
+
+
+function receive()
+  local(mpos,msg1,msg2,msg3)
+(
+  evt.present  = 0;
+
+  (midirecv(mpos, msg1, msg2, msg3))?(
+    evt.bus          = midi_bus + 1; // 1-16, not 0-15
+    evt.mpos         = mpos;
+    evt.msg1         = msg1;
+    evt.msg2         = msg2;
+    evt.msg3         = msg3;
+    evt.status       = msg1;
+    evt.type         = (msg1 >> 4) & 0x0F;
+    evt.chan         = (msg1 & 0x0F) + 1; // 1-16, not 0-15
+    evt.present      = 1;
+
+    (evt.type == MSG_NOTE_ON || evt.type == MSG_NOTE_OFF)?(
+      evt.note        = evt.msg2;
+      evt.velocity    = evt.msg3;
+      evt.after_touch = 0;
+    );
+
+    (evt.type == MSG_AT_POLY)?(
+      evt.note        = evt.msg2;
+      evt.after_touch = evt.msg3;
+    );
+  );
+);
+
+function forwardCurrentEvent() (
+  midisend(evt.mpos, evt.msg1, evt.msg2, evt.msg3)
+);
+
+function treatCurrentEvent()
+  local(midi_bus_matches, midi_chan_matches, event_type_matches, test,
+    out_bus, out_note, out_chan, out_type)
+(
+  midi_bus_matches    = ((midiBusInput() == ANY) || (midiBusInput() == evt.bus));
+  midi_chan_matches   = ((midiChanInput() == ANY) || (midiChanInput() == evt.chan));
+  event_type_matches  = (evt.type == MSG_NOTE_ON || evt.type == MSG_NOTE_OFF || evt.type == MSG_AT_POLY);
+
+  (midi_bus_matches && midi_chan_matches && event_type_matches)?(
+
+    out_note  = evt.note;
+    test      = rangeTest(out_note);
+
+    (test == 1)?(
+      while(test == 1 && out_note >= 0)
+      (
+        out_note -= 12;
+        test = rangeTest(out_note);
+      );
+    ):(
+    (test == -1)?(
+      while(test == -1 && out_note <= 127)
+      (
+        out_note += 12;
+        test = rangeTest(out_note);
+      );
+    ));
+
+    (out_note >= 0 && out_note <= 127 && test == 0)?(
+
+      // ATM we don't reroute, but only use input bus/chan
+      out_bus  = evt.bus-1;
+      out_chan = evt.chan-1;
+      midi_bus = out_bus;
+
+      // NOTE ON
+      (evt.type == MSG_NOTE_ON && evt.velocity > 0)?(
+        // True note on.
+        (NOTE_PRESSED[out_chan][out_note])?(
+          // Send note off before sending note on if we were already pressed.
+          // Since we are mapping multiple keys on the same note, we may generate
+          // overlapping notes, so take special care.
+          midisend(evt.mpos, (out_chan | (MSG_NOTE_OFF << 4)), out_note, 0);
+        );
+        NOTE_PRESSED[out_chan][out_note] = 1;
+        midisend(evt.mpos, (out_chan | (MSG_NOTE_ON << 4)), out_note, evt.velocity);
+      );
+
+      // NOTE OFF
+      ((evt.type == MSG_NOTE_ON && evt.velocity == 0) || evt.type == MSG_NOTE_OFF)?(
+        // Note off.
+        (NOTE_PRESSED[out_chan][out_note] != 0)?(
+          // Only send note off if we were pressed
+          // (else it's a bounce due to overlapping configuration)
+          midisend(evt.mpos, (out_chan | (MSG_NOTE_OFF << 4)), out_note, evt.velocity);
+        );
+        NOTE_PRESSED[out_chan][out_note] = 0;
+      );
+
+      // POLY AT
+      (evt.type == MSG_AT_POLY)?(
+         midisend(evt.mpos, (out_chan | (MSG_AT_POLY << 4)), out_note, evt.after_touch);
+      );
+
+    );
+
+  ):(
+    forwardCurrentEvent();
+  ); // <-- Bus & event type matching
+);
+
+function handleMidiEvents()
+(
+  evt = 0;
+
+  receive();
+  while(evt.present)
+  (
+    treatCurrentEvent();
+    receive();
+  );
+);
+
+function mainLoop() (
+  handleMidiEvents();
+);
+
+mainLoop();
+
