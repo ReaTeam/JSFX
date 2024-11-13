@@ -1,13 +1,17 @@
 desc:MIDI Note Remapper
 author:Ben 'Talagan' Babut
-version: 0.5
+version: 0.6
 donation:
   https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
 screenshot:
+  https://stash.reaper.fm/49440/note_remapper.gif
+links:
+  Forum Thread https://forum.cockos.com/showthread.php?t=295480
 license:
   MIT (Do whatever you like with this code).
 changelog:
-  - Added option to switch between note names and note numbers in the UI
+  - Poly AT messages are now remapped for coherency
+  - [Bug Fix] Mapping was not applied to notes defining only a remapping for the off velocity
 about:
   # MIDI Note Remapper
 
@@ -239,11 +243,9 @@ function instanceMemoryMapInit()
   MEM_PTR   = 0;
   GMEM_PTR  = 0;
 
-  NOTE_ACTIVITY = malloc(128);
   NOTE_PRESSED  = malloc(128);
   ni = 0;
   while(ni < 128) (
-    NOTE_ACTIVITY[ni] = 0;
     NOTE_PRESSED[ni]  = 0;
     ni = ni+1;
   );
@@ -599,7 +601,7 @@ function drawBottomBanner()
   // Header text
   gfx_rgb(TH.HEADER_TEXT);
   gfx_x = 6; gfx_y = gfx_h - 14;
-  gfx_drawstr("MIDI Note Remapper v0.5 by Benjamin 'Talagan' Babut");
+  gfx_drawstr("MIDI Note Remapper v0.6 by Benjamin 'Talagan' Babut");
 );
 
 // UI Draw Functions
@@ -1366,11 +1368,11 @@ function forwardCurrentEvent() (
 );
 
 function treatCurrentEvent()
-  local(chano, chani, chan_mask, nmsg1, midi_bus_matches, midi_chan_matches,event_type_matches, out_cc, out_bus, out_chan, out_type, out_vel, routing_is_defined, curinf, curofv, curtgt, curvel)
+  local(chano, chani, chan_mask, nmsg1, midi_bus_matches, midi_chan_matches,event_type_matches, out_cc, out_bus, out_chan, out_type, out_note, out_vel, routing_is_defined, curinf, curofv, curtgt, curvel)
 (
   midi_bus_matches    = ((midiBusInput() == ANY) || (midiBusInput() == evt.bus));
   midi_chan_matches   = ((midiChanInput() == ANY) || (midiChanInput() == evt.chan));
-  event_type_matches  = (evt.type == MSG_NOTE_ON || evt.type == MSG_NOTE_OFF);
+  event_type_matches  = (evt.type == MSG_NOTE_ON || evt.type == MSG_NOTE_OFF || evt.type == MSG_AT_POLY);
 
   (midi_bus_matches && midi_chan_matches && event_type_matches)?(
 
@@ -1379,10 +1381,9 @@ function treatCurrentEvent()
     curvel = noteSliderExtractTgtVelocity(curinf);
     curofv = noteSliderExtractTgtOffVelocity(curinf);
 
-    routing_is_defined  = (curtgt != evt.note || curvel != 0xFF);
+    routing_is_defined  = (curtgt != evt.note || curvel != 0xFF || curofv != 0xFF);
 
-    NOTE_ACTIVITY[evt.note] = 0;
-
+    // Update pressed states to show activity in the UI
     (evt.type == MSG_NOTE_ON)?(  NOTE_PRESSED[evt.note] = (evt.velocity != 0)?(1):(0); );
     (evt.type == MSG_NOTE_OFF)?( NOTE_PRESSED[evt.note] = 0; );
 
@@ -1392,14 +1393,23 @@ function treatCurrentEvent()
 
       midi_bus = out_bus;
 
-      out_type = (evt.type == MSG_NOTE_OFF || evt.velocity == 0)?(MSG_NOTE_OFF):(MSG_NOTE_ON);
-      out_vel  = (out_type == MSG_NOTE_ON)?(
-        (curvel == 0xFF)?(evt.velocity):(curvel)
+      out_note = curtgt;
+
+      (evt.type == MSG_AT_POLY)?(
+        // Just forward the AT value but on the new mapping
+        out_type = MSG_AT_POLY;
+        out_vel  = evt.after_touch;
       ):(
-        (curofv == 0xFF)?(evt.velocity):(curofv)
+        // Apply requested velocity
+        out_type = (evt.type == MSG_NOTE_OFF || evt.velocity == 0)?(MSG_NOTE_OFF):(MSG_NOTE_ON);
+        out_vel  = (out_type == MSG_NOTE_ON)?(
+          (curvel == 0xFF)?(evt.velocity):(curvel)
+        ):(
+          (curofv == 0xFF)?(evt.velocity):(curofv)
+        );
       );
 
-      midisend(evt.mpos, (out_chan | (out_type << 4)), curtgt, out_vel);
+      midisend(evt.mpos, (out_chan | (out_type << 4)), out_note, out_vel);
     ):(
       forwardCurrentEvent();
     );
