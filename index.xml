@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="de1faadd17ae962bf7436b312881af15b75cdfbf">
+<index version="1" name="ReaTeam JSFX" commit="75226ffbcdabab68d94ccf87727f2d7ee956077e">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2223,6 +2223,25 @@ And a bit of source code cleaning.]]></changelog>
       <version name="0.9.2" author="Ben 'Talagan' Babut" time="2024-06-16T13:11:31Z">
         <changelog><![CDATA[- Feature : Added pass through option for MIDI Bus Routing]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/115ad3269c0873c9c9b989d31273ed6b8af37756/MIDI/talagan_MIDI%20Channel%20Matrix%20Router.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="talagan_MIDI Force Notes to Range.jsfx" type="effect" desc="MIDI Force Notes To Range">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 With a specific note range defined, all notes that are outside that range will be remapped inside of it by either adding octavi (if too low) or removing octavi (if too high) until falling again into it.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This is more or less a port to JSFX of pizzmidi's midiForceToRange as requested on the REAPER forum in this thread: https://forum.cockos.com/showthread.php?t=295480.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 ATM, the script may be installed on a selected MIDI Bus (or any), and a selected MIDI Channel (or any). and does not offer bus/chan routing (thus, it does not offer a passthrough option either). Not sure yet if it's really useful.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Since multiple keys may be routed on the same note, the script implements a system to avoid overlapping notes (successive Note ON events without Note OFF events in the between are not allowed, so in that case a Note OFF event is inserted before the Note ON event).\par}
+}
+]]></description>
+        <link rel="donation">https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&amp;no_recurring=1&amp;currency_code=EUR</link>
+      </metadata>
+      <version name="0.5" author="Ben 'Talagan' Babut" time="2024-11-14T12:32:42Z">
+        <changelog><![CDATA[- Initial version]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/75226ffbcdabab68d94ccf87727f2d7ee956077e/MIDI/talagan_MIDI%20Force%20Notes%20to%20Range.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI Note Remapper.jsfx" type="effect" desc="MIDI Note Remapper">
