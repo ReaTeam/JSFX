@@ -1,0 +1,36 @@
+desc: Simple Stereo Width Control
+author: Denis Filippov
+version: 1.0
+about:
+  # Simple Stereo Width Control
+
+  Controls the width parameter with one slider.
+
+  Features:
+  - Lightweight and simple width controller.
+  - Does not affect signal when set to 1.
+
+  Usage:
+  - Add to item or track, move the slider to change width.
+
+
+desc:Simple Stereo Width Control
+
+slider1:1<0,1,0.01:sqr>Width
+
+@init
+width = slider1;
+
+@slider
+width = slider1;
+
+@sample
+tmp = 1 / max(1 + width, 2);
+coef_M = 1 * tmp;
+coef_S = width * tmp;
+
+m = (spl0 + spl1) * coef_M; // mid signal (spl0 = left, spl1 = right)
+s = (spl1 - spl0) * coef_S; // side signal
+
+spl0 = m - s; // out left
+spl1 = m + s; // out right
