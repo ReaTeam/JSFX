@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="75226ffbcdabab68d94ccf87727f2d7ee956077e">
+<index version="1" name="ReaTeam JSFX" commit="74461a8f7932a1a944ec1d186987cc9d20306d19">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -4360,6 +4360,26 @@ Added the freembuf call to indicate how much memory is used.]]></changelog>
       <version name="1.0" author="Corey Scogin" time="2018-06-13T05:09:19Z">
         <changelog><![CDATA[initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/7f2f0c085b27393a6c642f3f6cffd8197aa4f262/Utility/CoreyScogin_TimeDelayByDistance.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="denisfilippov_Simple Stereo Width Control.jsfx" type="effect" desc="Simple Stereo Width Control">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 Simple Stereo Width Control\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Controls the width parameter with one slider.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Features:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Lightweight and simple width controller.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Does not affect signal when set to 1.\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Usage:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Add to item or track, move the slider to change width.\sa180\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Denis Filippov" time="2024-11-15T14:07:26Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/74461a8f7932a1a944ec1d186987cc9d20306d19/Utility/denisfilippov_Simple%20Stereo%20Width%20Control.jsfx</source>
       </version>
     </reapack>
     <reapack name="dylanmadigan_Automatic Gain Stager.jsfx" type="effect" desc="Automatic Gain Stager">
