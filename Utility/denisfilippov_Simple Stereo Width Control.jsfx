@@ -13,9 +13,6 @@ about:
   Usage:
   - Add to item or track, move the slider to change width.
 
-
-desc:Simple Stereo Width Control
-
 slider1:1<0,1,0.01:sqr>Width
 
 @init
