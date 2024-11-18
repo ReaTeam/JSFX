@@ -1,0 +1,245 @@
+desc:MIDI Delay X
+author: Ben 'Talagan' Babut
+version: 0.3
+donation:
+  https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
+license:
+  MIT (Do whatever you like with this code).
+changelog:
+  - Initial release.
+about:
+  # MIDI Delay X
+
+  This plugin is an eXtended version of 'MIDI Delay' which is shipped with REAPER.
+
+  It aims to be part of a **very experimental** workflow that tries to address the problem
+  of synths or orchestral VSTs that play various type of samples that need to "ramp up" before reaching
+  their attack climax, and thus, have their notes played "off grid".
+
+  One simple solution to be "on grid", when the attack time is constant and homogeneous,
+  is to set a "media track offset" on the track in REAPER to force every MIDI event to play
+  in advance, to compensate the slow attack.
+
+  But for complex instruments with an attack time that varies in time, it's not always sufficient. It is the
+  case with modern orchestral instruments that allow to switch between articulations (short, long, etc).
+
+  The objective of this plugin is thus to offer a MIDI delay that is automatable, and appliable on
+  selectable MIDI event types.
+
+  The user would set a negative media track offset on the track to the compensate the worst case delay,
+  set the opposite as the max delay for this plugin, and automate the "amount" (0.0-1.0) parameter to
+  make the compensation vary.
+
+  Please note that this technique may have drawbacks : the MIDI event order may be changed, thus it needs to
+  be used cautiously. And again, this is experimental !
+
+
+slider1:s_amount=0<0,1,0.0001>Amount (0.0-1.0)
+#--
+slider3:s_max_delay=0<0,1000,1>Max Delay (ms)
+# slider2:0<0,16,0.25>Max Delay (QN)
+# slider3:0<0,10000,1>Max Delay (samples)
+#--
+#--
+slider7:0<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16>MIDI Channel
+slider8:0<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Bus
+#--
+slider10:s_apply_to_note_on=1<0,1,1{No,Yes}>Note ON
+slider11:s_apply_to_note_off=1<0,1,1{No,Yes}>Note OFF
+slider12:s_apply_to_poly_at=1<0,1,1{No,Yes}>Poly AT
+slider13:s_apply_to_pitch_bend=0<0,1,1{No,Yes}>Pitch Bend
+slider14:s_apply_to_channel_pressure=0<0,1,1{No,Yes}>Channel Pressure
+slider15:s_apply_to_program_change=0<0,1,1{No,Yes}>Program Change
+slider16:s_apply_to_ccs=0<0,1,1{No,Yes}>CCs
+slider17:s_apply_to_other=0<0,1,1{No,Yes}>Other
+#--
+slider20:s_excluded_cc_1=-1<-1,127,1{None,0 Bank Sel M,1 Mod Wheel M,2 Breath M,3,4 Foot P M,5 Porta M,6 Data Entry M,7 Vol M,8 Balance M,9,10 Pan M,11 Expression M,12 Ctrl 1 M,13 Ctrl 2 M,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel L,33 Mod Wheel L,34 Breath L,35,36 Foot P L,37 Porta L,38 Data Entry L,39 Vol L,40 Balance L,41,42 Pan L,43 Expression L,44 Ctrl 1 L,45 Ctrl 2 L,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Timbre,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP L,99 NRP M,100 RP L,101 RP M,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>Exclude CC
+
+in_pin:none
+out_pin:none
+
+@init
+
+ext_midi_bus=ext_nodenorm=1;
+
+HEADER_SIZE  = 3; // Size of a packet header : 3. Position, length (incl header), bus + emitted status
+MAX_RAM      = __memtop(); // This is big... maybe we should calm it down
+
+MSG_NOTE_OFF              = 8;
+MSG_NOTE_ON               = 9;
+MSG_AT_POLY               = 10; // 0x0A
+MSG_CC                    = 11; // 0x0B
+MSG_PROGRAM_CHANGE        = 12; // 0x0C
+MSG_CHAN_PRESSURE         = 13; // 0x0D
+MSG_PITCH_BEND            = 14; // 0x0E
+
+// The script uses a rolling buffer.
+g_buf_l = 0;
+g_buf_r = 0;
+
+@slider
+
+s_chan      = slider7-1;
+s_bus       = slider8-1;
+
+@block
+
+function iround(f) (
+  floor(f+0.5);
+);
+
+
+function processEvents()
+  local(delay_samples, delay_sc, delay_isc, first_byte, second_byte,
+      msg_len, msg_chan, msg_type, msg_has_channel, msg_pos, msg_emitted,
+      msg_type_matches, chan_matches, bus_matches,
+      packet)
+(
+
+
+  // Size of the delay, in samples
+  // delay_samples = floor((slider1*0.001 + slider2*60.0/tempo)*srate + slider3 + 0.5) * slider5 ;
+  delay_samples = floor(s_max_delay*0.001*srate) * s_amount;
+
+  // The original design applies
+
+  // - a scaling factor when putting the events on the queue
+  // - and an inverse factor when poping the events from the queue
+  //
+  // The reason might be to adapt to sample rate changes ? or dely/amount changes ?
+
+
+  // Delay scaling, applied when poping
+  delay_sc      = (delay_samples + samplesblock);
+
+  // Inverse delay scaling, applied when pushing
+  delay_isc     = 1.0 / delay_sc;
+
+  // process incoming events
+
+  // Pull events at the end of our buffer
+  while((msg_len=midirecv_buf(msg_pos, g_buf_r + HEADER_SIZE, MAX_RAM - g_buf_r - HEADER_SIZE))>0)
+  (
+    // Midi bus matches and chan matches
+
+    // For the chan, either we are in "omni" mode and every midi message can pass
+
+    // Or, we need to read the channel and it only applies to midi messages that have a length <= 3
+    // (Longer messages do not follow this spec so the channel cannot be deduced)
+    // As well, to read the channel, the command bit must be set to 0 (hence < 0xF0)
+
+    first_byte      = g_buf_r[HEADER_SIZE];
+    second_byte     = g_buf_r[HEADER_SIZE+1];
+
+    msg_has_channel = (msg_len <=3 && first_byte < 0xF0); // first bit should be null
+
+    msg_chan        = (first_byte & 0x0F);
+    msg_type        = ((first_byte & 0xF0) >> 4);
+
+    bus_matches      = (s_bus<0  || midi_bus == s_bus);
+    chan_matches     = (s_chan<0 || (msg_has_channel && (msg_chan == s_chan)));
+    msg_type_matches = s_apply_to_other;
+
+    (msg_has_channel)?(
+      msg_type_matches = 0;
+
+      ( (msg_type == MSG_NOTE_ON            && s_apply_to_note_on)
+        || (msg_type == MSG_NOTE_OFF        && s_apply_to_note_off)
+        || (msg_type == MSG_AT_POLY         && s_apply_to_poly_at)
+        || (msg_type == MSG_CHAN_PRESSURE   && s_apply_to_channel_pressure)
+        || (msg_type == MSG_PITCH_BEND      && s_apply_to_pitch_bend)
+        || (msg_type == MSG_PROGRAM_CHANGE  && s_apply_to_program_change) )?(
+        // Should be delayed !
+        msg_type_matches = 1;
+      );
+
+      (msg_type == MSG_CC && s_apply_to_ccs)?(
+        msg_cc           = second_byte;
+        msg_type_matches = (msg_cc != s_excluded_cc_1);
+      );
+    );
+
+
+    (bus_matches && chan_matches && msg_type_matches) ? (
+
+      // Store the packet in the queue
+
+      msg_pos    += delay_samples;             // Calculate new pos in samples
+
+      g_buf_r[0] = msg_pos * delay_isc;        // Position, expressed in blocks (I think)
+      g_buf_r[1] = HEADER_SIZE + msg_len;      // Header (3) + Length = total length
+      g_buf_r[2] = midi_bus | 0;               // Bus and re-emitted status
+
+      g_buf_r   += HEADER_SIZE + msg_len;      // Advance by total packet length
+
+    ) : (
+      midisend_buf(msg_pos, g_buf_r + HEADER_SIZE, msg_len);
+    );
+  );
+
+  // Process outgoing events.
+  // This part is changed from the original plugin :
+  // Here, we tolerate to have a scrambled order in the MIDI msg sequence
+  // So we cannot always advance the left part of the rolling buffer, and we
+  // can re-emit messages that are in the middle of the queue.
+  // to avoid multiple sends, we need to flag our packets when reemitted
+
+  packet = g_buf_l;
+  while (packet < g_buf_r)
+  (
+    //packet_pos     = packet[0];
+    //packet_len     = packet[1];
+    //packet_bus     = (packet[2] & 0x0F);
+
+    msg_pos       = iround(packet[0] * delay_sc);
+    msg_emitted   = (packet[2] & 0xF0) >> 4;
+
+    (!msg_emitted)?(
+      // An emitted message does not need to be treated anymore.
+      // It just waits to be eaten with the left of the rolling buffer.
+
+      (msg_pos < samplesblock) ? (
+        // This buffered packet is in the current block so it's time to trigger it
+        midi_bus  = (packet[2] & 0x0F);
+        msg_len   = packet[1] - HEADER_SIZE;
+
+        midisend_buf( max(msg_pos, 0), packet + HEADER_SIZE, msg_len);
+
+        // Update emission flag and store it with the bus.
+        msg_emitted = 1;
+        packet[2]   = midi_bus | (msg_emitted << 4);
+
+       ):(
+
+        // Decrement current packet's trigger time by one whole block
+        packet[0] -= samplesblock * delay_isc;
+      );
+    );
+
+    // Emission status may have change in the block above
+    (msg_emitted)?(
+      (g_buf_l == packet)?(
+        // Eat the left of the buffer, the top left event is treated !
+        g_buf_l += packet[1];
+      );
+    );
+
+    // Advance to the next packet
+    packet    += packet[1];
+  );
+
+  // compact buf if needed
+  (g_buf_l >= g_buf_r) ? (
+    // Queue is empty, go back to zero
+    g_buf_l = 0;
+    g_buf_r = 0;
+  ) : (
+    (g_buf_l > max(1024, g_buf_r * 0.5)) ? (
+      (g_buf_r -= g_buf_l) > 0 ? memcpy(0, g_buf_l, g_buf_r) : g_buf_r=0;
+      g_buf_l=0;
+    );
+  );
+
+);
+
+processEvents();
