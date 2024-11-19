@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="5f8d18f7941f41390119c757fcfecc65f8b8fa97">
+<index version="1" name="ReaTeam JSFX" commit="a1ebfccf88d05d34606104b462acb08b0e8104ec">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -2246,6 +2246,10 @@ And a bit of source code cleaning.]]></changelog>
       <version name="0.3" author="Ben 'Talagan' Babut" time="2024-11-18T22:38:08Z">
         <changelog><![CDATA[- Initial release.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/5f8d18f7941f41390119c757fcfecc65f8b8fa97/MIDI/talagan_MIDI%20Delay%20X.jsfx</source>
+      </version>
+      <version name="0.4" author="Ben 'Talagan' Babut" time="2024-11-19T08:57:21Z">
+        <changelog><![CDATA[- [Bug/Behaviour Fix] Once an event programmation date is decided, do not make this trigger date subject to change by automation.]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/a1ebfccf88d05d34606104b462acb08b0e8104ec/MIDI/talagan_MIDI%20Delay%20X.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI Force Notes to Range.jsfx" type="effect" desc="MIDI Force Notes To Range">
