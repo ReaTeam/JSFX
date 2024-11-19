@@ -1,12 +1,12 @@
 desc:MIDI Delay X
 author: Ben 'Talagan' Babut
-version: 0.3
+version: 0.4
 donation:
   https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
 license:
   MIT (Do whatever you like with this code).
 changelog:
-  - Initial release.
+  - [Bug/Behaviour Fix] Once an event programmation date is decided, do not make this trigger date subject to change by automation.
 about:
   # MIDI Delay X
 
@@ -107,13 +107,16 @@ function processEvents()
   // - and an inverse factor when poping the events from the queue
   //
   // The reason might be to adapt to sample rate changes ? or dely/amount changes ?
+  // IMHO, for MIDI Delay X's purpose, we should not do this
+  // as automating the MIDI amount will modify the trigger time of events
+  // which is not what we want. Once an event date is decided, it's decided.
 
 
   // Delay scaling, applied when poping
-  delay_sc      = (delay_samples + samplesblock);
+  delay_sc      = 1.0; // (delay_samples + samplesblock);
 
   // Inverse delay scaling, applied when pushing
-  delay_isc     = 1.0 / delay_sc;
+  delay_isc     = 1.0; // 1.0 / delay_sc;
 
   // process incoming events
 
