@@ -1,12 +1,12 @@
 desc:MIDI Delay X
 author: Ben 'Talagan' Babut
-version: 0.4
+version: 0.5
 donation:
   https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
 license:
   MIT (Do whatever you like with this code).
 changelog:
-  - [Bug/Behaviour Fix] Once an event programmation date is decided, do not make this trigger date subject to change by automation.
+  - Added "bypass during recording" option.
 about:
   # MIDI Delay X
 
@@ -37,10 +37,9 @@ about:
 slider1:s_amount=0<0,1,0.0001>Amount (0.0-1.0)
 #--
 slider3:s_max_delay=0<0,1000,1>Max Delay (ms)
-# slider2:0<0,16,0.25>Max Delay (QN)
-# slider3:0<0,10000,1>Max Delay (samples)
-#--
-#--
+
+slider5:s_bypass_during_recording=1<0,1,1{No,Yes}>Bypass during recording
+
 slider7:0<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16>MIDI Channel
 slider8:0<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Bus
 #--
@@ -90,9 +89,9 @@ function iround(f) (
 
 
 function processEvents()
-  local(delay_samples, delay_sc, delay_isc, first_byte, second_byte,
+  local(delay_samples, delay_sc, delay_isc, first_byte, second_byte, is_recording,
       msg_len, msg_chan, msg_type, msg_has_channel, msg_pos, msg_emitted,
-      msg_type_matches, chan_matches, bus_matches,
+      msg_type_matches, chan_matches, bus_matches, play_mode_matches,
       packet)
 (
 
@@ -133,15 +132,16 @@ function processEvents()
 
     first_byte      = g_buf_r[HEADER_SIZE];
     second_byte     = g_buf_r[HEADER_SIZE+1];
-
     msg_has_channel = (msg_len <=3 && first_byte < 0xF0); // first bit should be null
 
     msg_chan        = (first_byte & 0x0F);
     msg_type        = ((first_byte & 0xF0) >> 4);
+    is_recording    = (play_state == 5);
 
-    bus_matches      = (s_bus<0  || midi_bus == s_bus);
-    chan_matches     = (s_chan<0 || (msg_has_channel && (msg_chan == s_chan)));
-    msg_type_matches = s_apply_to_other;
+    bus_matches         = (s_bus<0  || midi_bus == s_bus);
+    chan_matches        = (s_chan<0 || (msg_has_channel && (msg_chan == s_chan)));
+    msg_type_matches    = s_apply_to_other;
+    play_mode_matches   = (!is_recording || !s_bypass_during_recording);
 
     (msg_has_channel)?(
       msg_type_matches = 0;
@@ -163,7 +163,7 @@ function processEvents()
     );
 
 
-    (bus_matches && chan_matches && msg_type_matches) ? (
+    (bus_matches && chan_matches && msg_type_matches && play_mode_matches) ? (
 
       // Store the packet in the queue
 
