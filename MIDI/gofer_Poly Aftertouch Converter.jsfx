@@ -1,0 +1,170 @@
+desc: Poly Aftertouch Converter
+author: gofer
+version: 1.0.0
+changelog: Initial release
+about:
+  # Poly Aftertouch Converter
+
+    - Converts Poly Aftertouch messages to Channel Pressure or CC messages.
+    - Uses the highest current value if several pitches send PolyAT at the same time.
+
+    - Includes a bunch of sliders to mingle with the message values:
+
+    - "Convert on Channel" - which channel is listened to and worked on
+    - "Out Message" - select Channel Pressure or CC
+    - "Value Curve" - a small collection of curves to tweak the action, for example to get more sensitivity in the lower or upper range.
+    - "Min. Input Threshold" - all incoming values below this threshold will output whatever is set in "Min. Output". Raise this when Aftertouch starts at too low a pressure.
+    - "Max. Input Threshold" - all incoming values above this threshold will output whatever is set in "Max. Output". Lower this when too much pressure is needed to get to max.
+    - "Min. Output" - lowest output value.
+    - "Max. Output" - highest output value.
+
+    Min Output can be set higher than Max Output, this will invert the action.
+
+
+
+slider1:setCh=0<0,16,1{all,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}> Convert on Channel:
+slider2:setMsg=0<0,121,1{Ch Pressure,0 Bank Select MSB,1 Mod Wheel MSB,2 Breath MSB,3,4 Foot P MSB,5 Porta MSB,6 Data Entry MSB,7 Vol MSB,8 Balance MSB,9,10 Pan MSB,11 Expression MSB,12 Ctrl 1 MSB,13 Ctrl 2 MSB,14,15,16 GP Slider 1 MSB,17 GP Slider 2 MSB,18 GP Slider 3 MSB,19 GP Slider 4 MSB,20,21,22,23,24,25,26,27,28,29,30,31,32 Bank Sel LSB,33 Mod Wheel LSB,34 Breath LSB,35,36 Foot P LSB,37 Porta LSB,38 Data Entry LSB,39 Vol LSB,40 Balance LSB,41,42 Pan LSB,43 Expression LSB,44 Ctrl 1 LSB,45 Ctrl 2 LSB,46,47,48 GP Slider 1 LSB,49 GP Slider 2 LSB,50 GP Slider 3 LSB,51 GP Slider 4 LSB,52,53,54,55,56,57,58,59,60,61,62,63,64 Hold P sw,65 Porta sw,66 Sustenuto sw,67 Soft P sw,68 Legato P sw,69 Hold 2 P sw,70 S.Variation,71 S.Resonance,72 S.Release,73 S.Attack,74 S.Brightness,75 S.Ctrl 6,76 S.Ctrl 7,77 S.Ctrl 8,78 S.Ctrl 9,79 S.Ctrl 10,80 GP B.1 sw,81 GP B.2 sw,82 GP B.3 sw,83 GP B.4 sw,84,85,86,87,88,89,90,91 Effects Lv,92 Trem Lv,93 Chorus Lv,94 Celeste Lv,95 Phaser Lv,96 Data B. Inc,97 Data B. Dec,98 NRP LSB,99 NRP MSB,100 RP LSB,101 RP MSB,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119}>Out Message:
+slider3:
+slider10:setCurvature=3<0,10,1{  slow start 3,  slow start 2,  slow start 1,linear,  fast start 1,  fast start 2,  fast start 3, slow start/end 1, slow start/end 2, fast start/end 1, fast start/end 2}>Value Curve:
+slider11:setMinThresh=0<0,126,1>Min. Input Threshold:
+slider12:setMaxThresh=127<1,127,1>Max. Input Threshold:
+slider13:setMinOut=0<0,127,1>Min. Output:
+slider14:setMaxOut=127<0,127,1>Max. Output:
+
+in_pin:none
+out_pin:none
+
+@init
+PolyValArray=1024;
+memset(PolyValArray,0,128);
+
+ChAT_MSG = 13;
+PAT_MSG = 10;
+CC_MSG = 11;
+
+//--------------------------------------------------------------------------------
+function expCurve(inVal, curveStrength)
+(
+  (exp(curveStrength * inVal) - 1) / (exp(curveStrength) - 1);
+);
+
+function S_CurveSlow(inVal, curveStrength)
+(
+  (inVal <= 0.5)?(
+    inVal = 2 * inVal;
+    expCurve(inVal, curveStrength)/2;
+  ):(
+    inVal = 2 * (1 - inVal);
+    1 - expCurve(inVal, curveStrength)/2;
+  );
+);
+
+function S_CurveFast(inVal, curveStrength)
+(
+  (inVal <= 0.5)?(
+    inVal = 2 * inVal;
+    (1 - expCurve(1 - inVal, curveStrength))/2;
+  ):(
+    inVal = 2 * (1 - inVal);
+    1 - (1 - expCurve((1 - inVal), curveStrength))/2;
+  );
+);
+
+function calcCurvature(minInput,maxInput,minOutput,maxOutput,inputValue,curvature)
+(
+  // ensure input is within range:
+  inputValue = max(minInput, min(maxInput,inputValue));
+  // map input values to range between 0 and 1:
+  mappedValue = (inputValue - minInput) / (maxInput - minInput);
+
+  // calculate output with curvature:
+  curvature == 3 ? (
+    curve_Out = minOutput + (maxOutput - minOutput) * mappedValue;   //no curve
+  );
+
+  curvature > 3 && curvature <= 6 ? (   //power curve up
+    curveStrength = (curvature - 3) * 1.3;  // mapping curveStrength to be zero-based and slightly widen the range
+    curve_Out = (1 - expCurve(1 - mappedValue, curveStrength));
+    curve_Out =  minOutput + (maxOutput - minOutput) * curve_Out;
+  );
+
+  curvature < 3 ? (  //power curve down
+    curveStrength = (curvature - 3) * -1.3; // negative 1.3 because curveStrength needs to be positive
+    curve_Out = expCurve(mappedValue, curveStrength);
+    curve_Out =  minOutput + (maxOutput - minOutput) * curve_Out;
+  );
+
+  curvature >= 7 && curvature <= 8 ? (  //S-curves Slow Start/End
+    curveStrength = curvature - 6; //  setting curveStrength to 1 and 2
+    curve_Out = S_CurveSlow(mappedValue, curveStrength);
+    curve_Out =  minOutput + (maxOutput - minOutput) * curve_Out;
+  );
+
+  curvature >= 9 && curvature <= 10 ? (  //S-curves Fast Start/End
+    curveStrength = curvature - 8; //  setting curveStrength to 1 and 2
+    curve_Out = S_CurveFast(mappedValue, curveStrength);
+    curve_Out =  minOutput + (maxOutput - minOutput) * curve_Out;
+  );
+  curve_Out = floor(curve_Out); // making it integer
+);
+//--------------------------------------------------------------------------------
+
+
+@slider
+setMinThresh >= setMaxThresh ? setMaxThresh = setMinThresh + 1;
+
+
+@block
+while // main
+(midirecv(ts,msg1,msg2,msg3))
+(
+  setCh == 0 ?
+  (
+    Ch=msg1&15; //Channel
+  ):(
+    Ch=setCh-1;
+  );
+
+  mType = (msg1 / 16) | 0; //message type
+  mCh=msg1&15;  //original channel
+
+  // is Poly AT?
+  mType == PAT_MSG && mCh == ch ?
+  (
+    NoteNr = msg2;
+    PolyValArray[NoteNr]=msg3;
+
+
+    curve_Out = calcCurvature(setMinThresh, setMaxThresh,setMinOut,setMaxOut,msg3,setCurvature);
+
+    //look up highest value in the array:
+    i=0;
+    maxATVal=0;
+    loop(128,
+           maxATVal=max(PolyValArray[i],maxATVal);
+           i+=1;
+        );
+
+    maxATVal <= msg3 ?  // is highest current value?
+    (
+        //convert message bytes:
+      setMsg == 0 ? // output message is Channel Pressure
+      (
+        msg1 = ChAT_MSG*16+Ch;
+        msg2 = curve_Out;
+        msg3 = 0;
+      );
+      setMsg != 0 ? // output message is CC
+      (
+        msg1 = CC_MSG*16+Ch;
+        msg2 = setMsg - 1;
+        msg3 = curve_Out;
+      );
+      midisend(ts,msg1,msg2,msg3);
+    );
+  )
+  :
+  ( //any other message:
+    midisend(ts,msg1,msg2,msg3); //passthrough
+  );
+);
