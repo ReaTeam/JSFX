@@ -7,15 +7,15 @@ about:
   Uses the highest current value if several pitches send PolyAT at the same time.
   Includes a bunch of sliders to mingle with the message values:
 
-      - "Convert on Channel" - which channel is listened to and worked on
-      - "Out Message" - select Poly Aftertouch (through curve), Channel Pressure or CC
-      - "Value Curve" - a small collection of curves to tweak the action, for example to get more sensitivity in the lower or upper range.
-      - "Min. Input Threshold" - all incoming values below this threshold will output whatever is set in "Min. Output". Raise this when Aftertouch starts at too low a pressure.
-      - "Max. Input Threshold" - all incoming values above this threshold will output whatever is set in "Max. Output". Lower this when too much pressure is needed to get to max.
-      - "Min. Output" - lowest output value.
-      - "Max. Output" - highest output value.
+  - "Convert on Channel" - which channel is listened to and worked on
+  - "Out Message" - select Poly Aftertouch (through curve), Channel Pressure or CC
+  - "Value Curve" - a small collection of curves to tweak the action, for example to get more sensitivity in the lower or upper range.
+  - "Min. Input Threshold" - all incoming values below this threshold will output whatever is set in "Min. Output". Raise this when Aftertouch starts at too low a pressure.
+  - "Max. Input Threshold" - all incoming values above this threshold will output whatever is set in "Max. Output". Lower this when too much pressure is needed to get to max.
+  - "Min. Output" - lowest output value.
+  - "Max. Output" - highest output value.
 
-      Min Output can be set higher than Max Output, this will invert the action.
+  Min Output can be set higher than Max Output, this will invert the action.
 
 //----------------------------------------------
 
