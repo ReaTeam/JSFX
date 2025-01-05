@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="eeb087b70ffc2d19b41e379e41bb5b56b8c9092b">
+<index version="1" name="ReaTeam JSFX" commit="69de0b91fe05a8454432db53e22f9ad205d016ed">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -531,6 +531,29 @@ Easier setting of mask by right mouse button drag over grid lines.]]></changelog
 * Mellowed down error rate update to be less jumpy.
 * Minor color updates.]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/8721149a29eb51f03b7066cd626826f9629bc8f6/MIDI/erantalmor_MIDI%20Rhythm%20Trainer.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="gofer_Poly Aftertouch Converter.jsfx" type="effect" desc="Poly Aftertouch Converter">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Converts Poly Aftertouch messages to Channel Pressure or CC messages. Uses the highest current value if several pitches send PolyAT at the same time. Includes a bunch of sliders to mingle with the message values:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "Convert on Channel" - which channel is listened to and worked on\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "Out Message" - select Poly Aftertouch (through curve), Channel Pressure or CC\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "Value Curve" - a small collection of curves to tweak the action, for example to get more sensitivity in the lower or upper range.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "Min. Input Threshold" - all incoming values below this threshold will output whatever is set in "Min. Output". Raise this when Aftertouch starts at too low a pressure.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "Max. Input Threshold" - all incoming values above this threshold will output whatever is set in "Max. Output". Lower this when too much pressure is needed to get to max.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "Min. Output" - lowest output value.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab "Max. Output" - highest output value.\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Min Output can be set higher than Max Output, this will invert the action.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0.1" author="gofer" time="2025-01-05T17:42:48Z">
+        <changelog><![CDATA[Add Poly aftertouch message output (going through value transform functions)]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/69de0b91fe05a8454432db53e22f9ad205d016ed/MIDI/gofer_Poly%20Aftertouch%20Converter.jsfx</source>
       </version>
     </reapack>
     <reapack name="juan_r_Keyboard MirrorInvert (Juan_R).jsfx" type="effect" desc="Keyboard Mirror/Invert">
@@ -5250,17 +5273,17 @@ fix: Channel mode labels are no longer grayed out when mouse cursor is in trigge
     </reapack>
   </category>
   <metadata>
-    <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
+    <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs36 ReaTeam JSFX Repository\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel0 \b \fs36 ReaTeam JSFX Repository\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 {\cf1 [image: https://github.com/ReaTeam/JSFX/workflows/check/badge.svg]\cf0}\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Community-maintained collection of JS effects for REAPER.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Installation\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 Installation\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Copy and paste this URL in Extensions > ReaPack > Import a repository:\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 \f1 https://github.com/ReaTeam/JSFX/raw/master/index.xml\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 \b \fs32 Contributing\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 Contributing\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Use {\field{\*\fldinst{HYPERLINK "https://reapack.com/upload/jsfx"}}{\fldrslt{\ul
 https://reapack.com/upload/jsfx
 }}}
