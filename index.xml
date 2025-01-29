@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="db943927cad0b31056aacb7278f390dd2e78914e">
+<index version="1" name="ReaTeam JSFX" commit="295b72b8f05c2c617a62d78baab88e53074df611">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -991,6 +991,32 @@ bugfix]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/cd154af80f9e7e1458bb5f1745ff76fbb6379d4c/MIDI/mschnell_MIDI%20Slider%20and%20MIDI%20CC.jsfx</source>
       </version>
     </reapack>
+    <reapack name="mschnell_Note On Delay Tool.jsfx" type="effect" desc="Note On Delay Tool">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel0 \b \fs36 Note On Delay\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Tool modulates the Note-On and Note-Off time of the notes passing through, according to two parameters and a random amount. One of the two parameters can be controlled by Midi CC messages.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 It can be used to humanize recorded loops. E.g. feeding the first parameter by an envelope, the second by a random-walk fluctuation plugin (such as MIDI CC fluctuation), and adding some individual randomness to any note. Randomness for chords results in a melody-alike feeling.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Parameters:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Input Channel" selects the Midi channel for the notes and the CC messages (or "Any" for all channels)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Controller for Delay 2" selects the (low resolution) CC message that is used to modulate the second delay (or "-" for no modulation by CC)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Controller Factor" sets the factor to be used when modulating Delay2 by CC messages\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Delay Headroom (ms)" "Plugin Delay Compensation" (i.e. negative delay) imposed to allow for negative amount of delay modulation. The resulting negative delay is limited to this value.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Delay 1 (ms)" delay imposed on Note-On and related Note-Off events\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Delay 2 (ms)" delay imposed on Note-On and related Note-Off events\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Random (ms)" amount of random delay imposed on Note-On and related Note-Off events\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Delay (ms)" displays the resulting delay\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2025-01-29T16:26:47Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/8b1b973a9400fac013a6f6905ae0de2e04f72ca0/MIDI/mschnell_Note%20On%20Delay%20Tool.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="mschnell_Note On under X velocity to Note Off and send All Notes Off.jsfx" type="effect" desc="Note On under X velocity to Note Off and send All Notes Off">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
@@ -1014,6 +1040,32 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2019-05-26T23:06:04Z">
         <changelog><![CDATA[allow for setting vel = 0 -> pass through]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/8df4d36e6338cfda5684790552f0c71530504e63/MIDI/mschnell_Note%20On%20under%20X%20velocity%20to%20Note%20Off%20and%20send%20All%20Notes%20Off.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnell_Note On Velocity Tool.jsfx" type="effect" desc="Note On Velocity Tool">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel0 \b \fs36 Note On Velocity Tool\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 modulates the Note-On velocity of the notes passing through, according to two parameters and a random amount. One of the two parameters can be controlled by Midi CC messages.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 It can be used to humanize recorded loops. E.g. feeding the first parameter by an envelope, the second by a random-walk fluctuation plugin (such as MIDI CC fluctuation), and adding some individual randomness to any note. Randomness for chords results in a multiple-player-alike feeling.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Parameters:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Input Channel" selects the Midi channel for the notes and the CC messages (or "Any" for all channels)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Controller for Offset 2" selects the (low resolution) CC message that is used to modulate the second offset (or "-" for no modulation by CC)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Controller Factor" sets the factor to be used when modulating Offset2 by CC messages\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Velocity Offset 1" addition to the velocity\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Velocity Offset 2" addition to the velocity\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Velocity Factor" factor imposed on the input velocity after addition\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Random Factor" amount of additional random velocity to the resulting velocity\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Random Value" displays the additional random velocity\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2025-01-29T16:27:00Z">
+        <changelog><![CDATA[initial release]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/295b72b8f05c2c617a62d78baab88e53074df611/MIDI/mschnell_Note%20On%20Velocity%20Tool.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Send All Notes Off.jsfx" type="effect" desc="Send All Notes Off">
