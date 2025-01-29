@@ -1,7 +1,7 @@
 desc: MIDI CC fluctuation
 author: Michael Schnell (mschnell@bschnell.de)
-version: 3.0
-changelog: user interface can be selected to be simple, medium or complex
+version: 3.1
+changelog: Improve low resolution output slider display
 provides: [data] mschnell_MIDI CC fluctuation/Voice Doubling.RfxChain
 about:
   ## Description 
@@ -51,16 +51,9 @@ about:
       "Result Midi (0 ... 16383)": High resolution Midi CC output value
 
       A graphics shows the history of the "Delta with Hold" value in blue and the history of the output value in yellow. The gray line defines the center (Zero / CC value = 8191), the purple line shows the average of the output during the shown range of time.
-    
+
       Using the "+" button, the user interface can be selected to be simple, medium or complex, making a different count of parameters visible and adjustable.
 
-//tags: MIDI processing filter
-//author: MSchnell
-
-
-// these lines tell Reaper the effect has no audio input/output,
-// which enables processing optimizations.
-// MIDI-only FX should always have these lines.
 in_pin:none
 out_pin:none
 
@@ -99,7 +92,8 @@ slider21: 0<-1,1,0.0001><?printf(complex_h)?>Hold
 slider22: 0<-1,1,0.0001><?printf(complex_h)?>Delta with Hold
 slider23: 0<-1,1,0.0001><?printf(complex)?>Result raw
 slider24: 0<-1,1,0.0001><?printf(complex)?>Result -1 ... 1
-slider25: 8191<0,16383,1>Result Midi (HR: 0.. 16383, LR: 0...127)
+slider25: 63<0,127,1>Result Midi 
+slider26: 8191<0,16383,1>Result Midi HR
 //slider25: 8191<0,0,1>Result Midi (HR: 0.. 16383, LR: 0...127)
 
 
@@ -124,9 +118,13 @@ slider25: 8191<0,16383,1>Result Midi (HR: 0.. 16383, LR: 0...127)
 //    hr = 0;
     msg21 -= 32;
     msg22 = -1;
+    slider_show(0x1<<24, 1);
+    slider_show(0x1<<25, 0);
    ) : ( 
 //    hr = 1;
     msg22 = msg21 + 32;
+    slider_show(0x1<<24, 0);
+    slider_show(0x1<<25, 1);
   ); 
   
   a1 = slider3;
@@ -242,12 +240,14 @@ slider25: 8191<0,16383,1>Result Midi (HR: 0.. 16383, LR: 0...127)
   );
   msg22 >= 0 ? (
     slider25 = m;
+    slider26 = m;
     msg32 != m2 ? (
       msg32 = m2;
       midisend(offset, msg1, msg22, msg32);    
     );  
    ) : ( 
     slider25 = msg31;
+    slider26 = msg31;
   );
   
   _p >= _w ? _p = 0 : _p += 1;
