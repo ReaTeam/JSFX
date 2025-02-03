@@ -1,29 +1,29 @@
 desc: Note On Delay Tool
 author: Michael Schnell (mschnell@bschnell.de)
-version: 1.0
-changelog: initial release
+version: 1.1
+changelog: PDC was not working
 about:
   # Note On Delay
   Tool modulates the Note-On and Note-Off time of the notes passing through, according to two parameters and a random amount. One of the two parameters can be controlled by Midi CC messages.
-   
+
      It can be used to humanize recorded loops. E.g. feeding the first parameter by an envelope, the second by a random-walk fluctuation plugin (such as  MIDI CC fluctuation), and adding some individual randomness to any note. Randomness for chords results in a melody-alike feeling.
 
      Parameters:
-   
+
      "Input Channel" selects the Midi channel for the notes and the CC messages (or "Any" for all channels)
-   
+
      "Controller for Delay 2" selects the (low resolution) CC message that is used to modulate the second delay (or "-" for no modulation by CC)
-   
+
      "Controller Factor" sets the factor to be used when modulating Delay2 by CC messages
-   
+
      "Delay Headroom (ms)" "Plugin Delay Compensation" (i.e. negative delay) imposed to allow for negative amount of delay modulation. The resulting negative delay is limited to this value.
-   
+
      "Delay 1 (ms)" delay imposed on Note-On and related Note-Off events
-   
+
      "Delay 2 (ms)" delay imposed on Note-On and related Note-Off events
-   
+
      "Random (ms)" amount of random delay imposed on Note-On and related Note-Off events
-   
+
      "Delay (ms)" displays the resulting delay
 
 slider1:0<0,16,1{Any,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Input Channel
@@ -60,7 +60,7 @@ out_pin:none
   inChannel = slider1-1;
   modCC = slider2-1;
   pdc = -floor(slider3 / 1000 * srate); 
-  pdc_delay = pdc;
+  pdc_delay = -pdc;
 
 @block
 /*
