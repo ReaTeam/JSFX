@@ -1,0 +1,573 @@
+desc: Delay & Reverb Time Calculator PRO
+author: Windows-G
+version: 4.1
+changelog: 1. Added an option to display double the BPM, particularly useful for obtaining lower time values as compression release times when in Manual BPM mode.
+about:
+  # Delay & Reverb Time Calculator PRO 
+
+  It converts musical note values into seconds, milliseconds, and even Hertz, all based on your project's tempo. Perfect for syncing your delay, chorus, phaser, and flanger effects to the beat. 
+
+  Key features: 
+
+  - Automatic BPM detection or manually enter a custom BPM
+  - It calculates reverb pre-delay and decay times in seconds and milliseconds 
+  - Variety of note values for custom pre-delay calculations
+  - Hertz to Time converter
+
+
+slider1:0<0,1,1{Auto BPM,Manual BPM}>BPM Mode
+//the zero after slider1:(0), can be 0 or 1, 0=auto and 1=manual (for default mode)
+slider2:120<2,960,1>Manual BPM
+slider3:0<0,2,1{Seconds,Milliseconds,Hertz,Manual Pre-Delay (Seconds),Manual Pre-Delay (Milliseconds)}>Unit/Manual Pre-Delay 
+slider4:0<0,6,1{1/8,1/16,1/32,1/64,1/128,1/256,1/512}>Manual Pre-Delay Note
+
+
+@init
+  // Initialize note names array
+  noteNames[0] = "2 Bars";
+  noteNames[1] = "1 Bar";
+  noteNames[2] = "1/2";
+  noteNames[3] = "1/4";
+  noteNames[4] = "1/8";
+  noteNames[5] = "1/16";
+  noteNames[6] = "1/32";
+  noteNames[7] = "1/64";
+  noteNames[8] = "1/128";
+  noteNames[9] = "1/256";
+  noteNames[10] = "1/512";
+  
+  // Initialize reverb types array
+  reverbTypes[11] = "Small Room (1/4)";
+  reverbTypes[12] = "Medium Room (1/2)";
+  reverbTypes[13] = "Large Room (1 Bar)";
+  reverbTypes[14] = "Hall (2 Bars)";
+  reverbTypes[15] = "Massive Cathedral (3 Bars)";
+  
+  // Get tempo (also contols Default fallback)
+  hostBPM = slider1 == 0 ? tempo : slider2;
+
+
+@slider
+  // Adjust note list based on slider3 mode
+  slider3 == 3 || slider3 == 4 ? (
+    noteNames[0] = "Very Small (1/8)";
+    noteNames[1] = "Small (1/4)";
+    noteNames[2] = "Medium (1/2)";
+    noteNames[3] = "Large (1 Bar)";
+    noteNames[4] = "Extra-Large (2 Bars)";
+    noteNames[5] = "Massive (3 Bars)";
+    noteNames[6] = "Super-Massive (4 Bars)";        
+    noteNames[7] = "";              // Clear unused slots
+    noteNames[8] = "";
+    noteNames[9] = "";
+    noteNames[10] = "";
+  ) : (
+    noteNames[0] = "2 Bars";
+    noteNames[1] = "1 Bar";
+    noteNames[2] = "1/2";
+    noteNames[3] = "1/4";
+    noteNames[4] = "1/8";
+    noteNames[5] = "1/16";
+    noteNames[6] = "1/32";
+    noteNames[7] = "1/64";
+    noteNames[8] = "1/128";
+    noteNames[9] = "1/256";
+    noteNames[10] = "1/512";
+  );
+
+// Control visibility of Manual BPM slider(S2) based on slider1 mode
+slider_show(slider2, slider1 == 1 ? 1 : 0); 
+
+// Control visibility of Manual Pre-Delay Note slider (S4) based on slider3 mode
+slider_show(slider4, slider3 == 3 || slider3 == 4 ? 1 : 0);
+
+
+@block
+  // Get tempo
+  hostBPM = slider1 == 0 ? tempo : slider2;
+  
+
+@gfx 510 460 // width height
+  // Clear screen
+  gfx_r = gfx_g = gfx_b = 0.9; 
+  gfx_a = 1;
+  gfx_rect(0, 0, gfx_w, gfx_h);
+  
+  // Set text color
+  gfx_r = 0.2; gfx_g = 0.3; gfx_b = 0.4;
+  
+  // TITLE------------------------------------------------------------------
+  
+  gfx_setfont(1, "Arial", 16, 'b'); // Plugin Name Font  (1-multiplier, font name, font size, 'style initial=i,b,u')
+  gfx_x = 10; gfx_y = 5;
+  gfx_x = 75;gfx_drawstr("DELAY & REVERB TIME CALCULATOR PRO"); //Plugin Name
+  gfx_x = 370;gfx_drawstr(sprintf(#, "BPM: %.1f (%s)", hostBPM, slider1 == 0 ? "Auto" : "Manual"));
+  gfx_x = 10; gfx_y += 2; //vertical space btn name of plugin and header
+  
+  // 1st horizontal line (above the header)
+  gfx_y += 18; // adjust vertical position of 1st horizontal line
+  gfx_line(10, gfx_y, gfx_w - 11, gfx_y); // adjust line length
+  gfx_y += -28; // adjust space between 1st horizontal line and header 
+  
+  
+  
+  // DELAY CALCULATION------------------------------------------------------
+  gfx_x = 10; gfx_y += 30;
+  gfx_x = 133;gfx_drawstr(slider3 == 0 ? "DELAY CALCULATION" : slider3 == 1 ? "DELAY CALCULATION" : "");
+  gfx_x = 109;gfx_drawstr(slider3 == 2 ? "NOTE TO HERTZ CALCULATION" : "");
+  gfx_x = 10;gfx_drawstr(slider3 == 3 ? "REVERB CALCULATION (MANUAL PRE-DELAY)" : slider3 == 4 ? "REVERB CALCULATION (MANUAL PRE-DELAY)" : "");
+  //gfx_x = 408;gfx_drawstr("Windows-G"); //Author
+  gfx_x = 370;gfx_drawstr(sprintf(#, "BPM x 2 = %.1f", hostBPM * 2)); //BPM Double-----------------------------------------------------------
+  gfx_y += -3; // distance between Delay Calculation title and its headers
+  
+  // 2nd horizontal Line (above the header)
+  gfx_y += 21; // adjust vertical position of 2nd horizontal line
+  gfx_line(10, gfx_y, gfx_w - 11, gfx_y); // adjust line length
+  gfx_y += -31; // adjust space between 2nd horizontal line and lower header
+  
+  // Draw header for slider3 mode 0 - 2
+  gfx_x = 10; gfx_y += 32;
+  gfx_x = 10; gfx_drawstr(slider3 == 3 || slider3 == 4 ? "Reverb Size" : "Note"); // Change text based on slider3 mode
+  //gfx_x = 10; gfx_drawstr("Notes"); // Set starting position for Reverb Type header
+  gfx_x = 100;gfx_drawstr(slider3 == 0 ? "Regular(s)" : slider3 == 1 ? "Regular(ms)" : slider3 == 2 ? "Regular(hz)" : "");
+  gfx_x = 200;gfx_drawstr(slider3 == 0 ? "Dotted(s)" : slider3 == 1 ? "Dotted(ms)" : slider3 == 2 ? "Dotted(hz)" : "");
+  gfx_x = 295;gfx_drawstr(slider3 == 0 ? "Triplet(s)" : slider3 == 1 ? "Triplet(ms)" : slider3 == 2 ? "Triplet(hz)" : "");
+  
+  // Draw header for pre-delay, decay, and total reverb time for slider3 mode 3 & 4
+  gfx_x = 161;gfx_drawstr(slider3 == 3 ? "Pre-Delay(s)" : slider3 == 4 ? "Pre-Delay(ms)" : "");
+  gfx_x = 258;gfx_drawstr(slider3 == 3 ? "Decay(s)" : slider3 == 4 ? "Decay(ms)" : "");
+  gfx_x = 355;gfx_drawstr(slider3 == 3 ? "Total Reverb Time(s)" : slider3 == 4 ? "Total Reverb Time(ms)" : "");
+  // MANUAL PRE-DELAY 1st Vertical Line (between Pre-Delay and Decay)-----------------
+  (slider3 != 0 && slider3 != 1 && slider3 != 2) ? (
+    gfx_x = 156; // adjust position of 1st vertical line
+    gfx_line(gfx_x, gfx_y + 0, gfx_x, gfx_y + 157); // first number=vertical line origin, second number=vertical line length
+  ) : 0; // Do nothing when slider3 is in modes 0, 1, or 2
+  // MANUAL PRE-DELAY 2nd Vertical Line (between Pre-Delay and Decay)------------------
+  (slider3 != 0 && slider3 != 1 && slider3 != 2) ? (
+    gfx_x = 253; // adjust position of 2nd vertical line
+    gfx_line(gfx_x, gfx_y + 0, gfx_x, gfx_y + 157); // first number=vertical line origin, second number=vertical line length
+  ) : 0; // Do nothing when slider3 is in modes 0, 1, or 2
+  // MANUAL PRE-DELAY 3rd Vertical Line (between Pre-Delay and Decay)------------------
+  (slider3 != 0 && slider3 != 1 && slider3 != 2) ? (
+    gfx_x = 350; // adjust position of 3rd vertical line
+    gfx_line(gfx_x, gfx_y + 0, gfx_x, gfx_y + 157); // first number=vertical line origin, second number=vertical line length
+  ) : 0; // Do nothing when slider3 is in modes 0, 1, or 2
+  
+  gfx_y += 22; // vertical distance between headers and note values
+  
+  // 3rd Horizontal Line (below the header)
+  gfx_y += -5; // adjust vertical position of 3rd horizontal line
+  gfx_line(10, gfx_y, gfx_w - 11, gfx_y); //adjust line length
+  gfx_y += 2; // vertical distance between 3rd horizontal line and table content values
+
+  
+  // Calculate and display note durations
+  __i = 0;
+  loop(11,
+    // Calculate seconds for each note value
+    noteVal = pow(2, __i - 1); // Adjust for "2 Bars" being twice as long as "1 Bar"
+    seconds = __i == 0 ? (60.0 / hostBPM) * 8.0 : (60.0 / hostBPM) * (4.0 / noteVal);
+    milliseconds = seconds * 1000;
+    hertz = seconds > 0 ? 1.0 / seconds : 0.0;
+    
+    // Dotted note calculation
+    dotted_seconds = seconds * 1.5;
+    dotted_milliseconds = dotted_seconds * 1000;
+    dotted_hertz = dotted_seconds > 0 ? 1.0 / dotted_seconds : 0.0;
+    
+    // Triplet note calculation
+    triplet_seconds = seconds * (2.0 / 3.0);
+    triplet_milliseconds = triplet_seconds * 1000;
+    triplet_hertz = triplet_seconds > 0 ? 1.0 / triplet_seconds : 0.0;
+    
+    // Draw note name
+    gfx_x = 10;
+    gfx_drawstr(noteNames[__i]);
+    
+    // Draw seconds value
+    gfx_x = 100; //distance between notes and seconds values
+    slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+    // Draw milliseconds value
+    gfx_x = 100; //distance between seconds and ms values
+    slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+    // Draw Hertz value
+    gfx_x = 100; //distance between regular ms and regular hertz values
+    slider3 == 2 ? gfx_drawstr(sprintf(#, "%.2f", hertz));
+    
+    // Draw Dotted note seconds, milliseconds, and hertz
+    gfx_x = 200; // distance between regular hertz and dotted sec values
+    slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", dotted_seconds));
+    gfx_x = 200; // distance between dotted sec and dotted ms values
+    slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", dotted_milliseconds));
+    gfx_x = 200; // distance between Dotted ms and Dotted hertz values
+    slider3 == 2 ? gfx_drawstr(sprintf(#, "%.2f", dotted_hertz));
+    
+    
+    // Draw Triplet note seconds, milliseconds, and hertz
+    gfx_x = 295; // distance between dotted hertz and triplet sec values
+    slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", triplet_seconds));
+    gfx_x = 295; // distance between triplet sec and triplet ms values
+    slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", triplet_milliseconds));
+    gfx_x = 295; // distance between triplet ms and triplet hz values
+    slider3 == 2 ? gfx_drawstr(sprintf(#, "%.2f", triplet_hertz));
+    
+    gfx_y += 20;
+    __i += 1;
+  );
+  
+  // 4th Horizontal Line (to close the table)
+  (slider3 != 3 && slider3 != 4) ? (
+    gfx_y += -2; // adjust position for the bottom line
+    gfx_line(10, gfx_y, gfx_w - 11, gfx_y); // Draw the bottom horizontal line to close the table
+  ) : 0; // Do nothing when slider3 is in modes 3 or 4
+  
+  // 4th Horizontal Line (to close the table) for Manual Pre-Delay modes (slider3 modes 3 and 4)
+  (slider3 == 3 || slider3 == 4) ? (
+    gfx_y += -82; // adjust position for the bottom line
+    gfx_line(10, gfx_y, gfx_w - 11, gfx_y); // Draw the bottom horizontal line to close the table
+  ) : 0; // Do nothing when slider3 is not in mode 3 or 4
+  
+  
+  
+// REVERB CALCULATION----------------------------------------------------------------------------------------------
+  
+  gfx_y += -5; // distance bewtween first table and 2nd table
+  
+  // Draw "Reverb Calculation" title
+  gfx_x = 10; gfx_y += 8; // distance between first table and second table title header
+  //gfx_x = 129;gfx_drawstr("REVERB CALCULATION");
+  gfx_x = 133;gfx_drawstr(slider3 == 0 ? "REVERB CALCULATION" : slider3 == 1 ? "REVERB CALCULATION");
+  gfx_y += -7; // distance between Reverb Calculation title and its headers
+  
+  // 1st horizontal line (above the 2nd header)
+  (slider3 != 2 && slider3 != 3 && slider3 != 4) ? (
+    gfx_y += 25; // adjust vertical position of 1st horizontal line
+    gfx_line(10, gfx_y, gfx_w - 11, gfx_y); // adjust line length
+    gfx_y += -29; // adjust space between 1st horizontal line and header
+  ) : 0; // Do nothing when slider3 is in modes 2, 3, or 4
+  
+  // Draw Reverb Size, Pre-Delay, Decay headers
+  gfx_y += 30; // vertical distance between 2nd table title and its headers
+  gfx_x = 10; gfx_drawstr(slider3 == 0 ? "Reverb Size" : slider3 == 1 ? "Reverb Size"); // Set starting position for Reverb Size header
+  gfx_x = 185; gfx_drawstr(slider3 == 0 ? "Pre-Delay(s)" : slider3 == 1 ? "Pre-Delay(ms)"); // position for Pre-Delay header
+  gfx_x = 282; gfx_drawstr(slider3 == 0 ? "Decay(s)" : slider3 == 1 ? "Decay(ms)"); // position for Decay header
+  gfx_x = 354; gfx_drawstr(slider3 == 0 ? "Total Reverb Time(s)" : slider3 == 1 ? "Total Reverb Time(ms)");   // position for Reverb Time
+  
+  // 2nd Horizontal line (below the 2nd header)
+  (slider3 != 2 && slider3 != 3 && slider3 != 4) ? (
+    gfx_y += 17; // adjust vertical position of 2nd horizontal line
+    gfx_line(10, gfx_y, gfx_w - 11, gfx_y); // adjust line length
+    gfx_y += 2; // vertical distance between 2nd horizontal line and table content values
+  ) : 0; // Do nothing when slider3 is in modes 2, 3, or 4
+  
+  // 1st Vertical Line (between Pre-Delay and Decay)
+  (slider3 != 2 && slider3 != 3 && slider3 != 4) ? (
+    gfx_x = 180; // adjust position of first vertical line
+    gfx_line(gfx_x, gfx_y - 19, gfx_x, gfx_y + 98); // first number=vertical line origin, second number=vertical line length
+  ) : 0; // Do nothing when slider3 is in modes 2, 3, or 4
+  
+  // 2nd Vertical Line (between Pre-Delay and Decay)
+  (slider3 != 2 && slider3 != 3 && slider3 != 4) ? (
+    gfx_x = 277; // adjust position of first vertical line
+    gfx_line(gfx_x, gfx_y - 19, gfx_x, gfx_y + 98); // first number=vertical line origin, second number=vertical line length
+  ) : 0; // Do nothing when slider3 is in modes 2, 3, or 4
+  
+  // 3rd Vertical Line (between Pre-Delay and Decay)
+  (slider3 != 2 && slider3 != 3 && slider3 != 4) ? (
+    gfx_x = 349; // adjust position of 3rd vertical line
+    gfx_line(gfx_x, gfx_y - 19, gfx_x, gfx_y + 98); // first number=vertical line origin, second number=vertical line length
+  ) : 0; // Do nothing when slider3 is in modes 2, 3, or 4
+
+
+
+  // Draw Reverb Types under the headers and calculate Pre-delay, Decay, Total Reverb Time etc-----------------------------------------------
+  
+  
+  //Formula for finding NOTE VALUE QUANTITY: 
+                      //NOTE VALUE QUANTITY = 1 / (FRACTION OF NOTE VALUE---e.g 4 bars is 4/1, 1 bar is 1/1, 1/2 note is 1/2 etc)
+  //Formula for finding NOTE VALUE DURATION (IN SECONDS): NOTE VALUE DURATION (IN SECONDS) = 60/BPM * 4/NOTE VALUE QUANTITY
+  //Formula for finding NOTE VALUE DURATION (IN MILLISECONDS): NOTE VALUE DURATION (IN SECONDS) = (60/BPM * 4/NOTE VALUE QUANTITY) * 1000
+  
+  // SMALL ROOM
+  (slider3 != 2 && slider3 != 3 && slider3 != 4) ? (
+  //slider3 != 2 ? (
+    gfx_x = 10; gfx_drawstr("Small Room (1/4)"); // Reverb Type
+  ) : 0; // Do nothing when slider3 is in modes 2, 3, or 4  
+  //);
+  //gfx_x = 10; gfx_drawstr("Small Room (1/4)"); // Reverb Type
+  
+  gfx_x = 185; //horizontal distance - Predelay-----
+  // Calculate seconds and milliseconds
+  seconds = (60.0 / hostBPM) * (4 / 256); // Calculate pre-delay in seconds
+  milliseconds = seconds * 1000;         // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  
+  gfx_x = 282; //horizontal distance - Decay---------------------------------
+  // Calculate seconds and milliseconds
+  seconds = (60.0 / hostBPM) * (4 / 4) - (60.0 / hostBPM) * (4 / 256); // Calculate decay in seconds
+  milliseconds = seconds * 1000; // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  
+  gfx_x = 354; //horizontal distance - Total Reverb Time-------------------------------------------------------
+  // Calculate seconds and milliseconds
+  seconds = ((60.0 / hostBPM) * (4 / 4) - (60.0 / hostBPM) * (4 / 256)) + (60.0 / hostBPM) * (4 / 256); // Calculate Reverb Time in seconds
+  milliseconds = seconds * 1000; // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  gfx_y += 20; //vertical distance
+  
+  
+  // MEDIUM ROOM
+  (slider3 != 2 && slider3 != 3 && slider3 != 4) ? (
+  //slider3 != 2 ? (
+    gfx_x = 10; gfx_drawstr("Medium Room (1/2)"); // Reverb Type
+  ) : 0; // Do nothing when slider3 is in modes 2, 3, or 4
+  
+  gfx_x = 185; //horizontal distance - Predelay-----
+  // Calculate seconds and milliseconds
+  seconds = (60.0 / hostBPM) * (4 / 128); // Calculate pre-delay in seconds
+  milliseconds = seconds * 1000;         // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  
+  gfx_x = 282; //horizontal distance - Decay-------------------------------
+  // Calculate seconds and milliseconds
+  seconds = (60.0 / hostBPM) * (4 / 2) - (60.0 / hostBPM) * (4 / 128); // Calculate decay in seconds
+  milliseconds = seconds * 1000; // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  
+  gfx_x = 354; //horizontal distance - Total Reverb Time-------------------------------------------------------
+  // Calculate seconds and milliseconds
+  seconds = ((60.0 / hostBPM) * (4 / 2) - (60.0 / hostBPM) * (4 / 128)) + (60.0 / hostBPM) * (4 / 128); // Calculate Reverb Time in seconds
+  milliseconds = seconds * 1000; // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  gfx_y += 20; //vertical distance
+  
+  
+  // LARGE ROOM
+  (slider3 != 2 && slider3 != 3 && slider3 != 4) ? (
+    gfx_x = 10; gfx_drawstr("Large Room (1 Bar)"); // Reverb Type
+  ) : 0; // Do nothing when slider3 is in modes 2, 3, or 4
+  
+  gfx_x = 185; //horizontal distance - Predelay-----
+  // Calculate seconds and milliseconds
+  seconds = (60.0 / hostBPM) * (4 / 64); // Calculate pre-delay in seconds
+  milliseconds = seconds * 1000;         // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  
+  gfx_x = 282; //horizontal distance - Decay-------------------------------
+  // Calculate seconds and milliseconds
+  seconds = (60.0 / hostBPM) * (4 / 1) - (60.0 / hostBPM) * (4 / 64); // Calculate decay in seconds
+  milliseconds = seconds * 1000; // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  
+  gfx_x = 354; //horizontal distance - Total Reverb Time-------------------------------------------------------
+  // Calculate seconds and milliseconds
+  seconds = ((60.0 / hostBPM) * (4 / 1) - (60.0 / hostBPM) * (4 / 64)) + (60.0 / hostBPM) * (4 / 64); // Calculate Reverb Time in seconds
+  milliseconds = seconds * 1000; // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  gfx_y += 20; //vertical distance
+  
+  
+  // HALL
+  (slider3 != 2 && slider3 != 3 && slider3 != 4) ? (
+    gfx_x = 10; gfx_drawstr("Hall (2 Bars)"); // Reverb Type
+  ) : 0; // Do nothing when slider3 is in modes 2, 3, or 4
+  
+  gfx_x = 185; //horizontal distance - Predelay-----
+  // Calculate seconds and milliseconds
+  seconds = (60.0 / hostBPM) * (4 / 32); // Calculate pre-delay in seconds
+  milliseconds = seconds * 1000;         // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  
+  gfx_x = 282; //horizontal distance - Decay------------------------------
+  // Calculate seconds and milliseconds
+  seconds = (60.0 / hostBPM) * (4 / 0.5) - (60.0 / hostBPM) * (4 / 32); // Calculate decay in seconds
+  milliseconds = seconds * 1000; // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  
+  gfx_x = 354; //horizontal distance - Total Reverb Time-------------------------------------------------------
+  // Calculate seconds and milliseconds
+  seconds = ((60.0 / hostBPM) * (4 / 0.5) - (60.0 / hostBPM) * (4 / 32)) + (60.0 / hostBPM) * (4 / 32); // Calculate Reverb Time in seconds
+  milliseconds = seconds * 1000; // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  gfx_y += 20; //vertical distance
+  
+  
+  // MASSIVE CATHEDRAL
+  (slider3 != 2 && slider3 != 3 && slider3 != 4) ? (
+    gfx_x = 10; gfx_drawstr("Massive Cathedral (3 Bars)"); // Reverb Type
+  ) : 0; // Do nothing when slider3 is in modes 2, 3, or 4
+  
+  gfx_x = 185; //horizontal distance - Predelay-----
+  // Calculate seconds and milliseconds
+  seconds = (60.0 / hostBPM) * (4 / 16); // Calculate pre-delay in seconds
+  milliseconds = seconds * 1000;         // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  
+  gfx_x = 282; //horizontal distance - Decay------------------------------
+  // Calculate seconds and milliseconds
+  seconds = (60.0 / hostBPM) * (4 / 0.3333333) - (60.0 / hostBPM) * (4 / 16); // Calculate decay in seconds
+  milliseconds = seconds * 1000; // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  
+  gfx_x = 354; //horizontal distance - Total Reverb Time-------------------------------------------------------
+  // Calculate seconds and milliseconds
+  seconds = ((60.0 / hostBPM) * (4 / 0.3333333) - (60.0 / hostBPM) * (4 / 16)) + (60.0 / hostBPM) * (4 / 16); // Calculate Reverb Time in seconds
+  milliseconds = seconds * 1000; // Convert to milliseconds
+  // Display based on slider3
+  slider3 == 0 ? gfx_drawstr(sprintf(#, "%.3f", seconds));
+  slider3 == 1 ? gfx_drawstr(sprintf(#, "%.2f", milliseconds));
+  gfx_y += 20; //vertical distance
+  
+  // 3rd Horizontal line (to close 2nd table)
+  (slider3 != 2 && slider3 != 3 && slider3 != 4) ? (
+    gfx_y += -2; // adjust position for the bottom line
+    gfx_line(10, gfx_y, gfx_w - 11, gfx_y); // Draw the bottom horizontal line to close the table
+  ) : 0; // Do nothing when slider3 is in modes 2, 3, or 4
+  
+  
+  // MANUAL REVERB PREDELAY CALCULATION------------------------------------------------------------------------------------------------------------------------------
+  
+  // Get the denominator value from slider4 (this corresponds to the selected note)
+  denominator = slider4 == 0 ? 8 :
+                slider4 == 1 ? 16 :
+                slider4 == 2 ? 32 :
+                slider4 == 3 ? 64 :
+                slider4 == 4 ? 128 :
+                slider4 == 5 ? 256 :
+                slider4 == 6 ? 512 : 8;  // Default denominator to 8 (if no valid selection or slider4 does not match any of the specified notes (0 through 6))
+  
+  // 1/8 Reverb Size------------------pre-delay (=formula for conerting notes to s/ms)
+  gfx_x = 161; gfx_y = 65; // Position for 1/8 pre-delay calculation
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / denominator))); // 1/8 note seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / denominator) * 1000)); // 1/8 milliseconds
+  // 1/8 Reverb Size------------------------------------decay (reverb time - predelay)
+  gfx_x = 258; gfx_y = 65;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 8) - (60.0 / hostBPM) * (4 / denominator))); // 1/8 note seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", ((60.0 / hostBPM) * (4 / 8) - (60.0 / hostBPM) * (4 / denominator)) * 1000)); // 1/8 note note milliseconds
+  // 1/8 Reverb Size---------------------------------------------------------reverb time
+  gfx_x = 355; gfx_y = 65;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 8))); // 1/8 note seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / 8) * 1000)); // 1/8 note note milliseconds
+  
+  
+  // 1/4 Reverb Size------------------pre-delay
+  gfx_x = 161; gfx_y = 85; // Position for 1/4 pre-delay calculation
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / denominator))); // 1/4 note seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / denominator) * 1000)); // 1/4 note milliseconds
+  // 1/4 Reverb Size------------------------------------decay
+  gfx_x = 258; gfx_y = 85;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 4) - (60.0 / hostBPM) * (4 / denominator))); // 1/4 note seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", ((60.0 / hostBPM) * (4 / 4) - (60.0 / hostBPM) * (4 / denominator)) * 1000)); // 1/4 note note millisecons
+  // 1/4 Reverb Size---------------------------------------------------------reverb time
+  gfx_x = 355; gfx_y = 85;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 4))); // 1/4 note seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / 4) * 1000)); // 1/4 note note millisecons
+  
+  
+  // 1/2 Reverb Size------------------pre-delay
+  gfx_x = 161; gfx_y = 105; // Position for 1/2 pre-delay calculation
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / denominator))); // 1/2 note seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / denominator) * 1000)); // 1/2 note milliseconds
+  // 1/2 Reverb Size------------------------------------decay
+  gfx_x = 258; gfx_y = 105;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 2) - (60.0 / hostBPM) * (4 / denominator))); // 1/2 note seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", ((60.0 / hostBPM) * (4 / 2) - (60.0 / hostBPM) * (4 / denominator)) * 1000)); // 1/2 note note milliseconds
+  // 1/2 Reverb Size---------------------------------------------------------reverb time
+  gfx_x = 355; gfx_y = 105;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 2))); // 1/2 note seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / 2) * 1000)); // 1/2 note note milliseconds
+  
+  
+  // 1 Bar Reverb Size------------------pre-delay
+  gfx_x = 161; gfx_y = 125; // Position for 1 Bar pre-delay calculation
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / denominator))); // 1 Bar seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / denominator) * 1000)); // 1 Bar note milliseconds
+  // 1 Bar Reverb Size------------------------------------decay
+  gfx_x = 258; gfx_y = 125;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 1) - (60.0 / hostBPM) * (4 / denominator))); // 1 Bar seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", ((60.0 / hostBPM) * (4 / 1) - (60.0 / hostBPM) * (4 / denominator)) * 1000)); // 1 Bar note milliseconds
+  // 1 Bar Reverb Size---------------------------------------------------------reverb time
+  gfx_x = 355; gfx_y = 125;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 1))); // 1 Bar seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / 1) * 1000)); // 1 Bar milliseconds
+  
+  
+  // 2 Bars Reverb Size------------------pre-delay
+  gfx_x = 161; gfx_y = 145; // Position for 2 Bars pre-delay calculation
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / denominator))); // 2 Bars seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / denominator) * 1000)); // 2 Bars milliseconds
+  // 2 Bars Reverb Size------------------------------------decay
+  gfx_x = 258; gfx_y = 145;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 0.5) - (60.0 / hostBPM) * (4 / denominator))); // 2 Bars seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", ((60.0 / hostBPM) * (4 / 0.5) - (60.0 / hostBPM) * (4 / denominator)) * 1000)); // 2 Bars note milliseconds
+  // 2 Bars Reverb Size---------------------------------------------------------reverb time
+  gfx_x = 355; gfx_y = 145;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 0.5))); // 2 Bars seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / 0.5) * 1000)); // 2 Bars note milliseconds
+  
+  
+  // 3 Bars Reverb Size------------------pre-delay
+  gfx_x = 161; gfx_y = 165; // Position for 4 Bars pre-delay calculation
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / denominator))); // 3 Bars seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / denominator) * 1000)); // 3 Bars note milliseconds
+  // 4 Bars Reverb Size------------------------------------decay
+  gfx_x = 258; gfx_y = 165;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 0.3333333) - (60.0 / hostBPM) * (4 / denominator))); // 3 Bars seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", ((60.0 / hostBPM) * (4 / 0.3333333) - (60.0 / hostBPM) * (4 / denominator)) * 1000)); // 3 Bars note milliseconds
+  // 4 Bars Reverb Size---------------------------------------------------------reverb time
+  gfx_x = 355; gfx_y = 165;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 0.3333333))); // 4 Bars seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / 0.3333333) * 1000)); // 4 Bars note milliseconds
+  
+  
+  // 4 Bars Reverb Size------------------pre-delay
+  gfx_x = 161; gfx_y = 185; // Position for 4 Bars pre-delay calculation
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / denominator))); // 4 Bars seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / denominator) * 1000)); // 4 Bars note milliseconds
+  // 4 Bars Reverb Size------------------------------------decay
+  gfx_x = 258; gfx_y = 185;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 0.25) - (60.0 / hostBPM) * (4 / denominator))); // 4 Bars seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", ((60.0 / hostBPM) * (4 / 0.25) - (60.0 / hostBPM) * (4 / denominator)) * 1000)); // 4 Bars note milliseconds
+  // 4 Bars Reverb Size---------------------------------------------------------reverb time
+  gfx_x = 355; gfx_y = 185;
+  slider3 == 3 ? gfx_drawstr(sprintf(#, "%.3f", (60.0 / hostBPM) * (4 / 0.25))); // 4 Bars seconds
+  slider3 == 4 ? gfx_drawstr(sprintf(#, "%.2f", (60.0 / hostBPM) * (4 / 0.25) * 1000)); // 4 Bars note milliseconds
+  
+  //Author Name & Version Number + Position
+  gfx_x = 385; 
+  gfx_y += (slider3 == 3 || slider3 == 4) ? 214 : 238; // 214 for slider3 modes 3 and 4; 238 for all other sliders and modes
+  gfx_drawstr("Windows-G (V4.1)");
+  
+  
+
+@serialize
+  file_var(0, hostBPM);
+
