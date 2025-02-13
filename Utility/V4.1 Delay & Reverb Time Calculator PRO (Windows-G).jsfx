@@ -564,7 +564,7 @@ slider_show(slider4, slider3 == 3 || slider3 == 4 ? 1 : 0);
   //Author Name & Version Number + Position
   gfx_x = 385; 
   gfx_y += (slider3 == 3 || slider3 == 4) ? 214 : 238; // 214 for slider3 modes 3 and 4; 238 for all other sliders and modes
-  gfx_drawstr("Windows-G (V4.1)");
+  gfx_drawstr("Windows-G (V4.2)");
   
   
 
