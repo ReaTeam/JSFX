@@ -1,0 +1,236 @@
+desc: JSFX Library to make JSFX plugins look nicer (and easier to program)
+author: Phil Ranger
+version: 0.Alpha.1
+provides:
+  Test Phil Ranger Library version Alpha/PhilRangerAudioLibraryAlpha1.jsfx
+  Test Phil Ranger Library version Alpha/Switch.png
+  Test Phil Ranger Library version Alpha/Knob.png
+  Test Phil Ranger Library version Alpha/Highlight.png
+about:
+  Allows creating simple graphic-based plugins. The goal is for the library to be easy to use:
+  - Resizing of the graphic components is automatic
+  - Automatic memory management
+  - No stack management needed
+  - Everything is in JSFX so it's easy to edit
+
+  https://github.com/PhilRangerQuebec/...-Audio-Library
+
+  Main graphic functions included:
+  - Linear and non-linear range management
+  - Text and number (with auto-format)
+  - Panel
+  - Picture
+  - Knob
+  - Slider
+  - Switch
+  - Meter
+  Sliders, switches and knobs have a default style or can be whatever picture you want.
+
+  Audio functions included:
+  - EQ (Peaking, Low Pass, High Pass, Band Pass, Notch, Low Shelf, High Shelf)
+  - Enveloppe Follower
+  - Clipper
+  - Delay (with clipping@+12 dB)
+  - Conversion utilities
+
+  All of the functions and global variables all begin with "PR." so they don't clutter the debugger everywhere.
+
+  Files:
+  - The library itself (PhilRangerAudioLibraryAlpha1)
+  - A demo plugin that uses the library (Test Phil Ranger Library version Alpha)
+  - 3 pictures that are used by the demo plugin (knob, highlight, switch)
+
+  Comments would be very welcome!
+
+import PhilRangerAudioLibraryAlpha1.jsfx
+
+/* Existing widgets: Panels, pictures, switches, knobs, meters, sliders
+Right-click = set to default value
+Ctrl-click = finer adjustment
+
+Global variables:
+  PR.Text.Font="Arial";
+  PR.Color.Text="D0D0FFF"; //Blueish pale gray
+  PR.Color.Main="808080FF"; //Gray
+  PR.Color.Panel="300050A0"; //Dark Violet
+  PR.Color.Contour="303040FF"; //Blueish Gray
+  PR.Color.Shadow = "00000080"; //Semi-transparent black
+*/
+
+//Load pictures if desired.  They will be referred to by their number.
+filename:0,Highlight.png
+filename:1,Knob.png
+filename:2,Switch.png
+
+// Adding a "-" right after the > would make the default slider invisible
+slider1:Frequency=1000<20,20000,1>-Frequency (Hz)
+slider2:Gain=0<-24,24,1>-Gain (dB)
+Slider3:Q=0.5<0.1,10,1>-Q
+
+Slider4:Delayms=120<0,1000,1>-Delay (ms)
+Slider5:Feedback=30<0,100,1>-Feedback (%)
+Slider6:DelayMix=20<0,100,1>-Delay Mix (%)
+
+slider7:ClipLevel=-3<-20,15,1>-Clip Level
+
+slider8:Unmute=1<0,1,1>-Unmute
+
+slider9:Pad=0<0,1,1>-Pad (20dB)
+
+slider10:EQStyle=0<0,6,1,{Peaking,Low Pass, High Pass, Band Pass, Notch, Low Shelf, High Shelf}>EQ Style
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init  // "my" isn't a reserved word: it just indicates that you could use any variable, as opposed to the library functions and globalvariables, which all begin with "PR."
+  // Define ranges for the widgets.  Use same values as for the slider definitions
+  myRangeFrequency =PR.NewFrequencyRange(1000,20,20000); //Ranges: DefaultValue MinValue MaxValue
+  myRangeGain=PR.NewLinearRange(0,-24,24);
+  myRangeQ=PR.NewFrequencyRange(0.7,0.1,10);
+
+  myRangeDelay=PR.NewLinearRange(120,0,1000);
+  myRangeFeedback=PR.NewLinearRange(30,0,100);
+  myRangeMix=PR.NewLinearRange(20,0,100);
+
+  myRangeClip=PR.NewLinearRange(-3,-20,15);
+
+  // Reserve memory for the widgets and give startup values
+  myLeftEQ=PR.NewEQ();
+  myRightEQ=PR.NewEQ();
+  PR.SetPeakingEQ(myLeftEQ,Frequency,Gain,Q);//F,G,Q
+  PR.SetPeakingEQ(myRightEQ,Frequency,Gain,Q);//F,G,Q
+  myEnveloppeFollower=PR.NewEnveloppeFollower(); //Attack Time, Release Time
+  PR.SetEnveloppeFollower(myEnveloppeFollower, 0.001, 0.5);  //Attack and Release Time
+
+  myDelayLeft=PR.NewDelay(1000); //Maximum delay, in milliseconds
+  myDelayRight=PR.NewDelay(1000); //Maximum delay, in milliseconds
+  PR.SetDelay(Delayms,Feedback,myDelayLeft);
+  PR.SetDelay(Delayms,Feedback,myDelayRight);
+
+  // Set shapes for the widgets.  Memory needs to ba allocated beforehand.
+  // Sizes are in % of the total width of the plugin.
+  // Positions of widgetss are their centers (top corner wouldn't make sense for knobs)
+  myShapePanel=PR.NewRectangle(50,50,98,98); //Panels are rectangular: Xcenter,Ycenter, Width, Height
+  myShapeHighlight=PR.NewCircle(70,70,150); // Picture display don't consider height, so they use a circle: X Y and size, will not stretch the picture
+
+  myShapeFrequency=PR.NewRectangle(15,28,6,32); //will be a rectangular slider
+  myShapeGain=PR.NewCircle(33,25,12); // will be a round knob.  Center x, center y, Size
+  myShapeQ=PR.NewCircle(55,25,12); //Will be a round knob
+
+  myShapeDelay=PR.NewCircle(20,62,12); //Will be a round knob
+  myShapeFeedback=PR.NewCircle(50,62,12); //Will be a round knob
+  MyShapeMix=PR.NewCircle(80,62,12); //Will be a round knob
+
+  myShapeMeter=PR.NewCircle(80,25,15); //meters use a circle
+
+  myShapeClip=PR.NewRectangle(34,89,52,5); //will be a rectangular slider
+
+  myShapeUnmute=PR.NewRectangle(72,88,3,7); //will be a rectangular switch
+  myShapePad=PR.NewRectangle(88,88,10,4); //will be a rectangular switch
+
+@slider
+  // No need to do anything here as I used named variables for the slider definitions
+
+@block
+  (EQStyle==0)? (
+    PR.SetPeakingEQ(myLeftEQ,Frequency,Gain,Q);
+    PR.SetPeakingEQ(myRightEQ,Frequency,Gain,Q);
+  );
+  (EQStyle==1)? (
+    PR.SetLowPassEQ(myLeftEQ,Frequency,Gain,Q);
+    PR.SetLowPassEQ(myRightEQ,Frequency,Gain,Q);
+  );
+  (EQStyle==2)? (
+    PR.SetHighPassEQ(myLeftEQ,Frequency,Gain,Q);
+    PR.SetHighPassEQ(myRightEQ,Frequency,Gain,Q);
+  );
+  (EQStyle==3)? (
+    PR.SetBandPassEQ(myLeftEQ,Frequency,Gain,Q);
+    PR.SetBandPassEQ(myRightEQ,Frequency,Gain,Q);
+  );
+  (EQStyle==4)? (
+    PR.SetNotchEQ(myLeftEQ,Frequency,Gain,Q);
+    PR.SetNotchEQ(myRightEQ,Frequency,Gain,Q);
+  );
+  (EQStyle==5)? (
+    PR.SetLowShelfEQ(myLeftEQ,Frequency,Gain,Q);
+    PR.SetLowShelfEQ(myRightEQ,Frequency,Gain,Q);
+  );
+  (EQStyle==6)? (
+    PR.SetHighShelfEQ(myLeftEQ,Frequency,Gain,Q);
+    PR.SetHighShelfEQ(myRightEQ,Frequency,Gain,Q);
+  );
+
+  PR.SetDelay(myDelayLeft,Delayms,Feedback);
+  PR.SetDelay(myDelayRight,Delayms,Feedback);
+
+@sample
+  (Pad==1) ? (spl0=spl0/10; spl1=spl1/10;);
+
+  //Processing: Unmute(or not) the clipped output of the eq
+  spl0 = Unmute * PR.Clip(ClipLevel,PR.EQ(myLeftEQ,spl0));
+  spl1 = Unmute * PR.Clip(ClipLevel,PR.EQ(myRightEQ,spl1));
+
+  PR.Delay(myDelayLeft, spl0);
+  Mix=Delaymix/100;
+  spl0=(1-Mix)*spl0+Mix*PR.Delay(myDelayLeft,spl0);
+  spl1=(1-Mix)*spl1+Mix*PR.Delay(myDelayRight,spl1);
+
+  //For the meter:
+  myMeterValue = PR.EnveloppeFollower((spl0+spl1)/2, myEnveloppeFollower); //Value, AttackTime, ReleaseTime
+
+@gfx 500 500
+  // right click = default value, ctrl-drag = smaller movements
+  //Main panel, using 98% of the size
+  PR.Color.Panel="30005060"; //Dark Purple.  There are default colors if you don't want to bother.
+  PR.DisplayPanel(myShapePanel); //Rectangle. Uses PR.Color.Contour; PR.Color.Panel as the background color
+  //Name of the plugin
+  PR.DisplayTextCenter(50,5,5,"My First Little Plugin");//x,y,size,text
+
+  //Little panels to visually define the sections
+  PR.Color.Panel="100050A0"; //Dark Violet.
+  PR.DisplayPanel(50,30,90,40); //EQ sub-panel.  x,y,width,height.
+  PR.DisplayTextCenter(15,46,3,"Frequency");//x,y,size,text
+  PR.DisplayTextCenter(33,35,3,"Gain (dB)");//x,y,size,text
+  PR.DisplayTextCenter(55,35,3,"Q");//x,y,size,text
+
+  PR.DisplayPanel(50,65,90,28); //Delay sub-panel.
+  PR.DisplayTextCenter(20,72,3,"Delay (ms)");//x,y,size,text
+  PR.DisplayTextCenter(50,72,3,"Feedback (%)");//x,y,size,text
+  PR.DisplayTextCenter(80,72,3,"Mix (%)");//x,y,size,text
+
+  PR.DisplayPanel(34,89,58,18); //Clipper sub-panel
+  PR.DisplayText(21,93,3,"Clip Level:         dB");//x,y,size,text
+  PR.DisplayText(33,93,3,PR.NumbertoText(ClipLevel));//x,y,size,number
+
+  PR.DisplayPanel(72,89,15,18); //Unmute sub-panel
+  PR.DisplayTextCenter(72,94,3,"Unmute"); //x,y,size,text
+
+  PR.DisplayPanel(88,89,15,18); //Visual Style sub-panel
+  PR.DisplayTextCenter(88,94,3,"20 dB Pad");//x,y,size,text
+
+  //Add a highlight picture because I think it looks cool
+  gfx_a = 0.2; //Picture will be quite transparent.
+  PR.DisplayPicture(myShapeHighlight,0); //x,y,width,PictureNumber.
+
+  PR.DisplaySlider(myShapeFrequency,myRangeFrequency,1);// Shape,Range,SliderNumber,[PictureNumber].
+  PR.DisplayKnob(myShapeGain,myRangeGain,2);
+  PR.DisplayKnob(myShapeQ,myRangeQ,3);
+
+  //Now using pictures instead of default shapes
+  PR.DisplayKnob(myShapeDelay,myRangeDelay,4,1);// Shape,Range,SliderNumber,[PictureNumber]. Uses PR.Color.Contour; PR.Color.Main; PR.Color.Shadow; PR.Color.Text;
+  PR.DisplayKnob(myShapeFeedback,myRangeFeedback,5,1);
+  PR.DisplayKnob(MyShapeMix,myRangeMix,6,1);
+
+  PR.DisplaySlider(myShapeClip,myRangeClip,7,1);// Shape,Range,SliderNumbe,PictureNumberr.
+  PR.DisplaySwitch(myShapeUnmute,8,2); // Rectangle, Slider Numbe,PictureNumberr.  Uses PR.Color.Contour; PR.Color.Main; PR.Color.Shadow;
+  PR.DisplaySwitch(myShapePad,9,1);
+
+  // Meters don't have a picture, Let's change its background color
+  mydBMeterValue=PR.LinearTodB(myMeterValue);
+  PR.DisplayMeter(myShapeMeter,mydBMeterValue,-45,6); //Circle, Value Min Max
+  PR.DisplayTextCenter(80,35,3,"Output (dB)");//x,y,size,text
+
+  PR.End();// Required at the end of gfx block
