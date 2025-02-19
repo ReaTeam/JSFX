@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="572bba467b8cd3ce06b02f6c3eff30c933afc78a">
+<index version="1" name="ReaTeam JSFX" commit="df47a7c25fc828729d18980212c27c021e1fa521">
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
@@ -1009,6 +1009,7 @@ bugfix]]></changelog>
 {\pard \ql \f0 \sa180 \li0 \fi0 "Delay 2 (ms)" delay imposed on Note-On and related Note-Off events\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 "Random (ms)" amount of random delay imposed on Note-On and related Note-Off events\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 "Delay (ms)" displays the resulting delay\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Random Profile" select more centrist or equal distribution\par}
 }
 ]]></description>
       </metadata>
@@ -1019,6 +1020,10 @@ bugfix]]></changelog>
       <version name="1.1" author="Michael Schnell (mschnell@bschnell.de)" time="2025-02-03T02:37:31Z">
         <changelog><![CDATA[PDC was not working]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/572bba467b8cd3ce06b02f6c3eff30c933afc78a/MIDI/mschnell_Note%20On%20Delay%20Tool.jsfx</source>
+      </version>
+      <version name="1.2" author="Michael Schnell (mschnell@bschnell.de)" time="2025-02-19T16:06:08Z">
+        <changelog><![CDATA[Adding Random Profile slider]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/df47a7c25fc828729d18980212c27c021e1fa521/MIDI/mschnell_Note%20On%20Delay%20Tool.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Note On under X velocity to Note Off and send All Notes Off.jsfx" type="effect" desc="Note On under X velocity to Note Off and send All Notes Off">
@@ -1064,12 +1069,17 @@ Kills all notes below a selectable velocity threshold and sends an "All Notes Of
 {\pard \ql \f0 \sa180 \li0 \fi0 "Velocity Factor" factor imposed on the input velocity after addition\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 "Random Factor" amount of additional random velocity to the resulting velocity\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 "Random Value" displays the additional random velocity\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 "Random Profile" select centrist or equal ramdom distribution\par}
 }
 ]]></description>
       </metadata>
       <version name="1.0" author="Michael Schnell (mschnell@bschnell.de)" time="2025-01-29T16:27:00Z">
         <changelog><![CDATA[initial release]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/295b72b8f05c2c617a62d78baab88e53074df611/MIDI/mschnell_Note%20On%20Velocity%20Tool.jsfx</source>
+      </version>
+      <version name="1.2" author="Michael Schnell (mschnell@bschnell.de)" time="2025-02-19T16:05:56Z">
+        <changelog><![CDATA[add Random Profile slider]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/9c50d42c143474a039015fe36c9a669f4ea9089e/MIDI/mschnell_Note%20On%20Velocity%20Tool.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Send All Notes Off.jsfx" type="effect" desc="Send All Notes Off">
