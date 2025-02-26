@@ -12,7 +12,7 @@ about:
   Main graphic functions included: Linear and non-linear range management, GUI for Texts and numbers, panels, pictures, knobs, sliders, switches and meters.  Sliders, switches and knobs have a default style or can be whatever picture you want.
   Audio functions included: EQ (all main types), enveloppe follower, clipper, delay (with clipping@+12 dB) and conversion utilities
 
-import PhilRangerAudioLibraryAlpha2.jsfx-inc
+import philranger_Phil Ranger GUI and Audio Library/PhilRangerAudioLibraryAlpha2.jsfx-inc
 
 /* Existing widgets: Panels, pictures, switches, knobs, meters, sliders
 Right-click = set to default value
