@@ -1,0 +1,723 @@
+/*******************************************************************************************************
+Phil Ranger Audio and GUI Library Version Alpha 2
+Programmed and designed by Phil Ranger Copyright (C) 2025 (philipperanger@hotmail.com)
+
+Terms and conditions: This library is free to use in free software. Using this library in a non-free software automatically entices a 3% royalty to Phil Ranger, unless another amount is agreed on by both parties with a written proof.
+TLDR: It's free unless you sell something that uses it.
+*******************************************************************************************************/
+@init
+	//set defaults in case the user forgets to do it
+	PR.Memory.Start=0; //Modify this if you use memory
+	PR.Memory.End=0; //will be modified as you create items
+	
+	PR.Text.Font="Arial";
+	PR.Color.Text="D0D0FFF"; //Blueish pale gray
+	PR.Color.Main="808080FF"; //Gray
+	PR.Color.Panel="300050A0"; //Dark Violet
+	PR.Color.Contour="303040FF"; //Blueish Gray
+	PR.Color.Shadow = "10000080"; //Semi-transparent black
+	
+/*******************************************************************************************************						Utility functions
+*******************************************************************************************************/
+
+function PR.ExtractByteFromPackedHexadecimal(PackedHexadecimalNumber,position) local(num1,num2) (
+	num1=str_getchar(PackedHexadecimalNumber, position)-48; //char 48 = "0"
+	num1 >= 10 ? num1-=7;
+	num2=str_getchar(PackedHexadecimalNumber, position+1)-48; //char 48 = "0"
+	num2 >= 10 ? num2-=7;
+	num1*16+num2;//returned value
+);
+
+function PR.LinearToPercent(Value Min Max) ((Value-Min)*100/(Max-Min););
+function PR.PercentToLinear(ValuePercent Min Max) ( Min+ValuePercent*(Max-Min)/100 );
+function PR.FrequencyToPercent(Value Min Max) (100*(log(Value/Min))/(log(Max/Min)));
+function PR.PercentToFrequency(ValuePercent Min Max) ( exp(log(Min)+(ValuePercent/100)*(log(Max/Min))) );
+function PR.dBToLinear(Value) (10^(Value/20));
+function PR.LinearTodB(Value) (20*log(max(Value,10^(-5)))/log(10));
+function FToOmega(F) (2*$pi*F/srate);
+function OmegaToF(w) (w*srate/(2*$pi));
+
+function PR.UseColor(Color) ( 
+//Color is a packed Hexadecimal color in a string ("RRGGBBAA"). Example: "000080FF" is a vivid blue, no transparency (alpha)
+	gfx_set(PR.ExtractByteFromPackedHexadecimal(Color,0)/255,		PR.ExtractByteFromPackedHexadecimal(Color,2)/255,		PR.ExtractByteFromPackedHexadecimal(Color,4)/255,		PR.ExtractByteFromPackedHexadecimal(Color,6)/255);
+);
+
+function PR.NumbertoText(Value) local(Text) ( 
+//Returns a string of reasonable length, even for larger numbers. Usage example: PR.DisplayText(Text3,PR.NumbertoText(slider1));
+	abs(Value)<10 ? (Text=sprintf(#, "%1.2f", Value)	):(
+		abs(Value)<100 ? (Text=sprintf(#, "%2.1f", Value)		):(
+			abs(Value)<1000 ? (Text=sprintf(#, "%.0f", Value)
+			):(abs(Value)<10000 ? (Text=sprintf(#, "%.2fk", floor((Value+5.1)/10)/100)
+				):(Text=sprintf(#, "%.1fk", floor((Value+50.1)/100)/10)
+				)
+			)
+		);	
+	);
+);
+
+function SetSlider(SliderNumber Value) (
+	slider(SliderNumber)=Value;
+	sliderchange(2^(SliderNumber-1));
+	slider_automate(2^(SliderNumber-1)); //Thanks to Ben (Talagan) for helping me on the Reaper forum!
+);
+
+function PR.End()( // Has to be called at the end of the @gfx block for mouse movement detection.
+	PR.Mouse.PreviousX=mouse_x;	PR.Mouse.PreviousY=mouse_y;
+	PR.Mouse.PreviousButtons=mouse_cap;);
+
+function PR.ValueChanger(X Y Width Height ValuePercent) local(MouseDetectionSize) (
+//Returns a value from 0 to 100, or -1 if default value is asked
+	//User wants to change value: left mouse pressed and position inside slider, sticky	
+	(mouse_x>= (X-Width/10)) && (mouse_x<= (X+1.1*Width)) && (mouse_y >= Y-Height/10) && (mouse_y<= (Y+1.1*Height)) ? (
+		mouse_cap & 1==1 ?( 	//mouse_cap&4=ctrl is pressed
+			((PR.Mouse.PreviousY!=mouse_y) || (PR.Mouse.PreviousX!=mouse_x)) && (mouse_cap & 4==4) ? (
+				(Width<=Height) ? (
+					//Vertical small change
+					ValuePercent=ValuePercent+(PR.Mouse.PreviousY-mouse_y)*0.05;				
+				):(
+					//Horizontal small change
+					ValuePercent=ValuePercent-(PR.Mouse.PreviousX-mouse_x)*0.05;				
+				);
+			);
+			((PR.Mouse.PreviousY!=mouse_y) || (PR.Mouse.PreviousX!=mouse_x)) && (mouse_cap & 4!=4) ? (
+				(Width<=Height) ? (
+					//Vertical large changes
+					ValuePercent=100*((Y+Height-mouse_y)/Height);
+				):(
+					//Horizontal large change
+					ValuePercent=100*((mouse_x-X)/Width);
+				);
+			);
+		);
+		ValuePercent=min(ValuePercent,100);
+		ValuePercent=max(ValuePercent,0);
+		mouse_cap & 2==2 ? (//Right-click inside the box = back to default value.
+			ValuePercent=-1;
+		);	
+	);	
+	ValuePercent;
+);
+
+/*******************************************************************************************************				Constructor functions, should be needed by your plugin in the @init block
+*******************************************************************************************************/
+
+function PR.NewRectangle(X Y Width Height) (
+	PR.Memory.End[0] = X;
+	PR.Memory.End[1] = Y;	PR.Memory.End[2] = Width;
+	PR.Memory.End[3] = Height;
+	PR.Memory.End +=4;
+	PR.Memory.End-4;
+);
+
+function PR.NewCircle(X Y Size) (	PR.Memory.End[0] = X;
+	PR.Memory.End[1] = Y;	PR.Memory.End[2] = Size;
+	PR.Memory.End +=3;
+	PR.Memory.End-3;
+);
+
+function PR.NewLinearRange(DefaultValue MinValue MaxValue) ( //Returns a pointer to the values
+	PR.Memory.End[0] = DefaultValue;
+	PR.Memory.End[1] = MinValue;	PR.Memory.End[2] = MaxValue;
+	PR.Memory.End[3] = 0; //0=Linear, 1=Frequency, 2=Gain
+	PR.Memory.End +=4;
+	PR.Memory.End-4;
+);
+
+function PR.NewFrequencyRange(DefaultValue MinValue MaxValue) ( //Returns a pointer to the values
+	PR.Memory.End[0] = DefaultValue;
+	PR.Memory.End[1] = MinValue;	PR.Memory.End[2] = MaxValue;
+	PR.Memory.End[3] = 1; //0=Linear, 1=Frequency, 2=Gain
+	PR.Memory.End +=4;
+	PR.Memory.End-4;
+);
+
+function PR.NewEQ() ( //Returns a pointer to the values.	//PR.Memory.End[0] = y1
+	//PR.Memory.End[1] = y2
+	//PR.Memory.End[2] = x1
+	//PR.Memory.End[3] = x2
+	//PR.Memory.End[4] = a1	
+	//PR.Memory.End[5] = a2
+	//PR.Memory.End[6] = b0
+	//PR.Memory.End[7] = b1
+	//PR.Memory.End[8] = b2
+	PR.Memory.End +=9;	PR.Memory.End-9;
+);
+
+function PR.NewEnveloppeFollower() ( //Returns a pointer to the values.
+	//PR.Memory.End[0] = y1
+	//PR.Memory.End[1] = Attack Coefficient
+	//PR.Memory.End[2] = Release Coefficient
+	PR.Memory.End +=3;
+	PR.Memory.End-3;
+);
+
+function PR.NewDelay(MaxDelayms) local(temp)( //Returns a pointer to the values.
+	temp=PR.Memory.End;
+	PR.Memory.End[0] = floor(MaxDelayms*srate/1000);
+	PR.Memory.End += (4+MaxDelayms*srate/1000); // maximum length, length, Feedback, ValuePointer, then values
+	temp;
+);
+
+
+/*******************************************************************************************************				
+Display functions for various objects, should be needed by your plugin in the @gfx
+*******************************************************************************************************/
+
+function PR.DisplayText(X Y Size Text) local(ScalingFactor) (
+	PR.UseColor(PR.Color.Text);
+	ScalingFactor = min(gfx_w, gfx_h)/100;
+	gfx_x = X*ScalingFactor;
+	gfx_y = Y*ScalingFactor;	stack_push(gfx_getfont()); //Save user-selected font number
+	gfx_setfont(16, PR.Text.Font, Size*ScalingFactor); 	
+	gfx_drawstr(Text);	gfx_setfont(stack_pop()); //puts user font number back
+);
+
+function PR.DisplayTextCenter(X Y Size Text) local(ScalingFactor) (
+	PR.UseColor(PR.Color.Text);
+	ScalingFactor = min(gfx_w, gfx_h)/100;
+	gfx_x = X*ScalingFactor;
+	gfx_y = Y*ScalingFactor;	stack_push(gfx_getfont()); //Save user-selected font number
+	gfx_setfont(16, PR.Text.Font, Size*ScalingFactor); 	
+	gfx_drawstr(Text,1|4|256,gfx_x, gfx_y); //1 = center horizontally, 4 = center vertically, 256 = ignore clipping.
+	gfx_setfont(stack_pop()); //puts user font number back
+);
+
+function PR.DisplayPanel(xPercent yPercent wPercent hPercent) local(ScalingFactor Contour X Y W H) (
+/*********************************************
+	Uses PR.Color.Contour; PR.Color.Panel
+*********************************************/
+	//Size of the element in pixels
+	ScalingFactor = min(gfx_w, gfx_h)/100;
+	X = ScalingFactor*(xPercent-wPercent/2); //X and Y are center coordinates
+	Y = ScalingFactor*(yPercent-hPercent/2);	W = ScalingFactor*wPercent;	H = ScalingFactor*hPercent;
+	Contour = max(0.2*ScalingFactor,2); //Contour Size is set to 0.2% of the GUI. This is an arbitrary artistic decision.	
+	PR.UseColor(PR.Color.Contour);	gfx_rect(X,Y,W,H);
+	
+	PR.UseColor(PR.Color.Panel);
+	X += Contour;
+	Y += Contour;
+	W -= (2*Contour); //remove twice the contour
+	H -= (2*Contour); //remove twice the contour
+	gfx_rect(X, Y, W, H); 	
+);
+
+function PR.DisplayPanel(Rectangle)	(PR.DisplayPanel(Rectangle[0],Rectangle[1],Rectangle[2],Rectangle[3]););
+
+function PR.DisplayPicture(Circle PictureNumber) local(ScalingFactor Size PictureWidth PictureHeight Ratio) (
+	/*********************************************
+	After the "desc" line at the beginning of your plugin, load the pictures. They have to be in the same folder as your plugin.	Example:		import PhilRangerGUILibraryv1.1
+			desc:My Unicorn Plugin
+			filename:0,JustinFrankelOnAUnicorn.png
+			slider1:gaindB=-12<-80,24,1>-gain (dB)
+	Tip: to get a semi-transparent picture, adjust the value of gfx_a before calling thin function (0=full transparent, 1=full opaque)
+	*********************************************/
+	ScalingFactor = min(gfx_w, gfx_h)/100;
+	Size = ScalingFactor*Circle[2];	
+	gfx_x = ScalingFactor*Circle[0]-Size/2; //X and Y are center coordinates
+	gfx_y = ScalingFactor*Circle[1]-Size/2;
+	gfx_getimgdim(PictureNumber,PictureWidth,PictureHeight);
+	Ratio=Size/max(PictureWidth, PictureHeight);
+	gfx_blit(PictureNumber,Ratio,0);
+);
+
+function PR.DisplayPicture(XPercent YPercent SizePercent PictureNumber) local(ScalingFactor X Y Size PictureWidth PictureHeight Ratio) (
+	/*********************************************
+	After the "desc" line at the beginning of your plugin, load the pictures. They have to be in the same folder as your plugin.	Example:		import PhilRangerGUILibraryv1.1
+			desc:My Unicorn Plugin
+			filename:0,JustinFrankelOnAUnicorn.png
+			slider1:gaindB=-12<-80,24,1>-gain (dB)
+	Tip: to get a semi-transparent picture, adjust the value of gfx_a before calling thin function (0=full transparent, 1=full opaque)
+	*********************************************/
+	ScalingFactor = min(gfx_w, gfx_h)/100;
+	Size = ScalingFactor* SizePercent;	
+	gfx_x = ScalingFactor*XPercent-Size/2; //X and Y are center coordinates
+	gfx_y = ScalingFactor*YPercent-Size/2;
+	gfx_getimgdim(PictureNumber,PictureWidth,PictureHeight);
+	Ratio=Size/max(PictureWidth, PictureHeight);
+	gfx_blit(PictureNumber,Ratio,0);
+);
+
+function PR.DisplaySwitch(Rectangle SliderNumber PictureNumber) local(X Y Width Height Value ScalingFactor ContourSize Ratio PictureWidth PictureHeight) (
+	/*********************************************
+	Uses PR.Color.Contour; PR.Color.Main; PR.Color.Shadow; PR.Mouse.PreviousX; PR.Mouse.PreviousY;
+	*********************************************/
+	Value=slider(SliderNumber);
+	//Size of the elements in pixels
+	ScalingFactor = min(gfx_w, gfx_h)/100;
+	X = (Rectangle[0]-Rectangle[2]/2)*ScalingFactor; //X and Y are centered
+	Y = (Rectangle[1]-Rectangle[3]/2)*ScalingFactor;
+	Width = Rectangle[2]*ScalingFactor;	Height = Rectangle[3]*ScalingFactor;
+	ContourSize = max(2,0.2*ScalingFactor); //Arbitrary artistic decision.
+		
+	//left button pressed and position inside button
+	((mouse_cap & 1==1) && (PR.Mouse.PreviousButtons & 1 == 0) && (mouse_x>= X) && (mouse_x<= X+Width) && (mouse_y>= Y) && (mouse_y<= Y+Height)) ? (Value = !Value;);
+	
+	//Draw Button
+	PR.UseColor(PR.Color.Contour);
+	gfx_rect(X,Y,Width,Height);
+	PR.UseColor(PR.Color.Shadow);
+	gfx_rect(X+ContourSize, Y+ContourSize, Width-2*ContourSize, Height-2*ContourSize);
+	(PictureNumber==-1) ? ( //No Picture, default style
+		PR.UseColor(PR.Color.Contour);
+		(Height < Width) ? ( //Horizontal
+			gfx_rect(X+Value*Width/2, Y, Width/2, Height);
+			PR.UseColor(PR.Color.Main);
+			gfx_rect(1+X+Value*Width/2, Y+1, Width/2-2, Height-2);
+		):( //Vertical
+			gfx_rect(X,Y+(!Value*Height/2), Width, Height/2);
+			PR.UseColor(PR.Color.Main);
+			gfx_rect(1+X,1+Y+(!Value*Height/2), Width-2, Height/2-2);
+		);
+	):(  //With Picture
+		gfx_getimgdim(PictureNumber,PictureWidth,PictureHeight);
+		(Height < Width) ? ( //Horizontal
+			Ratio=Height/PictureHeight;
+			X=X+ContourSize+(Value*(Width-PictureWidth*Ratio));
+		):( //Vertical
+			Ratio=Width/PictureWidth;
+			Y=Y+ContourSize+(!Value*(Height-PictureHeight*Ratio));
+		);
+			gfx_x = X;
+			gfx_y = Y;
+			gfx_a = 1;
+			gfx_blit(PictureNumber,Ratio ,0);
+	);
+	PR.SetSlider(SliderNumber,Value);
+);
+
+function PR.DisplaySwitch(Rectangle SliderNumber)
+(
+	PR.DisplaySwitch(Rectangle,SliderNumber, -1); //No picture!
+);
+
+/*********************************************/
+function PR.DisplaySlider(Rectangle ValueRange SliderNumber PictureNumber)
+local(Value ValuePercent DefaultValuePercent ScalingFactor X Y Width Height ContourSize MouseDetectionSize Size Ratio PictureHeight PictureWidth TickNumber) (
+	/*********************************************
+	Uses PR.Color.Contour; PR.Color.Main; PR.Color.Shadow; PR.Color.Text; PR.Mouse.PreviousX; PR.Mouse.PreviousY;
+	Rectangle (X Y Width Height)
+	ValueRange(DefaultValue MinValue MaxValue Linearity)
+	/*********************************************/
+	Value=slider(SliderNumber);
+
+	ValueRange[3]==0 ? (
+		//Linear
+		ValuePercent = PR.LineartoPercent(Value, ValueRange[1], ValueRange[2]); //PR.LineartoPercent(Value MinValue MaxValue)
+		DefaultValuePercent=PR.LineartoPercent(ValueRange[0], ValueRange[1], ValueRange[2]);
+	);
+	ValueRange[3]==1 ? (
+		//Frequency
+		ValuePercent = PR.FrequencyToPercent(Value, ValueRange[1], ValueRange[2]);
+		DefaultValuePercent=PR.FrequencyToPercent(ValueRange[0], ValueRange[1], ValueRange[2]);
+	);
+	//Size the elements in pixels
+	ScalingFactor = min(gfx_w, gfx_h)/100;
+	X = ScalingFactor*(Rectangle[0]-Rectangle[2]/2); //X Y are not centered
+	Y = ScalingFactor*(Rectangle[1]-Rectangle[3]/2);
+	Width = ScalingFactor*Rectangle[2];
+	Height = ScalingFactor*Rectangle[3];
+	ContourSize = max(2,0.2*ScalingFactor); //Arbitrary artistic decision.	
+	Size=0.1; //Size of the fader button, arbitrary artistic decision.
+	ValuePercent = PR.ValueChanger(X,Y,Width,Height,ValuePercent);//Will send back "-1" if default value
+	(ValuePercent == -1) ? ValuePercent = DefaultValuePercent;	
+	ValueRange[3]==0 ? (
+		//Linear
+		Value=PR.PercentToLinear(ValuePercent, ValueRange[1], ValueRange[2]);
+	);
+	ValueRange[3]==1 ? (
+		//Frequencies
+		Value=PR.PercentToFrequency(ValuePercent, ValueRange[1], ValueRange[2]);
+	);
+	//Draw it
+	PR.UseColor(PR.Color.Contour);
+	gfx_rect(X,Y,Width,Height);
+	PR.UseColor(PR.Color.Shadow);
+	gfx_rect(X+ContourSize, Y+ContourSize, Width-2*ContourSize, Height-2*ContourSize);
+	
+	(Height > Width) ? ( //Vertical Slider
+		//Middle Line
+		PR.UseColor(PR.Color.Text);
+		gfx_a=0.1; //Quite transparent
+		gfx_rect(X+Width/2-1, Y, 2, Height);
+		PR.UseColor(PR.Color.Main);
+		(PictureNumber==-1) ? (
+			//Button
+			PR.UseColor(PR.Color.Contour);
+			gfx_rect(X,Y+Height*(1-(ValuePercent/100))*(1-Size),Width,Size*Height);
+			PR.UseColor(PR.Color.Main);
+			gfx_rect(X+1,Y+1+Height*(1-(ValuePercent/100))*(1-Size),Width,Size*Height);
+			//Button Middle Line
+			PR.UseColor(PR.Color.Text);
+			gfx_a=0.3; //Quite transparent
+			gfx_rect(X,Y+(Height)*(1-Size)*(1+size/2-(ValuePercent/100)),Width,2);
+		):( //Picture as a button
+			gfx_getimgdim(PictureNumber,PictureWidth,PictureHeight);
+			Ratio=Width/PictureWidth;
+			gfx_x = X;
+			gfx_y = Y+Height-ValuePercent*(Height-PictureHeight*Ratio)/100-PictureHeight*Ratio;;
+			gfx_a = 1;
+			gfx_blit(PictureNumber,Ratio ,0);
+		);
+		
+		//Tick marks
+		PR.UseColor(PR.Color.Text);
+		TickNumber = 0;
+		loop(10,
+		gfx_line(X-Width/10, Y+Height*Size/2+TickNumber*Height/10, X,Y+Height*Size/2+TickNumber*Height/10); //Draw the tick
+		TickNumber +=1;
+		);
+		
+		//Slider value
+		PR.DisplayTextCenter(Rectangle[0],Rectangle[1],Rectangle[2]/2.1, PR.NumbertoText(Value));
+		//Min Value, using ValueRange(DefaultValue MinValue MaxValue Linearity)
+		PR.UseColor(PR.Color.Text);		PR.DisplayTextCenter(Rectangle[0]-Rectangle[2],Rectangle[1]+(0.5-Size/2)*Rectangle[3],Rectangle[2]/2.5, PR.NumbertoText(ValueRange[1])); //X,Y,size,text
+		//Max Value		PR.DisplayTextCenter(Rectangle[0]-Rectangle[2],Rectangle[1]-(0.5-Size/2)*Rectangle[3], Rectangle[2]/2.5, PR.NumbertoText(ValueRange[2])); //X,Y,size,text
+	):( //Horizontal Slider
+		//Middle Line
+		PR.UseColor(PR.Color.Text);
+		gfx_a=0.1; //Quite transparent
+		gfx_rect(X, Y+Height/2, Width, 2);
+		PR.UseColor(PR.Color.Main);
+		(PictureNumber==-1) ? (
+			//Button
+			PR.UseColor(PR.Color.Contour);
+			gfx_rect(X+Width*(ValuePercent/100)*(1-Size),Y,Size*Width,Height);			PR.UseColor(PR.Color.Main);
+			gfx_rect(1+X+Width*(ValuePercent/100)*(1-Size),1+Y,Size*Width-2,Height-2);
+
+			//Button Middle Line
+			PR.UseColor(PR.Color.Text);
+			gfx_a=0.3; //Quite transparent
+			gfx_rect(X+Width*(ValuePercent/100)*(1-Size)+0.5*Width*Size,Y,20,Height); 		
+		):( //Picture as a button
+			gfx_getimgdim(PictureNumber,PictureWidth,PictureHeight);
+			Ratio=Height/PictureHeight;
+			gfx_x = X+ValuePercent*(Width-PictureWidth*Ratio)/100;
+			gfx_y = Y;
+			gfx_a = 1;
+			gfx_blit(PictureNumber,Ratio ,0);
+		);
+		//Tick marks
+		PR.UseColor(PR.Color.Text);
+		TickNumber = 0;
+		loop(10,
+		gfx_line(X+Width*Size/2+TickNumber*Width/10, Y-Height/10, X+Width*Size/2+TickNumber*Width/10,Y); //Draw the tick
+		TickNumber +=1;
+		);
+		
+		//Slider value
+		PR.DisplayTextCenter(Rectangle[0],Rectangle[1],Rectangle[3]*.8, PR.NumbertoText(Value));
+		//Min Value, using ValueRange(DefaultValue MinValue MaxValue Linearity)
+		PR.UseColor(PR.Color.Text);		
+		PR.DisplayTextCenter(Rectangle[0]-Rectangle[2]/2.1,Rectangle[1]-Rectangle[3], Rectangle[2]/22, PR.NumbertoText(ValueRange[1])); //X,Y,size,text
+		//Max Value		PR.DisplayTextCenter(Rectangle[0]+Rectangle[2]/2.1,Rectangle[1]-Rectangle[3], Rectangle[2]/22, PR.NumbertoText(ValueRange[2])); //X,Y,size,text
+	);
+	PR.SetSlider(SliderNumber, Value);
+);
+
+function PR.DisplaySlider(Rectangle ValueRange SliderNumber)
+(
+	PR.DisplaySlider(Rectangle,ValueRange,SliderNumber,-1); //No picture!
+);
+
+/*********************************************/
+function PR.DisplayMeter(Circle Value MinValue MaxValue)
+local(ValuePercent ScalingFactor Size Radius X Y ContourSize TickAngle TickNumber NeedleAngle XAngle YAngle) (
+	/*********************************************
+	Uses PR.Color.Contour; PR.Color.Main; PR.Color.Shadow; PR.Color.Text;	Circle (X Y Size)
+	*********************************************/
+		
+	ValuePercent = PR.LineartoPercent(Value, MinValue, MaxValue);
+	ValuePercent=min(ValuePercent,100);
+	ValuePercent=max(ValuePercent,0);
+
+	//Size of the elements in pixels
+	ScalingFactor = min(gfx_w, gfx_h)/100;
+	X = Circle[0]*ScalingFactor;
+	Y = Circle[1]*ScalingFactor;
+	Size = Circle[2]*ScalingFactor;
+	Radius = 0.5*Size; //Meter radius
+	ContourSize = max(1.5*ScalingFactor,2); //This is an arbitrary artistic decision.
+	//Shadow around the contour of the meter
+	PR.UseColor(PR.Color.Shadow);
+	gfx_circle(X+Radius/35,Y+Radius/25,Radius*1.0,1,1);
+	//Contour
+	PR.UseColor(PR.Color.Contour);
+	gfx_circle(X,Y,Radius,1,1);
+	//Meter
+	PR.UseColor(PR.Color.Shadow);
+	gfx_circle(X,Y,Radius-ContourSize,1,1);
+	//Draw the ticks around the circle
+	PR.UseColor(PR.Color.Text);
+	TickNumber = 0;
+	loop(11,
+		TickAngle = (TickNumber*1.5-75)*2*$pi/360; //scaled to an angle in rad from -50 degrees to 50 degrees
+		gfx_line(X+Radius*sin(TickAngle), Y-Radius*cos(TickAngle), X+(Radius-ContourSize)*sin(TickAngle), Y-(Radius-ContourSize)*cos(TickAngle)); //Draw the tick
+		TickNumber +=10;
+	);
+	//Needle
+	NeedleAngle=(ValuePercent*1.5-75)*2*$pi/360; //scaled to an angle in rad from -75 degrees to 75 degrees
+	PR.UseColor(PR.Color.Text);	
+	gfx_line(X,Y,X+sin(NeedleAngle)*(Radius-ContourSize),Y-cos(NeedleAngle)*(Radius-ContourSize),1);
+	//Needle center dot
+	PR.UseColor(PR.Color.Main);
+	gfx_circle(X,Y,Radius/6,1,1);	
+	
+	//Min Value
+	PR.UseColor(PR.Color.Text);	
+	PR.DisplayTextCenter(Circle[0]-0.7*Circle[2],Circle[1]-Circle[2]/10, Circle[2]/6, PR.NumbertoText(MinValue)); //X,Y,size,text
+	//Max Value
+	PR.UseColor(PR.Color.Text);	
+	PR.DisplayTextCenter(Circle[0]+0.7*Circle[2],Circle[1]-Circle[2]/10, Circle[2]/6, PR.NumbertoText(MaxValue));
+);
+
+function PR.DisplayKnob(Circle ValueRange SliderNumber PictureNumber) local(Value ValuePercent DefaultValuePercent ScalingFactor X Y ContourSize Size Radius Xangle Yangle KnobAngle PictureWidth PictureHeight Ratio TickAngle TickNumber) (
+	/*********************************************
+	Uses PR.Color.Contour; PR.Color.Main; PR.Color.Shadow; PR.Color.Text; PR.Mouse.PreviousX; PR.Mouse.PreviousY;
+	Circle (X Y Size)
+	ValueRange(DefaultValue MinValue MaxValue Linearity)
+	/*********************************************/
+	
+	Value=slider(SliderNumber);
+	ValueRange[3]==0 ? ( //Linear
+		ValuePercent = PR.LineartoPercent(Value, ValueRange[1], ValueRange[2]); //PR.LineartoPercent(Value MinValue MaxValue)
+		DefaultValuePercent=PR.LineartoPercent(ValueRange[0], ValueRange[1], ValueRange[2]);
+	);
+	ValueRange[3]==1 ? ( //Frequency
+		ValuePercent = PR.FrequencyToPercent(Value, ValueRange[1], ValueRange[2]);
+		DefaultValuePercent=PR.FrequencyToPercent(ValueRange[0], ValueRange[1], ValueRange[2]);
+	);
+	//Size the elements in pixels
+	ScalingFactor = min(gfx_w, gfx_h)/100;
+	X = ScalingFactor*Circle[0]; //X Y are centered
+	Y = ScalingFactor*Circle[1];
+	Size = ScalingFactor*Circle[2];
+	Radius = 0.5*Size; //Knob radius
+	ContourSize=Radius*.35; //Arbitrary artistic decision
+
+	ValuePercent = PR.ValueChanger(X-Radius,Y-Radius,Size,Size,ValuePercent);//X,Y,Width,Height,ValuePercent. Will send back "-1" if default value
+	(ValuePercent < 0) ? ValuePercent = DefaultValuePercent;	
+	ValueRange[3]==0 ? (
+		//Linear
+		Value=PR.PercentToLinear(ValuePercent, ValueRange[1], ValueRange[2]);
+	);
+	ValueRange[3]==1 ? (
+		//Frequencies
+		Value=PR.PercentToFrequency(ValuePercent, ValueRange[1], ValueRange[2]);
+	);
+	//Draw it
+	KnobAngle=(ValuePercent*3-150)*2*$pi/360; //scaled to an angle in rad. *3-150 = from -150 degrees to 150 degrees
+	//Draw the ticks around the circle
+	PR.UseColor(PR.Color.Text);
+	TickNumber = 0;
+	loop(11,
+		TickAngle = (-150+TickNumber*30)*2*$pi/360; //scaled to an angle in rad from -150 degrees to 150 degrees
+		gfx_line(X+1.1*Radius*sin(TickAngle), Y-1.1*Radius*cos(TickAngle), X,Y); //Draw the tick
+		TickNumber +=1;
+	);
+	//Shadow around the contour of the knob
+	PR.UseColor(PR.Color.Shadow);
+	gfx_circle(X+Radius/30,Y+Radius/20,Radius*1.0,1,1);
+
+	(PictureNumber == -1) ? (
+		XAngle=X+sin(KnobAngle)*Radius;
+		YAngle=Y-cos(KnobAngle)*Radius; //minus means center on top
+		//Contour
+		PR.UseColor(PR.Color.Contour);
+		gfx_circle(X,Y,Radius,1,1);
+		//Pointer
+		PR.UseColor(PR.Color.Text);	gfx_line((X*Circle[2]+XAngle*(100-Circle[2]))/100,(Y*Circle[2]+YAngle*(100-Circle[2]))/100,XAngle,YAngle,1);
+		gfx_arc(X, Y, Radius, -2.618, KnobAngle); //2.618: Arc starts at -150 degrees
+		//gfx_arc(x,y,r, ang1, ang2[,antialias]) -- REAPER 4.60+ Draws an arc of the circle centered at x,y, with ang1/ang2 being specified in radians.
+		//Shadow on the knob
+		PR.UseColor(PR.Color.Shadow);
+		gfx_circle(X+Radius/10,Y+Radius/8,(Radius-ContourSize)*1.0,1,1);
+		//Knob
+		PR.UseColor(PR.Color.Main);
+		gfx_circle(X,Y,Radius-ContourSize,1,1);
+	):(
+		gfx_x = X-Radius;
+		gfx_y = Y-Radius;
+		gfx_a = 1;
+		gfx_getimgdim(PictureNumber,PictureWidth,PictureHeight);
+		Ratio=Circle[2]*ScalingFactor/PictureWidth;
+		gfx_blit(PictureNumber,Ratio,KnobAngle);//KnobAngle
+	);	
+	//Knob value	
+	PR.DisplayTextCenter(Circle[0],Circle[1], 0.9*(Radius-ContourSize)/ScalingFactor, PR.NumbertoText(Value)); //XPercent and YPercent are at the center
+	//Min Value, using ValueRange(DefaultValue MinValue MaxValue Linearity)
+	PR.UseColor(PR.Color.Text);	
+	PR.DisplayTextCenter(Circle[0]-0.5*Circle[2],Circle[1]+Circle[2]/2, Circle[2]/5, PR.NumbertoText(ValueRange[1])); //X,Y,size,text
+	//Max Value	
+	PR.DisplayTextCenter(Circle[0]+0.5*Circle[2],Circle[1]+Circle[2]/2, Circle[2]/5, PR.NumbertoText(ValueRange[2]));	PR.SetSlider(SliderNumber, Value);
+);
+
+function PR.DisplayKnob(Circle ValueRange SliderNumber) ( //No Picture!
+	PR.DisplayKnob(Circle,ValueRange,SliderNumber,-1);
+);
+
+/*******************************************************************************************************					 
+Processing setup functions, to be used by your plugins
+*******************************************************************************************************/
+
+function PR.SetPeakingEQ(EQ,F,G,Q) local(omega alpha A norm) ( 
+	//EQ is a pointer to quasi-object. Use the appropriate new function
+	A = PR.dBToLinear(max(-24, min(Gain,24)));	
+	omega = 2*$pi*max(20, min(F,20000))/srate;
+	alpha = sin(omega)/(2*max(0.1, min(Q,10)));
+
+	//EQ[4] //a1		EQ[5] //a2
+	//EQ[6] //b0		EQ[7] //b1		EQ[8] //b2		
+	norm = 1+alpha/A;
+	EQ[6] = (1+alpha*A)/norm;
+	EQ[7] = -2*cos(omega)/norm;
+	EQ[8] = (1-alpha*A)/norm;
+	EQ[4] = -2*cos(omega)/norm;
+	EQ[5] = (1-alpha/A)/norm;
+);
+
+function PR.SetLowPassEQ(EQ,F,G,Q) local(omega alpha A) ( 
+	//EQ is a pointer to quasi-object. Use the appropriate new function
+	A = PR.dBToLinear(max(-24, min(Gain,24)));	
+	omega = 2*$pi*max(20, min(F,20000))/srate;
+	alpha = sin(omega)/(2*max(0.1, min(Q,10)));
+
+	//EQ[4] //a1		EQ[5] //a2
+	//EQ[6] //b0		EQ[7] //b1		EQ[8] //b2			
+	EQ[6] = (1-cos(omega))/2/(1+alpha);
+	EQ[7] = (1-cos(omega))/(1+alpha);
+	EQ[8] = (1-cos(omega))/2/(1+alpha);
+	EQ[4] = -2*cos(omega)/(1+alpha);
+	EQ[5] = (1-alpha)/(1+alpha);
+);
+
+function PR.SetHighPassEQ(EQ,F,G,Q) local(omega alpha A) ( 
+	//EQ is a pointer to quasi-object. Use the appropriate new function
+	A = PR.dBToLinear(max(-24, min(Gain,24)));	
+	omega = 2*$pi*max(20, min(F,20000))/srate;
+	alpha = sin(omega)/(2*max(0.1, min(Q,10)));
+
+	//EQ[4] //a1		EQ[5] //a2
+	//EQ[6] //b0		EQ[7] //b1		EQ[8] //b2			
+	EQ[6] = (1+cos(omega))/2/(1+alpha);
+	EQ[7] = -(1+cos(omega))/(1+alpha);
+	EQ[8] = (1+cos(omega))/2/(1+alpha);
+	EQ[4] = -2*cos(omega)/(1+alpha);
+	EQ[5] = (1-alpha)/(1+alpha);
+);
+
+function PR.SetBandpassEQ(EQ,F,G,Q) local(omega alpha A) ( 
+	//EQ is a pointer to quasi-object. Use the appropriate new function
+	A = PR.dBToLinear(max(-24, min(Gain,24)));	
+	omega = 2*$pi*max(20, min(F,20000))/srate;
+	alpha = sin(omega)/(2*max(0.1, min(Q,10)));
+
+	//EQ[4] //a1		EQ[5] //a2
+	//EQ[6] //b0		EQ[7] //b1		EQ[8] //b2			
+	EQ[6] = alpha/(1+alpha);
+	EQ[7] = 0;
+	EQ[8] = -alpha/(1+alpha);
+	EQ[4] = -2*cos(omega)/(1+alpha);
+	EQ[5] = (1-alpha)/(1+alpha);
+);
+
+function PR.SetNotchEQ(EQ,F,G,Q) local(omega alpha A) ( 
+	//EQ is a pointer to quasi-object. Use the appropriate new function
+	A = PR.dBToLinear(max(-24, min(Gain,24)));	
+	omega = 2*$pi*max(20, min(F,20000))/srate;
+	alpha = sin(omega)/(2*max(0.1, min(Q,10)));
+
+	//EQ[4] //a1		EQ[5] //a2
+	//EQ[6] //b0		EQ[7] //b1		EQ[8] //b2			
+	EQ[6] = 1/(1+alpha);
+	EQ[7] = -2*cos(omega)/(1+alpha);
+	EQ[8] = 1/(1+alpha);
+	EQ[4] = -2*cos(omega)/(1+alpha);
+	EQ[5] = (1-alpha)/(1+alpha);
+);
+
+function PR.SetLowShelfEQ(EQ,F,G,Q) local(omega alpha A norm) ( 
+	//EQ is a pointer to quasi-object. Use the appropriate new function
+	A = PR.dBToLinear(max(-24, min(Gain,24)));	
+	omega = 2*$pi*max(20, min(F,20000))/srate;
+	alpha = sin(omega)/(2*max(0.1, min(Q,10)));
+
+	//EQ[4] //a1		EQ[5] //a2
+	//EQ[6] //b0		EQ[7] //b1		EQ[8] //b2			
+	norm = (A+1)+(A-1)*cos(omega)+2*sqrt(A)*alpha;
+	EQ[6] = A*((A+1)-(A-1)*cos(omega)+2*sqrt(A)*alpha)/norm;
+	EQ[7] = 2*A*((A-1)-(A+1)*cos(omega))/norm;
+	EQ[8] = A*((A+1)-(A-1)*cos(omega)-2*sqrt(A)*alpha)/norm;
+	EQ[4] = -2*((A-1)+(A+1)*cos(omega))/norm;
+	EQ[5] = ((A+1)+(A-1)*cos(omega)-2*sqrt(A)*alpha)/norm;
+);
+
+function PR.SetHighShelfEQ(EQ,F,G,Q) local(omega alpha A norm) ( 
+	//EQ is a pointer to quasi-object. Use the appropriate new function
+	A = PR.dBToLinear(max(-24, min(Gain,24)));	
+	omega = 2*$pi*max(20, min(F,20000))/srate;
+	alpha = sin(omega)/(2*max(0.1, min(Q,10)));
+
+	//EQ[4] //a1		EQ[5] //a2
+	//EQ[6] //b0		EQ[7] //b1		EQ[8] //b2		
+	norm = (A+1)-(A-1)*cos(omega)+2*sqrt(A)*alpha;
+	EQ[6] = A*((A+1)+(A-1)*cos(omega)+2*sqrt(A)*alpha)/norm;
+	EQ[7] = -2*A*((A-1)+(A+1)*cos(omega))/norm;
+	EQ[8] = A*((A+1)+(A-1)*cos(omega)-2*sqrt(A)*alpha)/norm;
+	EQ[4] = 2*((A-1)-(A+1)*cos(omega))/norm;
+	EQ[5] = ((A+1)-(A-1)*cos(omega)-2*sqrt(A)*alpha)/norm;
+);
+
+function PR.SetEnveloppeFollower(EF AttackTime ReleaseTime) (
+	//EF is a pointer to quasi-object. Use the appropriate new function
+	EF[1]=exp(-1/(AttackTime*srate));//AttackCoefficient
+	EF[2]=exp(-1/(ReleaseTime*srate));//ReleaseCoefficient
+);
+
+function PR.SetDelay(Delay Timems Feedback) local(CircularBufferSize)( 
+	//Dealy is a pointer to quasi-object. Use the appropriate new function.  It contains: maximum length, length, feedback, ptr, then values
+	CircularBufferSize=min(Delay[0],floor(Timems*srate/1000)); // Time can't longer than maxdelay, which is stored in DelayPointer[0]	//(CircularBufferSize>Delay[1])?(memset(Delay[1]+4,0,CircularBufferSize-Delay[1]);); // If the new delay is longer, fill memory with zeros to avoid hearing old samples
+	Delay[1]=CircularBufferSize;
+	Delay[2]=Feedback/100;
+);
+/*******************************************************************************************************									Signal Processing Functions
+*******************************************************************************************************/
+
+function PR.EQ(EQ input) local(output)( 
+	//EQ is a pointer to quasi-object. Use the appropriate new and set functions
+	/* Stereo parametric EQ, output left = EQ[0] and right =EQ[1]
+	Pointer values are:
+		EQ[0] //y1		EQ[1] //y2		
+		EQ[2] //x1		EQ[3] //x2	
+		EQ[4] //a1		EQ[5] //a2	
+		EQ[6] //b0		EQ[7] //b1		EQ[8] //b2	
+		process:	out = b0*in +b1*x1+ b2*x2-a1*y1 -a2*y2;
+	*/
+	output = EQ[6]*input+EQ[7]*EQ[2]+EQ[8]*EQ[3]-EQ[4]*EQ[0]-EQ[5]*EQ[1];
+	//time slip
+	EQ[3]=EQ[2];	EQ[2]=input;	EQ[1]=EQ[0];	EQ[0]=output; //return value
+);
+
+function PR.Clip(MAXdB input ) (sign(input)*min(abs(input),PR.dBToLinear(MAXdB)););
+
+function PR.EnveloppeFollower(input EF) local (output)( 
+	//Returns the output.  EF is a pointer to quasi-object. Use the appropriate new and set functions.  Contains: 0:Last value, 1:AttackConstant, 2:ReleaseConstant
+	(input > EF[0]) ? (
+		//output[i] = attack_alpha*output[i-1]+(1-attack_alpha)*input_signal[i]
+		EF[0]=EF[1]*EF[0]+(1-EF[1])*input;
+	):(
+		//output[i] = release_alpha*output[i-1]+(1-release_alpha)*input_signal[i]
+		EF[0]=EF[2]*EF[0]+(1-EF[2])*input;
+	);
+	EF[0];
+);
+
+function PR.Delay(Delay input) local(ThisSample NextSample)( 
+	// Returns the output.  Delay is a pointer to quasi-object. Use the appropriate new and set functions.  Contains: 0:maximum length, 1:length, 2:feedback, 3:ptr, then values
+	ThisSample=Delay[3]+4;	// +4 = skip parameters (0:maximum length, 1:length, 2:feedback, 3:ptr)
+
+	//Increment circular buffer pointer
+	(Delay[3]>=Delay[1])? (NextSample=4;):(NextSample=ThisSample+1;);	
+	Delay[3] = NextSample-4;	Delay[ThisSample]=input+PR.Clip(12,Delay[NextSample])*Delay[2];
+
+	Delay[NextSample];
+);
