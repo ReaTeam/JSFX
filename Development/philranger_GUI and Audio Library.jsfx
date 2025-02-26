@@ -1,13 +1,13 @@
-desc: Phil Ranger GUI and Audio Library (JSFX)
+desc: GUI and Audio Library
 author: Phil Ranger
 version: 0.Alpha2
 provides:
-  philranger_Phil Ranger GUI and Audio Library (JSFX)/PhilRangerAudioLibraryAlpha2.jsfx-inc
-  philranger_Phil Ranger GUI and Audio Library (JSFX)/Knob.png
-  philranger_Phil Ranger GUI and Audio Library (JSFX)/Highlight.png
-  philranger_Phil Ranger GUI and Audio Library (JSFX)/Switch.png
+  philranger_GUI and Audio Library/PhilRangerAudioLibraryAlpha2.jsfx-inc
+  philranger_GUI and Audio Library/Knob.png
+  philranger_GUI and Audio Library/Highlight.png
+  philranger_GUI and Audio Library/Switch.png
 about:
-  This is about the library, not the plugin itself as it is given only as aexample of using most of the function's library.  Comments welcome!
+  This is about the library, not the plugin itself as it is given only as an example of using most of the function's library.  Comments welcome!
   Resizing of the graphic components is automatic, automatic memory management, JSFX exclusively so it's easy to understand, edit and improve
   Main graphic functions included: Linear and non-linear range management, GUI for Texts and numbers, panels, pictures, knobs, sliders, switches and meters.  Sliders, switches and knobs have a default style or can be whatever picture you want.
   Audio functions included: EQ (all main types), enveloppe follower, clipper, delay (with clipping@+12 dB) and conversion utilities
