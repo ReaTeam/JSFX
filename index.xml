@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="df47a7c25fc828729d18980212c27c021e1fa521">
+<index version="1" name="ReaTeam JSFX" commit="31d05a54d3f7ffdefa828912261464c63bc47e99">
+  <category name="Development">
+    <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 This is about the library, not the plugin itself as it is given only as an example of using most of the function's library. Comments welcome! Resizing of the graphic components is automatic, automatic memory management, JSFX exclusively so it's easy to understand, edit and improve Main graphic functions included: Linear and non-linear range management, GUI for Texts and numbers, panels, pictures, knobs, sliders, switches and meters. Sliders, switches and knobs have a default style or can be whatever picture you want. Audio functions included: EQ (all main types), enveloppe follower, clipper, delay (with clipping@+12 dB) and conversion utilities\par}
+}
+]]></description>
+      </metadata>
+      <version name="0.Alpha2" author="Phil Ranger" time="2025-03-06T18:12:36Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/31d05a54d3f7ffdefa828912261464c63bc47e99/Development/philranger_GUI%20and%20Audio%20Library.jsfx</source>
+        <source file="philranger_GUI and Audio Library/PhilRangerAudioLibraryAlpha2.jsfx-inc">https://github.com/ReaTeam/JSFX/raw/31d05a54d3f7ffdefa828912261464c63bc47e99/Development/philranger_GUI%20and%20Audio%20Library/PhilRangerAudioLibraryAlpha2.jsfx-inc</source>
+        <source file="philranger_GUI and Audio Library/Knob.png">https://github.com/ReaTeam/JSFX/raw/31d05a54d3f7ffdefa828912261464c63bc47e99/Development/philranger_GUI%20and%20Audio%20Library/Knob.png</source>
+        <source file="philranger_GUI and Audio Library/Highlight.png">https://github.com/ReaTeam/JSFX/raw/31d05a54d3f7ffdefa828912261464c63bc47e99/Development/philranger_GUI%20and%20Audio%20Library/Highlight.png</source>
+        <source file="philranger_GUI and Audio Library/Switch.png">https://github.com/ReaTeam/JSFX/raw/31d05a54d3f7ffdefa828912261464c63bc47e99/Development/philranger_GUI%20and%20Audio%20Library/Switch.png</source>
+      </version>
+    </reapack>
+  </category>
   <category name="Distortion">
     <reapack name="Loudener.jsfx" type="effect" desc="Loudener">
       <metadata>
