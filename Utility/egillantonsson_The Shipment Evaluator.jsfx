@@ -1,0 +1,58 @@
+desc: The Shipment Evaluator
+author: Egill Antonsson
+version: 0.0.1
+changelog: First release
+link: Website https://www.egill.rocks/blog/shipment-evaluator
+donation: Donate via PayPal https://www.paypal.com/donate/?hosted_button_id=9PSFWJT92K8U4
+about:
+  # The Shipment Evaluator by Egill Antonsson
+
+  ## Disclaimer
+  Use of this software is on your own risk, mainly as it provides a powerful encouragement to "SHIP IT !",
+
+  Thus you need to be careful about when to use it (not too soon, not too late).
+
+  This software is completely predictable as it has a fixed evaluation result and does no audio processing.
+
+tags:
+  analysis, utility, evaluation
+license:
+  MIT (Do whatever you like with this code)
+//_____________END-OF-INFO_____________//
+
+slider1:0<-0,11,0.1>The Evaluation Meter
+
+in_pin:none
+out_pin:none
+
+@init
+ext_tail_size = -2;
+i = 0.0;
+popup_shown = 0;
+do_ship = 0;
+
+@slider
+
+@block
+play_state == 1 ? (
+  i < 11 ? (
+    i = i + 0.025;
+    slider(1) = i;
+  ) : (
+    i = 11;
+    slider(1) = i;
+  )
+) : (
+  i = 0.0;
+  slider(1) = i;
+  popup_shown = 0;
+)
+
+@sample
+spl0=spl0;
+
+@gfx
+i == 11 && popup_shown == 0 ? (
+popup_shown = 1;
+user_clicked = gfx_showmenu("Evaluation Result: ♬ ♫ ♪ ♩  -->  SHIP IT !  <--  ♩ ♪ ♫ ♬");
+)
