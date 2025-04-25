@@ -1,8 +1,8 @@
 desc: MIDI CC Mapper X
 author: Ben 'Talagan' Babut
-version: 5.3.1
+version: 5.4.0
 changelog:
-  - Bug Fix : Note OFF events with non-zero velocities should make keypress feedback indicator disappear
+  - Adding some sliders for yielding control outputs, for MIDI parameter modulation
 screenshot:
   Dark Theme https://stash.reaper.fm/45504/MIDICCMapperX-5-0-Dark.png
   Light Theme https://stash.reaper.fm/45505/MIDICCMapperX-5-0-Light.png
@@ -172,6 +172,52 @@ slider44:0.5<0,1,0.001>-Morph Poly Aftertouch Blue
 slider45:0.5<0,1,0.001>-Morph Poly Aftertouch Orange
 slider46:0.5<0,1,0.001>-Morph Poly Aftertouch Violet
 
+slider51:0.5<0,1,0.001>-Output Pitch Bend
+slider52:0.5<0,1,0.001>-Output Mod Wheel
+slider53:0.5<0,1,0.001>-Output Pedal 1
+slider54:0.5<0,1,0.001>-Output Pedal 2
+slider55:0.5<0,1,0.001>-Output Pedal 3
+slider56:0.5<0,1,0.001>-Output Pedal 4
+slider57:0.5<0,1,0.001>-Output Fader 1
+slider58:0.5<0,1,0.001>-Output Fader 2
+slider59:0.5<0,1,0.001>-Output Fader 3
+slider60:0.5<0,1,0.001>-Output Fader 4
+slider61:0.5<0,1,0.001>-Output Fader 5
+slider62:0.5<0,1,0.001>-Output Fader 6
+slider63:0.5<0,1,0.001>-Output Fader 7
+slider64:0.5<0,1,0.001>-Output Fader 8
+slider65:0.5<0,1,0.001>-Output Fader 9
+slider66:0.5<0,1,0.001>-Output Fader 10
+slider67:0.5<0,1,0.001>-Output Knob 1
+slider68:0.5<0,1,0.001>-Output Knob 2
+slider69:0.5<0,1,0.001>-Output Knob 3
+slider70:0.5<0,1,0.001>-Output Knob 4
+slider71:0.5<0,1,0.001>-Output Knob 5
+slider72:0.5<0,1,0.001>-Output Knob 6
+slider73:0.5<0,1,0.001>-Output Knob 7
+slider74:0.5<0,1,0.001>-Output Knob 8
+slider75:0.5<0,1,0.001>-Output Knob 9
+slider76:0.5<0,1,0.001>-Output Knob 10
+slider77:0.5<0,1,0.001>-Output Pad 1
+slider78:0.5<0,1,0.001>-Output Pad 2
+slider79:0.5<0,1,0.001>-Output Pad 3
+slider80:0.5<0,1,0.001>-Output Pad 4
+slider81:0.5<0,1,0.001>-Output Pad 5
+slider82:0.5<0,1,0.001>-Output Pad 6
+slider83:0.5<0,1,0.001>-Output Pad 7
+slider84:0.5<0,1,0.001>-Output Pad 8
+slider85:0.5<0,1,0.001>-Output Pad 9
+slider86:0.5<0,1,0.001>-Output Pad 10
+slider87:0.5<0,1,0.001>-Output Velocity Green
+slider88:0.5<0,1,0.001>-Output Velocity Red
+slider89:0.5<0,1,0.001>-Output Velocity Blue
+slider90:0.5<0,1,0.001>-Output Velocity Orange
+slider91:0.5<0,1,0.001>-Output Velocity Violet
+slider92:0.5<0,1,0.001>-Output Poly Aftertouch Green
+slider93:0.5<0,1,0.001>-Output Poly Aftertouch Red
+slider94:0.5<0,1,0.001>-Output Poly Aftertouch Blue
+slider95:0.5<0,1,0.001>-Output Poly Aftertouch Orange
+slider96:0.5<0,1,0.001>-Output Poly Aftertouch Violet
 //===========================================//
 //=============      INIT      ==============//
 //===========================================//
@@ -2470,6 +2516,14 @@ function morphSliderNumForControl(cnum) (
   (cnum == CONTROL_PITCH_BEND)?(1):(
   (cnum == CONTROL_MOD_WHEEL)?(2):(
     cnum + 2;
+  ));
+);
+function outputSliderNumForControl(cnum) (
+  // Slider num starts at 1, but cnum starts at 0.
+  // 1,2 ... etc.
+  (cnum == CONTROL_PITCH_BEND)?(51):(
+  (cnum == CONTROL_MOD_WHEEL)?(52):(
+    cnum + 52;
   ));
 );
 function morphValueForControl(cnum) (
@@ -6598,6 +6652,7 @@ function produceAndEmitCCOutputForControl(blk_control, in_val_01, src_chan, dst_
         midiSend(mpos, out_status, out_cc_num, roundi(out_val_01 * 127) );
       );
     );
+    slider(outputSliderNumForControl(blk_control)) = out_val_01;
   );
 );
 
@@ -6629,6 +6684,7 @@ function produceAndEmitPitchBendOutputForControl(blk_control, in_val_01, src_cha
 
     // Output low res, normalize by 127 (max is 127).
     midiSend(mpos, out_status, out_val & 0x7F , (out_val >> 7) & 0x7F);
+    slider(outputSliderNumForControl(blk_control)) = out_val_01;
   );
 );
 
@@ -6883,6 +6939,7 @@ function processNoteMessage(evt)
           // - Note OFF (Zero or non-zero vel)
           midisend(evt.mpos, dst_status, keyToMidiNote(new_key), roundi(out_velocity_01 * 127) );
         );
+        slider(outputSliderNumForControl(velocity_control_num)) = out_velocity_01;
       ); // <- dst chan is not drop
     ); // <- Transposition is not outside range
 
@@ -6976,6 +7033,7 @@ function processPolyphonicAfterTouchMessage(evt)
         dst_status = (evt.type << 4) | (dst_chan-1);
 
         midisend(evt.mpos, dst_status, keyToMidiNote(new_key), roundi(out_val_01 * 127) );
+        slider(outputSliderNumForControl(velocity_control)) = out_val_01;
       );
     ); // <- Transposition is not outside range
 
