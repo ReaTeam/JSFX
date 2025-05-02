@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="66be53b0e7bd620ad186f7284afc8d126406b1bb">
+<index version="1" name="ReaTeam JSFX" commit="268ecd157d90b802dc7bc2ac10c732ef1fb20de1">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -2464,6 +2464,33 @@ And a bit of source code cleaning.]]></changelog>
       <version name="0.5" author="Ben 'Talagan' Babut" time="2024-11-14T12:32:42Z">
         <changelog><![CDATA[- Initial version]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/75226ffbcdabab68d94ccf87727f2d7ee956077e/MIDI/talagan_MIDI%20Force%20Notes%20to%20Range.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="talagan_MIDI Multi Channel Pre-Delay.jsfx" type="effect" desc="MIDI Multi Channel Pre-Delay">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel0 \b \fs36 MIDI Multi Channel Pre-Delay\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This plugin allows to set different pre-delays for MIDI Channels, and perform what we could call "MIDI channel delay compensation".\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 It targets workflows where composers use different MIDI Channels for articulations (slow, staccato, etc). Each articulation may have an attack time that is necessary for the note to ramp up, and in such circumstances an instrumentist would anticipate and start to play before the grid. When composing/programming, this makes things difficult because not working on the grid is time consuming. One technique is to put an articulation type per track, and set a time offset on the track, specific to the articulation. Still, this is greedy in tracks, not always quite readable, and time consuming too.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Here, the aim is instead to use one articulation per MIDI Chan, and set the articulation delays on each Chan.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The plugin sliders are all set to zero by default, but you can pull them in the "past", to adjust the articulation's pre-delay, using e.g. the values recommended by the editor of the VST you want to control.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 What happens then is that the MIDI Chan with the biggest pre-delay will not be delayed, but the other ones will be, using the difference between their pre-delays and the biggest one. This is what's usually called "delay compensation"\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Wait ... Everything will now be layered correctly, but too late !\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 To correct this and have everything synced, there are two options.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The first one is to put a track offset on the track with a value equal to the biggest pre-delay. This will shift everything back earlier.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Or, you can use Reaper's MIDI PDC (Plugin Delay Compensation), which can be enabled by the first slider "Apply Max Pre-Delay as PDC".\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This slider will automatically set the MIDI PDC to the biggest pre-delay, and Reaper will know how to apply PDC to the MIDI plugin.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 There are advantages to use the PDC instead of the track offset : for example, freezing the audio will make things fall on the grid, and the obtained audio item does not need to know anything about delays.\par}
+}
+]]></description>
+        <link rel="donation">https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&amp;no_recurring=1&amp;currency_code=EUR</link>
+      </metadata>
+      <version name="0.5" author="Ben 'Talagan' Babut" time="2025-05-02T08:23:48Z">
+        <changelog><![CDATA[- Initial Version]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/268ecd157d90b802dc7bc2ac10c732ef1fb20de1/MIDI/talagan_MIDI%20Multi%20Channel%20Pre-Delay.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI Note Remapper.jsfx" type="effect" desc="MIDI Note Remapper">
