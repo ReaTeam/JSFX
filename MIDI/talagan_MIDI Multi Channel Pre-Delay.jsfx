@@ -1,0 +1,295 @@
+desc:MIDI Multi Channel Pre-Delay
+author: Ben 'Talagan' Babut
+version: 0.5
+donation:
+  https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
+license:
+  MIT (Do whatever you like with this code).
+changelog:
+  - Initial Version
+about:
+  # MIDI Multi Channel Pre-Delay
+
+  This plugin allows to set different pre-delays for MIDI Channels, and perform what we could call "MIDI channel delay compensation". 
+  
+  It targets workflows where composers use different MIDI Channels for articulations (slow, staccato, etc).
+  Each articulation may have an attack time that is necessary for the note to ramp up, and in such circumstances
+  an instrumentist would anticipate and start to play before the grid.
+  When composing/programming, this makes things difficult because not working on the grid is time consuming.
+  One technique is to put an articulation type per track, and set a time offset on the track, specific to the articulation.
+  Still, this is greedy in tracks, not always quite readable, and time consuming too.
+  
+  Here, the aim is instead to use one articulation per MIDI Chan, and set the articulation delays on each Chan.
+  
+  The plugin sliders are all set to zero by default, but you can pull them in the "past", to adjust the articulation's pre-delay,
+  using e.g. the values recommended by the editor of the VST you want to control.
+  
+  What happens then is that the MIDI Chan with the biggest pre-delay will not be delayed, but the other ones will be, 
+  using the difference between their pre-delays and the biggest one. This is what's usually called "delay compensation"
+  
+  Wait ... Everything will now be layered correctly, but too late ! 
+  
+  To correct this and have everything synced, there are two options.
+  
+  - The first one is to put a track offset on the track with a value equal to the biggest pre-delay. This will shift everything back earlier.
+  - Or, you can use Reaper's MIDI PDC (Plugin Delay Compensation), which can be enabled by the first slider "Apply Max Pre-Delay as PDC". 
+  
+  This slider will automatically set the MIDI PDC to the biggest pre-delay, and Reaper will know how to apply PDC to the MIDI plugin.
+  
+  There are advantages to use the PDC instead of the track offset : for example, freezing the audio will make things fall on the grid,
+  and the obtained audio item does not need to know anything about delays.
+
+
+
+
+slider1:apply_pdc=1<0,1,1>Apply Max Pre-Delay as PDC
+
+<?
+  ni = 0;
+  while(ni < 16) (
+  
+    // Generate sliders for held notes
+    printf("slider%d:0<1000,0,0.001>Chan %d Pre-Delay (ms)\n", 10 + ni , ni+1);
+  
+    ni += 1;
+  );
+?>
+
+
+
+//////////////////////////////////////////////////
+@init
+//////////////////////////////////////////////////
+
+ext_midi_bus  = 1;          // Active but not handled yet
+
+HEADER_SIZE   = 3;          // Size of a packet header : 3. Position, length (incl header), bus + emitted status
+MAX_RAM       = __memtop(); // This is big... maybe we should calm it down
+
+// The script uses a rolling buffer.
+g_buf_l = 0;
+g_buf_r = 0;
+
+g_max_pre_delay = 0;
+g_last_srate    = srate;
+
+//-----------------------
+
+function iround(f) (
+  floor(f+0.5);
+);
+
+function chanPreDelay(chan_num)
+(
+  slider(10 + chan_num);
+);
+
+function chanDelayInSamples(chan_num)
+  local(delay)
+(
+  // Convert to seconds then samples
+  delay = (g_max_pre_delay - chanPreDelay(chan_num)) * 0.001 * srate;
+);
+
+function applyPDC() 
+(
+  pdc_midi    = apply_pdc;
+  pdc_bot_ch  = 0;
+  pdc_top_ch  = 16;
+  pdc_delay   = (apply_pdc )?(g_max_pre_delay * 0.001 * srate):(0);
+);
+
+function updateMaxDelay()
+  local(ni, sval)
+(
+  g_max_pre_delay = 0;
+  ni = 0;
+  while(ni < 16) (
+    sval = slider(10+ni);
+    (sval > g_max_pre_delay)?(g_max_pre_delay = sval);
+    ni = ni+1;
+  );
+);
+
+function onSliderChange()
+(
+  updateMaxDelay();
+  applyPDC();
+);
+
+function onSampleRateChange()
+(
+  applyPDC();
+  g_last_srate = srate;
+);
+
+//-----------------------
+
+onSliderChange();
+
+
+
+
+//////////////////////////////////////////////////
+@slider
+//////////////////////////////////////////////////
+
+onSliderChange();
+
+
+
+//////////////////////////////////////////////////
+@block
+//////////////////////////////////////////////////
+
+function processEvents()
+  local(delay_samples, delay_sc, delay_isc, first_byte, second_byte, is_recording,
+      msg_len, msg_chan, msg_type, msg_has_channel, msg_pos, msg_emitted,
+      is_candidate, packet)
+(
+
+  // The original design applies
+
+  // - a scaling factor when putting the events on the queue
+  // - and an inverse factor when poping the events from the queue
+  //
+  // The reason might be to adapt to sample rate changes ? or dely/amount changes ?
+  // IMHO, for MIDI Delay X's purpose, we should not do this
+  // as automating the MIDI amount will modify the trigger time of events
+  // which is not what we want. Once an event date is decided, it's decided.
+
+
+  // Delay scaling, applied when poping
+  delay_sc      = 1.0; // (delay_samples + samplesblock);
+
+  // Inverse delay scaling, applied when pushing
+  delay_isc     = 1.0; // 1.0 / delay_sc;
+
+  // process incoming events
+
+  // Pull events at the end of our buffer
+  while((msg_len=midirecv_buf(msg_pos, g_buf_r + HEADER_SIZE, MAX_RAM - g_buf_r - HEADER_SIZE))>0)
+  (
+    // Midi bus matches and chan matches
+
+    // For the chan, either we are in "omni" mode and every midi message can pass
+
+    // Or, we need to read the channel and it only applies to midi messages that have a length <= 3
+    // (Longer messages do not follow this spec so the channel cannot be deduced)
+    // As well, to read the channel, the command bit must be set to 0 (hence < 0xF0)
+
+    first_byte      = g_buf_r[HEADER_SIZE];
+    second_byte     = g_buf_r[HEADER_SIZE+1];
+    msg_has_channel = (msg_len <=3 && first_byte < 0xF0); // first bit should be null
+
+    msg_chan        = (first_byte & 0x0F);
+    msg_type        = ((first_byte & 0xF0) >> 4);
+    is_recording    = (play_state == 5);
+    
+    // If plugin evolves, add some conditions here
+    is_candidate    = 0;
+
+    (msg_has_channel)?(
+      is_candidate = 1;
+    );
+
+    (is_candidate) ? (
+
+      // Store the packet in the queue
+      msg_pos    += chanDelayInSamples(msg_chan); // Calculate new pos in samples
+
+      g_buf_r[0] = msg_pos * delay_isc;        // Position, expressed in blocks (I think)
+      g_buf_r[1] = HEADER_SIZE + msg_len;      // Header (3) + Length = total length
+      g_buf_r[2] = midi_bus | 0;               // Bus and re-emitted status
+
+      g_buf_r   += HEADER_SIZE + msg_len;      // Advance by total packet length
+
+    ) : (
+      midisend_buf(msg_pos, g_buf_r + HEADER_SIZE, msg_len);
+    );
+  );
+
+  // Process outgoing events.
+  // This part is changed from the original plugin :
+  // Here, we tolerate to have a scrambled order in the MIDI msg sequence
+  // So we cannot always advance the left part of the rolling buffer, and we
+  // can re-emit messages that are in the middle of the queue.
+  // to avoid multiple sends, we need to flag our packets when reemitted
+
+  packet = g_buf_l;
+  while (packet < g_buf_r)
+  (
+    //packet_pos     = packet[0];
+    //packet_len     = packet[1];
+    //packet_bus     = (packet[2] & 0x0F);
+
+    msg_pos       = iround(packet[0] * delay_sc);
+    msg_emitted   = (packet[2] & 0xF0) >> 4;
+
+    (!msg_emitted)?(
+      // An emitted message does not need to be treated anymore.
+      // It just waits to be eaten with the left of the rolling buffer.
+
+      (msg_pos < samplesblock) ? (
+        // This buffered packet is in the current block so it's time to trigger it
+        midi_bus  = (packet[2] & 0x0F);
+        msg_len   = packet[1] - HEADER_SIZE;
+
+        midisend_buf( max(msg_pos, 0), packet + HEADER_SIZE, msg_len);
+
+        // Update emission flag and store it with the bus.
+        msg_emitted = 1;
+        packet[2]   = midi_bus | (msg_emitted << 4);
+
+       ):(
+
+        // Decrement current packet's trigger time by one whole block
+        packet[0] -= samplesblock * delay_isc;
+      );
+    );
+
+    // Emission status may have change in the block above
+    (msg_emitted)?(
+      (g_buf_l == packet)?(
+        // Eat the left of the buffer, the top left event is treated !
+        g_buf_l += packet[1];
+      );
+    );
+
+    // Advance to the next packet
+    packet    += packet[1];
+  );
+
+  // compact buf if needed
+  (g_buf_l >= g_buf_r) ? (
+    // Queue is empty, go back to zero
+    g_buf_l = 0;
+    g_buf_r = 0;
+  ) : (
+    // If buffer is drifting right, but everything back at the beginning
+    (g_buf_l > max(1024, g_buf_r * 0.5)) ? (
+    
+      g_buf_r -= g_buf_l;
+      
+      (g_buf_r > 0) ? (
+        memcpy(0, g_buf_l, g_buf_r) 
+      ): 
+      (
+        g_buf_r=0;
+      );
+      
+      g_buf_l=0;
+    );
+  );
+
+);
+
+//-----------------------
+
+// Detect sample rate changes
+(g_last_srate != srate)?(
+  onSampleRateChange();
+);
+
+processEvents();
+
