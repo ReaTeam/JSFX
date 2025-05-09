@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="268ecd157d90b802dc7bc2ac10c732ef1fb20de1">
+<index version="1" name="ReaTeam JSFX" commit="84b688dfa127042cce339c482406436f9f0e1771">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -2476,6 +2476,7 @@ And a bit of source code cleaning.]]></changelog>
 {\pard \ql \f0 \sa180 \li0 \fi0 This plugin allows to set different pre-delays for MIDI Channels, and perform what we could call "MIDI channel delay compensation".\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 It targets workflows where composers use different MIDI Channels for articulations (slow, staccato, etc). Each articulation may have an attack time that is necessary for the note to ramp up, and in such circumstances an instrumentist would anticipate and start to play before the grid. When composing/programming, this makes things difficult because not working on the grid is time consuming. One technique is to put an articulation type per track, and set a time offset on the track, specific to the articulation. Still, this is greedy in tracks, not always quite readable, and time consuming too.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Here, the aim is instead to use one articulation per MIDI Chan, and set the articulation delays on each Chan.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 How to use\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 The plugin sliders are all set to zero by default, but you can pull them in the "past", to adjust the articulation's pre-delay, using e.g. the values recommended by the editor of the VST you want to control.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 What happens then is that the MIDI Chan with the biggest pre-delay will not be delayed, but the other ones will be, using the difference between their pre-delays and the biggest one. This is what's usually called "delay compensation"\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 Wait ... Everything will now be layered correctly, but too late !\par}
@@ -2484,6 +2485,18 @@ And a bit of source code cleaning.]]></changelog>
 {\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Or, you can use Reaper's MIDI PDC (Plugin Delay Compensation), which can be enabled by the first slider "Apply Max Pre-Delay as PDC".\sa180\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 This slider will automatically set the MIDI PDC to the biggest pre-delay, and Reaper will know how to apply PDC to the MIDI plugin.\par}
 {\pard \ql \f0 \sa180 \li0 \fi0 There are advantages to use the PDC instead of the track offset : for example, freezing the audio will make things fall on the grid, and the obtained audio item does not need to know anything about delays.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel1 \b \fs32 Do not delay live events\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This plugin also implements a way to bypass delays for live events. This can be useful during recording/playback/overdub. Without this option, delays are applied to live events, which means that everything that should be "in the past" will be played immediately, and everything that should be "in the present" will be delayed.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 This is probably not what you want (except if you learn to play in advance and anticipate ramp-ups), but you may prefer having live events undelayed.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 To be able to activate this behaviour, you MUST :\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Enable the "Don't delay live events" slider\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Install the "MIDI Multi Channel Pre-Delay Flagger" companion JSFX in the {\i input FX chain} of the track\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The companion JSFX will listen to live events, and buffer them in memory for the current block. The main JSFX will listen to events coming from the track, and lookup into memory to check for each event if it is present in the "live buffer"\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 If it is the case, the delay is not applied. The comparison is made on the full event content + the event offset in the block, so {\i you should not modify any live event between the companion JSFX and the main JSFX}. Don't apply MIDI routing or filtering between both.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 The safest way to do this, is to layer your JSFXes so that:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab the companion JSFX is {\i the last of the input FX chain}\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab the main JSFX is {\i the first of the normal FX chain}\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Of course, if you really know what you do, you may give yourself some more flexibility but you've been warned.\par}
 }
 ]]></description>
         <link rel="donation">https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&amp;no_recurring=1&amp;currency_code=EUR</link>
@@ -2491,6 +2504,13 @@ And a bit of source code cleaning.]]></changelog>
       <version name="0.5" author="Ben 'Talagan' Babut" time="2025-05-02T08:23:48Z">
         <changelog><![CDATA[- Initial Version]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/268ecd157d90b802dc7bc2ac10c732ef1fb20de1/MIDI/talagan_MIDI%20Multi%20Channel%20Pre-Delay.jsfx</source>
+      </version>
+      <version name="0.6" author="Ben 'Talagan' Babut" time="2025-05-09T01:37:27Z">
+        <changelog><![CDATA[- [Feature] Added "Max Delay" option, in case 1 second is not sufficient
+- [Feature] Added "Don't delay live events" option, using companion JSFX
+- [Prereq]  Added companion JSFX for option above]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/84b688dfa127042cce339c482406436f9f0e1771/MIDI/talagan_MIDI%20Multi%20Channel%20Pre-Delay.jsfx</source>
+        <source file="talagan_MIDI Multi Channel Pre-Delay Live Flagger.jsfx">https://github.com/ReaTeam/JSFX/raw/84b688dfa127042cce339c482406436f9f0e1771/MIDI/talagan_MIDI%20Multi%20Channel%20Pre-Delay%20Live%20Flagger.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI Note Remapper.jsfx" type="effect" desc="MIDI Note Remapper">
