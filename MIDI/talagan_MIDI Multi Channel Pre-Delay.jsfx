@@ -1,70 +1,106 @@
 desc:MIDI Multi Channel Pre-Delay
 author: Ben 'Talagan' Babut
-version: 0.5
+version: 0.6
 donation:
   https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
 license:
   MIT (Do whatever you like with this code).
 changelog:
-  - Initial Version
+  - [Feature] Added "Max Delay" option, in case 1 second is not sufficient
+  - [Feature] Added "Don't delay live events" option, using companion JSFX
+  - [Prereq]  Added companion JSFX for option above
+provides:
+  talagan_MIDI Multi Channel Pre-Delay Live Flagger.jsfx
 about:
   # MIDI Multi Channel Pre-Delay
 
-  This plugin allows to set different pre-delays for MIDI Channels, and perform what we could call "MIDI channel delay compensation". 
-  
+  This plugin allows to set different pre-delays for MIDI Channels, and perform what we could call "MIDI channel delay compensation".
+
   It targets workflows where composers use different MIDI Channels for articulations (slow, staccato, etc).
   Each articulation may have an attack time that is necessary for the note to ramp up, and in such circumstances
   an instrumentist would anticipate and start to play before the grid.
   When composing/programming, this makes things difficult because not working on the grid is time consuming.
   One technique is to put an articulation type per track, and set a time offset on the track, specific to the articulation.
   Still, this is greedy in tracks, not always quite readable, and time consuming too.
-  
+
   Here, the aim is instead to use one articulation per MIDI Chan, and set the articulation delays on each Chan.
-  
+
+  ## How to use
+
   The plugin sliders are all set to zero by default, but you can pull them in the "past", to adjust the articulation's pre-delay,
   using e.g. the values recommended by the editor of the VST you want to control.
-  
-  What happens then is that the MIDI Chan with the biggest pre-delay will not be delayed, but the other ones will be, 
+
+  What happens then is that the MIDI Chan with the biggest pre-delay will not be delayed, but the other ones will be,
   using the difference between their pre-delays and the biggest one. This is what's usually called "delay compensation"
-  
-  Wait ... Everything will now be layered correctly, but too late ! 
-  
+
+  Wait ... Everything will now be layered correctly, but too late !
+
   To correct this and have everything synced, there are two options.
-  
+
   - The first one is to put a track offset on the track with a value equal to the biggest pre-delay. This will shift everything back earlier.
-  - Or, you can use Reaper's MIDI PDC (Plugin Delay Compensation), which can be enabled by the first slider "Apply Max Pre-Delay as PDC". 
-  
+  - Or, you can use Reaper's MIDI PDC (Plugin Delay Compensation), which can be enabled by the first slider "Apply Max Pre-Delay as PDC".
+
   This slider will automatically set the MIDI PDC to the biggest pre-delay, and Reaper will know how to apply PDC to the MIDI plugin.
-  
+
   There are advantages to use the PDC instead of the track offset : for example, freezing the audio will make things fall on the grid,
   and the obtained audio item does not need to know anything about delays.
 
+  ## Do not delay live events
+
+  This plugin also implements a way to bypass delays for live events. This can be useful during recording/playback/overdub.
+  Without this option, delays are applied to live events, which means that everything that should be "in the past" will be
+  played immediately, and everything that should be "in the present" will be delayed.
+
+  This is probably not what you want (except if you learn to play in advance and anticipate ramp-ups), but you may prefer
+  having live events undelayed.
+
+  To be able to activate this behaviour, you MUST :
+
+  - Enable the "Don't delay live events" slider
+  - Install the "MIDI Multi Channel Pre-Delay Flagger" companion JSFX in the _input FX chain_ of the track
+
+  The companion JSFX will listen to live events, and buffer them in memory for the current block.
+  The main JSFX will listen to events coming from the track, and lookup into memory to check for each event if it is present in the "live buffer"
+
+  If it is the case, the delay is not applied. The comparison is made on the full event content + the event offset in the block, so _you should not
+  modify any live event between the companion JSFX and the main JSFX_. Don't apply MIDI routing or filtering between both.
+
+  The safest way to do this, is to layer your JSFXes so that:
+
+  - the companion JSFX is _the last of the input FX chain_
+  - the main JSFX is _the first of the normal FX chain_
+
+  Of course, if you really know what you do, you may give yourself some more flexibility but you've been warned.
 
 
+options:gmem=MIDIMultiChannelPredelay
+config: max_delay "Max Delay" 1 1="1 second" 2="2 seconds" 4="4 seconds"
 
 slider1:apply_pdc=1<0,1,1>Apply Max Pre-Delay as PDC
+slider2:dont_delay_live=1<0,1,1>Don't delay live events (READ MANUAL !)
 
 <?
   ni = 0;
   while(ni < 16) (
-  
+
     // Generate sliders for held notes
-    printf("slider%d:0<1000,0,0.001>Chan %d Pre-Delay (ms)\n", 10 + ni , ni+1);
-  
+    printf("slider%d:0<%d,0,0.001>Chan %d Pre-Delay (ms)\n", 10 + ni, max_delay * 1000 , ni+1);
+
     ni += 1;
   );
 ?>
-
-
 
 //////////////////////////////////////////////////
 @init
 //////////////////////////////////////////////////
 
-ext_midi_bus  = 1;          // Active but not handled yet
+ext_midi_bus        = 1;          // Active but not handled yet
 
-HEADER_SIZE   = 3;          // Size of a packet header : 3. Position, length (incl header), bus + emitted status
-MAX_RAM       = __memtop(); // This is big... maybe we should calm it down
+HEADER_SIZE         = 3;          // Size of a packet header : 3. Position, length (incl header), bus + emitted status
+MAX_RAM             = __memtop(); // This is big... maybe we should calm it down
+
+MAGIC_NUMBER        = 0xF5AF5BB0;
+STORED_EVENT_SIZE   = 6;
 
 // The script uses a rolling buffer.
 g_buf_l = 0;
@@ -91,7 +127,7 @@ function chanDelayInSamples(chan_num)
   delay = (g_max_pre_delay - chanPreDelay(chan_num)) * 0.001 * srate;
 );
 
-function applyPDC() 
+function applyPDC()
 (
   pdc_midi    = apply_pdc;
   pdc_bot_ch  = 0;
@@ -123,11 +159,41 @@ function onSampleRateChange()
   g_last_srate = srate;
 );
 
+function getUID()
+  local(cp, flags)
+(
+  get_host_placement(cp, flags);
+);
+
+function isLiveEvent(offset, msg1, msg2, msg3)
+  local(cursor, found, _msg, _msg1, _msg2, _msg3)
+(
+  cursor = 0;
+  found  = 0;
+
+  while( (gmem[cursor] == MAGIC_NUMBER) && !found) (
+
+    // UID and Offset should match
+    ( (gmem[cursor+1] == UID) && (gmem[cursor+5] == offset) )?(
+      // Test message content
+      _msg  = gmem[cursor+4];
+
+      _msg1 = (_msg >> 16) & 0xFF;
+      _msg2 = (_msg >> 8) & 0xFF;
+      _msg3 = _msg & 0xFF;
+
+      found = ((msg1 == _msg1) && (msg2 == _msg2) && (msg3 == _msg3))
+    );
+
+    cursor += STORED_EVENT_SIZE;
+  );
+
+  found;
+);
+
 //-----------------------
 
 onSliderChange();
-
-
 
 
 //////////////////////////////////////////////////
@@ -137,13 +203,12 @@ onSliderChange();
 onSliderChange();
 
 
-
 //////////////////////////////////////////////////
 @block
 //////////////////////////////////////////////////
 
 function processEvents()
-  local(delay_samples, delay_sc, delay_isc, first_byte, second_byte, is_recording,
+  local(delay_samples, delay_sc, delay_isc, msg1, msg2, msg3, is_recording,
       msg_len, msg_chan, msg_type, msg_has_channel, msg_pos, msg_emitted,
       is_candidate, packet)
 (
@@ -178,19 +243,25 @@ function processEvents()
     // (Longer messages do not follow this spec so the channel cannot be deduced)
     // As well, to read the channel, the command bit must be set to 0 (hence < 0xF0)
 
-    first_byte      = g_buf_r[HEADER_SIZE];
-    second_byte     = g_buf_r[HEADER_SIZE+1];
-    msg_has_channel = (msg_len <=3 && first_byte < 0xF0); // first bit should be null
+    msg1 = g_buf_r[HEADER_SIZE];
+    msg2 = g_buf_r[HEADER_SIZE+1];
+    msg3 = g_buf_r[HEADER_SIZE+2];
 
-    msg_chan        = (first_byte & 0x0F);
-    msg_type        = ((first_byte & 0xF0) >> 4);
+    msg_has_channel = (msg_len <=3 && msg1 < 0xF0); // first bit should be null
+
+    msg_chan        = (msg1 & 0x0F);
+    msg_type        = ((msg1 & 0xF0) >> 4);
     is_recording    = (play_state == 5);
-    
+
     // If plugin evolves, add some conditions here
     is_candidate    = 0;
 
     (msg_has_channel)?(
       is_candidate = 1;
+
+      (dont_delay_live && isLiveEvent(msg_pos, msg1, msg2, msg3))?(
+        is_candidate = 0;
+      );
     );
 
     (is_candidate) ? (
@@ -268,16 +339,16 @@ function processEvents()
   ) : (
     // If buffer is drifting right, but everything back at the beginning
     (g_buf_l > max(1024, g_buf_r * 0.5)) ? (
-    
+
       g_buf_r -= g_buf_l;
-      
+
       (g_buf_r > 0) ? (
-        memcpy(0, g_buf_l, g_buf_r) 
-      ): 
+        memcpy(0, g_buf_l, g_buf_r)
+      ):
       (
         g_buf_r=0;
       );
-      
+
       g_buf_l=0;
     );
   );
@@ -290,6 +361,8 @@ function processEvents()
 (g_last_srate != srate)?(
   onSampleRateChange();
 );
+
+UID = getUID();
 
 processEvents();
 
