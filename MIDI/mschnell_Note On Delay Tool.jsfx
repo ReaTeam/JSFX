@@ -1,7 +1,7 @@
 desc: Note On Delay Tool
 author: Michael Schnell (mschnell@bschnell.de)
-version: 1.2
-changelog: Adding Random Profile slider
+version: 1.3
+changelog: bugfix: use Slider 4 for PDC
 about:
   # Note On Delay
   Tool modulates the Note-On and Note-Off time of the notes passing through, according to two parameters and a random amount. One of the two parameters can be controlled by Midi CC messages.
@@ -62,8 +62,8 @@ out_pin:none
 @slider
   inChannel = slider1-1;
   modCC = slider2-1;
-  pdc = -floor(slider3 / 1000 * srate); 
-  pdc_delay = -pdc;
+  pdc = -floor(slider4 / 1000 * srate); 
+  pdc_delay = pdc;
 
 @block
 /*
