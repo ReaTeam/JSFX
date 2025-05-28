@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="84b688dfa127042cce339c482406436f9f0e1771">
+<index version="1" name="ReaTeam JSFX" commit="65012bd6e6cb500f050a639ed957132053c01cae">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -1044,6 +1044,10 @@ bugfix]]></changelog>
       <version name="1.2" author="Michael Schnell (mschnell@bschnell.de)" time="2025-02-19T16:06:08Z">
         <changelog><![CDATA[Adding Random Profile slider]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/df47a7c25fc828729d18980212c27c021e1fa521/MIDI/mschnell_Note%20On%20Delay%20Tool.jsfx</source>
+      </version>
+      <version name="1.3" author="Michael Schnell (mschnell@bschnell.de)" time="2025-05-28T09:57:08Z">
+        <changelog><![CDATA[bugfix: use Slider 4 for PDC]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/65012bd6e6cb500f050a639ed957132053c01cae/MIDI/mschnell_Note%20On%20Delay%20Tool.jsfx</source>
       </version>
     </reapack>
     <reapack name="mschnell_Note On under X velocity to Note Off and send All Notes Off.jsfx" type="effect" desc="Note On under X velocity to Note Off and send All Notes Off">
