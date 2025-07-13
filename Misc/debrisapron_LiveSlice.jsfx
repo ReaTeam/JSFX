@@ -1,0 +1,62 @@
+desc: LiveSlice
+author: debrisapron
+version: 0.2.1
+metapackage: true
+provides: LiveSlice https://raw.githubusercontent.com/debrisapron/JSFXs/refs/heads/main/LiveSlice/LiveSlice.jsfx
+about:
+  # LiveSlice
+
+  A Reaper JSFX effect for slicing live audio with midi control.
+
+  ## Get Started
+
+  Put a midi clip with C3 notes on track A. Put an audio clip on track B and insert LiveSlice. Route the midi from track A to track B. Play looped & move the notes around. Have some fun.
+
+  ## Parameters
+
+  ### MIDI Channel
+
+  Can receive control messages on `All` channels, or a specified channel. Defaults to `All`.
+
+  ### Bottom Note
+
+  The MIDI note number that the control messages start at. Defaults to C3.
+
+  ### Slice Length
+
+  The size of the slices you want to cut the audio into. Defaults to 16ths.
+
+  ### Mode
+
+  See Modes info below. Defaults to `note → delay`
+
+  ## Modes
+
+  ### Note → Delay
+
+  In this mode the delay is calculated purely from the note played. So with default settings, pressing D3 will result in a delay of 1/8. This is the way most delay modulation plugins do slicing.
+
+  In this mode, an "init" note pattern (i.e. it will play the original audio) is a row of the same note.
+
+  ### Note → Slice
+
+  In this mode the delay is calculated so that every note corresponds to a stable slice in the bar. What? OK, an example. With default settings, pressing E3 will always play the second beat of the bar, wherever you are in a bar. In other words, it works like a normal _sample_ slicer, but on live audio.
+
+  In this mode, an "init" note pattern is a diagonal ladder of notes of `Slice Length`.
+
+  NOTE: If you play a note before the current position (e.g. the playhead is at the second beat of the bar and you play the key for the third beat), it will play the slice from the _previous_ bar. So if this is the first time around, you will hear silence. Unfortunately Claude Code couldn't give me a JSFX function that reverses the flow of time so we're gonna have to leave this as a TODO.
+
+  ## Fun With LiveSlice
+
+  - Play it with a MIDI controller. Party Time!
+  - Automate the bottom note. What?
+  - Automate the slice length. Damn!
+  - Automate the mode. Um HELLO!
+  - Control it with an arpeggiator. DANGER MANIACS ONLY.
+  - Put two in sequence, listening on different MIDI channels. Add a selective note randomizer before each one (I haven't actually done this, might sound rubbish). Madness!
+  - Don't vote for Republicans! OK.
+
+  ## TODO Probably Never
+
+  - Swing
+
