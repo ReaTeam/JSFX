@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="65012bd6e6cb500f050a639ed957132053c01cae">
+<index version="1" name="ReaTeam JSFX" commit="2e992d33e9fa76af1df04ba34e74c043cd2059dc">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -113,6 +113,21 @@ Minor optimizations]]></changelog>
       </metadata>
       <version name="1.0" author="RCJacH" time="2021-09-21T19:54:58Z">
         <source>https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/rcjach_RCInflator.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="reincore_MegaGrit.jsfx" type="effect" desc="MegaGrit">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Multiband JSFX distortion for REAPER \u8211- splits audio into low/mid/high, adds unique dirt per band, then a feedback \u8220"breather\u8221" that bends with your playing.\par}
+}
+]]></description>
+        <link rel="website" href="https://github.com/reincore/megagrit-jsfx">MegaGrit GitHub Repo</link>
+      </metadata>
+      <version name="1.0" author="reincore" time="2025-07-23T13:27:29Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/2e992d33e9fa76af1df04ba34e74c043cd2059dc/Distortion/reincore_MegaGrit.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
