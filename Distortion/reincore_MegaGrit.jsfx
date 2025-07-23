@@ -1,0 +1,54 @@
+desc: MegaGrit
+author: reincore
+version: 1.0
+link: MegaGrit GitHub Repo https://github.com/reincore/megagrit-jsfx
+about: Multiband JSFX distortion for REAPER – splits audio into low/mid/high, adds unique dirt per band, then a feedback “breather” that bends with your playing.
+
+// MegaGrit – 3-Band + Feedback Distortion
+// License: MIT – do whatever you want, credit optional.
+// This is a hobby project; if you like or use MegaGrit I’d love to hear about it!
+//   email: dnzsaglam@gmail.com
+//   X/Twitter: @saglamspor
+//
+// ------------------------------------------------------------
+
+desc:MegaGrit – 3-Band + Feedback Distortion
+
+slider1:pregain=15<1,40,0.1>Input Drive
+slider2:lowgain=1<0.1,4,0.01>Low‑Band Gain
+slider3:midgain=1<0.1,4,0.01>Mid‑Band Gain
+slider4:highgain=1<0.1,4,0.01>High‑Band Gain
+slider5:feedback=0.8<0,2,0.01>Feedback Amount  (0‑2)
+slider6:depth=1<0,2,0.01>Envelope Depth      (0‑2)
+slider7:mix=1<0,1,0.01>Distortion Mix (0=Dry,1=Wet)
+slider8:postgain=0.5<0.1,1,0.01>Output Volume
+
+@init
+low = mid = high = 0;
+env = 0;
+function softclip(v) ( v/(1+abs(v)); );
+
+@sample
+// Multibreak stage with gains per band
+in  = spl0 * pregain;
+low  = low  + 0.1 * (in - low);
+high = in - low;
+mid  = in - low - high;
+low_d  = softclip(low  * lowgain);
+mid_d  = sin(mid * 3 * midgain);
+high_d = max(-0.3, min(0.3, high * highgain));
+multibreak_out = low_d + mid_d + high_d;
+
+// NeuroGrit feedback stage with boosted modulation depth
+pre  = softclip(multibreak_out);
+absin = abs(pre);
+env = 0.97 * env + 0.03 * absin;
+boost = 2;
+mod  = 1 + feedback * sin(env * depth * $pi) * boost;
+ng_out = softclip(pre * mod);
+
+// Dry/Wet mix & output
+final = mix * ng_out + (1 - mix) * in;
+
+spl0 = spl1 = final * postgain;
+
