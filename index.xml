@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="2e992d33e9fa76af1df04ba34e74c043cd2059dc">
+<index version="1" name="ReaTeam JSFX" commit="9ff4669c904ab09d2109007e66d3eb1ecafeae11">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -115,7 +115,7 @@ Minor optimizations]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/2ab83011ebb4e10130c5614e864b46235e0680d3/Distortion/rcjach_RCInflator.jsfx</source>
       </version>
     </reapack>
-    <reapack name="reincore_MegaGrit.jsfx" type="effect" desc="MegaGrit">
+    <reapack name="reincore_MegaGrit.jsfx" type="effect" desc="MegaGrit – 3-Band + Feedback Distortion">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
@@ -128,6 +128,15 @@ Minor optimizations]]></changelog>
       </metadata>
       <version name="1.0" author="reincore" time="2025-07-23T13:27:29Z">
         <source>https://github.com/ReaTeam/JSFX/raw/2e992d33e9fa76af1df04ba34e74c043cd2059dc/Distortion/reincore_MegaGrit.jsfx</source>
+      </version>
+      <version name="2.0" author="reincore" time="2025-07-26T05:17:30Z">
+        <changelog><![CDATA[- Fixed a critical bug where the mid-band signal was always silent.
+- Added 'Envelope Smoothness' slider for direct control over the modulation's character.
+- Replaced the high-band clipper with a smoother soft-clip distortion.
+- Added input clamping for improved stability at high gain.
+- Lowered the default 'Input Drive' for a better experience.
+* Special thanks to ashcat_lt for the feedback!]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/9ff4669c904ab09d2109007e66d3eb1ecafeae11/Distortion/reincore_MegaGrit.jsfx</source>
       </version>
     </reapack>
     <reapack name="TiaR_Ze Morpho Dist.jsfx" type="effect" desc="Ze Morpho Dist">
