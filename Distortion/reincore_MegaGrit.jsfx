@@ -1,8 +1,15 @@
-desc: MegaGrit
+desc: MegaGrit – 3-Band + Feedback Distortion
 author: reincore
-version: 1.0
+version: 2.0
 link: MegaGrit GitHub Repo https://github.com/reincore/megagrit-jsfx
 about: Multiband JSFX distortion for REAPER – splits audio into low/mid/high, adds unique dirt per band, then a feedback “breather” that bends with your playing.
+changelog:
+  - Fixed a critical bug where the mid-band signal was always silent.
+  - Added 'Envelope Smoothness' slider for direct control over the modulation's character.
+  - Replaced the high-band clipper with a smoother soft-clip distortion.
+  - Added input clamping for improved stability at high gain.
+  - Lowered the default 'Input Drive' for a better experience.
+  * Special thanks to ashcat_lt for the feedback!
 
 // MegaGrit – 3-Band + Feedback Distortion
 // License: MIT – do whatever you want, credit optional.
@@ -12,43 +19,47 @@ about: Multiband JSFX distortion for REAPER – splits audio into low/mid/high, 
 //
 // ------------------------------------------------------------
 
-desc:MegaGrit – 3-Band + Feedback Distortion
-
-slider1:pregain=15<1,40,0.1>Input Drive
-slider2:lowgain=1<0.1,4,0.01>Low‑Band Gain
-slider3:midgain=1<0.1,4,0.01>Mid‑Band Gain
-slider4:highgain=1<0.1,4,0.01>High‑Band Gain
-slider5:feedback=0.8<0,2,0.01>Feedback Amount  (0‑2)
-slider6:depth=1<0,2,0.01>Envelope Depth      (0‑2)
-slider7:mix=1<0,1,0.01>Distortion Mix (0=Dry,1=Wet)
-slider8:postgain=0.5<0.1,1,0.01>Output Volume
+slider1:pregain=6<1,40,0.1>Input Drive
+slider2:lowgain=1<0.1,4,0.01>Low-Band Gain
+slider3:midgain=1<0.1,4,0.01>Mid-Band Gain
+slider4:highgain=1<0.1,4,0.01>High-Band Gain
+slider5:feedback=0.8<0,2,0.01>Feedback Amount
+slider6:env_smooth=0.01<0.001,0.2,0.001>Envelope Smoothness
+slider7:depth=1<0,2,0.01>Envelope Depth
+slider8:mix=1<0,1,0.01>Distortion Mix (Dry/Wet)
+slider9:postgain=0.5<0.1,1,0.01>Output Volume
 
 @init
-low = mid = high = 0;
+low_lpf = mid_lpf = 0;
 env = 0;
-function softclip(v) ( v/(1+abs(v)); );
+
+function softclip(val) ( val / (1 + abs(val)) );
 
 @sample
-// Multibreak stage with gains per band
-in  = spl0 * pregain;
-low  = low  + 0.1 * (in - low);
-high = in - low;
-mid  = in - low - high;
-low_d  = softclip(low  * lowgain);
-mid_d  = sin(mid * 3 * midgain);
-high_d = max(-0.3, min(0.3, high * highgain));
-multibreak_out = low_d + mid_d + high_d;
+in = spl0 * pregain;
 
-// NeuroGrit feedback stage with boosted modulation depth
-pre  = softclip(multibreak_out);
-absin = abs(pre);
-env = 0.97 * env + 0.03 * absin;
-boost = 2;
-mod  = 1 + feedback * sin(env * depth * $pi) * boost;
-ng_out = softclip(pre * mod);
+low_lpf = low_lpf + 0.1 * (in - low_lpf);
+mid_lpf = mid_lpf + 0.2 * (in - mid_lpf); 
 
-// Dry/Wet mix & output
-final = mix * ng_out + (1 - mix) * in;
+low  = low_lpf;
+mid  = mid_lpf - low_lpf;
+high = in - mid_lpf;
 
-spl0 = spl1 = final * postgain;
+low_d  = softclip(low * lowgain);
+mid_input_clamped = min(100, max(-100, mid * 3 * midgain));
+mid_d  = sin(mid_input_clamped);
+high_d = 0.9 * softclip(high * highgain * 1.5);
 
+multiband_out = low_d + mid_d + high_d;
+
+pre_feedback = softclip(multiband_out);
+abs_in = abs(pre_feedback);
+
+env = (1 - env_smooth) * env + env_smooth * abs_in;
+
+boost = 1.5;
+mod_signal = 1 + feedback * sin(env * depth * $pi) * boost;
+feedback_out = softclip(pre_feedback * mod_signal);
+
+final_out = mix * feedback_out + (1 - mix) * spl0;
+spl0 = spl1 = final_out * postgain;
