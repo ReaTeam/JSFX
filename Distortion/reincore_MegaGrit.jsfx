@@ -1,3 +1,16 @@
+desc: MegaGrit – 3-Band + Feedback Distortion
+author: reincore
+version: 2.0
+link: MegaGrit GitHub Repo https://github.com/reincore/megagrit-jsfx
+about: Multiband JSFX distortion for REAPER – splits audio into low/mid/high, adds unique dirt per band, then a feedback “breather” that bends with your playing.
+changelog:
+  - Fixed a critical bug where the mid-band signal was always silent.
+  - Added 'Envelope Smoothness' slider for direct control over the modulation's character.
+  - Replaced the high-band clipper with a smoother soft-clip distortion.
+  - Added input clamping for improved stability at high gain.
+  - Lowered the default 'Input Drive' for a better experience.
+  * Special thanks to ashcat_lt for the feedback!
+
 // MegaGrit – 3-Band + Feedback Distortion
 // License: MIT – do whatever you want, credit optional.
 // This is a hobby project; if you like or use MegaGrit I’d love to hear about it!
@@ -5,19 +18,6 @@
 //   X/Twitter: @saglamspor
 //
 // ------------------------------------------------------------
-
-desc:MegaGrit – 3-Band + Feedback Distortion (v2.0)
-// version: 2.0
-// author: reincore
-// date: 2025-07-25
-
-// changelog:
-//   - Fixed a critical bug where the mid-band signal was always silent.
-//   - Added 'Envelope Smoothness' slider for direct control over the modulation's character.
-//   - Replaced the high-band clipper with a smoother soft-clip distortion.
-//   - Added input clamping for improved stability at high gain.
-//   - Lowered the default 'Input Drive' for a better experience.
-//   * Special thanks to ashcat_lt for the feedback!
 
 slider1:pregain=6<1,40,0.1>Input Drive
 slider2:lowgain=1<0.1,4,0.01>Low-Band Gain
