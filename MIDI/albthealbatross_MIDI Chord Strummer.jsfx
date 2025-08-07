@@ -1,0 +1,283 @@
+desc: MIDI Chord Strummer
+author: ALBtheALBatross
+version: 1.0
+about:
+  MIDI STRUMMER
+  Strum any chord UP/DOWN in a guitar-ish way.
+
+  Tips:
+      -Bypass Mode "Stopped DAW" - Good for editing chords and then live strum playing
+      -Keyswitches: choose the keyswitch in your instrument, then press them with the keyswitch keys.
+
+  Key Diagram: https://i.imgur.com/9WZTU6J.jpeg
+
+slider1:40<1,200,1>Strum Down Base Timing (ms)
+slider2:-5<-30,30,1>Strum Down Timing Curve
+slider3:-6<-20,20,1>Strum Down Velocity Curve
+slider4:40<1,200,1>Strum Up Base Timing (ms)
+slider5:4<-30,30,1>Strum Up Timing Curve
+slider6:-10<-20,20,1>Strum Up Velocity Curve
+
+slider7:0<0,1,1{Key Activated,Stopped DAW}>Bypass Mode
+
+slider8:0<0,127,1>Keyswitch 1
+slider9:0<0,127,1>Keyswitch 2
+slider10:0<0,127,1>Keyswitch 3
+
+slider11:0<0,0,0>
+
+slider12:0<-120,120,1>Transpose Key Map
+slider13:24<0,127,1>Long Strum Down Key
+slider14:26<0,127,1>Long Strum Up Key
+slider15:25<0,127,1>Medium Strum Down Key
+slider16:27<0,127,1>Medium Strum Up Key
+slider17:28<0,127,1>Short Strum Down Key
+slider18:29<0,127,1>Short Strum Up Key
+slider19:30<0,127,1>Mute Strum Down Key
+slider20:32<0,127,1>Mute Strum Up Key
+slider21:31<0,127,1>Short Mute Down Key
+slider22:33<0,127,1>Short Mute Up Key
+slider23:34<0,127,1>All Notes Off Key
+
+slider24:35<0,127,1>Keyswitch 1 Key
+slider25:36<0,127,1>Keyswitch 2 Key
+slider26:37<0,127,1>Keyswitch 3 Key
+
+slider28:38<0,127,1>Bypass Off Key
+slider27:39<0,127,1>Bypass On Key
+
+
+
+@init
+  // Initialize note buffer
+  i = 0;
+  while (i < 128)(
+    storedNotes[i] = 0;
+    i += 1;
+  );
+
+  // Initialize strum parameters
+  note_index = 0;
+  strum_index = 0;
+  trigger_pending = 0;
+  trigger_vel = 100;
+  strum_timer = 0;
+  strum_up = 0;
+  strum_medium = 0;
+  mute_strum = 0;
+  strum_short = 0;
+  first_strum_sent = 0;
+
+  // Bypass flag
+  bypass_active = 0;
+  prev_state = 0
+
+@block
+
+  base_timing_down        = slider1;
+  timing_curve_down       = slider2;
+  velocity_curve_down     = slider3;
+
+  base_timing_up          = slider4;
+  timing_curve_up         = slider5;
+  velocity_curve_up       = slider6;
+
+  bypass_mode             = slider7;
+
+  keyswitch_1             = slider8;
+  keyswitch_2             = slider9;
+  keyswitch_3             = slider10;
+
+  //space                   slider11
+
+  key_transpose           = slider12;
+  trigger_long_down       = slider13 + key_transpose;
+  trigger_long_up         = slider14 + key_transpose;
+  trigger_medium_down     = slider15 + key_transpose;
+  trigger_medium_up       = slider16 + key_transpose;
+  trigger_short_down      = slider17 + key_transpose;
+  trigger_short_up        = slider18 + key_transpose;
+  trigger_mute_down       = slider19 + key_transpose;
+  trigger_mute_up         = slider20 + key_transpose;
+  trigger_short_mute_down = slider21 + key_transpose;
+  trigger_short_mute_up   = slider22 + key_transpose;
+  trigger_note_off        = slider23 + key_transpose;
+
+  keyswitch_1_key         = slider24 + key_transpose;
+  keyswitch_2_key         = slider25 + key_transpose;
+  keyswitch_3_key         = slider26 + key_transpose;
+
+  bypass_off_key          = slider27 + key_transpose;
+  bypass_on_key           = slider28 + key_transpose;
+
+
+  play_state = play_state ? play_state : 0; // ensure defined
+
+  bypass_mode == 1 ? ( // 1 = Stopped DAW
+	prev_state == 1 && play_state == 0?(
+		i = 0;
+		while (i < 128)(
+		  storedNotes[i] = 0;
+		  i += 1;
+		);
+	);
+	prev_state = play_state;
+    bypass_active = play_state == 0; // bypass if transport is stopped
+  );
+
+  // MIDI event loop
+  while (midirecv(offset, msg1, msg23)) (
+    // Decode MIDI message
+    status = msg1 & 240;
+    chan   = msg1 & 15;
+    note   = msg23 & 255;
+    vel    = (msg23 / 256) & 127;
+
+    // Determine event type
+    is_noteon  = status == 144 && vel > 0;
+    is_noteoff = status == 128 || (status == 144 && vel == 0);
+
+	bypass_mode == 0 ? (
+    // Handle bypass on key
+		is_noteon && note == bypass_on_key ? (
+		  bypass_active = 1;
+		  i = 0;
+		  while (i < 128)(
+			storedNotes[i] = 0;
+			i += 1;
+		  );
+		);
+
+		// Handle bypass off key
+		is_noteon && note == bypass_off_key ? (
+		  bypass_active = 0;
+		);
+	);
+
+    // If bypassed, pass through all MIDI and exit processing
+    bypass_active ? (
+      midisend(offset, msg1, msg23);
+    )
+
+	// Else, do the epic stumming stuff yaaay :)
+    : (
+
+      is_strum_trigger =
+        note == trigger_long_down || note == trigger_long_up ||
+        note == trigger_medium_down || note == trigger_medium_up ||
+        note == trigger_mute_down || note == trigger_mute_up ||
+        note == trigger_short_down || note == trigger_short_up ||
+        note == trigger_short_mute_down || note == trigger_short_mute_up;
+
+      is_noteon ? (
+
+        is_strum_trigger ? (
+          trigger_vel = vel;
+          trigger_pending = 1;
+          strum_index = 0;
+          first_strum_sent = 0;
+
+          strum_up = (
+            note == trigger_long_up || note == trigger_medium_up ||
+            note == trigger_mute_up || note == trigger_short_up ||
+            note == trigger_short_mute_up
+          );
+          strum_medium = (
+            note == trigger_medium_down || note == trigger_medium_up ||
+            note == trigger_mute_down || note == trigger_mute_up ||
+            note == trigger_short_down || note == trigger_short_up ||
+            note == trigger_short_mute_down || note == trigger_short_mute_up
+          );
+          strum_short = (
+            note == trigger_short_down || note == trigger_short_up ||
+            note == trigger_short_mute_down || note == trigger_short_mute_up
+          );
+          mute_strum = (
+            note == trigger_mute_down || note == trigger_mute_up ||
+            note == trigger_short_mute_down || note == trigger_short_mute_up
+          );
+
+
+          note_index = strum_up ? 127 : 0;
+          while (note_index >= 0 && note_index < 128 && storedNotes[note_index] == 0)(
+            strum_up ? note_index -= 1 : note_index += 1;
+          );
+
+          note_index >= 0 && note_index < 128 ? (
+            decayed_vel = trigger_vel;
+            decayed_vel = min(127, max(1, decayed_vel));
+
+            midisend(offset, 144 + chan, note_index + decayed_vel * 256);
+            mute_strum ? midisend(offset, 128 + chan, note_index);
+            strum_index += 1;
+            strum_up ? note_index -= 1 : note_index += 1;
+            strum_timer = 0;
+            first_strum_sent = 1;
+          );
+        )
+        : note == trigger_note_off ? (
+          trigger_pending = 0;
+          first_strum_sent = 0;
+          i = 0;
+          while (i < 128)(
+            storedNotes[i] == 1 ? midisend(offset, 128 + chan, i);
+            i += 1;
+          );
+        )
+        :
+	    note == keyswitch_1_key ? (
+			midisend(offset, 144 + chan, keyswitch_1 + 100 * 256);
+		):
+		note == keyswitch_2_key ? (
+			midisend(offset, 144 + chan, keyswitch_2 + 100 * 256);
+		):
+		note == keyswitch_3_key ? (
+			midisend(offset, 144 + chan, keyswitch_3 + 100 * 256);
+		):
+
+		storedNotes[note] = 1;
+      )
+      : is_noteoff ? (
+        note != trigger_note_off ? storedNotes[note] = 0;
+        midisend(offset, 128 + chan, note);
+      )
+      : midisend(offset, msg1, msg23);
+    );
+  );
+
+  trigger_pending ? (
+    strum_timer += samplesblock / srate * 1000;
+
+    speed_scale = strum_short ? 0.15 : strum_medium ? 0.5 : 1;
+
+	delay_curve = strum_up ? timing_curve_up : timing_curve_down;
+	velocity_curve = strum_up ? velocity_curve_up : velocity_curve_down;
+
+
+	delay_step = delay_curve * speed_scale;
+	interval = (strum_up ? base_timing_up : base_timing_down) * speed_scale;
+
+    offset_interval = first_strum_sent ? interval + strum_index * delay_step : 0;
+
+    strum_timer >= offset_interval ? (
+      while (note_index >= 0 && note_index < 128 && storedNotes[note_index] == 0)(
+        strum_up ? note_index -= 1 : note_index += 1;
+      );
+
+      note_index >= 0 && note_index < 128 ? (
+        decayed_vel = trigger_vel + (strum_index * velocity_curve);
+        decayed_vel = min(127, max(1, decayed_vel));
+
+        midisend(offset, 144 + chan, note_index + decayed_vel * 256);
+        mute_strum ? midisend(offset, 128 + chan, note_index);
+        strum_index += 1;
+        strum_up ? note_index -= 1 : note_index += 1;
+        strum_timer = 0;
+        first_strum_sent = 1;
+      )
+      : (
+        trigger_pending = 0;
+        first_strum_sent = 0;
+      );
+    );
+  );
