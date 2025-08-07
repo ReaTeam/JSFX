@@ -1,0 +1,180 @@
+desc: Multi-Channel MIDI Humanizer
+author: ALBtheALBatross
+version: 1.0
+about:
+  author: schwa + edited by ALBtheALBatross
+  Humanize multiple MIDI channels at once.  Good for layering instruments
+
+slider1:0<0,50>Bias Timing Offset (ms)
+slider2:0<0,10>Timing Humanization Level
+slider3:0<0,127,1>Base Velocity (0=use input)
+slider4:0<0,10>Velocity Humanization Level
+slider5:4<1,16,1>Number of Channels
+
+@init
+NOTE_ON = 9;
+NOTE_OFF = 8;
+
+// We are "humanizing" not "crapifying"
+MAX_VEL_SHIFT = 0.25;
+MAX_IS_X_STDEV = 1.5;
+DEV_N = 12;
+
+gfx_timing = 0;
+gfx_velocity = 16;
+
+n_buf = 0;
+MSG_BUF = 512; // msg buffer start location.
+memset(0, 0, MSG_BUF);
+
+@block
+while (
+  midirecv(mpos, msg1, msg23) ? (
+    type = msg1 >> 4;
+    note = msg23 & 127;
+    vel_in = (msg23 >> 8) & 127;
+
+    base_vel = slider3 > 0 ? slider3 : vel_in;
+    base_delay = srate * slider1 / 1000;
+    max_time_jitter = srate * 0.1;
+
+    (type == NOTE_ON && vel_in > 0) ? (
+      i = 0;
+      loop(slider5,
+        // Timing jitter
+        t_dev = (rand(200) - 100) / 100;
+        timing_offset = t_dev * slider2 * max_time_jitter / (10 * MAX_IS_X_STDEV);
+        delay_samples = base_delay + timing_offset;
+        pos = mpos + delay_samples;
+
+        // Velocity jitter
+        v_dev = 0;
+        loop(DEV_N, v_dev += rand(100) / 100;);
+        v_dev -= DEV_N / 2;
+        jitter_scale = slider4 * base_vel * MAX_VEL_SHIFT * 2 / (DEV_N * MAX_IS_X_STDEV);
+        v_jitter = v_dev * jitter_scale;
+        final_vel = max(1, min(127, floor(base_vel + v_jitter + 0.5)));
+
+        // Store for visuals
+        gfx_timing[i] = delay_samples * 1000 / srate;
+        gfx_velocity[i] = final_vel;
+
+        // Send NOTE_ON
+        status_on = (NOTE_ON << 4) | i;
+        msg_on = note | (final_vel << 8);
+        buffer[MSG_BUF + n_buf] = pos;
+        buffer[MSG_BUF + n_buf + 1] = status_on;
+        buffer[MSG_BUF + n_buf + 2] = msg_on;
+        n_buf += 3;
+
+        // Save offset for NOTE_OFF
+        buffer[MSG_BUF + 256 + note * 16 + i] = timing_offset;
+        i += 1;
+      );
+
+    ) : (type == NOTE_OFF || (type == NOTE_ON && vel_in == 0)) ? (
+      i = 0;
+      loop(slider5,
+        offset = buffer[MSG_BUF + 256 + note * 16 + i];
+        status_off = (NOTE_OFF << 4) | i;
+        buffer[MSG_BUF + n_buf] = mpos + base_delay + offset;
+        buffer[MSG_BUF + n_buf + 1] = status_off;
+        buffer[MSG_BUF + n_buf + 2] = note;
+        n_buf += 3;
+        buffer[MSG_BUF + 256 + note * 16 + i] = 0;
+        i += 1;
+      );
+
+    ) : (
+      buffer[MSG_BUF + n_buf] = mpos;
+      buffer[MSG_BUF + n_buf + 1] = msg1;
+      buffer[MSG_BUF + n_buf + 2] = msg23;
+      n_buf += 3;
+    );
+  );
+);
+
+// Playback
+i = 0;
+while (
+  i < n_buf ? (
+    t = buffer[MSG_BUF + i];
+    (t < samplesblock) ? (
+      midisend(t, buffer[MSG_BUF + i + 1], buffer[MSG_BUF + i + 2]);
+      memcpy(MSG_BUF + i, MSG_BUF + i + 3, n_buf - i);
+      n_buf -= 3;
+    ) : (
+      buffer[MSG_BUF + i] -= samplesblock;
+      i += 3;
+    );
+  );
+);
+
+@gfx
+gfx_clear = 0.15;
+gfx_setfont(1, "Arial", 16);
+
+bar_x = 40;
+bar_w = 300;
+bar_h = 12;
+
+// TIMING BAR
+gfx_x = 10; gfx_y = 10;
+gfx_r = gfx_g = gfx_b = 1;
+gfx_printf("Timing (ms)");
+
+bar_y = 30;
+gfx_r = gfx_g = gfx_b = 0.3;
+gfx_rect(bar_x, bar_y, bar_w, bar_h);
+
+// Add labels for clarity
+gfx_r = gfx_g = gfx_b = 0.8;
+gfx_setfont(1, "Arial", 12);
+gfx_x = bar_x + 2; gfx_y = bar_y + bar_h + 2;
+gfx_printf("0");
+gfx_x = bar_x + bar_w - 20;
+gfx_printf("100");
+
+i = 0;
+loop(slider5,
+  timing_ms = gfx_timing[i];
+  x = bar_x + (timing_ms / 100) * bar_w;
+  x = max(bar_x, min(bar_x + bar_w - 1, x));
+  hue = i / slider5;
+  gfx_r = sin(hue * 6.28) * 0.5 + 0.5;
+  gfx_g = sin(hue * 6.28 + 2) * 0.5 + 0.5;
+  gfx_b = sin(hue * 6.28 + 4) * 0.5 + 0.5;
+  gfx_line(x, bar_y, x, bar_y + bar_h);
+  i += 1;
+);
+
+// VELOCITY BAR
+gfx_x = 10; gfx_y = 60;
+gfx_r = gfx_g = gfx_b = 1;
+gfx_setfont(1, "Arial", 16);
+gfx_printf("Velocity");
+
+bar_y = 80;
+gfx_r = gfx_g = gfx_b = 0.3;
+gfx_rect(bar_x, bar_y, bar_w, bar_h);
+
+// Add labels for clarity
+gfx_r = gfx_g = gfx_b = 0.8;
+gfx_setfont(1, "Arial", 12);
+gfx_x = bar_x + 2; gfx_y = bar_y + bar_h + 2;
+gfx_printf("0");
+gfx_x = bar_x + bar_w - 20;
+gfx_printf("127");
+
+i = 0;
+loop(slider5,
+  velocity_val = gfx_velocity[i];
+  x = bar_x + (velocity_val / 127) * bar_w;
+  x = max(bar_x, min(bar_x + bar_w - 1, x));
+  hue = i / slider5;
+  gfx_r = sin(hue * 6.28) * 0.5 + 0.5;
+  gfx_g = sin(hue * 6.28 + 2) * 0.5 + 0.5;
+  gfx_b = sin(hue * 6.28 + 4) * 0.5 + 0.5;
+  gfx_line(x, bar_y, x, bar_y + bar_h);
+  i += 1;
+);
