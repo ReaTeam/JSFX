@@ -1,0 +1,104 @@
+desc: MIDI Channel Cycler
+author: ALBtheALBatross
+version: 1.0
+about: Every time a note is played, the MIDI channel is changed
+
+slider1:4<2,16,1>Cycle Channel Count
+slider2:0<0,4,1{Cycle,Reverse Cycle,Sequencer,Reverse Sequencer,Randomize}>Mode
+slider3:8<1,16,1>Sequencer Steps
+slider4:1<1,16,1>Seq 1
+slider5:1<1,16,1>Seq 2
+slider6:1<1,16,1>Seq 3
+slider7:1<1,16,1>Seq 4
+slider8:1<1,16,1>Seq 5
+slider9:1<1,16,1>Seq 6
+slider10:1<1,16,1>Seq 7
+slider11:1<1,16,1>Seq 8
+slider12:1<1,16,1>Seq 9
+slider13:1<1,16,1>Seq 10
+slider14:1<1,16,1>Seq 11
+slider15:1<1,16,1>Seq 12
+slider16:1<1,16,1>Seq 13
+slider17:1<1,16,1>Seq 14
+slider18:1<1,16,1>Seq 15
+slider19:1<1,16,1>Seq 16
+
+@init
+next_channel = 0;
+seq_step = 0;
+note_channel_map = 0;
+
+@slider
+// Refresh sequencer channels so when they are changed they update in realtime
+seq_channels[0] = slider4 - 1;
+seq_channels[1] = slider5 - 1;
+seq_channels[2] = slider6 - 1;
+seq_channels[3] = slider7 - 1;
+seq_channels[4] = slider8 - 1;
+seq_channels[5] = slider9 - 1;
+seq_channels[6] = slider10 - 1;
+seq_channels[7] = slider11 - 1;
+seq_channels[8] = slider12 - 1;
+seq_channels[9] = slider13 - 1;
+seq_channels[10] = slider14 - 1;
+seq_channels[11] = slider15 - 1;
+seq_channels[12] = slider16 - 1;
+seq_channels[13] = slider17 - 1;
+seq_channels[14] = slider18 - 1;
+seq_channels[15] = slider19 - 1;
+
+@block
+while (midirecv(offset, msg1, msg23)) (
+    msg_type = msg1 & 0xF0;
+    note = msg23 & 0xFF;
+    velocity = msg23 >> 8;
+
+    is_note_on = msg_type == 0x90 && velocity > 0;
+    is_note_off = msg_type == 0x80 || (msg_type == 0x90 && velocity == 0);
+
+    mode = slider2;
+    cycle_count = slider1;
+    seq_count = slider3;
+
+    is_note_on ? (
+        mode == 1 ? (
+            // Reverse Cycle
+            channel = (cycle_count - 1 - next_channel % cycle_count);
+            seq_channel = channel;
+            next_channel += 1;
+        ) : mode == 2 ? (
+            // Sequence
+            step_index = seq_step % seq_count;
+            seq_channel = seq_channels[step_index];
+            seq_step += 1;
+        ) : mode == 3 ? (
+            // Reverse Sequence
+            step_index = seq_step % seq_count;
+            rev_index = seq_count - 1 - step_index;
+            seq_channel = seq_channels[rev_index];
+            seq_step += 1;
+        ) : mode == 4 ? (
+            // Randomize
+            seq_channel = floor(rand() * cycle_count);
+        ) : (
+            // Cycle
+            channel = next_channel % cycle_count;
+            seq_channel = channel;
+            next_channel += 1;
+        );
+
+        status_byte = msg_type | seq_channel;
+        midisend(offset, status_byte, msg23);
+        note_channel_map[note] = seq_channel;
+    );
+
+    is_note_off ? (
+        out_channel = note_channel_map[note];
+        status_byte = 0x80 | out_channel;
+        midisend(offset, status_byte, msg23);
+    );
+		// Just ignore uneeded midi messages and pass them through. maybe this will be useful to someone I have no idea xD
+    !(is_note_on || is_note_off) ? (
+        midisend(offset, msg1, msg23);
+    );
+);
