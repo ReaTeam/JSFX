@@ -38,8 +38,8 @@ slider24:35<0,127,1>Keyswitch 1 Key
 slider25:36<0,127,1>Keyswitch 2 Key
 slider26:37<0,127,1>Keyswitch 3 Key
 
-slider28:38<0,127,1>Bypass Off Key
-slider27:39<0,127,1>Bypass On Key
+slider27:38<0,127,1>Bypass Off Key
+slider28:39<0,127,1>Bypass On Key
 
 
 
