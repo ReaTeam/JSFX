@@ -63,8 +63,7 @@ while (midirecv(offset, msg1, msg23)) (
     is_note_on ? (
         mode == 1 ? (
             // Reverse Cycle
-            channel = (cycle_count - 1 - next_channel % cycle_count);
-            seq_channel = channel;
+            seq_channel = (cycle_count - 1 - next_channel % cycle_count);
             next_channel += 1;
         ) : mode == 2 ? (
             // Sequence
@@ -82,8 +81,7 @@ while (midirecv(offset, msg1, msg23)) (
             seq_channel = floor(rand() * cycle_count);
         ) : (
             // Cycle
-            channel = next_channel % cycle_count;
-            seq_channel = channel;
+            seq_channel = next_channel % cycle_count;
             next_channel += 1;
         );
 
