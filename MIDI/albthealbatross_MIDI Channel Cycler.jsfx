@@ -90,20 +90,19 @@ while (midirecv(offset, msg1, msg23)) (
         status_byte = msg_type | seq_channel;
         midisend(offset, status_byte, msg23);
         note_channel_map[note] = seq_channel;
-    );
+    ):
 
     is_note_off ? (
         out_channel = note_channel_map[note];
         status_byte = 0x80 | out_channel;
         midisend(offset, status_byte, msg23);
-    );
+	) : (
 	// process midi cc stuff for pitchbend modwheel etc
-	msg_type >= 0xB0 && msg_type <= 0xEF ? (
-		i = 0;
-		loop(slider1,
-			status_byte = msg_type | i;
-			midisend(offset, status_byte, msg23);
-			i += 1;
+	i = 0;
+	loop(slider1,
+		status_byte = msg_type | i;
+		midisend(offset, status_byte, msg23);
+		i += 1;
 		);
 	);
 );
