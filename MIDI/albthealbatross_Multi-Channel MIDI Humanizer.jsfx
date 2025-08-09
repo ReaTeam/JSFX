@@ -31,6 +31,7 @@ memset(0, 0, MSG_BUF);
 while (
   midirecv(mpos, msg1, msg23) ? (
     type = msg1 >> 4;
+    status = msg1 & 0xF0;
     note = msg23 & 127;
     vel_in = (msg23 >> 8) & 127;
 
@@ -86,10 +87,16 @@ while (
       );
 
     ) : (
-      buffer[MSG_BUF + n_buf] = mpos;
-      buffer[MSG_BUF + n_buf + 1] = msg1;
-      buffer[MSG_BUF + n_buf + 2] = msg23;
-      n_buf += 3;
+      // process midi cc stuff for pitchbend modwheel etc
+      i = 0;
+      loop(slider5,
+        msg_out = status | i;
+        buffer[MSG_BUF + n_buf] = mpos;
+        buffer[MSG_BUF + n_buf + 1] = msg_out;
+        buffer[MSG_BUF + n_buf + 2] = msg23;
+        n_buf += 3;
+        i += 1;
+      );
     );
   );
 );
