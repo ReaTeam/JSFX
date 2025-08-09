@@ -97,8 +97,13 @@ while (midirecv(offset, msg1, msg23)) (
         status_byte = 0x80 | out_channel;
         midisend(offset, status_byte, msg23);
     );
-		// Just ignore uneeded midi messages and pass them through. maybe this will be useful to someone I have no idea xD
-    !(is_note_on || is_note_off) ? (
-        midisend(offset, msg1, msg23);
-    );
+	// process midi cc stuff for pitchbend modwheel etc
+	msg_type >= 0xB0 && msg_type <= 0xEF ? (
+		i = 0;
+		loop(slider1,
+			status_byte = msg_type | i;
+			midisend(offset, status_byte, msg23);
+			i += 1;
+		);
+	);
 );
