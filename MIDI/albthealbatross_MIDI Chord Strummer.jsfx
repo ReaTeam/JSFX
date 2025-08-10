@@ -4,6 +4,12 @@ version: 1.0
 screenshot: https://i.imgur.com/9WZTU6J.jpeg
 about:
   Strum any chord UP/DOWN in a guitar-ish way.
+  Tips:
+  - Change the Keyswitches to match your instrument
+    Use instrument Keyswitches via the Keyswitch keys (see diagram)
+  - Use Bypass Mode "Stopped DAW" for easier chord editing,
+    then strum it live for a natural strum sound
+  
   Key Diagram: https://i.imgur.com/9WZTU6J.jpeg
 
 slider1:40<1,200,1>Strum Down Base Timing (ms)
@@ -108,7 +114,9 @@ slider28:39<0,127,1>Bypass On Key
 
   play_state = play_state ? play_state : 0; // ensure defined
 
-  bypass_mode == 1 ? ( // 1 = Stopped DAW
+
+  // Handle Bypass by Bypass Mode  "Stopped DAW"
+  bypass_mode == 1 ? (
 	prev_state == 1 && play_state == 0?(
 		i = 0;
 		while (i < 128)(
@@ -117,7 +125,7 @@ slider28:39<0,127,1>Bypass On Key
 		);
 	);
 	prev_state = play_state;
-    bypass_active = play_state == 0; // bypass if transport is stopped
+    bypass_active = play_state == 0;
   );
 
   // MIDI event loop
@@ -132,8 +140,8 @@ slider28:39<0,127,1>Bypass On Key
     is_noteon  = status == 144 && vel > 0;
     is_noteoff = status == 128 || (status == 144 && vel == 0);
 
+    // Handle Bypass by Bypass Mode "Key Activated"
 	bypass_mode == 0 ? (
-    // Handle bypass on key
 		is_noteon && note == bypass_on_key ? (
 		  bypass_active = 1;
 		  i = 0;
@@ -142,8 +150,6 @@ slider28:39<0,127,1>Bypass On Key
 			i += 1;
 		  );
 		);
-
-		// Handle bypass off key
 		is_noteon && note == bypass_off_key ? (
 		  bypass_active = 0;
 		);
@@ -218,25 +224,37 @@ slider28:39<0,127,1>Bypass On Key
             storedNotes[i] == 1 ? midisend(offset, 128 + chan, i);
             i += 1;
           );
-        )
-        :
-	    note == keyswitch_1_key ? (
+		):
+
+		note == keyswitch_1_key ? (
 			midisend(offset, 144 + chan, keyswitch_1 + 100 * 256);
+			midisend(offset, 128 + chan, keyswitch_1);
 		):
 		note == keyswitch_2_key ? (
 			midisend(offset, 144 + chan, keyswitch_2 + 100 * 256);
+			midisend(offset, 128 + chan, keyswitch_2);
 		):
 		note == keyswitch_3_key ? (
 			midisend(offset, 144 + chan, keyswitch_3 + 100 * 256);
+			midisend(offset, 128 + chan, keyswitch_3);
 		):
-
+		
+		note == bypass_off_key ? ( 0; //do nothing. this removes it from stored notes
+		):
+		note == bypass_on_key ? ( 0; //do nothing. this removes it from stored notes
+		):
+		
+		// store the notes
 		storedNotes[note] = 1;
       )
       : is_noteoff ? (
+		// remove the notes
         note != trigger_note_off ? storedNotes[note] = 0;
         midisend(offset, 128 + chan, note);
       )
-      : midisend(offset, msg1, msg23);
+	  :
+	  //else pass through other midi not specified
+	  midisend(offset, msg1, msg23);
     );
   );
 
