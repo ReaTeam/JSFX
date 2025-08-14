@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="5b8cd15c3e4de80e2d62d21902a82718ab8973fa">
+<index version="1" name="ReaTeam JSFX" commit="2c2c462c676aa802276946a72563c919f1d784d8">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -322,6 +322,20 @@ Yutani Bass
     </reapack>
   </category>
   <category name="MIDI">
+    <reapack name="albthealbatross_MIDI Channel Cycler.jsfx" type="effect" desc="MIDI Channel Cycler">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Every time a note is played, the MIDI channel is changed\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="ALBtheALBatross" time="2025-08-14T17:10:58Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/2c2c462c676aa802276946a72563c919f1d784d8/MIDI/albthealbatross_MIDI%20Channel%20Cycler.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="albthealbatross_MIDI Chord Strummer.jsfx" type="effect" desc="MIDI Chord Strummer">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
