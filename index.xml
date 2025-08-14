@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="9ff4669c904ab09d2109007e66d3eb1ecafeae11">
+<index version="1" name="ReaTeam JSFX" commit="5b8cd15c3e4de80e2d62d21902a82718ab8973fa">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -322,6 +322,24 @@ Yutani Bass
     </reapack>
   </category>
   <category name="MIDI">
+    <reapack name="albthealbatross_MIDI Chord Strummer.jsfx" type="effect" desc="MIDI Chord Strummer">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Strum any chord UP/DOWN in a guitar-ish way. Tips:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Change the Keyswitches to match your instrument Use instrument Keyswitches via the Keyswitch keys (see diagram)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Use Bypass Mode "Stopped DAW" for easier chord editing, then strum it live for a natural strum sound\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Key Diagram: https://i.imgur.com/9WZTU6J.jpeg\par}
+}
+]]></description>
+        <link rel="screenshot">https://i.imgur.com/9WZTU6J.jpeg</link>
+      </metadata>
+      <version name="1.0" author="ALBtheALBatross" time="2025-08-14T11:28:22Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/5b8cd15c3e4de80e2d62d21902a82718ab8973fa/MIDI/albthealbatross_MIDI%20Chord%20Strummer.jsfx</source>
+      </version>
+    </reapack>
     <reapack name="bertbouwhuis_MIDI controller for S8 looper with fade in and out.jsfx" type="effect" desc="MIDI controller for S8 looper with fade in and out">
       <metadata>
         <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 Courier;}}
