@@ -1,0 +1,95 @@
+desc: MIDI Exercise Counter
+author: chippisch
+version: 0.1
+about:
+  desc: MIDI Exercise Counter
+
+  Count the repetitions of your exercises.
+  When I was a student for church organ, there were plenty of tally sheets next to the organ, where each stundent counted the repetitions of his exercises.
+  This simple jsfx-plugin does the counting for you: just press the pedal or a specific key to go on counting.
+
+  Key Features:
+  - Select the MIDI-event to be counted: Pedal or one of the 3 lowest or highest keys.
+  - If your exercise-target (or its muliple) is reached, the highest C will be played and the display will turn green.
+  - Use the counter-slider to reset.
+
+slider1:100<0,127,1>Loudness of "target reached"
+slider2:0<0,1,1{0 Pedal,1 Lowest A,2 Lowest Bb,3 Lowest B,4 Lowest C,5 Highest Bb,6 Highest B,7 Highest C}>Controller
+slider3:25<0,100,1>Target
+
+//slider4 is used as counter:
+slider4:0<0,200,1>Counter
+
+@init
+
+@slider
+TargetLoudness = slider1;
+TriggerEvent = slider2;
+Target = slider3;
+
+
+// Select Midievent choosen by slider1
+TriggerEvent == 0 ? (
+       MidiEvent1 = 176;
+       MidiEvent2 = 64;
+     ): TriggerEvent == 1 ? (
+       MidiEvent1 = 144;
+       MidiEvent2 = 21;
+     ): TriggerEvent == 2 ? (
+       MidiEvent1 = 144;
+       MidiEvent2 = 22;
+     ): TriggerEvent == 3 ? (
+      MidiEvent1 = 144;
+      MidiEvent2 = 23;
+     ): TriggerEvent == 4 ? (
+      MidiEvent1 = 144;
+      MidiEvent2 = 24;
+     ): TriggerEvent == 5 ? (
+      MidiEvent1 = 144;
+      MidiEvent2 = 106;
+     ): TriggerEvent == 6 ? (
+      MidiEvent1 = 144;
+      MidiEvent2 = 107;
+     ): TriggerEvent == 7 ? (
+       MidiEvent1 = 144;
+       MidiEvent2 = 108;
+       );
+
+@block
+
+    while (midirecv(offset,msg1,msg2,msg3)) (
+        midisend(offset,msg1,msg2,msg3); // passthrough all events
+        msg1==MidiEvent1 && msg2== MidiEvent2 && msg3!=0 ? (
+
+          slider4+=1;                   // Count in  slider1
+
+         // Decide Backgroundcolor:
+          slider4 % Target != 0 ? (       // not matching
+           backgroundcolor=0;
+          );
+          (slider4 +2) % Target == 0 ? (  // 2 to go
+            backgroundcolor=0x003300;
+          );
+          (slider4 +1) % Target == 0 ? (  // 1 to go
+           backgroundcolor=0x006600;
+         );
+          slider4 % Target == 0 ? (       //Target reached
+            backgroundcolor=0x00FF00;
+            midisend(0, 144, 108, TargetLoudness); midisend(0, 144, 108, 0);
+         );
+      );
+
+ );
+
+
+@gfx
+gfx_r = 1.0; gfx_g =1.0;  gfx_b = 1.0;
+gfx_x=0;
+gfx_y=0;
+gfx_clear=backgroundcolor; //set backgroundcolor
+
+// set fontsize to gfx_h
+gfx_setfont(1, "Arial", gfx_h);
+
+// Print the Counter stored in slider4 (convert numer to string with sprintf)
+gfx_drawstr(sprintf(#, "%d", slider4 ), 1|4, gfx_w, gfx_h);
