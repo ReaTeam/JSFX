@@ -365,6 +365,7 @@ filename:0,strummer_diagram.png
 							note_to_play = (chord_buffer + note_idx_in_buffer)[0];
 							(storedNotes[note_to_play] == 1 || storedNotes[note_to_play] == 2) ? (
 								decayed_vel = min(127, max(1, ch_base[S_VELOCITY] + strum_idx * vel_curve));
+								midisend(0, 0x80 + c, note_to_play); // < ------------------------------------------------- note off the same note before the note is played. prevents CPU disaster
 								midisend(0, 0x90 + c, note_to_play | (decayed_vel << 8));
 								ch_base[S_IS_MUTED] ? midisend(0, 0x80 + c, note_to_play);
 							);
