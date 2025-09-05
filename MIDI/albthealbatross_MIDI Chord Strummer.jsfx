@@ -17,7 +17,7 @@ about:
 
 	- Use large speed curves for dramatic strums. Great for harps
 
-	- Use "Ignore Last Notes" to create more realistic guitar strums by not playing the highest/lowest notes (only kicks in when there are 3 more notes than ignored notes)
+	- Use "Ignore Last Notes" to create more realistic guitar strums by not playing the highest/lowest notes (only kicks in when there are 2 more notes than ignored notes)
 
 slider1:40<1,200,1>Strum Down Speed (ms)
 slider2:-5<-40,40,1>Strum Down Speed Curve
@@ -353,8 +353,8 @@ filename:0,strummer_diagram.png
 
 					effective_chord_size = is_muted ? chord_size : (chord_size > 2 ? max(0, chord_size - ignore_count) : chord_size);
 
-					// only ignore notes if chord size is 3 notes more than ignore amount
-					should_ignore = !is_muted && (chord_size > (ignore_count + 2));
+					// only ignore notes if chord size is 2 notes more than ignore amount
+					should_ignore = !is_muted && (chord_size > (ignore_count + 1));
 					effective_chord_size = should_ignore ? max(0, chord_size - ignore_count) : chord_size;
 
 					strum_idx < effective_chord_size ? (
