@@ -1,40 +1,41 @@
 desc: MIDI Chord Strummer
 author: ALBtheALBatross
 version: 2.0
-changelog:
-  Added new "Ring Current Notes" key.  Great on guitar allowing bass notes to ring out while you strum higher notes at the same time.
-  Added support for multiple channels with random strum timings. Great for stereo strums.
-provides: albthealbatross_MIDI Chord Strummer/strummer_diagram.png
-screenshot: Strummer diagram https://i.imgur.com/Y5X8EW5.png
 about:
   Strum any chord UP/DOWN in a guitar-ish way.
+
   Tips:
-  	- Use the "Ring Current Notes" key to ring notes.  Ringing notes aren't strummed.
-  	  This is great on guitar allowing bass notes to ring out while you strum higher notes at the same time.
+	- Use the "Ring Current Notes" key to ring notes.  Ringing notes aren't strummed.
+	  This is great on guitar allowing bass notes to ring out while you strum higher notes at the same time.
 
-  	- Change the Keyswitches to match your instrument
-  	  Use instrument Keyswitches via the Keyswitch keys (see diagram)
+	- Change the Keyswitches to match your instrument
+	  Use instrument Keyswitches via the Keyswitch keys (see diagram)
 
-  	- Use Bypass Mode "Stopped DAW" for easier chord editing, then strum it live for a natural strum sound
+	- Use Bypass Mode "Stopped DAW" for easier chord editing, then strum it live for a natural strum sound
 
-  	- Use multiple channels with random timing to create lush stereo strums
+	- Use multiple channels with random timing to create lush stereo strums
 
-  	- Use large speed curves for dramatic strums. Great for harps
+	- Use large speed curves for dramatic strums. Great for harps
+
+	- Use "Ignore Last Notes" to create more realistic guitar strums by not playing the highest/lowest notes (only kicks in when there are 3 more notes than ignored notes)
 
 slider1:40<1,200,1>Strum Down Speed (ms)
 slider2:-5<-40,40,1>Strum Down Speed Curve
 slider3:-6<-20,20,1>Strum Down Velocity Curve
-slider4:40<1,200,1>Strum Up Speed (ms)
-slider5:4<-40,40,1>Strum Up Speed Curve
-slider6:-10<-20,20,1>Strum Up Velocity Curve
+slider4:0<0,4,1>Ignore Last Notes Down
 
-slider7:0<0,1,1{Key Activated,DAW Stopped}>Bypass Mode
+slider5:40<1,200,1>Strum Up Speed (ms)
+slider6:4<-40,40,1>Strum Up Speed Curve
+slider7:-10<-20,20,1>Strum Up Velocity Curve
+slider8:1<0,4,1>Ignore Last Notes Up
+
+slider9:0<0,1,1{Key Activated,DAW Stopped}>Bypass Mode
 
 
-slider8:0<0,127,1>Keyswitch 1 Note
-slider9:0<0,127,1>Keyswitch 2 Note
-slider10:0<0,127,1>Keyswitch 3 Note
-slider12:0<-12,12,1>Key Map Octave
+slider10:0<0,127,1>Keyswitch 1 Note
+slider11:0<0,127,1>Keyswitch 2 Note
+slider12:0<0,127,1>Keyswitch 3 Note
+slider13:0<-12,12,1>Key Map Octave
 
 slider14:0<0,3,1{1 Channel,2 Channels,3 Channels,4 Channels}>MIDI Channels
 slider15:10<0,200,5>Channel Timing Randomizer (ms)
@@ -85,7 +86,7 @@ filename:0,strummer_diagram.png
 		);
 	);
 
-	//fun clear all notes and states
+	//func clear all notes and states
 	function clear_all_notes() local(i) (
 		memset(storedNotes, 0, 128);
 		i = 0;
@@ -121,11 +122,13 @@ filename:0,strummer_diagram.png
 	base_timing_down = slider1;
 	timing_curve_down = slider2;
 	velocity_curve_down = slider3;
-	base_timing_up = slider4;
-	timing_curve_up = slider5;
-	velocity_curve_up = slider6;
+	ignore_last_notes_down = slider4;
+	base_timing_up = slider5;
+	timing_curve_up = slider6;
+	velocity_curve_up = slider7;
+	ignore_last_notes_up = slider8;
 
-	bypass_mode = slider7;
+	bypass_mode = slider9;
 
 	bypass_mode == 1 ? (
 		play_state == 0 ? (
@@ -135,14 +138,14 @@ filename:0,strummer_diagram.png
 		);
 	);
 
-	keyswitch_1_note = slider8;
-	keyswitch_2_note = slider9;
-	keyswitch_3_note = slider10;
+	keyswitch_1_note = slider10;
+	keyswitch_2_note = slider11;
+	keyswitch_3_note = slider12;
 
 	num_channels = slider14 + 1;
 	channel_randomizer = slider15;
 
-	key_transpose = slider12 * 12;
+	key_transpose = slider13 * 12;
 
 
 @block
@@ -342,12 +345,24 @@ filename:0,strummer_diagram.png
 				) : (
 					strum_idx = ch_base[S_NOTE_INDEX];
 					chord_size = ch_base[S_CHORD_SIZE];
-					strum_idx < chord_size ? (
-						base_speed = ch_base[S_IS_UP] ? base_timing_up : base_timing_down;
-						timing_curve = ch_base[S_IS_UP] ? timing_curve_up : timing_curve_down;
-						vel_curve = ch_base[S_IS_UP] ? velocity_curve_up : velocity_curve_down;
+					is_up = ch_base[S_IS_UP];
+					is_muted = ch_base[S_IS_MUTED];
+
+					// calculate effective chord size based on ignore settings (ignore last notes for regular strums, not muted)
+					ignore_count = is_up ? ignore_last_notes_up : ignore_last_notes_down;
+
+					effective_chord_size = is_muted ? chord_size : (chord_size > 2 ? max(0, chord_size - ignore_count) : chord_size);
+
+					// only ignore notes if chord size is 3 notes more than ignore amount
+					should_ignore = !is_muted && (chord_size > (ignore_count + 2));
+					effective_chord_size = should_ignore ? max(0, chord_size - ignore_count) : chord_size;
+
+					strum_idx < effective_chord_size ? (
+						base_speed = is_up ? base_timing_up : base_timing_down;
+						timing_curve = is_up ? timing_curve_up : timing_curve_down;
+						vel_curve = is_up ? velocity_curve_up : velocity_curve_down;
 						speed_mod = ch_base[S_SPEED_MOD];
-						
+
 						// calculate humanize random delay for this note - might remove this
 						// scale humanization by speed modifier
 						ch_base[S_HUMANIZE_DELAY] == 0 && strum_idx > 0 && humanize_note > 0 ? (
@@ -361,13 +376,13 @@ filename:0,strummer_diagram.png
 							ch_base[S_HUMANIZE_DELAY];
 
 						timer >= target_time ? (
-							note_idx_in_buffer = ch_base[S_IS_UP] ? (chord_size - 1 - strum_idx) : strum_idx;
+							note_idx_in_buffer = is_up ? (chord_size - 1 - strum_idx) : strum_idx;
 							note_to_play = (chord_buffer + note_idx_in_buffer)[0];
 							(storedNotes[note_to_play] == 1 || storedNotes[note_to_play] == 2) ? (
 								decayed_vel = min(127, max(1, ch_base[S_VELOCITY] + strum_idx * vel_curve));
 								midisend(0, 0x80 + c, note_to_play); // < ------------------------------------------------- note off the same note before the note is played. prevents CPU disaster
 								midisend(0, 0x90 + c, note_to_play | (decayed_vel << 8));
-								ch_base[S_IS_MUTED] ? midisend(0, 0x80 + c, note_to_play);
+								is_muted ? midisend(0, 0x80 + c, note_to_play);
 							);
 							ch_base[S_NOTE_INDEX] += 1;
 							ch_base[S_TIMER] -= target_time;
@@ -394,7 +409,6 @@ bypass_active ? (
 	gfx_drawstr("BYPASSED");
 
 	gfx_y += 75;
-
 );
 
 gfx_x = 50;
