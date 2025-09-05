@@ -17,17 +17,17 @@ about:
 
 	- Use large speed curves for dramatic strums. Great for harps
 
-	- Use "Ignore Last Notes" to create more realistic guitar strums by not playing the highest/lowest notes (only kicks in when there are 2 more notes than ignored notes)
+	- Use "Ignore Last Strum Notes" to create more realistic guitar strums by not playing the highest/lowest notes (only kicks in when there are 3 or more notes)
 
 slider1:40<1,200,1>Strum Down Speed (ms)
 slider2:-5<-40,40,1>Strum Down Speed Curve
 slider3:-6<-20,20,1>Strum Down Velocity Curve
-slider4:0<0,4,1>Ignore Last Notes Down
+slider4:0<0,4,1>Ignore Last Strum Notes Down
 
 slider5:40<1,200,1>Strum Up Speed (ms)
 slider6:4<-40,40,1>Strum Up Speed Curve
 slider7:-10<-20,20,1>Strum Up Velocity Curve
-slider8:1<0,4,1>Ignore Last Notes Up
+slider8:1<0,4,1>Ignore Last Strum Notes Up
 
 slider9:0<0,1,1{Key Activated,DAW Stopped}>Bypass Mode
 
@@ -348,14 +348,12 @@ filename:0,strummer_diagram.png
 					is_up = ch_base[S_IS_UP];
 					is_muted = ch_base[S_IS_MUTED];
 
-					// calculate effective chord size based on ignore settings (ignore last notes for regular strums, not muted)
+					// calculate effective chord size based on ignore settings (ignore last notes in strums)
 					ignore_count = is_up ? ignore_last_notes_up : ignore_last_notes_down;
 
-					effective_chord_size = is_muted ? chord_size : (chord_size > 2 ? max(0, chord_size - ignore_count) : chord_size);
-
-					// only ignore notes if chord size is 2 notes more than ignore amount
-					should_ignore = !is_muted && (chord_size > (ignore_count + 1));
-					effective_chord_size = should_ignore ? max(0, chord_size - ignore_count) : chord_size;
+					// ignore at least 2 notes or at most the ignore count
+					actual_ignore = is_muted ? 0 : min(ignore_count, max(0, chord_size - 2));
+					effective_chord_size = chord_size - actual_ignore;
 
 					strum_idx < effective_chord_size ? (
 						base_speed = is_up ? base_timing_up : base_timing_down;
