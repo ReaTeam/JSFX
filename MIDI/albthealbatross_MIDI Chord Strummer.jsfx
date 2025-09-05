@@ -17,17 +17,17 @@ about:
 
 	- Use large speed curves for dramatic strums. Great for harps
 
-	- Use "Ignore Last Strum Notes" to create more realistic guitar strums by not playing the highest/lowest notes (only kicks in when there are 3 or more notes)
+	- Use "Skip End Notes" to create more realistic guitar strums by not playing the highest/lowest notes (only kicks in when there are 3 or more notes)
 
 slider1:40<1,200,1>Strum Down Speed (ms)
 slider2:-5<-40,40,1>Strum Down Speed Curve
 slider3:-6<-20,20,1>Strum Down Velocity Curve
-slider4:0<0,4,1>Ignore Last Strum Notes Down
+slider4:0<0,4,1>Skip End Notes Down
 
 slider5:40<1,200,1>Strum Up Speed (ms)
 slider6:4<-40,40,1>Strum Up Speed Curve
 slider7:-10<-20,20,1>Strum Up Velocity Curve
-slider8:1<0,4,1>Ignore Last Strum Notes Up
+slider8:1<0,4,1>Skip End Notes Up
 
 slider9:0<0,1,1{Key Activated,DAW Stopped}>Bypass Mode
 
