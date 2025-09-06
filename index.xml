@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="2c2c462c676aa802276946a72563c919f1d784d8">
+<index version="1" name="ReaTeam JSFX" commit="9c17c1b123be711d71de0e60d905221b5dacbe7d">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -342,16 +342,30 @@ Yutani Bass
 {\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
 \widowctrl\hyphauto
 
-{\pard \ql \f0 \sa180 \li0 \fi0 Strum any chord UP/DOWN in a guitar-ish way. Tips:\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Change the Keyswitches to match your instrument Use instrument Keyswitches via the Keyswitch keys (see diagram)\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Use Bypass Mode "Stopped DAW" for easier chord editing, then strum it live for a natural strum sound\sa180\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Key Diagram: https://i.imgur.com/9WZTU6J.jpeg\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Strum any chord UP/DOWN in a guitar-ish way.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Tips:\par}
 }
 ]]></description>
-        <link rel="screenshot">https://i.imgur.com/9WZTU6J.jpeg</link>
       </metadata>
       <version name="1.0" author="ALBtheALBatross" time="2025-08-14T11:28:22Z">
         <source>https://github.com/ReaTeam/JSFX/raw/5b8cd15c3e4de80e2d62d21902a82718ab8973fa/MIDI/albthealbatross_MIDI%20Chord%20Strummer.jsfx</source>
+      </version>
+      <version name="2.0" author="ALBtheALBatross" time="2025-09-06T16:29:57Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/e7b31cd1b72ea5fbbfedb4d74229061e3f6240e2/MIDI/albthealbatross_MIDI%20Chord%20Strummer.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="albthealbatross_Multi-Channel MIDI Timing Randomizer.jsfx" type="effect" desc="Multi-Channel MIDI Timing Randomizer">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Great for layering MIDI instruments\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="ALBtheALBatross" time="2025-09-06T16:30:43Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/9c17c1b123be711d71de0e60d905221b5dacbe7d/MIDI/albthealbatross_Multi-Channel%20MIDI%20Timing%20Randomizer.jsfx</source>
       </version>
     </reapack>
     <reapack name="bertbouwhuis_MIDI controller for S8 looper with fade in and out.jsfx" type="effect" desc="MIDI controller for S8 looper with fade in and out">
