@@ -1,0 +1,192 @@
+desc: Multi-Channel MIDI Timing Randomizer
+author: ALBtheALBatross
+version: 1.0
+about: Great for layering MIDI instruments
+
+slider1:50<0,250>Random Timing Range (ms)
+slider2:0<0,127,1>Base Velocity (0=use input)
+slider3:0<0,64,1>Velocity Random Range
+slider4:4<1,16,1>Number of Channels
+slider6:0<0,2,{Random,Cycle,Channel 1}>Root Channel
+
+@init
+
+// channel colors
+channel_r = 32;
+channel_g = 48;
+channel_b = 64;
+channel_r[0] = 0;    channel_g[0] = 1;     channel_b[0] = 0;    // Green
+channel_r[1] = 1;    channel_g[1] = 0;     channel_b[1] = 0;    // Red
+channel_r[2] = 0;    channel_g[2] = 0;     channel_b[2] = 1;    // Blue
+channel_r[3] = 1;    channel_g[3] = 1;     channel_b[3] = 0;    // Yellow
+channel_r[4] = 0.5;  channel_g[4] = 0;     channel_b[4] = 0.5;  // Purple
+channel_r[5] = 1;    channel_g[5] = 0.5;   channel_b[5] = 0;    // Orange
+channel_r[6] = 0;    channel_g[6] = 1;     channel_b[6] = 1;
+channel_r[7] = 1;    channel_g[7] = 0;     channel_b[7] = 1;
+channel_r[8] = 0.5;  channel_g[8] = 1;     channel_b[8] = 0;
+channel_r[9] = 1;    channel_g[9] = 0.5;   channel_b[9] = 0.5;
+channel_r[10] = 0;   channel_g[10] = 0.5;  channel_b[10] = 0.5;
+channel_r[11] = 0.5; channel_g[11] = 0;    channel_b[11] = 1;
+channel_r[12] = 1;   channel_g[12] = 0.75; channel_b[12] = 0;
+channel_r[13] = 0;   channel_g[13] = 0.75; channel_b[13] = 1;
+channel_r[14] = 1;   channel_g[14] = 0.25; channel_b[14] = 0.25;
+channel_r[15] = 0.25;channel_g[15] = 0.75; channel_b[15] = 0.5;
+
+gfx_timing = 0;
+gfx_velocity = 16;
+current_root = -1;
+cycle_index = 0;
+
+event_pos = 512;
+event_status = 1024;
+event_msg = 1536;
+event_count = 0;
+sample_time = 0;
+
+// store delays for note-ons to reuse for note-offs. i think this will prevent most note bleeding problems.  I might change this to note off all channels instantly
+note_delays = 2048; // Per note (0-127) and channel (0-15)
+
+@block
+
+while (
+  midirecv(mpos, msg1, msg23) ? (
+
+    msg_type = msg1 & 0xF0;
+    note = msg23 & 0xFF;
+    velocity = (msg23 >> 8) & 0x7F;
+
+    is_note_on = msg_type == 0x90 && velocity > 0;
+    is_note_off = msg_type == 0x80 || (msg_type == 0x90 && velocity == 0);
+
+    base_vel = slider2 > 0 ? slider2 : velocity;
+
+
+	rand_range = slider1 * srate / 1000;
+
+    // root channel
+    is_note_on && slider4 > 1 ? (
+      slider6 == 0 ? (
+        current_root = floor(rand(slider4));
+      ) : slider6 == 1 ? (
+        current_root = cycle_index;
+        cycle_index = (cycle_index + 1) % slider4;
+      ) : slider6 == 2 ? (
+        current_root = 0;
+      );
+    ) : (
+      current_root = -1; // no root channel if only one channel
+    );
+
+    //note messages
+    is_note_on || is_note_off ? (
+      i = 0;
+      loop(slider4,
+        is_nodelay = (i == current_root);
+        // Use stored delay for note-off, generate new for note-on
+        delay_samples = is_note_on ? (is_nodelay ? 0 : floor(rand_range * rand(1))) : note_delays[note * 16 + i];
+        pos = sample_time + delay_samples;
+
+        // use delay from note-on to note-off
+        is_note_on ? (
+          note_delays[note * 16 + i] = delay_samples;
+        );
+
+        // velocity randomization
+        vel_rand = slider3 > 0 ? floor((rand(2) - 1) * slider3) : 0;
+        vel_out = base_vel + vel_rand;
+        vel_out = max(1, min(127, vel_out));
+
+        // for gui
+		is_note_on ? (
+			gfx_timing[i] = delay_samples * 1000 / srate;
+			gfx_velocity[i] = vel_out;
+			);
+
+        // queue midi
+        status = is_note_on ? (0x90 | i) : (0x80 | i);
+        msg_out = note | (is_note_on ? (vel_out << 8) : 0);
+        event_pos[event_count] = pos;
+        event_status[event_count] = status;
+        event_msg[event_count] = msg_out;
+        event_count += 1;
+        i += 1;
+      );
+    ) : (
+      // process midi stuff for pitchbend modwheel etc
+      i = 0;
+      loop(slider4,
+        status = msg_type | i;
+        midisend(sample_time, status, msg23);
+        i += 1;
+      );
+    );
+  );
+);
+
+// process queued midi events
+i = 0;
+j = 0;
+while (
+  i < event_count ? (
+    event_pos[i] <= sample_time ? (
+      midisend(0, event_status[i], event_msg[i]);
+      i += 1;
+    ) : (
+      event_pos[j] = event_pos[i];
+      event_status[j] = event_status[i];
+      event_msg[j] = event_msg[i];
+      i += 1;
+      j += 1;
+    );
+  );
+);
+event_count = j;
+
+// update sample time
+sample_time += samplesblock;
+
+@gfx
+gfx_clear = 0.15;
+gfx_setfont(1, "Arial", 16);
+
+// Timing Bar
+bar_x = 40; bar_w = 300; bar_h = 12;
+gfx_x = 10; gfx_y = 10; gfx_r = gfx_g = gfx_b = 1;
+gfx_printf("Timing (ms)");
+bar_y = 30;
+gfx_r = gfx_g = gfx_b = 0.3;
+gfx_rect(bar_x, bar_y, bar_w, bar_h);
+gfx_r = gfx_g = gfx_b = 0.8; gfx_setfont(1, "Arial", 12);
+gfx_x = bar_x + 2; gfx_y = bar_y + bar_h + 2; gfx_printf("0");
+gfx_x = bar_x + bar_w - 20; gfx_printf("250");
+
+i = 0;
+loop(slider4,
+  timing_ms = gfx_timing[i];
+  x = bar_x + (timing_ms / 250) * bar_w;
+  x = max(bar_x, min(bar_x + bar_w - 1, x));
+  gfx_r = channel_r[i]; gfx_g = channel_g[i]; gfx_b = channel_b[i];
+  gfx_line(x, bar_y, x, bar_y + bar_h - 1);
+  i += 1;
+);
+
+// Velocity Bar
+gfx_x = 10; gfx_y = 60; gfx_r = gfx_g = gfx_b = 1;
+gfx_setfont(1, "Arial", 16);
+gfx_printf("Velocity");
+bar_y = 80;
+gfx_r = gfx_g = gfx_b = 0.3;
+gfx_rect(bar_x, bar_y, bar_w, bar_h);
+gfx_r = gfx_g = gfx_b = 0.8; gfx_setfont(1, "Arial", 12);
+gfx_x = bar_x + 2; gfx_y = bar_y + bar_h + 2; gfx_printf("0");
+gfx_x = bar_x + bar_w - 20; gfx_printf("127");
+
+i = 0;
+loop(slider4,
+  velocity_val = gfx_velocity[i];
+  x = bar_x + (velocity_val / 127) * bar_w;
+  x = max(bar_x, min(bar_x + bar_w - 1, x));
+  gfx_r = channel_r[i]; gfx_g = channel_g[i]; gfx_b = channel_b[i];
+  gfx_line(x, bar_y, x, bar_y + bar_h - 1);
+  i += 1;
+);
