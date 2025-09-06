@@ -40,7 +40,7 @@ slider13:0<-12,12,1>Key Map Octave
 slider14:0<0,3,1{1 Channel,2 Channels,3 Channels,4 Channels}>MIDI Channels
 slider15:10<0,200,5>Channel Timing Randomizer (ms)
 
-filename:0,strummer_diagram.png
+filename:0,albthealbatross_MIDI Chord Strummer/strummer_diagram.png
 
 @init
 
