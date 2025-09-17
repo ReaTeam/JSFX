@@ -7,19 +7,19 @@ about:
   Strum any chord UP/DOWN in a guitar-ish way.
 
   Tips:
-	- Use the "Ring Current Notes" key to ring notes.  Ringing notes aren't strummed.
-	  This is great on guitar allowing bass notes to ring out while you strum higher notes at the same time.
+  - Use the "Ring Current Notes" key to ring notes.  Ringing notes aren't strummed.
+  This is great on guitar allowing bass notes to ring out while you strum higher notes at the same time.
 
-	- Change the Keyswitches to match your instrument
-	  Use instrument Keyswitches via the Keyswitch keys (see diagram)
+  - Change the Keyswitches to match your instrument
+Use instrument Keyswitches via the Keyswitch keys (see diagram)
 
-	- Use Bypass Mode "Stopped DAW" for easier chord editing, then strum it live for a natural strum sound
+  - Use Bypass Mode "Stopped DAW" for easier chord editing, then strum it live for a natural strum sound
 
-	- Use multiple channels with random timing to create lush stereo strums
+  - Use multiple channels with random timing to create lush stereo strums
 
-	- Use large speed curves for dramatic strums. Great for harps
+  - Use large speed curves for dramatic strums. Great for harps
 
-	- Use "Skip End Notes" to create more realistic guitar strums by not playing the highest/lowest notes (only kicks in when there are 3 or more notes)
+  - Use "Skip End Notes" to create more realistic guitar strums by not playing the highest/lowest notes (only kicks in when there are 3 or more notes)
 
 slider1:40<1,200,1>Strum Down Speed (ms)
 slider2:-5<-40,40,1>Strum Down Speed Curve
