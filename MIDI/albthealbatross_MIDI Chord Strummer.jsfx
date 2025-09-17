@@ -1,6 +1,8 @@
 desc: MIDI Chord Strummer
 author: ALBtheALBatross
-version: 2.0
+version: 2.0-1
+changelog: Add missing image to the package
+provides: albthealbatross_MIDI Chord Strummer/strummer_diagram.png
 about:
   Strum any chord UP/DOWN in a guitar-ish way.
 
