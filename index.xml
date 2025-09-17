@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="9c17c1b123be711d71de0e60d905221b5dacbe7d">
+<index version="1" name="ReaTeam JSFX" commit="80bd842f7a9c23e29d94cb910352042d1d2aa7b2">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -352,6 +352,11 @@ Yutani Bass
       </version>
       <version name="2.0" author="ALBtheALBatross" time="2025-09-06T16:29:57Z">
         <source>https://github.com/ReaTeam/JSFX/raw/e7b31cd1b72ea5fbbfedb4d74229061e3f6240e2/MIDI/albthealbatross_MIDI%20Chord%20Strummer.jsfx</source>
+      </version>
+      <version name="2.0-1" author="ALBtheALBatross" time="2025-09-17T00:09:55Z">
+        <changelog><![CDATA[Add missing image to the package]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/80bd842f7a9c23e29d94cb910352042d1d2aa7b2/MIDI/albthealbatross_MIDI%20Chord%20Strummer.jsfx</source>
+        <source file="albthealbatross_MIDI Chord Strummer/strummer_diagram.png">https://github.com/ReaTeam/JSFX/raw/80bd842f7a9c23e29d94cb910352042d1d2aa7b2/MIDI/albthealbatross_MIDI%20Chord%20Strummer/strummer_diagram.png</source>
       </version>
     </reapack>
     <reapack name="albthealbatross_Multi-Channel MIDI Timing Randomizer.jsfx" type="effect" desc="Multi-Channel MIDI Timing Randomizer">
