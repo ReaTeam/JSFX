@@ -1,0 +1,98 @@
+desc: APC mini mk2 — Pad Blinker (sync to transport)
+author: tomaszpio
+version: 1.0.0
+
+desc:APC Pad Blinker (Sync to Transport)
+
+/*
+  - Pads 0..63: RGB via SysEx (APC mini mk2, header 47 7F 4F 24)
+  - Buttons 64..127: single-color LED via Note On velocity
+  - Blinks on every beat (quarter note) while transport is playing
+*/
+
+slider1:0<0,127,1>Pad MIDI Note
+slider2:1<0,1,1{Off,On}>Blink
+
+// -------------------------
+// @init
+// -------------------------
+@init
+pad_note   = 0;
+blink_on   = 1;
+
+beat_sec   = 0.5;     // will be set from tempo
+t_accum    = 0.0;
+led_state  = 0;
+
+channel    = 0;       // MIDI ch 1 (0..15)
+status_on  = $x90 | (channel & $x0F);
+status_off = $x80 | (channel & $x0F);
+
+// Prebuilt SysEx header for APC mini mk2 RGB
+//  F0 47 7F 4F 24 00 08 <start> <end> <RMSB> <RLSB> <GMSB> <GLSB> <BMSB> <BLSB> F7
+sysex_len = 16;
+sysex[0]=$xF0; sysex[1]=$x47; sysex[2]=$x7F; sysex[3]=$x4F; sysex[4]=$x24;
+sysex[5]=$x00; sysex[6]=$x08;
+
+// -------------------------
+// helpers
+// -------------------------
+function send_apc_rgb(off, pid, r7f, g7f, b7f)(
+  // clamp pad id to 0..63 per APC mk2 spec
+  pid &= $x3F;
+  sysex[7]=pid; sysex[8]=pid;
+  sysex[9]=0;  sysex[10]=r7f&$x7F;
+  sysex[11]=0; sysex[12]=g7f&$x7F;
+  sysex[13]=0; sysex[14]=b7f&$x7F;
+  sysex[15]=$xF7;
+  midisend_buf(off, sysex, sysex_len);
+);
+
+function send_note_led(off, ch, note, vel)(
+  // NoteOn for LED on buttons 64..127
+  m1 = $x90 | (ch & $x0F);
+  m23 = ((vel & $x7F) << 8) | (note & $x7F);
+  midisend(off, m1, m23);
+);
+
+// -------------------------
+// @slider
+// -------------------------
+@slider
+pad_note = slider1|0;
+blink_on = slider2|0;
+
+// -------------------------
+// @block
+// -------------------------
+@block
+// tempo (BPM) -> seconds per beat
+tempo > 0 ? (beat_sec = 60/tempo) : (beat_sec = 0.5);
+
+// accumulate time in seconds per block
+t_accum += samplesblock/srate;
+
+// transport play? (JSFX udostępnia play_state: 0=stop,1=play,2=pause)
+is_playing = (play_state == 1);
+
+// when playing & blinking enabled -> toggle on each beat
+(is_playing && blink_on) ? (
+  (t_accum >= beat_sec) ? (
+    t_accum -= beat_sec;
+    led_state = led_state ? 0 : 1;
+
+    pid = pad_note & $x7F;
+
+    (pid <= 63) ? (
+      // RGB pads (SysEx): ON = biała (127,127,127), OFF = 0
+      r = led_state ? 127 : 0;
+      g = led_state ? 127 : 0;
+      b = led_state ? 127 : 0;
+      send_apc_rgb(0, pid, r, g, b);
+    ) : (
+      // Buttons (64..127): NoteOn velocity toggled
+      vel = led_state ? 127 : 0;
+      send_note_led(0, channel, pid, vel);
+    );
+  );
+);
