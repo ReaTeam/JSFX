@@ -1,14 +1,10 @@
 desc: APC mini mk2 — Pad Blinker (sync to transport)
 author: tomaszpio
 version: 1.0.0
-
-desc:APC Pad Blinker (Sync to Transport)
-
-/*
+about:
   - Pads 0..63: RGB via SysEx (APC mini mk2, header 47 7F 4F 24)
   - Buttons 64..127: single-color LED via Note On velocity
   - Blinks on every beat (quarter note) while transport is playing
-*/
 
 slider1:0<0,127,1>Pad MIDI Note
 slider2:1<0,1,1{Off,On}>Blink
