@@ -1,21 +1,18 @@
 desc:  APC Pad Blinker (Sync to Transport)
 author: tomaszpio
 version: 1.0.0
-
-/*
 about:
-APC Mini mk2: blink a chosen pad LED **once per quarter note** while the DAW is **playing**.
-- Output is via **Note On velocity** (single-color LED).
-- Tempo comes from host `tempo` (falls back to 120 BPM).
-- Uses pad note numbers (APC pads are typically 0–63; script slider allows up to 77).
+  APC Mini mk2: blink a chosen pad LED **once per quarter note** while the DAW is **playing**.
+  - Output is via **Note On velocity** (single-color LED).
+  - Tempo comes from host `tempo` (falls back to 120 BPM).
+  - Uses pad note numbers (APC pads are typically 0–63; script slider allows up to 77).
 
-Sliders:
-1) Pad MIDI Note (0–77) — which pad to blink
-2) Enable Blinking (Off/On)
-3) Pad Color (0–127) — velocity used when LED is ON
+  Sliders:
+  1) Pad MIDI Note (0–77) — which pad to blink
+  2) Enable Blinking (Off/On)
+  3) Pad Color (0–127) — velocity used when LED is ON
 
-MIDI out (LED): status `0x96` (Note On, ch. 7), data1 = pad note, data2 = color or 0.
-*/
+  MIDI out (LED): status `0x96` (Note On, ch. 7), data1 = pad note, data2 = color or 0.
 
 slider1:0<0,77,1>Pad MIDI Note (0-63)
 slider2:1<0,1,1{Off,On}>Enable Blinking
