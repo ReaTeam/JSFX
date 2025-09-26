@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="ed050b8907df6a31929747031139ea4d38d0124a">
+<index version="1" name="ReaTeam JSFX" commit="8d0fdc416983c49ef15a50daf94e1366ab2a28e2">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -2832,6 +2832,28 @@ Add value slider]]></changelog>
       <version name="0.6.6beta1" author="Kevin Morrison (ThrashJazzAssassin)" time="2024-09-29T20:03:44Z">
         <changelog><![CDATA[-Add Sustain pedal filter]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/1e18276ee8a78fc670e1bad075c983530a9fe282/MIDI/TJA_MIDI%20Performer2.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="tomaszpio_APC Pad Blinker (Sync to Transport).jsfx" type="effect" desc="APC Pad Blinker (Sync to Transport)">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 APC Mini mk2: blink a chosen pad LED {\b once per quarter note} while the DAW is {\b playing}.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Output is via {\b Note On velocity} (single-color LED).\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Tempo comes from host {\f1 tempo} (falls back to 120 BPM).\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Uses pad note numbers (APC pads are typically 0\u8211-63; script slider allows up to 77).\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Sliders:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 1)\tx360\tab Pad MIDI Note (0\u8211-77) \u8212- which pad to blink\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 2)\tx360\tab Enable Blinking (Off/On)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 3)\tx360\tab Pad Color (0\u8211-127) \u8212- velocity used when LED is ON\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 MIDI out (LED): status {\f1 0x96} (Note On, ch. 7), data1 = pad note, data2 = color or 0.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0.0" author="tomaszpio" time="2025-09-26T05:38:42Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/8d0fdc416983c49ef15a50daf94e1366ab2a28e2/MIDI/tomaszpio_APC%20Pad%20Blinker%20(Sync%20to%20Transport).jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
