@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="8d0fdc416983c49ef15a50daf94e1366ab2a28e2">
+<index version="1" name="ReaTeam JSFX" commit="c8ab0e4dce9b81436442e2ef26816ab832f4605e">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -2832,6 +2832,30 @@ Add value slider]]></changelog>
       <version name="0.6.6beta1" author="Kevin Morrison (ThrashJazzAssassin)" time="2024-09-29T20:03:44Z">
         <changelog><![CDATA[-Add Sustain pedal filter]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/1e18276ee8a78fc670e1bad075c983530a9fe282/MIDI/TJA_MIDI%20Performer2.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="tomaszpio_AKAI APC mini grid toggle.jsfx" type="effect" desc="AKAI APC mini grid toggle">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 NoteGrid Toggle is a JSFX plugin for REAPER.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Displays a 4x4 grid of 16 toggle slots, mapped to MIDI notes starting from a selectable offset.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Incoming NOTE ON (with velocity > 0) toggles the corresponding slot state.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Each toggle sends either:\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab MIDI CC (value 127 when ON, 0 when OFF), or\par}
+{\pard \ql \f0 \sa0 \li720 \fi-360 \endash \tx360\tab MIDI Note (Note On 127 when ON, Note Off when OFF).\sa180\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Input gating: Omni or specific channel.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Output: fixed channel or follow the input channel.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab UI shows last input, last output, last toggle, and current slot states.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab CC120/123 (All Sound/All Notes Off) clears all slots (no additional output).\sa180\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0.0" author="tomaszpio" time="2025-09-27T13:03:06Z">
+        <changelog><![CDATA[initial version]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/c8ab0e4dce9b81436442e2ef26816ab832f4605e/MIDI/tomaszpio_AKAI%20APC%20mini%20grid%20toggle.jsfx</source>
       </version>
     </reapack>
     <reapack name="tomaszpio_APC Pad Blinker (Sync to Transport).jsfx" type="effect" desc="APC Pad Blinker (Sync to Transport)">
