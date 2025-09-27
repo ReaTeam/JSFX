@@ -1,0 +1,217 @@
+desc: AKAI APC mini grid toggle
+author: tomaszpio
+version: 1.0.0
+changelog: initial version
+about:
+  NoteGrid Toggle is a JSFX plugin for REAPER.
+  
+  - Displays a 4x4 grid of 16 toggle slots, mapped to MIDI notes starting from a selectable offset.
+  - Incoming NOTE ON (with velocity > 0) toggles the corresponding slot state.
+  - Each toggle sends either:
+    - MIDI CC (value 127 when ON, 0 when OFF), or
+    - MIDI Note (Note On 127 when ON, Note Off when OFF).
+  - Input gating: Omni or specific channel.
+  - Output: fixed channel or follow the input channel.
+  - UI shows last input, last output, last toggle, and current slot states.
+  - CC120/123 (All Sound/All Notes Off) clears all slots (no additional output).
+
+// -------------------------
+// Sliders
+// -------------------------
+slider1:0<0,16,1{Omni,Channel 1,Channel 2,Channel 3,Channel 4,Channel 5,Channel 6,Channel 7,Channel 8,Channel 9,Channel 10,Channel 11,Channel 12,Channel 13,Channel 14,Channel 15,Channel 16}>Input Channel
+slider2:1<1,3,1{Dark Gray,Gray,Black}>Color Scheme
+slider3:0<0,112,1>Slot Base Note
+slider4:0<0,16,1{Follow IN,Channel 1,Channel 2,Channel 3,Channel 4,Channel 5,Channel 6,Channel 7,Channel 8,Channel 9,Channel 10,Channel 11,Channel 12,Channel 13,Channel 14,Channel 15,Channel 16}>Output Channel
+slider5:0<0,1,1{MIDI CC,MIDI Note}>Output Type
+
+// -------------------------
+// @init
+// -------------------------
+@init
+SLOTS = 16;
+STATE_BASE = 0; STATE_SIZE = SLOTS;
+state = STATE_BASE;
+
+in_channel      = slider1 - 1;
+color_mode      = slider2|0;
+slot_offset     = slider3|0;
+out_channel_sel = slider4|0;
+out_type        = slider5|0;
+
+last_in_status=-1; last_in_ch=-1; last_in_d1=-1; last_in_d2=-1;
+last_toggle_slot=-1; last_toggle_newstate=-1;
+last_reset_cc=-1; last_reset_ch=-1;
+last_out_kind=-1; last_out_num=-1; last_out_val=-1; last_out_ch=-1;
+
+CC_ON  = 127; CC_OFF = 0; VEL_ON = 127;
+
+i=0; loop(STATE_SIZE, state[i]=0; i+=1;);
+
+// -------------------------
+// @slider
+// -------------------------
+@slider
+in_channel      = slider1 - 1;
+color_mode      = slider2|0;
+slot_offset     = slider3|0;
+out_channel_sel = slider4|0;
+out_type        = slider5|0;
+
+// -------------------------
+// @block
+// -------------------------
+@block
+while ( midirecv(offset, msg1, msg23) ? 
+(
+  status = msg1 & 0xF0;
+  ch_in  = msg1 & 0x0F;
+  d1 =  msg23       & 0x7F;
+  d2 = (msg23 >> 8) & 0x7F;
+
+  last_in_status=status; last_in_ch=ch_in; last_in_d1=d1; last_in_d2=d2;
+
+  reacts = (in_channel < 0) || (ch_in == in_channel);
+
+  (status==0x90) && (d2>0) && reacts ? (
+    slot = d1 - slot_offset;
+    (slot >= 0 && slot < SLOTS) ? (
+      newstate = state[slot] ? 0 : 1;
+      state[slot] = newstate;
+      last_toggle_slot = slot;
+      last_toggle_newstate = newstate;
+
+      real_num = slot_offset + slot;
+      out_ch   = (out_channel_sel == 0) ? (ch_in & 0x0F) : ((out_channel_sel-1) & 0x0F);
+
+      (out_type == 0) ? (
+        out_status = 0xB0 | (out_ch & 0x0F);
+        out_val    = newstate ? CC_ON : CC_OFF;
+        out_data   = (real_num & 0x7F) | ((out_val & 0x7F) << 8);
+        midisend(offset, out_status, out_data);
+        last_out_kind=0; last_out_num=real_num; last_out_val=out_val; last_out_ch=out_ch;
+      ) : (
+        (newstate ? (
+          out_status = 0x90 | (out_ch & 0x0F);
+          out_data   = (real_num & 0x7F) | ((VEL_ON & 0x7F) << 8);
+        ) : (
+          out_status = 0x80 | (out_ch & 0x0F);
+          out_data   = (real_num & 0x7F);
+        ));
+        midisend(offset, out_status, out_data);
+        last_out_kind=1; last_out_num=real_num; last_out_val=(newstate?VEL_ON:0); last_out_ch=out_ch;
+      );
+    );
+  );
+
+  (status==0xB0) ? (
+    cc = d1;
+    (cc == 123 || cc == 120) ? (
+      i=0; loop(SLOTS, state[i]=0; i+=1;);
+      last_reset_cc = cc; last_reset_ch = ch_in;
+    );
+  );
+
+  1;
+) : 0 );
+
+// -------------------------
+// @gfx (unchanged)
+// -------------------------
+@gfx
+gfx_clear = color_mode == 1 ? 0x202020 : color_mode == 2 ? 0x303030 : 0x000000;
+gfx_a = 1;
+margin=10; pad_between=4; bottompad=margin; cols=4; rows=4;
+gfx_setfont(1,"",14);
+
+#in_str=""; (in_channel<0)?strcpy(#in_str,"Omni"):sprintf(#in_str,"Ch %d",in_channel+1);
+#out_ch_str=""; (out_channel_sel==0)?strcpy(#out_ch_str,"Follow IN"):sprintf(#out_ch_str,"Ch %d",out_channel_sel);
+#out_type_str=""; (out_type==0)?strcpy(#out_type_str,"CC"):strcpy(#out_type_str,"Note");
+sprintf(#hdr,"NoteGrid Toggle — OUT:%s — Offset:%d..%d — IN:%s — OUT CH:%s", #out_type_str, slot_offset, slot_offset+15, #in_str, #out_ch_str);
+gfx_measurestr(#hdr, w,h); gfx_r=gfx_g=gfx_b=1; gfx_x=margin; gfx_y=margin; gfx_drawstr(#hdr);
+
+// IN log
+(last_in_status>=0)?
+(
+  #it=""; (last_in_status==0x80)?strcpy(#it,"IN: NoteOff")
+  : (last_in_status==0x90)?strcpy(#it,"IN: NoteOn")
+  : (last_in_status==0xB0)?strcpy(#it,"IN: CC")
+  : (last_in_status==0xE0)?strcpy(#it,"IN: Pitch")
+  : sprintf(#it,"IN: 0x%02X",last_in_status);
+  sprintf(#inln,"%s  Ch %d  d1=%3d  d2=%3d",#it,last_in_ch+1,last_in_d1,last_in_d2);
+)
+:
+(
+  strcpy(#inln,"IN: —");
+);
+gfx_measurestr(#inln, iw, ih); gfx_x=margin; gfx_y=margin+h+pad_between; gfx_drawstr(#inln);
+
+// OUT log
+(last_out_num>=0)?
+(
+  (last_out_kind==0)?
+    sprintf(#outln,"OUT CC: #%d  val %3d  Ch %d", last_out_num, last_out_val, last_out_ch+1)
+  :
+    sprintf(#outln,"OUT NOTE: %3d  vel %3d  Ch %d", last_out_num, last_out_val, last_out_ch+1);
+)
+:
+(
+  strcpy(#outln,"OUT: —");
+);
+gfx_measurestr(#outln, ow, oh); gfx_x=margin; gfx_y=margin+h+pad_between+ih+pad_between; gfx_drawstr(#outln);
+
+// last toggle / last reset
+(last_toggle_slot>=0)?
+(
+  sprintf(#tgl,"Last toggle: slot %d  -> %s  (num %d)", last_toggle_slot, (last_toggle_newstate?"ON":"OFF"), slot_offset+last_toggle_slot);
+)
+:
+(
+  strcpy(#tgl,"Last toggle: —");
+);
+gfx_measurestr(#tgl, tw, th); gfx_x=margin; gfx_y=margin+h+pad_between+ih+pad_between+oh+pad_between; gfx_drawstr(#tgl);
+
+(last_reset_cc>=0)?
+(
+  sprintf(#rst,"Last reset: CC %d  on Ch %d (state cleared)", last_reset_cc, last_reset_ch+1);
+)
+:
+(
+  strcpy(#rst,"Last reset: —");
+);
+gfx_measurestr(#rst, rw, rh); gfx_x=margin; gfx_y=margin+h+pad_between+ih+pad_between+oh+pad_between+th+pad_between; gfx_drawstr(#rst);
+
+// GRID
+top = margin+h+pad_between+ih+pad_between+oh+pad_between+th+pad_between+rh+pad_between;
+avail_w = max(1, gfx_w-2*margin);
+avail_h = max(1, gfx_h-top-bottompad-20-pad_between);
+cell_w = floor(avail_w/cols); cell_h = floor(avail_h/rows); cell_h<18?cell_h=18;
+grid_w = cell_w*cols; grid_h = cell_h*rows;
+grid_x0 = margin + floor((avail_w-grid_w)*0.5);
+grid_y0 = top;
+
+i=0; loop(SLOTS,
+  row = floor(i/cols);
+  col = i % cols;
+
+  gx = grid_x0 + col * cell_w;
+  gy = grid_y0 + row * cell_h;
+
+  on = state[i]?1:0;
+  real_num = slot_offset+i; real_num<0?real_num=0:real_num>127?real_num=127;
+
+  gfx_r=on?0.10:0.07; gfx_g=on?0.30:0.07; gfx_b=on?0.10:0.07; gfx_rect(gx,gy,cell_w-1,cell_h-1);
+  gfx_r=gfx_g=gfx_b=0.6;
+  gfx_line(gx,gy,gx+cell_w-1,gy);
+  gfx_line(gx,gy,gx,gy+cell_h-1);
+  gfx_line(gx+cell_w-1,gy,gx+cell_w-1,gy+cell_h-1);
+  gfx_line(gx,gy+cell_h-1,gx+cell_w-1,gy+cell_h-1);
+
+  gfx_r=on?0.2:0.8; gfx_g=on?1.0:0.8; gfx_b=on?0.2:0.8;
+  gfx_x=gx+4; gfx_y=gy+floor((cell_h-12)*0.5);
+  (out_type==0) ? sprintf(#lab,"N %03d CC",real_num) : sprintf(#lab,"N %03d NOTE",real_num);
+  gfx_drawstr(#lab);
+
+  i+=1;
+);
+
+gfx_dirty=1;
