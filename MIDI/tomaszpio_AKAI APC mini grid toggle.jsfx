@@ -4,19 +4,16 @@ version: 1.0.0
 changelog: initial version
 about:
   NoteGrid Toggle is a JSFX plugin for REAPER.
-    - Displays a 4x4 grid of 16 toggle slots, mapped to MIDI notes starting from a selectable offset.
-    - Incoming NOTE ON (with velocity > 0) toggles the corresponding slot state.
-    - Each toggle sends either:
-        • MIDI CC (value 127 when ON, 0 when OFF), or
-        • MIDI Note (Note On 127 when ON, Note Off when OFF).
-    - Input gating: Omni or specific channel.
-    - Output: fixed channel or follow the input channel.
-    - UI shows last input, last output, last toggle, and current slot states.
-    - CC120/123 (All Sound/All Notes Off) clears all slots (no additional output).
-
-
-
-
+  
+  - Displays a 4x4 grid of 16 toggle slots, mapped to MIDI notes starting from a selectable offset.
+  - Incoming NOTE ON (with velocity > 0) toggles the corresponding slot state.
+  - Each toggle sends either:
+      • MIDI CC (value 127 when ON, 0 when OFF), or
+      • MIDI Note (Note On 127 when ON, Note Off when OFF).
+  - Input gating: Omni or specific channel.
+  - Output: fixed channel or follow the input channel.
+  - UI shows last input, last output, last toggle, and current slot states.
+  - CC120/123 (All Sound/All Notes Off) clears all slots (no additional output).
 
 // -------------------------
 // Sliders
