@@ -1,0 +1,48 @@
+noindex: true
+
+@description Compensator – sender
+@version 1.0.0
+@author Michael Voitovich (zx.hunter@gmail.com)
+@changelog
+  - Initial public release
+@about
+  LevelLink keeps post-FX level equal to the pre-FX reference (from Sender).
+  Modes: RMS, Peak, LUFS-M (400ms), LUFS-S (3s). A/B via Reference monitoring.
+desc:Compensator - sender (to sidechain)
+author:zx.Hunter@gmail.com & Reaper DAW Ultimate Assistant
+chans:16
+
+slider1:1<0,7,1{1/2,3/4,5/6,7/8,9/10,11/12,13/14,15/16}>Reference channels
+slider2:0<-24,24,0.1>Reference trim (dB)
+//slider3:0<0,1,1{Reserved,Reserved}>Compat placeholder (keep at 0)
+//slider4:0<0,1,1{Idle,Setup routing now}>Action (for Lua daemon)
+
+@init
+EPS=0.00000000000000000001;
+LN10=log(10);
+function amp_from_db(d) ( exp(d*LN10/20); );
+
+// helper: write L/R into selected pair by index 0..7
+function put_pair_idx(idx, L, R) (
+  idx==0 ? ( spl0  = L;  spl1  = R; )
+: idx==1 ? ( spl2  = L;  spl3  = R; )
+: idx==2 ? ( spl4  = L;  spl5  = R; )
+: idx==3 ? ( spl6  = L;  spl7  = R; )
+: idx==4 ? ( spl8  = L;  spl9  = R; )
+: idx==5 ? ( spl10 = L;  spl11 = R; )
+: idx==6 ? ( spl12 = L;  spl13 = R; )
+:          ( spl14 = L;  spl15 = R; );
+);
+
+@slider
+pair_idx = floor(slider1+0.5);   // 0..7  -> {1/2..15/16}
+g        = amp_from_db(slider2); // trim lin
+
+@sample
+inL = spl0; inR = spl1;
+rL  = inL * g;
+rR  = inR * g;
+put_pair_idx(pair_idx, rL, rR);
+
+// (без @gfx)
+
