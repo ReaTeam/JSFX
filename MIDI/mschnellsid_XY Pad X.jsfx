@@ -1,0 +1,399 @@
+desc: XY Pad X
+author: mschnell & SID
+version: 1.0
+changelog: Initial release (Based on XY Pad)
+about:
+  # XY Pad X
+  Sends out high resolution CC messages when the circle is dragged.
+
+  Moreover DAW-Parameters (hidden sliders) "x" and "Y" are provided for being directly linked from other plugins.
+
+
+  ### [+] menu in the Reaper provided plugin frame: 
+
+  show or hide faders
+
+  initial values (whenever loaded) for Wide/Narrow and Dragging modes.
+
+  ### Right click "color Key menu" on the left border or hit key to select modes: 
+
+    A red:        single CC -> only vertical (to use multiple "thin" instances)
+
+    B green:      dual CCs by X/Y pad 
+ 
+    C blue:       "drag" mode (left click and drag)
+
+    D dark gray:  "auto mode 1a (see below) 
+
+    E light gray: "auto mode 1b (see below) 
+
+    F white:      "auto mode 2" move by mouse over without clicking
+  
+  #### auto mode 1: 
+
+    green circle: passive 
+
+    click on pad: start dragging (circle turns white -> active)     
+
+    white circle: drag by mouse over
+
+    leave pad: circle turns green -> passive 
+
+    right click: circle turns green -> passive
+
+  ####  auto mode 1b: 
+
+  also left click: circle turns green -> passive
+
+
+      
+// auto -> move : 
+// 0 only with click      
+// 1 enabled: wait for first click 
+// 2 enabled until outside
+// 3 always
+      
+// auto_toggle (reset autop to passive with left-click)
+// 0 never
+// 1
+// 2
+
+
+
+in_pin:none
+out_pin:none
+
+config: conf "View Sliders" 0 0="No" 1="Yes"
+config: conf_width "Width" 0 0="A = wide" 1="B = narrow"
+config: conf_auto "Drag-Mode" 0 0="C = Left-Drag" 1="D = start Left-Drag, stop Right-Click" 2="E =  start Left-Drag, stop Right-Click or left-Click" 3="F = Hover-Drag"
+
+<?conf == 0 ? (
+   show = "-";
+  ) : ( 
+   show = "";
+);
+?>
+
+<?conf_auto == 0 ? (
+  init_auto = 0;
+  init_auto_toggle = 0;
+ ) : conf_auto == 1 ? (
+  init_auto = 1;
+  init_auto_toggle = 0;
+ ) : conf_auto == 2 ? (
+  init_auto = 1;
+  init_auto_toggle = 1;
+ ) : conf_auto == 3 ? (
+  init_auto = 3;
+  init_auto_toggle = 0;
+);  
+?>
+
+slider1:0<0,16,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}><?printf(show)?>Channel
+slider2:16<0,31,1{0 Bank Sel,1 Mod Wheel,2 Breath,3,4 Foot P,5 Porta,6 Data Entry,7 Vol,8 Balance,9,10 Pan,11 Expression,12 Ctrl 1,13 Ctrl 2,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,}><?printf(show)?>X CC # (Hi Res)
+slider3:17<0,31,1{0 Bank Sel,1 Mod Wheel,2 Breath,3,4 Foot P,5 Porta,6 Data Entry,7 Vol,8 Balance,9,10 Pan,11 Expression,12 Ctrl 1,13 Ctrl 2,14,15,16 GP Slider 1,17 GP Slider 2,18 GP Slider 3,19 GP Slider 4,20,21,22,23,24,25,26,27,28,29,30,31,}><?printf(show)?>Y CC # (Hi Res)
+slider4:0<0,11,1{Off, On}><?printf(show)?>Hi Res CC 
+slider10:0<0,1,0.0001><?printf(show)?>X
+slider11:0<0,1,0.0001><?printf(show)?>Y
+
+
+@init
+  ext_noinit = 1;
+
+  xh  = 0;
+  xl  = 0;
+  yh  = 0;
+  yl  = 0;
+  xh_ = -1;
+  xl_ = -1;
+  yh_ = -1;
+  yl_ = -1;
+  x_  = -1;
+  y_  = -1;
+  border = 20;
+  border2 = border / 2;
+  last_gfx_w = -1;
+  last_gfx_h = -1;
+
+  width = <?printf("%d", conf_width)?>;
+  auto = <?printf("%d", init_auto)?>;
+  auto_toggle = <?printf("%d", init_auto_toggle)?>;
+  
+
+@slider
+mes1   = 0x0B0 + slider1;
+mes2xl = slider2 + 0x20;
+mes2xh = slider2;
+mes2yl = slider3 + 0x20;
+mes2yh = slider3;
+
+@block
+  !width ? (
+    xh != xh_ ? (
+      xh_ = xh;
+      midisend(0, mes1, mes2xh, xh_);  
+    );
+    slider4 ? (
+      xl != xl_ ? (
+        xl_ = xl;
+        midisend(0, mes1, mes2xl, xl_);  
+      );  
+    );
+  );  
+  yh != yh_ ? (
+    yh_ = yh;
+    midisend(0, mes1, mes2yh, yh_);  
+  );
+  slider4 ? (
+    yl != yl_ ? (
+      yl_ = yl;
+      midisend(0, mes1, mes2yl, yl_);  
+    );  
+  );
+
+
+@gfx 640 400
+  redraw = 0;
+
+  width ? gfx_w = border * 2 + 1;
+  gfx_h2 = gfx_h / 2;
+  
+  last_gfx_w != gfx_w ? (
+    last_gfx_w = gfx_w;
+    redraw = 1;
+  );
+
+  last_gfx_h != gfx_h ? (
+    last_gfx_h = gfx_h;
+    redraw = 1;
+  );
+  
+  c = gfx_getchar();
+  c > 0 ? (
+    c == 'a' ? (
+      width = 1;
+      redraw = 1;
+     ) : c == 'b' ? (
+      width = 0;
+      redraw = 1;
+     ) : c == 'c' ? (
+      auto = 0;
+      auto_toggle = 0; 
+      redraw = 1;
+     ) : c == 'd' ? (
+      auto = 1;
+      auto_toggle = 0; 
+      redraw = 1;
+     ) : c == 'e' ? (
+      auto = 1;
+      auto_toggle = 1; 
+      redraw = 1;
+     ) : c == 'f' ? (
+      auto = 3;
+      auto_toggle = 0; 
+      redraw = 1;
+    );
+  );
+
+  mouse_cap & 2 ? (
+    mouse_x < border ? (
+      (mouse_y >         border) && (mouse_y <  3*border) ? (
+        width = 1;
+        redraw = 1;
+       ) : (mouse_y >  3*border) && (mouse_y <  5*border) ? ( 
+        width = 0;
+        redraw = 1;
+       ) : (mouse_y >  5*border) && (mouse_y <  7*border) ? ( 
+        auto = 0;
+        auto_toggle = 0; 
+        redraw = 1;
+       ) : (mouse_y >  7*border) && (mouse_y <  9*border) ? ( 
+        auto = 1;
+        auto_toggle = 0; 
+        redraw = 1;
+       ) : (mouse_y >  9*border) && (mouse_y < 11*border) ? ( 
+        auto = 1;
+        auto_toggle = 1; 
+        redraw = 1;
+       ) : (mouse_y > 11*border) && (mouse_y < 13*border) ? ( 
+        auto = 3;
+        auto_toggle = 0; 
+        redraw = 1;
+        mouse_x = border; mouse_y = gfx_h-border-1;
+       ); 
+      ) : ( 
+       auto == 2 ? (
+         auto = 1;
+         redraw = 1;
+       );  
+    );  
+  );
+
+  auto_do = 0;
+  auto ? 
+    (mouse_x > 0) && (mouse_x < gfx_w) && (mouse_y > 0) && (mouse_y < gfx_h) ? (
+            auto > 1 ?  auto_do = 1;
+           ) : (     // outside 
+            auto == 2 ? (
+              auto = 1;
+              redraw = 1;
+            );  
+          );
+   
+
+  (mouse_cap & 1) || auto_do ? (
+    _x = mouse_x - border;
+    _y = mouse_y - border;
+
+    _x < 0 ? _x = 0;
+    _y < 0 ? _y = 0;
+
+    // Calculate normalized position within active area
+    x = _x / active_w;
+    y = _y / active_h;
+  
+    x *= 16384;
+    y *= 16384;
+    y = 16383-y;
+    x |= 0;
+    y |= 0;
+  
+    x < 0 ? (
+       x = 0;
+      _x = border;
+     ) : x > 16383 ? (
+       x = 16383; 
+      _x = active_w;
+    );  
+    y < 0 ? (
+       y = 0;
+      _y = active_h; 
+     ) : y > 16383 ? (
+       y = 16383; 
+      _y = border;
+    );  
+
+    xh = x / 128;
+    xh |= 0;
+    xl = x -xh * 128;
+    yh = y / 128;
+    yh |= 0;
+    yl = y -yh * 128;
+  
+    mouse_cap & 1 ? (
+      auto_toggle == 1 ? (
+        auto == 2 ? (
+          auto = 1;
+          redraw = 1;
+        );  
+      );
+    );  
+  
+    (x != x_) || (y!=y_) ? (
+      auto == 1 ? (
+        auto = 2;  // enable hover-dragging
+        auto_toggle ? auto_toggle = 2;
+      );  
+      redraw = 1;
+     ) : (
+      auto == 2 ? (
+        mouse_cap & 1 ? (
+          auto_toggle == 2 ? auto_toggle = 1;
+        );  
+      );  
+    );  
+);    
+redraw ? ( 
+      x_ = x;
+      y_ = y;
+
+      // Calculate active area dimensions
+      active_w = gfx_w - (border * 2);
+      active_h = gfx_h - (border * 2);
+
+
+      // Draw background
+      gfx_r = gfx_g = gfx_b = 0.1;
+      gfx_rect(0, 0, gfx_w, gfx_h);
+
+      // Draw active area
+      gfx_r = gfx_g = gfx_b = 0.15;
+      gfx_rect(border, border, active_w, active_h);
+      width ? gfx_r = 1 : gfx_g = 1;
+      gfx_line(border,gfx_h-border,gfx_w-border,border);
+
+      // Draw position indicator (offset by border)
+      gfx_r = gfx_g = gfx_b = 1;
+      auto == 0 ? (
+         gfx_r = 0.1;
+        ) : auto == 1 ? (
+         gfx_r = gfx_b = 0.1;
+      ); 
+      gfx_circle(_x + border, _y + border, 7);
+      gfx_circle(_x + border, _y + border, 6);
+
+      //give x/y feedback
+      gfx_r = gfx_g = gfx_b = 1;
+      gfx_x = 5;
+      gfx_y = 5;
+      slider4 ? (
+        sprintf(#textx, "CC %2d: %3d / CC %2d: %3d", slider3, yh, slider3+32, yl);
+       ) : ( 
+        sprintf(#textx, "CC %2d: %3d", slider3, yh);
+      ); 
+      gfx_drawstr(#textx);
+      !width ? (
+       slider4 ? (
+          gfx_x = gfx_w - 185;
+         ) : (
+          gfx_x = gfx_w - 80;
+        ); 
+        gfx_y = gfx_h - border/2;
+        slider4 ? (
+          sprintf(#texty, "CC %2d: %3d / CC %2d: %3d", slider2, xh, slider2+32, xl);
+         ) : ( 
+          sprintf(#texty, "CC %2d: %3d", slider2, xh);
+        ); 
+        gfx_drawstr(#texty);
+      );  
+      
+      
+      // Show "menu" 
+      gfx_r = 1;
+      gfx_g = gfx_b = 0.1;
+      gfx_x = 7; gfx_y = border;
+      gfx_drawstr("A");
+      width ?  gfx_circle(border2, 2*border, border/5, 1);
+
+      gfx_g = 1;
+      gfx_r = gfx_b = 0.1;
+      gfx_x = 7; gfx_y = 3*border;
+      gfx_drawstr("B");
+      !width ?  gfx_circle(border2,  4*border, border/5, 1);
+
+      gfx_b = 1;
+      gfx_g = gfx_r = 0.1;
+      gfx_x = 7; gfx_y = 5*border;
+      gfx_drawstr("C");
+      auto == 0 ? gfx_circle(border2, 6*border, border/5, 1);
+
+      gfx_r = gfx_g = gfx_b = 0.33;
+      gfx_x = 7; gfx_y = 7*border;
+      gfx_drawstr("D");
+      (auto > 0) && (auto < 3) && (auto_toggle == 0) ? gfx_circle(border2, 8*border, border/5, 1);
+
+      gfx_r = gfx_g = gfx_b = 0.66;
+      gfx_x = 7; gfx_y = 9*border;
+      gfx_drawstr("E");
+      (auto > 0) && (auto_toggle > 0) ? gfx_circle(border2, 10*border, border/5, 1);
+
+
+      gfx_r = gfx_g = gfx_b = 1;
+      gfx_x = 7; gfx_y = 11*border;
+      gfx_drawstr("F");
+      (auto == 3) ? gfx_circle(border2, 12*border, border/5, 1);
+
+      
+      slider10 = x / 16383;
+      slider11 = y / 16383;
+);  
