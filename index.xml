@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="c8ab0e4dce9b81436442e2ef26816ab832f4605e">
+<index version="1" name="ReaTeam JSFX" commit="60fb85c40ba5892eedb920858713c0520b814064">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -1235,6 +1235,41 @@ Moreover DAW-Parameters (hidden sliders) "x" and "Y" are provided for being dire
       <version name="2.0" author="mschnell" time="2020-07-08T20:41:03Z">
         <changelog><![CDATA[add x and y hidden gader]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/3d9293eb094edaa11ce24e125dc9832f3e1fac2d/MIDI/mschnell_XY%20Pad.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="mschnellsid_XY Pad X.jsfx" type="effect" desc="XY Pad X">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel0 \b \fs36 XY Pad X\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Sends out high resolution CC messages when the circle is dragged.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 Moreover DAW-Parameters (hidden sliders) "x" and "Y" are provided for being directly linked from other plugins.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 [+] menu in the Reaper provided plugin frame:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 show or hide faders\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 initial values (whenever loaded) for Wide/Narrow and Dragging modes.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel2 \b \fs28 Right click "color Key menu" on the left border or hit key to select modes:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 A red: single CC -> only vertical (to use multiple "thin" instances)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 B green: dual CCs by X/Y pad\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 C blue: "drag" mode (left click and drag)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 D dark gray: "auto mode 1a (see below)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 E light gray: "auto mode 1b (see below)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 F white: "auto mode 2" move by mouse over without clicking\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel3 \b \fs24 auto mode 1:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 green circle: passive\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 click on pad: start dragging (circle turns white -> active)\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 white circle: drag by mouse over\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 leave pad: circle turns green -> passive\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 right click: circle turns green -> passive\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 \outlinelevel3 \b \fs24 auto mode 1b:\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 also left click: circle turns green -> passive\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0" author="mschnell &amp; SID" time="2025-10-20T10:45:40Z">
+        <changelog><![CDATA[Initial release (Based on XY Pad)]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/60fb85c40ba5892eedb920858713c0520b814064/MIDI/mschnellsid_XY%20Pad%20X.jsfx</source>
       </version>
     </reapack>
     <reapack name="polgo_MIDI Envelocity.jsfx" type="effect" desc="MIDI Envelocity">
