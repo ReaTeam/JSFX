@@ -1,7 +1,7 @@
 desc: XY Pad X
 author: mschnell & SID
-version: 1.0
-changelog: Initial release (Based on XY Pad)
+version: 1.1
+changelog: preserve slider settings when hiding sliders
 about:
   # XY Pad X
   Sends out high resolution CC messages when the circle is dragged.
@@ -17,10 +17,10 @@ about:
 
   ### Right click "color Key menu" on the left border or hit key to select modes: 
 
-    A red:        single CC -> only vertical (to use multiple "thin" instances)
+    A red:        single CC -> single CC only vertical (to use multiple "thin" instances)
 
     B green:      dual CCs by X/Y pad 
- 
+
     C blue:       "drag" mode (left click and drag)
 
     D dark gray:  "auto mode 1a (see below) 
@@ -28,7 +28,7 @@ about:
     E light gray: "auto mode 1b (see below) 
 
     F white:      "auto mode 2" move by mouse over without clicking
-  
+
   #### auto mode 1: 
 
     green circle: passive 
@@ -45,8 +45,6 @@ about:
 
   also left click: circle turns green -> passive
 
-
-      
 // auto -> move : 
 // 0 only with click      
 // 1 enabled: wait for first click 
@@ -63,7 +61,7 @@ about:
 in_pin:none
 out_pin:none
 
-config: conf "View Sliders" 0 0="No" 1="Yes"
+config: conf "View Sliders -preserve-config" 0 0="No" 1="Yes"
 config: conf_width "Width" 0 0="A = wide" 1="B = narrow"
 config: conf_auto "Drag-Mode" 0 0="C = Left-Drag" 1="D = start Left-Drag, stop Right-Click" 2="E =  start Left-Drag, stop Right-Click or left-Click" 3="F = Hover-Drag"
 
