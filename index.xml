@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="ceca2b742cd905179d7425ff84c65db331e10993">
+<index version="1" name="ReaTeam JSFX" commit="6ec56a68405ab3ff39da422a8665e9c2030b3086">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -1274,6 +1274,10 @@ Moreover DAW-Parameters (hidden sliders) "x" and "Y" are provided for being dire
       <version name="1.1" author="mschnell &amp; SID" time="2025-10-25T00:58:57Z">
         <changelog><![CDATA[preserve slider settings when hiding sliders]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/ceca2b742cd905179d7425ff84c65db331e10993/MIDI/mschnellsid_XY%20Pad%20X.jsfx</source>
+      </version>
+      <version name="1.2" author="mschnell &amp; SID" time="2025-10-25T06:34:39Z">
+        <changelog><![CDATA[preserve slider settings when modifying  any [+] option]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/6ec56a68405ab3ff39da422a8665e9c2030b3086/MIDI/mschnellsid_XY%20Pad%20X.jsfx</source>
       </version>
     </reapack>
     <reapack name="polgo_MIDI Envelocity.jsfx" type="effect" desc="MIDI Envelocity">
