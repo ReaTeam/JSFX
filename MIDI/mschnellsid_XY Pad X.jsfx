@@ -1,7 +1,7 @@
 desc: XY Pad X
 author: mschnell & SID
-version: 1.1
-changelog: preserve slider settings when hiding sliders
+version: 1.2
+changelog: preserve slider settings when modifying  any [+] option
 about:
   # XY Pad X
   Sends out high resolution CC messages when the circle is dragged.
@@ -62,8 +62,8 @@ in_pin:none
 out_pin:none
 
 config: conf "View Sliders -preserve-config" 0 0="No" 1="Yes"
-config: conf_width "Width" 0 0="A = wide" 1="B = narrow"
-config: conf_auto "Drag-Mode" 0 0="C = Left-Drag" 1="D = start Left-Drag, stop Right-Click" 2="E =  start Left-Drag, stop Right-Click or left-Click" 3="F = Hover-Drag"
+config: conf_width "Width -preserve-config" 0 0="A = wide" 1="B = narrow"
+config: conf_auto "Drag-Mode -preserve-config" 0 0="C = Left-Drag" 1="D = start Left-Drag, stop Right-Click" 2="E =  start Left-Drag, stop Right-Click or left-Click" 3="F = Hover-Drag"
 
 <?conf == 0 ? (
    show = "-";
