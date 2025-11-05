@@ -1,0 +1,45 @@
+desc: MIDI Keyboard Splitter Bus Router Transpose
+author: amagalma
+version: 1.00
+about: Splits the keyboard to a lower and an upper range and the user can define a different Midi Bus and note transposition for each range.
+
+
+slider1:67<0,127,1{127: G10,126: F#10,125: F10,124: E10,123: D#10,122: D10,121: C#10,120: C10,119: B9,118: A#9,117: A9,116: G#9,115: G9,114: F#9,113: F9,112: E9,111: D#9,110: D9,109: C#9,108: C9,107: B8,106: A#8,105: A8,104: G#8,103: G8,102: F#8,101: F8,100: E8,99: D#8,98: D8,97: C#8,96: C8,95: B7,94: A#7,93: A7,92: G#7,91: G7,90: F#7,89: F7,88: E7,87: D#7,86: D7,85: C#7,84: C7,83: B6,82: A#6,81: A6,80: G#6,79: G6,78: F#6,77: F6,76: E6,75: D#6,74: D6,73: C#6,72: C6,71: B5,70: A#5,69: A5,68: G#5,67: G5,66: F#5,65: F5,64: E5,63: D#5,62: D5,61: C#5,60: C5 (middle C),59: B4,58: A#4,57: A4,56: G#4,55: G4,54: F#4,53: F4,52: E4,51: D#4,50: D4,49: C#4,48: C4,47: B3,46: A#3,45: A3,44: G#3,43: G3,42: F#3,41: F3,40: E3,39: D#3,38: D3,37: C#3,36: C3,35: B2,34: A#2,33: A2,32: G#2,31: G2,30: F#2,29: F2,28: E2,27: D#2,26: D2,25: C#2,24: C2,23: B1,22: A#1,21: A1,20: G#1,19: G1,18: F#1,17: F1,16: E1,15: D#1,14: D1,13: C#1,12: C1,11: B0,10: A#0,9: A0,8: G#0,7: G0,6: F#0,5: F0,4: E0,3: D#0,2: D0,1: C#0,0: C0}>Split Point Note
+slider2:1<1,128,1>Low Range MIDI Bus
+slider3:2<1,128,1>High Range MIDI Bus
+slider4:0<-24,24,1>Low Range Transposition
+slider5:0<-24,24,1>High Range Transposition
+slider6:0<0,2,1{Send other events to both MIDI Buses,Send other events only to the Low Range MIDI Bus,Send other events only to the High Range MIDI Bus}>Other Events
+
+in_pin:none
+out_pin:none
+
+@init
+ext_midi_bus = 1;
+ext_noinit = 1;
+
+noteOn = $x90;
+noteOff = $x80;
+
+@slider
+lowBus = slider2 - 1;
+highBus = slider3 - 1;
+splitNote = abs(127 - slider1);
+
+@block
+while (midirecv(offset,msg1,msg2,msg3)) (
+  noteStatus = msg1 & $xF0;
+  currentNote = msg2;
+  noteStatus == noteOn || noteStatus == noteOff? (  // is a Note
+    currentNote < splitNote ? ( // Notes below
+      midi_bus = lowBus;
+      midisend(offset,msg1,currentNote+slider4,msg3);
+    ) : ( // Notes above
+      midi_bus = highBus;
+      midisend(offset,msg1,currentNote+slider5,msg3);
+    );
+  ) : ( // Other Events
+    slider6 != 2 ? (midi_bus = lowBus; midisend(offset,msg1,msg2,msg3));
+    slider6 != 1 ? (midi_bus = highBus; midisend(offset,msg1,msg2,msg3));
+  );
+);
