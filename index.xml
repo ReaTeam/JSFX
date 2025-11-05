@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="6ec56a68405ab3ff39da422a8665e9c2030b3086">
+<index version="1" name="ReaTeam JSFX" commit="aef689be3707685e7c8aa4ab016ecbac32243442">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -373,6 +373,20 @@ Yutani Bass
       </metadata>
       <version name="1.0" author="ALBtheALBatross" time="2025-09-06T16:30:43Z">
         <source>https://github.com/ReaTeam/JSFX/raw/9c17c1b123be711d71de0e60d905221b5dacbe7d/MIDI/albthealbatross_Multi-Channel%20MIDI%20Timing%20Randomizer.jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="amagalma_MIDI Keyboard Split Route Transpose.jsfx" type="effect" desc="MIDI Keyboard Splitter Bus Router Transpose">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 Splits the keyboard to a lower and an upper range and the user can define a different Midi Bus and note transposition for each range.\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.00" author="amagalma" time="2025-11-05T12:07:26Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/aef689be3707685e7c8aa4ab016ecbac32243442/MIDI/amagalma_MIDI%20Keyboard%20Split%20Route%20Transpose.jsfx</source>
       </version>
     </reapack>
     <reapack name="bertbouwhuis_MIDI controller for S8 looper with fade in and out.jsfx" type="effect" desc="MIDI controller for S8 looper with fade in and out">
