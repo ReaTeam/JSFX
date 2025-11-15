@@ -1,4 +1,4 @@
-desc: Midi hold notes range
+desc: MIDI hold notes range
 author: tomaszpio
 version: 1.0.0
 about:
@@ -34,7 +34,6 @@ about:
     while higher notes play normally.
   - Restrict hold behavior to a specific region (e.g., bass notes or keyswitches)
     without affecting the rest of the keyboard.
-
 
 slider1:0<0,16,1>Channel (0=omni)
 slider2:36<0,127,1>Low note
