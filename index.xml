@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="aef689be3707685e7c8aa4ab016ecbac32243442">
+<index version="1" name="ReaTeam JSFX" commit="ce70663a65b33ead55e9f365c01f992e9015a2d5">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -2935,6 +2935,34 @@ Add value slider]]></changelog>
       </metadata>
       <version name="1.0.0" author="tomaszpio" time="2025-09-26T05:38:42Z">
         <source>https://github.com/ReaTeam/JSFX/raw/8d0fdc416983c49ef15a50daf94e1366ab2a28e2/MIDI/tomaszpio_APC%20Pad%20Blinker%20(Sync%20to%20Transport).jsfx</source>
+      </version>
+    </reapack>
+    <reapack name="tomaszpio_MIDI hold notes range.jsfx" type="effect" desc="MIDI hold notes range">
+      <metadata>
+        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
+{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
+\widowctrl\hyphauto
+
+{\pard \ql \f0 \sa180 \li0 \fi0 This JSFX plugin implements a "note hold" function, active only within a specified MIDI note range. It is intended for live playing or MIDI processing where one key at a time is held, regardless of Note Off messages.\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 HOW IT WORKS:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab The plugin reacts only to Note On / Note Off messages.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab It works on: \u8226 ? a selected MIDI channel (1\u8211-16), or \u8226 ? all channels if Channel = 0 (omni mode).\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab It is active only for notes within the [Low note .. High note] range.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab For any Note On with velocity > 0 in that range: \u8226 ? The previously held note is turned off (Note Off is sent). \u8226 ? The new note is turned on (Note On is sent) and stored as the currently held note.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Note Off messages and Note On with velocity = 0 in that range are ignored, so they do NOT release the held note.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab All other MIDI messages (outside the note range, or on other channels, or non-note messages) pass through unchanged.\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 SLIDERS:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Channel (0=omni, 1\u8211-16 = specific MIDI channel) \u8226 ? 0 => process all channels \u8226 ? 1\u8211-16 => only process that MIDI channel\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Low note \u8211- lower bound of the active note range (0\u8211-127)\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab High note \u8211- upper bound of the active note range (0\u8211-127) If Low note > High note, the plugin automatically swaps them.\sa180\par}
+{\pard \ql \f0 \sa180 \li0 \fi0 TYPICAL USE CASES:\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Use a low octave on your keyboard as a "hold" controller area, while higher notes play normally.\par}
+{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Restrict hold behavior to a specific region (e.g., bass notes or keyswitches) without affecting the rest of the keyboard.\sa180\par}
+}
+]]></description>
+      </metadata>
+      <version name="1.0.0" author="tomaszpio" time="2025-11-15T15:44:23Z">
+        <source>https://github.com/ReaTeam/JSFX/raw/ce70663a65b33ead55e9f365c01f992e9015a2d5/MIDI/tomaszpio_MIDI%20hold%20notes%20range.jsfx</source>
       </version>
     </reapack>
     <reapack name="urtzurd_MIDI Glissando.jsfx" type="effect" desc="MIDI Glissando">
