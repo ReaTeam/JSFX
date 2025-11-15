@@ -1,0 +1,101 @@
+desc: MIDI hold notes range
+author: tomaszpio
+version: 1.0.0
+about:
+  This JSFX plugin implements a "note hold" function, active only within
+  a specified MIDI note range. It is intended for live playing or MIDI
+  processing where one key at a time is held, regardless of Note Off messages.
+
+  HOW IT WORKS:
+  - The plugin reacts only to Note On / Note Off messages.
+  - It works on:
+      • a selected MIDI channel (1–16), or
+      • all channels if Channel = 0 (omni mode).
+  - It is active only for notes within the [Low note .. High note] range.
+  - For any Note On with velocity > 0 in that range:
+      • The previously held note is turned off (Note Off is sent).
+      • The new note is turned on (Note On is sent) and stored as the
+        currently held note.
+  - Note Off messages and Note On with velocity = 0 in that range are ignored,
+    so they do NOT release the held note.
+  - All other MIDI messages (outside the note range, or on other channels,
+    or non-note messages) pass through unchanged.
+
+  SLIDERS:
+  - Channel (0=omni, 1–16 = specific MIDI channel)
+    • 0  => process all channels
+    • 1–16 => only process that MIDI channel
+  - Low note  – lower bound of the active note range (0–127)
+  - High note – upper bound of the active note range (0–127)
+    If Low note > High note, the plugin automatically swaps them.
+
+  TYPICAL USE CASES:
+  - Use a low octave on your keyboard as a "hold" controller area,
+    while higher notes play normally.
+  - Restrict hold behavior to a specific region (e.g., bass notes or keyswitches)
+    without affecting the rest of the keyboard.
+
+slider1:0<0,16,1>Channel (0=omni)
+slider2:36<0,127,1>Low note
+slider3:84<0,127,1>High note
+
+in_pin:none
+out_pin:none
+
+@init
+held_note = -1;
+held_chan = -1;
+
+@slider
+// Channel mapping:
+// slider1 = 0  -> omni (chan = -1, so all channels match)
+// slider1 = 1–16 -> MIDI channels 0–15
+s1   = slider1|0;
+chan = s1 ? (s1 - 1) : -1;
+
+low  = slider2|0;
+high = slider3|0;
+
+// If user sets Low > High, swap them
+low > high ? (
+  tmp  = low;
+  low  = high;
+  high = tmp;
+);
+
+@block
+while (
+  midirecv(ts, msg, msg23) ? (
+    status = msg & $xf0;          // 0x80 = Note Off, 0x90 = Note On
+    ch     = msg & $x0f;          // MIDI channel 0–15
+    note   = msg23 & $xff;        // note number
+    vel    = (msg23/256) & $xff;  // velocity
+
+    is_note  = (status == $x80) || (status == $x90);
+    in_chan  = (chan < 0) || (ch == chan);
+    in_range = (note >= low) && (note <= high);
+
+    is_note && in_chan && in_range ? (
+      // Hold logic only for Note On with vel > 0
+      status == $x90 && vel ? (
+        // Turn off previously held note (if any)
+        held_note >= 0 ? (
+          midisend(ts, $x80 + held_chan, held_note);
+        );
+
+        // Store new held note
+        held_note = note;
+        held_chan = ch;
+
+        // Send Note On for new note
+        midisend(ts, $x90 + ch, note | (vel << 8));
+      );
+      // Note Off and Note On with vel=0 in the active range are ignored
+    ) : (
+      // Pass everything else unchanged
+      midisend(ts, msg, msg23);
+    );
+
+    1;
+  );
+);
