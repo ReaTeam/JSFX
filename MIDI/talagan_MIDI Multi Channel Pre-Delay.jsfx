@@ -1,14 +1,12 @@
 desc:MIDI Multi Channel Pre-Delay
 author: Ben 'Talagan' Babut
-version: 0.6
+version: 0.7
 donation:
   https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
 license:
   MIT (Do whatever you like with this code).
 changelog:
-  - [Feature] Added "Max Delay" option, in case 1 second is not sufficient
-  - [Feature] Added "Don't delay live events" option, using companion JSFX
-  - [Prereq]  Added companion JSFX for option above
+  - [Bug Fix] Live Flagger cleanup was not invalidating all obsolete events if multiple instances were active
 provides:
   talagan_MIDI Multi Channel Pre-Delay Live Flagger.jsfx
 about:
@@ -109,6 +107,7 @@ g_buf_r = 0;
 g_max_pre_delay = 0;
 g_last_srate    = srate;
 
+
 //-----------------------
 
 function iround(f) (
@@ -173,8 +172,8 @@ function isLiveEvent(offset, msg1, msg2, msg3)
 
   while( (gmem[cursor] == MAGIC_NUMBER) && !found) (
 
-    // UID and Offset should match
-    ( (gmem[cursor+1] == UID) && (gmem[cursor+5] == offset) )?(
+    // UID and Offset should match and even should not be invalidated
+    ( (gmem[cursor+1] == UID) && (gmem[cursor+5] == offset) && (gmem[cursor+3] != -1))?(
       // Test message content
       _msg  = gmem[cursor+4];
 
@@ -208,7 +207,7 @@ onSliderChange();
 //////////////////////////////////////////////////
 
 function processEvents()
-  local(delay_samples, delay_sc, delay_isc, msg1, msg2, msg3, is_recording,
+  local(delay_samples, delay_sc, delay_isc, msg1, msg2, msg3,
       msg_len, msg_chan, msg_type, msg_has_channel, msg_pos, msg_emitted,
       is_candidate, packet)
 (
@@ -251,7 +250,6 @@ function processEvents()
 
     msg_chan        = (msg1 & 0x0F);
     msg_type        = ((msg1 & 0xF0) >> 4);
-    is_recording    = (play_state == 5);
 
     // If plugin evolves, add some conditions here
     is_candidate    = 0;
@@ -274,7 +272,6 @@ function processEvents()
       g_buf_r[2] = midi_bus | 0;               // Bus and re-emitted status
 
       g_buf_r   += HEADER_SIZE + msg_len;      // Advance by total packet length
-
     ) : (
       midisend_buf(msg_pos, g_buf_r + HEADER_SIZE, msg_len);
     );
