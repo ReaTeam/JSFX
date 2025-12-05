@@ -1,6 +1,6 @@
 noindex: true
 desc: MIDI Multi Channel Pre-Delay Live Flagger
-version: 0.6
+version: 0.7
 author: Ben 'Talagan' Babut
 
 options:gmem=MIDIMultiChannelPredelay
@@ -64,6 +64,7 @@ function cleanupMemory()
   local(last)
 (
   last = b_cursor;
+
   // Advance till we meet something which is not a slot
   while(gmem[b_cursor] == MAGIC_NUMBER) (
     last      = b_cursor;
@@ -78,6 +79,18 @@ function cleanupMemory()
     gmem[last+3] = 0;
     gmem[last+4] = 0;
     gmem[last+5] = 0;
+    last -= STORED_EVENT_SIZE;
+  );
+
+  // Only invalidate events in the rest of the queue if they belong to us and are not valid anymore.
+  while(last >= 0) (
+
+    id = gmem[last+1];
+    bn = gmem[last+3];
+
+    ((id == UID) && (bn != g_block_num))?(
+      gmem[last+3] = -1;
+    );
     last -= STORED_EVENT_SIZE;
   );
 );
