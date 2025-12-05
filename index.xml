@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="ce70663a65b33ead55e9f365c01f992e9015a2d5">
+<index version="1" name="ReaTeam JSFX" commit="c5aa3b7c5056a406eb72e6076aafef0b9e894865">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -2649,6 +2649,11 @@ And a bit of source code cleaning.]]></changelog>
 - [Prereq]  Added companion JSFX for option above]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/84b688dfa127042cce339c482406436f9f0e1771/MIDI/talagan_MIDI%20Multi%20Channel%20Pre-Delay.jsfx</source>
         <source file="talagan_MIDI Multi Channel Pre-Delay Live Flagger.jsfx">https://github.com/ReaTeam/JSFX/raw/84b688dfa127042cce339c482406436f9f0e1771/MIDI/talagan_MIDI%20Multi%20Channel%20Pre-Delay%20Live%20Flagger.jsfx</source>
+      </version>
+      <version name="0.7" author="Ben 'Talagan' Babut" time="2025-12-05T15:45:19Z">
+        <changelog><![CDATA[- [Bug Fix] Live Flagger cleanup was not invalidating all obsolete events if multiple instances were active]]></changelog>
+        <source>https://github.com/ReaTeam/JSFX/raw/c5aa3b7c5056a406eb72e6076aafef0b9e894865/MIDI/talagan_MIDI%20Multi%20Channel%20Pre-Delay.jsfx</source>
+        <source file="talagan_MIDI Multi Channel Pre-Delay Live Flagger.jsfx">https://github.com/ReaTeam/JSFX/raw/c5aa3b7c5056a406eb72e6076aafef0b9e894865/MIDI/talagan_MIDI%20Multi%20Channel%20Pre-Delay%20Live%20Flagger.jsfx</source>
       </version>
     </reapack>
     <reapack name="talagan_MIDI Note Remapper.jsfx" type="effect" desc="MIDI Note Remapper">
