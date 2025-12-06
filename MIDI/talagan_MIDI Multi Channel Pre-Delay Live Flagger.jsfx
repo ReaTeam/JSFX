@@ -1,10 +1,12 @@
 noindex: true
 desc: MIDI Multi Channel Pre-Delay Live Flagger
-version: 0.7
+version: 0.8
 author: Ben 'Talagan' Babut
 
-options:gmem=MIDIMultiChannelPredelay
+slider1:introduced_lag=0<0,1000>Introduced Lag
+slider2:queue_size=0<0,1000>Queue Size
 
+options:gmem=MIDIMultiChannelPredelay
 
 // This plugin flags live events in GMEM so that another plugin in the normal FX Chain
 // can check if incoming MIDI Events are live events or not.
@@ -32,12 +34,14 @@ g_last_play_state   = play_state;
 
 MAGIC_NUMBER        = 0xF5AF5BB0;
 
-EVENT_START_ADDR    = 0;
+EVENT_START_ADDR    = 1;
 STORED_EVENT_SIZE   = 6;
 
 g_block_num = 0;
 b_now       = 0;
-b_cursor    = 0;
+
+introduced_lag = 0;
+queue_size = 0;
 
 @block
 
@@ -45,6 +49,38 @@ function getUID()
   local(cp, flags)
 (
   get_host_placement(cp, flags);
+);
+
+function gmem_p()
+  local(res)
+(
+  res =  atomic_setifequal(gmem[0], 0, 1);
+  (res == 0);
+);
+
+function gmem_v()
+(
+  atomic_set(gmem[0],0);
+);
+
+function gmem_wait(timeout)
+local(t1, t2, elapsed)
+(
+  (timeout <=0)?(timeout = 1.0);
+
+  t1          = time_precise();
+  elapsed     = 0;
+  should_loop = 1;
+
+  while(!gmem_p() && should_loop == 1)
+  (
+    t2          = time_precise();
+    elapsed     = (t2 - t1);
+    should_loop = (elapsed < timeout);
+  );
+
+  introduced_lag += elapsed;
+  should_loop;
 );
 
 function slotIsReusable(slot_address)
@@ -60,19 +96,35 @@ function slotIsReusable(slot_address)
   (ts + 0.1 < b_now);                     // Too old, obsolete, probably a leftover of another plugin
 );
 
-function cleanupMemory()
-  local(last)
+
+function findFirstReusableSlot()
+  local(c)
 (
-  last = b_cursor;
+  c = EVENT_START_ADDR;
+  while(!slotIsReusable(c)) (
+    c += STORED_EVENT_SIZE;
+  );
+  c;
+);
+
+function cleanupMemory()
+  local(last, c, bn, id)
+(
+  gmem_wait(0.01);
+
+  c        = EVENT_START_ADDR;
+  last     = EVENT_START_ADDR;
 
   // Advance till we meet something which is not a slot
-  while(gmem[b_cursor] == MAGIC_NUMBER) (
-    last      = b_cursor;
-    b_cursor += STORED_EVENT_SIZE;
+  while(gmem[c] == MAGIC_NUMBER) (
+    last      = c;
+    c         += STORED_EVENT_SIZE;
   );
 
+  queue_size = c - EVENT_START_ADDR;
+
   // Now rewind-erase the end of the queue
-  while(slotIsReusable(last) && (last >= 0)) (
+  while(slotIsReusable(last) && (last >= EVENT_START_ADDR)) (
     gmem[last]   = 0;
     gmem[last+1] = 0;
     gmem[last+2] = 0;
@@ -83,7 +135,7 @@ function cleanupMemory()
   );
 
   // Only invalidate events in the rest of the queue if they belong to us and are not valid anymore.
-  while(last >= 0) (
+  while(last >= EVENT_START_ADDR) (
 
     id = gmem[last+1];
     bn = gmem[last+3];
@@ -93,23 +145,17 @@ function cleanupMemory()
     );
     last -= STORED_EVENT_SIZE;
   );
-);
 
-function findNextFreeSlotAddress()
-  local()
-(
-  while(!slotIsReusable(b_cursor)) (
-    b_cursor += STORED_EVENT_SIZE;
-  );
-
-  b_cursor;
+  gmem_v();
 );
 
 function flagEvent(offset, msg1, msg2, msg3)
   local(slot_address)
 (
+  gmem_wait(0.01);
+
   // Calculate address to store next event
-  slot_address            = findNextFreeSlotAddress();
+  slot_address            = findFirstReusableSlot();
 
   // Store UID / Offsetof the event at this address
   gmem[slot_address]      = MAGIC_NUMBER;
@@ -118,8 +164,9 @@ function flagEvent(offset, msg1, msg2, msg3)
   gmem[slot_address+3]    = g_block_num;
   gmem[slot_address+4]    = (msg1 << 16) | (msg2 << 8) | msg3;
   gmem[slot_address+5]    = offset;
-);
 
+  gmem_v();
+);
 
 function receiveEvents()
   local(offset,msg1,msg2,msg3)
@@ -137,7 +184,6 @@ function receiveEvents()
 //----------------------
 
 b_now     = time_precise();
-b_cursor  = 0;
 
 // Resync the counter on play changes
 
