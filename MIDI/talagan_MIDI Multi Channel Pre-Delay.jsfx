@@ -1,12 +1,12 @@
 desc:MIDI Multi Channel Pre-Delay
 author: Ben 'Talagan' Babut
-version: 0.7
+version: 0.8
 donation:
   https://www.paypal.com/donate/?business=3YEZMY9D6U8NC&no_recurring=1&currency_code=EUR
 license:
   MIT (Do whatever you like with this code).
 changelog:
-  - [Bug Fix] Live Flagger cleanup was not invalidating all obsolete events if multiple instances were active
+  - [Bug Fix] Fixing gmem multi-thread concurrency problem under windows (now using critical section)
 provides:
   talagan_MIDI Multi Channel Pre-Delay Live Flagger.jsfx
 about:
@@ -99,6 +99,7 @@ MAX_RAM             = __memtop(); // This is big... maybe we should calm it down
 
 MAGIC_NUMBER        = 0xF5AF5BB0;
 STORED_EVENT_SIZE   = 6;
+EVENT_START_ADDRESS = 1;
 
 // The script uses a rolling buffer.
 g_buf_l = 0;
@@ -167,7 +168,7 @@ function getUID()
 function isLiveEvent(offset, msg1, msg2, msg3)
   local(cursor, found, _msg, _msg1, _msg2, _msg3)
 (
-  cursor = 0;
+  cursor = EVENT_START_ADDRESS;
   found  = 0;
 
   while( (gmem[cursor] == MAGIC_NUMBER) && !found) (
