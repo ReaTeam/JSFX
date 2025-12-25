@@ -1,0 +1,464 @@
+desc: Automatic Gain Compensator
+author: z-Hunter
+version: 1.0
+provides: z_hunter_Compensator-Reveiver/z_hunter_Compensator-Sender.jsfx
+about:
+  z_hunter_Compensator-Receiver.jsfx receives a reference signal on the sidechain (e.g., channels 2/3) and dynamically adjusts the levels of the input signal (1/2) to match the reference.
+
+  Loudness detection by RMS, Peaks, LUFS-M, LUFS-S is supported. There are numerous tuning parameters that allow you to tailor the Compensator's behavior to different material. All controls are provided with tooltips that appear at the bottom of the window when you touch the corresponding slider/switch. 
+
+  There's also a reference signal monitoring option for quick A/B comparisons (e.g., signal before a VST chain VS processed and gain matched signal).
+
+  You can also use several Compensators in sequence, for example, using the "main" LUFS-M first, followed by the "fast and rough" RMS with a short detector window and a high activation threshold (Return-to-Zero parameter), so that it only suppresses sudden volume changes to which the first Compensator doesn't have time to react quickly.
+
+  The auxiliary z_hunter_Compensator-Sender.jsfx  allows you to quickly create a route to sidechain channels. Put Sender before your VST chain, Receiver after it, and set the same “Reference channels”.
+
+
+  Please send any feedback, comments, and suggestions to the author: zx.hunter@gmail.com
+
+//@description Compensator – receiver
+//@version 1.0.0
+//@author Michael Voitovich (zx.hunter@gmail.com)
+//@changelog
+  - Initial public release
+//@about
+  Compensator keeps post-FX level equal to the pre-FX reference (from Sender).
+  Modes: RMS, Peak, LUFS-M (400ms), LUFS-S (3s). A/B via Reference monitoring.
+//@link https://github.com/z-hunter/reaper_scripts
+//@donation IBAN: BE80967651977277
+desc:Compensator - receiver (gain match)
+author:zx.Hunter@gmail.com & Reaper DAW Ultimate Assistant
+chans:16
+
+// -------- Sliders (reordered to match signal flow) --------
+// 1. Reference channels
+slider1:1<0,7,1{1/2,3/4,5/6,7/8,9/10,11/12,13/14,15/16}>Reference channels
+// 2. Ref. silence threshold (dBFS)
+slider2:-75<-120,-40,1>Ref. silence threshold (dBFS)
+// 3. Detector mode
+slider3:2<0,3,1{RMS,Peak,LUFS-M,LUFS-S}>Detector mode
+// 4. RMS/Peak detector Window (ms)  (ignored in LUFS)
+slider4:200<5,3000,1>RMS/Peak detector Window (ms)
+// 5–6. Attack/Release
+slider5:350<1,500,1>Boost time (ms)
+slider6:350<10,1000,1>Cut time (ms)
+// 7–9. Limits
+slider7:6<0,24,0.5>Max step per block (dB)
+slider8:40<0,24,0.5>Max boost (dB)
+slider9:40<0,48,0.5>Max cut (dB)
+// 10. Output smoothing
+slider10:0<0,20,0.1>Anti-zipper ramp (ms)
+// 11. Mode
+slider11:0<0,1,1{Off,On}>Immediate mode
+// 12. Rounding
+slider12:0<0,0.2,0.01>Applied rounding (dB)
+// 13–14. RTZ
+slider13:0.5<0,6,0.1>Return-to-Zero threshold (dB)
+slider14:110<1,500,1>Return-to-Zero time (ms)
+// 15. Delta threshold
+slider15:0.25<0,6,0.05>Delta threshold (dB)
+// 16–17. Output
+slider16:0<-24,24,0.1>Output gain (dB)
+slider17:0<0,1,1{Off,On}>Soft limit output
+// 18. Reference monitoring
+slider18:0<0,1,1{Off,On}>Reference monitoring
+
+// -------- Init & helpers --------
+@init
+EPS  = 0.00000000000000000001; // ~1e-20 (compat)
+LN10 = log(10);
+LOG10= 1/LN10;
+K_OFFS = -0.691; // ITU-R BS.1770 offset
+
+function db20a(a) ( a<=EPS ? -200 : 20*LOG10*log(a); );
+function db10p(p) ( p<=EPS ? -200 : 10*LOG10*log(p); );
+function ampdb(d)  ( exp(d*LN10/20); );
+function clamp(v,lo,hi) ( v<lo ? lo : (v>hi ? hi : v); );
+function round_db(v,s) ( s<=0 ? v : floor(v/s+0.5)*s; );
+function sane(x, fb) ( (x == x) ? x : fb; ); // NaN guard
+
+// envelope coeff by window (ms)
+function env_from_ms(win_ms)
+(
+  t=max(0.001, win_ms/1000);
+  exp(-1/(t*srate));
+);
+
+// A/R, ramp, RTZ
+function update_dyn()
+(
+  a_boost_s = env_from_ms(slider5);
+  a_cut_s   = env_from_ms(slider6);
+  k_ramp    = (slider10<=0) ? 1 : (1 - env_from_ms(slider10)); // anti-zipper
+  a_rtz     = env_from_ms(slider14);
+);
+
+// K-weighting biquads (fs≈48k tuned)
+kw1_b0=1.53512485958697; kw1_b1=-2.69169618940638; kw1_b2=1.19839281085285;
+kw1_a1=-1.69065929318241; kw1_a2=0.73248077421585;
+kw2_b0=1; kw2_b1=-2; kw2_b2=1; kw2_a1=-1.99004745483398; kw2_a2=0.99007225036621;
+
+function biq(x,b0,b1,b2,a1,a2,x1*,x2*,y1*,y2*)
+(
+  y = b0*x + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+  x2 = x1; x1 = x; y2 = y1; y1 = y;
+  y;
+);
+
+function kw_pair(inL,inR,outL*,outR*,x1L*,x2L*,y1L*,y2L*,x1R*,x2R*,y1R*,y2R*,z1L*,z2L*,w1L*,w2L*,z1R*,z2R*,w1R*,w2R*)
+(
+  s1L = biq(inL,kw1_b0,kw1_b1,kw1_b2,kw1_a1,kw1_a2,x1L,x2L,y1L,y2L);
+  s1R = biq(inR,kw1_b0,kw1_b1,kw1_b2,kw1_a1,kw1_a2,x1R,x2R,y1R,y2R);
+  s2L = biq(s1L,kw2_b0,kw2_b1,kw2_b2,kw2_a1,kw2_a2,z1L,z2L,w1L,w2L);
+  s2R = biq(s1R,kw2_b0,kw2_b1,kw2_b2,kw2_a1,kw2_a2,z1R,z2R,w1R,w2R);
+  outL = s2L; outR = s2R;
+);
+
+// states
+pair_idx=0; mode=0;
+eff_win_ms = slider4; // set later by mode
+a_env = env_from_ms(eff_win_ms);
+update_dyn();
+
+delta=0;
+acc=0;      // AR accumulator
+acc_i=0;    // Immediate accumulator
+peak_in=0; peak_ref=0; ms_in=0; ms_ref=0;
+lufs_i=0; lufs_r=0;
+gain_cur=1; out_cur=ampdb(slider16);
+
+xi1L=xi2L=yi1L=yi2L=0; xi1R=xi2R=yi1R=yi2R=0; zi1L=zi2L=wi1L=wi2L=0; zi1R=zi2R=wi1R=wi2R=0;
+xr1L=xr2L=yr1L=yr2L=0; xr1R=xr2R=yr1R=yr2R=0; zr1L=zr2L=wr1L=wr2L=0; zr1R=zr2R=wr1R=wr2R=0;
+
+// Hints state (5s timeout in samples)
+last_chg = -1;
+hint_samps_left = 0;
+s1=slider1; s2=slider2; s3=slider3; s4=slider4; s5=slider5; s6=slider6; s7=slider7; s8=slider8; s9=slider9;
+s10=slider10; s11=slider11; s12=slider12; s13=slider13; s14=slider14; s15=slider15; s16=slider16; s17=slider17; s18=slider18;
+
+// helper to arm hint timer
+function hint_set(idx)
+(
+  last_chg = idx;
+  hint_samps_left = 5*srate; // 5 seconds
+);
+
+// Motion-color tracker
+last_app_db = 0;
+
+// -------- Sliders --------
+@slider
+// detect which slider changed (for hints)
+(slider1!=s1) ? (s1=slider1; hint_set(1););
+(slider2!=s2) ? (s2=slider2; hint_set(2););
+(slider3!=s3) ? (s3=slider3; hint_set(3););
+(slider4!=s4) ? (s4=slider4; hint_set(4););
+(slider5!=s5) ? (s5=slider5; hint_set(5););
+(slider6!=s6) ? (s6=slider6; hint_set(6););
+(slider7!=s7) ? (s7=slider7; hint_set(7););
+(slider8!=s8) ? (s8=slider8; hint_set(8););
+(slider9!=s9) ? (s9=slider9; hint_set(9););
+(slider10!=s10) ? (s10=slider10; hint_set(10););
+(slider11!=s11) ? (s11=slider11; hint_set(11););
+(slider12!=s12) ? (s12=slider12; hint_set(12););
+(slider13!=s13) ? (s13=slider13; hint_set(13););
+(slider14!=s14) ? (s14=slider14; hint_set(14););
+(slider15!=s15) ? (s15=slider15; hint_set(15););
+(slider16!=s16) ? (s16=slider16; hint_set(16););
+(slider17!=s17) ? (s17=slider17; hint_set(17););
+(slider18!=s18) ? (s18=slider18; hint_set(18););
+
+// assign working vars
+pair_idx = floor(slider1+0.5);          // 0..7
+mode     = floor(slider3+0.5);          // 0:RMS,1:Peak,2:LUFS-M,3:LUFS-S
+
+// auto window for LUFS; RMS/Peak use slider4
+eff_win_ms = (mode==2) ? 400 : (mode==3) ? 3000 : slider4;
+a_env = env_from_ms(eff_win_ms);
+update_dyn();
+
+max_step = slider7; max_boost=slider8; max_cut=slider9;
+imm = (slider11>=0.5);
+round_st = slider12;
+rtz_th   = slider13; // Return-to-Zero threshold
+delta_th = slider15; // Delta threshold
+softlim  = (slider17>=0.5);
+ref_mon  = (slider18>=0.5);
+
+// -------- Block --------
+@block
+step_lim_s = (samplesblock>0) ? ((max_step>0 ? max_step : 1000)/samplesblock) : (max_step>0 ? max_step : 1000);
+
+// silence detect based on previous block peaks
+ref_peak_prev = ref_peak_blk;
+ref_peak_db_prev = db20a(ref_peak_prev);
+ref_silent = (ref_peak_db_prev <= slider2) ? 1 : 0;
+
+// reset for this block accumulation
+ref_peak_blk = 0;
+in_peak_blk  = 0;
+
+// hint timer countdown (5s after last slider change)
+(hint_samps_left > 0) ? ( hint_samps_left = max(0, hint_samps_left - samplesblock); ) : (0);
+
+// -------- Sample --------
+@sample
+// post signal 1/2
+inL = spl0; inR = spl1;
+
+// ref by pair index 0..7 (single-line ternaries: robust for parser)
+pair_idx==0 ? ( rL=spl0;  rR=spl1;  ) : (
+pair_idx==1 ? ( rL=spl2;  rR=spl3;  ) : (
+pair_idx==2 ? ( rL=spl4;  rR=spl5;  ) : (
+pair_idx==3 ? ( rL=spl6;  rR=spl7;  ) : (
+pair_idx==4 ? ( rL=spl8;  rR=spl9;  ) : (
+pair_idx==5 ? ( rL=spl10; rR=spl11; ) : (
+pair_idx==6 ? ( rL=spl12; rR=spl13; ) : ( rL=spl14; rR=spl15; )
+))))));
+
+// block presence peaks
+a_in  = max(abs(inL),abs(inR));
+a_ref = max(abs(rL), abs(rR));
+in_peak_blk  = (a_in  > in_peak_blk)  ? a_in  : in_peak_blk;
+ref_peak_blk = (a_ref > ref_peak_blk) ? a_ref : ref_peak_blk;
+
+// -------- Detectors --------
+w_rms  = (mode==0);
+w_peak = (mode==1);
+w_lufs = (mode>=2);
+
+// Peak
+peak_in  = max(a_in,  a_env*peak_in);
+peak_ref = max(a_ref, a_env*peak_ref);
+in_db_peak  = db20a(peak_in);
+ref_db_peak = db20a(peak_ref);
+
+// RMS
+ms_in  = a_env*ms_in  + (1-a_env)*0.5*(inL*inL + inR*inR);
+ms_ref = a_env*ms_ref + (1-a_env)*0.5*(rL*rL   + rR*rR);
+in_db_rms  = db20a(sqrt(max(0,ms_in)));
+ref_db_rms = db20a(sqrt(max(0,ms_ref)));
+
+// LUFS
+kw_pair(inL,inR,kiL,kiR, xi1L,xi2L,yi1L,yi2L, xi1R,xi2R,yi1R,yi2R, zi1L,zi2L,wi1L,wi2L, zi1R,zi2R,wi1R,wi2R);
+kw_pair(rL ,rR ,krL,krR, xr1L,xr2L,yr1L,yr2L, xr1R,xr2R,yr1R,yr2R, zr1L,zr2L,wr1L,wr2L, zr1R,zr2R,wr1R,wr2R);
+p_i = kiL*kiL + kiR*kiR; lufs_i = a_env*lufs_i + (1-a_env)*p_i;
+p_r = krL*krL + krR*krR; lufs_r = a_env*lufs_r + (1-a_env)*p_r;
+in_db_lufs  = K_OFFS + db10p(lufs_i);
+ref_db_lufs = K_OFFS + db10p(lufs_r);
+
+// Select (and sanitize)
+in_db  = sane(in_db_rms  * w_rms  + in_db_peak  * w_peak  + in_db_lufs  * w_lufs,  0);
+ref_db = sane(ref_db_rms * w_rms  + ref_db_peak * w_peak  + ref_db_lufs * w_lufs, in_db);
+
+// -------- Error & dynamics (accumulated, no-if) --------
+err = sane(ref_db - in_db, 0);
+err = clamp(err, -max_cut, max_boost);
+
+// gates
+gate_sil = (ref_silent>=1) ? 1 : 0;
+thr = max(delta_th, round_st*0.5); // unified small-change threshold
+gate_app = (abs(err) < rtz_th) ? (gate_sil?0:1) : 0; // RTZ threshold
+
+// Immediate candidate with accumulation
+step_i = err - delta;
+acc_i += step_i;
+do_up_i = (abs(acc_i) >= thr) ? 1 : 0;
+delta_i = do_up_i ? (delta + acc_i) : delta;
+gate_chg_i = do_up_i ? 0 : 1;
+acc_i = do_up_i ? 0 : acc_i;
+
+// Attack/Release candidate with accumulation
+need_up = (err > delta) ? 1 : 0;
+a_ar = need_up ? a_boost_s : a_cut_s;
+next = a_ar*delta + (1-a_ar)*err;
+step_ar = clamp(next - delta, -step_lim_s, step_lim_s);
+
+acc += step_ar;
+do_up_ar = (abs(acc) >= thr) ? 1 : 0;
+delta_ar = do_up_ar ? (delta + acc) : delta;
+gate_chg_ar = do_up_ar ? 0 : 1;
+acc = do_up_ar ? 0 : acc;
+
+// choose active candidate
+delta_act = (imm>=1) ? delta_i : delta_ar;
+gate_chg  = (imm>=1) ? gate_chg_i : gate_chg_ar;
+
+// RTZ path (for silence or RTZ threshold)
+dz = a_rtz * delta;
+delta_rtz = (abs(dz) < 0.0001) ? 0 : dz;
+
+// final delta
+delta = gate_sil ? delta_rtz : ( gate_app ? delta_rtz : delta_act );
+
+// reset accumulators when RTZ is active
+rst = (gate_sil ? 1 : 0) + (gate_app ? 1 : 0);
+rst>=1 ? ( acc=0; acc_i=0; ) : (0);
+
+// gain target (rounded)
+gain_tgt = ampdb( round_db(delta, round_st) );
+
+// gate_kind for UI: 3=silence, 2=RTZ-thr, 1=delta-thr, 0=active
+gate_kind = gate_sil ? 3 : ( gate_app ? 2 : ( gate_chg ? 1 : 0 ) );
+
+// NaN guards on dynamics
+delta    = sane(delta,    0);
+gain_tgt = sane(gain_tgt, 1);
+
+// apply gain & output (with smoothing + NaN guards)
+gain_cur = sane(gain_cur, 1);
+out_tar  = ampdb(slider16);
+
+out_cur  += (out_tar - out_cur)*k_ramp;
+gain_cur += (gain_tgt - gain_cur)*k_ramp;
+
+gain_cur = sane(gain_cur, 1);
+out_cur  = sane(out_cur,  1);
+g = sane(gain_cur * out_cur, 1);
+
+// Output routing: REF monitor bypasses gain/softlim and routes reference directly
+(ref_mon>=1) ? (
+  spl0 = rL;
+  spl1 = rR;
+) : (
+  (softlim>=1) ? (
+    spl0 = (spl0 * g) / (1 + abs(spl0 * g));
+    spl1 = (spl1 * g) / (1 + abs(spl1 * g));
+  ) : (
+    spl0 *= g;
+    spl1 *= g;
+  );
+);
+
+// -------- GFX --------
+@gfx 720 296
+gfx_a=1; gfx_r=0.95; gfx_g=0.95; gfx_b=0.95; gfx_rect(0,0,gfx_w,gfx_h);
+
+// Status: Mode + Detector window only (+ REF MON badge)
+(mode==0) ? (#mode="RMS") : (mode==1) ? (#mode="Peak") : (mode==2) ? (#mode="LUFS-M") : (#mode="LUFS-S");
+eff_ms_i = floor(eff_win_ms+0.5);
+(mode==2) ? (#dwsfx=" (LUFS-M)") : (mode==3) ? (#dwsfx=" (LUFS-S)") : (#dwsfx="");
+gfx_r=gfx_g=gfx_b=0; gfx_x=10; gfx_y=10;
+sprintf(#buf,"Mode: %s    Detector window (ms): %d%s", #mode, eff_ms_i, #dwsfx); gfx_drawstr(#buf);
+
+// REF MON badge
+ref_mon ? (
+  #badge=" REF MONITORING ";
+  gfx_x=10+gfx_measurestr(#buf,tw,th)*0 + 420; gfx_y=8;
+  gfx_measurestr(#badge, bw, bh);
+  gfx_r=0.90; gfx_g=0.30; gfx_b=0.15; gfx_a=1; gfx_rect(gfx_x, gfx_y, bw+8, bh+6, 1);
+  gfx_r=1; gfx_g=1; gfx_b=1; gfx_x+=4; gfx_y+=3; gfx_drawstr(#badge);
+) : (0);
+
+// Hints under status (orange background, 5s after last change)
+function hint_text(idx)
+(
+  idx==1 ? ( #h="Reference signal source (stereo side-chain)." ) :
+  idx==2 ? ( #h="Silence detection for Reference. Below treshold: Applied gain -> 0 dB" ) :
+  idx==3 ? ( #h="Detector: RMS / Peak / LUFS-M (400ms) / LUFS-S (3s)." ) :
+  idx==4 ? ( #h="Detector window for RMS/Peak. Ignored in LUFS modes." ) :
+  idx==5 ? ( #h="Boost time: how fast gain increases (toward +dB)." ) :
+  idx==6 ? ( #h="Cut time: how fast gain decreases (toward -dB)." ) :
+  idx==7 ? ( #h="Max dB change per audio block (rate limiter)." ) :
+  idx==8 ? ( #h="Upper bound of applied boost (dB)." ) :
+  idx==9 ? ( #h="Upper bound of applied cut (dB)." ) :
+  idx==10 ? ( #h="Anti-zipper ramp for output smoothing (ms)." ) :
+  idx==11 ? (
+    (slider11>=0.5) ? ( #h="Immediate: ON — bypass Boost/Cut times, Max step, Anti-zipper." )
+                    : ( #h="Immediate: OFF — enable Applied gain time envelopes." )
+  ) :
+  idx==12 ? ( #h="Applied rounding: quantize gain steps in dB." ) :
+  idx==13 ? ( #h="Return-to-Zero: below this, Applied gain return to 0 dB." ) :
+  idx==14 ? ( #h="Return-to-Zero time: speed of returning to 0 dB." ) :
+  idx==15 ? ( #h="Delta threshold: minimum accumulated change before applying." ) :
+  idx==16 ? ( #h="Output gain after compensation (dB)." ) :
+  idx==17 ? ( #h="Soft limiter on the final output." ) :
+  idx==18 ? (
+    (slider18>=0.5) ? ( #h="Reference monitoring: ON — route Reference to output for A/B." )
+                    : ( #h="Reference monitoring: OFF — hear compensated post-FX signal." )
+  ) :
+            ( #h="" );
+  #h;
+);
+
+// draw hint with orange background
+show_hint = (hint_samps_left>0) ? 1 : 0;
+show_hint ? (
+  #hint = hint_text(last_chg);
+  gfx_x=0; gfx_y=0; gfx_measurestr(#hint, tw, th);
+  padx=8; pady=4;
+  bx=10; by=28; bw=tw+padx*2; bh=th+pady*2;
+  gfx_r=0.98; gfx_g=0.75; gfx_b=0.20; gfx_a=1; gfx_rect(bx,by,bw,bh,1);
+  gfx_r=0.08; gfx_g=0.05; gfx_b=0.02; gfx_x=bx+padx; gfx_y=by+pady; gfx_drawstr(#hint);
+) : (0);
+
+// Pair label for Reference indicator
+pair_idx==0?(#pair="1/2")
+: pair_idx==1?(#pair="3/4")
+: pair_idx==2?(#pair="5/6")
+: pair_idx==3?(#pair="7/8")
+: pair_idx==4?(#pair="9/10")
+: pair_idx==5?(#pair="11/12")
+: pair_idx==6?(#pair="13/14")
+:            (#pair="15/16");
+
+// Bars helpers
+function draw_bar(x,y,w,h,db,min,max, r,g,b)
+(
+  rng = max - min;
+  n   = (db - min) / (rng>0 ? rng : 1);
+  n = n<0 ? 0 : (n>1 ? 1 : n);
+  gfx_r=0.85; gfx_g=0.85; gfx_b=0.85; gfx_rect(x,y,w,h,1);
+  gfx_r=r; gfx_g=g; gfx_b=b; gfx_rect(x,y,w*n,h,1);
+  gfx_r=0.25; gfx_g=0.25; gfx_b=0.25; gfx_rect(x,y,w,h,0);
+);
+
+function draw_zero(x,y,w,h,min,max)
+(
+  rng=max-min; n0=(0-min)/(rng>0?rng:1); n0=n0<0?0:(n0>1?1:n0); x0=x+w*n0;
+  gfx_r=0.15; gfx_g=0.15; gfx_b=0.15; gfx_line(x0,y,x0,y+h); gfx_line(x0+1,y,x0+1,y+h);
+);
+
+// Layout baseline
+top0=56 + (show_hint? (th+2*pady+8) : 0);
+
+// Reference
+bx=10; bw=gfx_w-20; bh=18; top=top0;
+draw_bar(bx,top, bw,bh, ref_db, -80, 0, 0.20,0.60,0.90);
+gfx_r=gfx_g=gfx_b=0; gfx_x=bx; gfx_y=top+bh+4;
+sprintf(#t,"Reference (%s):  %.2f dB", #pair, ref_db); gfx_drawstr(#t);
+
+// Silence flag near Reference label
+draw_sil = (ref_silent>=1) ? 1 : 0;
+draw_sil ? (
+  gfx_x=bx+300; gfx_y=top+bh+4; gfx_r=0.85; gfx_g=0.25; gfx_b=0.25;
+  gfx_drawstr(" - Silence");
+) : (0);
+
+// Input
+draw_bar(bx,top+32, bw,bh, in_db, -80, 0, 0.20,0.60,0.90);
+gfx_r=gfx_g=gfx_b=0; gfx_x=bx; gfx_y=top+32+bh+4;
+sprintf(#t,"Input (1/2):  %.2f dB", in_db); gfx_drawstr(#t);
+
+// Applied (motion-aware color)
+gc = sane(gain_cur, 1);
+applied_db = (20/LN10)*log(max(EPS, gc));
+ramp_db_eps = 0.003; // ~0.003 dB/frame => visible motion
+ramping = (abs(applied_db - last_app_db) > ramp_db_eps) ? 1 : 0;
+
+// Color: 3=silence(red), 2=RTZ-thr(amber), 1=delta-thr(gray-blue), 0=active(blue)
+// If there is real ramping, force active blue
+col = (gate_kind==3) ? 3
+    : (gate_kind==2) ? 2
+    : (ramping ? 0 : (gate_kind==1 ? 1 : 0));
+
+r = (col==3)?0.90: (col==2)?0.95: (col==1)?0.60: 0.20;
+g = (col==3)?0.25: (col==2)?0.70: (col==1)?0.68: 0.60;
+b = (col==3)?0.25: (col==2)?0.30: (col==1)?0.78: 0.90;
+
+draw_bar(bx,top+64, bw,bh, applied_db, -48, 48, r,g,b);
+draw_zero(bx,top+64,bw,bh,-48,48);
+gfx_r=gfx_g=gfx_b=0; gfx_x=bx; gfx_y=top+64+bh+4; sprintf(#t,"Applied gain: %.2f dB", applied_db); gfx_drawstr(#t);
+
+last_app_db = applied_db;
+
