@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="ReaTeam JSFX" commit="1e437b5ae4857c334e9b96d6ce12e3f2103329de">
+<index version="1" name="ReaTeam JSFX" commit="6392c106cbec0a0283d223a01df79fa8297a0869">
   <category name="Development">
     <reapack name="philranger_GUI and Audio Library.jsfx" type="effect" desc="GUI and Audio Library">
       <metadata>
@@ -1292,32 +1292,6 @@ Moreover DAW-Parameters (hidden sliders) "x" and "Y" are provided for being dire
       <version name="1.2" author="mschnell &amp; SID" time="2025-10-25T06:34:39Z">
         <changelog><![CDATA[preserve slider settings when modifying  any [+] option]]></changelog>
         <source>https://github.com/ReaTeam/JSFX/raw/6ec56a68405ab3ff39da422a8665e9c2030b3086/MIDI/mschnellsid_XY%20Pad%20X.jsfx</source>
-      </version>
-    </reapack>
-    <reapack name="nait_MIDI Keytracked Velocity.jsfx" type="effect" desc="MIDI Keytracked Velocity">
-      <metadata>
-        <description><![CDATA[{\rtf1\ansi\deff0{\fonttbl{\f0 \fswiss Helvetica;}{\f1 \fmodern Courier;}}
-{\colortbl;\red255\green0\blue0;\red0\green0\blue255;}
-\widowctrl\hyphauto
-
-{\pard \ql \f0 \sa180 \li0 \fi0 Allows setting of the MIDI velocity based on keytracking (ex. high notes play give higher velocities, lower notes lower velocities).\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Parameters Keytracked Velocity Limit (Min/Max): Keytracking velocity will stay within this min/max range and scale accordingly. Does not affect played velocity (which is important to know for the "Keytrack Mode" parameter).\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Note Range (Min/Max): Only played notes falling within this range will potentially have their velocity keytracked. Next parameter describes how they're handled if outside range.\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 How to Handle Notes (Below/Above) Note Range: If notes played are outside the note range, do you want hem to snap to the min/max limit, or have velocity as played?\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Velocity Inversion:\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Normal: Higher notes have higher velocities.\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Invert: Lower notes have higher velocities.\sa180\par}
-{\pard \ql \f0 \sa180 \li0 \fi0 Keytrack Mode:\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Never Keytrack: Essentially disables this plugin. This allows another easy way to toggle keytracking on/off. Only played velocity is used.\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Always Keytrack: Keytracking velocity is always used.\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Keytrack If Stronger: Will use keytracking velocity, unless played velocity is higher than what keytrack velocity would be.\par}
-{\pard \ql \f0 \sa0 \li360 \fi-360 \bullet \tx360\tab Keytrack If Softer: Will use keytracking velocity, unless played velocity is lower than what keytrack velocity would be.\sa180\par}
-}
-]]></description>
-      </metadata>
-      <version name="1.0" author="Nait" time="2025-12-23T23:12:49Z">
-        <changelog><![CDATA[First release for Reapack]]></changelog>
-        <source>https://github.com/ReaTeam/JSFX/raw/1e437b5ae4857c334e9b96d6ce12e3f2103329de/MIDI/nait_MIDI%20Keytracked%20Velocity.jsfx</source>
       </version>
     </reapack>
     <reapack name="polgo_MIDI Envelocity.jsfx" type="effect" desc="MIDI Envelocity">
