@@ -1,6 +1,7 @@
 desc: RCInflator 2 (Oxford Edition)
 author: lewloiwc
 version: 1.0
+provides: [windows-arm64ec] .
 about:
   This edition clones the behavior of the Sonnox Oxford Inflator in every aspect including "bandsplit" mode. It improves upon the original RCInflator (Oxford Edition) by RCJacH with additions by sai'ke and chmaha.
 
