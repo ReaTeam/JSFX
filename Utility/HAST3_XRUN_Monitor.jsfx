@@ -1,0 +1,146 @@
+desc: XRUN Monitor/Logger
+author: Håvard Endresen HAST3
+version: 1.0
+changelog: First version
+provides:
+  [script main] HAST3_XRUN_Monitor/HAST3_XRUN_AddRegions.lua
+  [script main] HAST3_XRUN_Monitor/HAST3_XRUN_ClearRegions
+  [script main] HAST3_XRUN_Monitor/HAST3_XRUN_WriteCSV
+  [script] HAST3_XRUN_Monitor/HAST3_XRUN_InsertTime_EXPERIMENTAL
+about:
+  This package detects XRUNs based on drift between the software audio clock and OS clock. 
+
+  This is useful if you're recording audio and would like to be aware of any XRUNs that occur to that file. The XRUNs are detected by a JSFX script which writes them to REAPER's GMEM so they can be read with actions. These actions can put detected XRUNs in the project via regions or log them to a CSV file. 
+
+  An experimental action, XRUN_InsertTime, inserts space in the project where XRUNs were detected, which effectively aligns the recorded audio with the OS clock, and might help sync the audio to externally recorded media. However, it also inserts space for falsely detected XRUNs. The offset should be compensated in the long run, but will add excessive gaps in the project. 
+
+  JSFX Features:
+   - Underrun/overrun sensitivity: This is how many samples need to drift during a window for it to count as an XRUN.
+   - Window: adjusts how frequently the drift is measured. A shorter window measures the XRUN positions more accurately, but might get over-sensitive due to jitter with the OS clock. A longer window is more stable but logs less accurate time positions.
+   - Warmup: Ignores XRUNs from startup. The first couple of seconds with playback usually get over-sensitive, so it's recommended to ignore them.
+   - Display toggles: Toggles what to show in the GFX window. Might improve performance if disabled. The log display window is maximized to 50 lines for performance reasons, but can be easily adjusted in the code. Max lines does not limit how many XRUNs can be read by the actions.
+
+desc:XRUN Monitor/Logger
+options:gmem=xrun_monitor
+
+slider1:16<0,256,1>underrun sens[spl] (0=off)
+slider2:16<0,256,1>overrun sens[spl] (0=off)
+slider3:4<1,64,1>window[multiple of buffer size]
+slider4:3<0,5,0.5>warmup[s] (to avoid false xruns from startup)
+slider5:0<0,1,1>info[on/off]
+slider6:1<0,1,1>main display[on/off]
+slider7:0<0,1,1>log display[on/off] (off clears display)
+  
+@init
+/*CONFIG*/
+max_lines = 50;
+
+time_os_start = time_precise();
+
+#dropout_log = "time_os, time_audio, length\n";
+i=4;
+warmup = 0;
+warmup_counter = 0;
+dropouts_total = 0;
+log_entries = 0;
+time_os_prev = 0;
+counter = 0;
+total_count = 0;
+offsync = 0;
+prev_display_log = 0;
+
+gfx_open = 1; 
+gfx_r = 1; gfx_g = 1; gfx_b = 1; // txt color white
+gfx_a = 1; // alpha color opaque
+
+@slider
+sens = slider1;
+sens_neg = slider2;
+window = slider3;
+warmupsec = slider4;
+display_info = slider5;
+display_main = slider6;
+display_log = slider7;
+
+@block
+(counter >= window) ? (
+  time_real = time_precise();
+  time_os = (time_real - time_os_start) * srate;
+  time_audio = total_count * samplesblock;
+  interval_os = time_os - time_os_prev;
+  interval_audio = counter * samplesblock;
+  
+  (warmup_counter <= warmup) ? (
+    (warmup_counter == 0) ? (
+      /*INIT AFTER WARMUP*/
+      warmup = floor(warmupsec * srate / (samplesblock * window));
+      gmem[0] = srate;
+    );
+    (warmup_counter == warmup) ? (
+      //total_count = floor(time_os / samplesblock); /*alternative warmup*/
+      time_os_start = time_real - time_audio / srate;
+      time_os_prev = time_audio;
+    );
+    warmup_counter += 1;
+  ) : (
+    offsync = time_os - time_audio;
+    len = (interval_os - interval_audio);
+    (((len >= sens) && sens) || ((-len >= sens_neg) && sens_neg)) ? (
+      dropout_time_os = time_os;
+      dropout_time_audio = time_audio;
+      dropout_len = len;
+      dropouts_total += 1;
+      (display_log) ? (
+        (log_entries <= max_lines) ? (
+          sprintf(#line, "%.4f\t%.4f\t%d\n", dropout_time_os/srate, dropout_time_audio/srate, dropout_len);
+          #dropout_log += #line;
+          (log_entries == max_lines) ? (#dropout_log += "DISPLAY FULL (GMEM is still logging!)\n");
+          log_entries += 1;
+        );
+      );
+      gmem[i] = 42;
+      gmem[i+1] = dropout_time_os;
+      gmem[i+2] = dropout_time_audio;
+      gmem[i+3] = dropout_len;
+      gmem[i+4] = 0; //makes sure gmem reading stops
+      i += 4;
+    );
+    time_os_prev = time_os; 
+  );
+  counter = 0;
+);
+counter += 1;
+total_count += 1;
+
+@gfx
+gfx_x = 8;
+gfx_y = 8;
+(display_info) ? (
+  gfx_printf("Detects xruns based on drift between the audio clock and os clock. 
+This is useful if you're recording audio and would like to
+be aware of any xruns that occur to that file. 
+The xruns are logged to REAPER gmem so they can be read with actions.  
+These actions put detected xruns in the project via regions
+or log them to a CSV file. 
+A shorter window measures the xrun position more accurately,
+but might get over-sensitive due to jitter with the OS clock. 
+A longer window is more stable but logs less acurate time positions.\n"
+  );
+);
+(display_main) ? (
+  gfx_printf("Sample Rate: %d\n", srate);
+  gfx_printf("Buffer Size: %d\n", samplesblock);
+  gfx_printf("Window: %.3fs\n", samplesblock * window / srate);
+  gfx_printf("Play State: %d\n", play_state);
+  gfx_printf("%d dropouts total\n", dropouts_total); 
+  gfx_printf("%d spl offsync\n", offsync); 
+  gfx_printf("Time: %.1f s\n", time_os / srate); 
+  gfx_printf("Block no.: %.0f\n\n", total_count);
+);
+(display_log) ? (
+  gfx_printf("%s", #dropout_log);
+) : (prev_display_log) ? ( /*only resets string once, for less redundant CPU*/
+  #dropout_log = "time_os, time_audio, length\n";log_entries=0
+);
+prev_display_log = display_log;
+(warmup_counter <= warmup) ? (gfx_printf("Warming up...\n"));
