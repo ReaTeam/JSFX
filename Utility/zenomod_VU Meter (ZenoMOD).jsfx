@@ -1,9 +1,19 @@
 desc: VU Meter (ZenoMOD)
 author: ZenoMOD
-version: 1.7.7
+version: 1.8.0
 changelog:
-  - Revised double-click speed for parameter reset [p=2683566]
-  - Fix idle bug. The meter now correctly detects if audio is present at the left input when the input signal is panned hard left [p=2683919]
+  - Fix needle hold time being significantly shorter than configured
+  - Fix inconsistent meter readings on transients [p=2923589]
+  - Extend Calibration Level range to -60 dB [p=2762077]
+  - Add embedded UI reference level display (show if size permits) [p=2762077]
+  - Add embedded UI hitbox for reference level drag
+  - Add embedded UI hitboxes for VU/Peak display reset
+  - Fix DPI-independent drag speed for GUI sliders
+  - Fix trackpad scroll speed normalization (hopefully also on macOS!) [p=2767438]
+  - Redesign L||R Summed Mode: Needle now correctly displays the higher of the two audio channels 
+  - Add Rise Time & Overshoot abstraction parameters (internally converted to momentum/damping) [p=2921657]
+  - Replace VU regression curve with analytical function
+  - Various performance optimizations
 provides: zenomod_VU Meter (ZenoMOD)/Index.jsfx-inc
 link: Forum Thread https://forum.cockos.com/showthread.php?t=262611
 donation:
@@ -47,10 +57,12 @@ Disclaimer: Use of this software is on your own risk!
 
 slider1: 1<0,12,1{Classic,Knight,Purple,Moss,Moo,Warm,Ivory,Trooper,Ultimate,Mooncake,Black,User 01,User 02}>-UI Style
 slider2: 0<0,2,1{Stereo,Summed,Mid / Side}>                                                                 -Mode
-slider3: -18<-36,0,1>                                                                                       -Ref Level
+slider3: -18<-60,0,1>                                                                                       -Ref Level
 slider4: -6<-20,0,1>                                                                                        -Warn Level
 slider5: 50<0,100>                                                                                          -Response
 slider6: 0.0053<0,.01,0.0001>                                                                               -Damping
+slider48: 300<50,1000,1>                                                                                    -Rise Time (ms)
+slider49: 1.25<0,5,0.01>                                                                                    -Overshoot (%)
 slider7: 0<-18,18,0.1>                                                                                      -Volume (dB)
 
 slider8: 1<0,3,1{Off,On,Arc,Needle}>                                                                        -Needle Hold on/off
@@ -67,8 +79,8 @@ slider21: <-20,3,.1:log=-2.5>                                                   
 slider22: <0,1,1{-,PEAK}>                                                                                   -Peak LED L
 slider23: <0,1,1{-,PEAK}>                                                                                   -Peak LED R
 
-slider24: <-20,3,.1:log=-2.5>                                                                               -VU Current - Left/Mid
-slider25: <-20,3,.1:log=-2.5>                                                                               -VU Current - Right/Side
+slider24: <-20,3,.1>                                                                                        -VU Current - Left/Mid
+slider25: <-20,3,.1>                                                                                        -VU Current - Right/Side
 slider26: <-60,0,.01>                                                                                       -PK Current - Left/Mid
 slider27: <-60,0,.01>                                                                                       -PK Current - Right/Side
 
@@ -83,7 +95,7 @@ slider45: 0<-3,2,.5>                                                            
 slider46: 0<0,1,1{Off,On}>                                                                                  -LBX Support
 slider47: 12<0,20,1>                                                                                        -Preference Page Blur
 
-slider50: 0<0,1,1{Off,On}>                                                                                  -Trackpad Support
+slider50: 0<0,1,1{Off,On}>                                                                                  -Wheel Support
 
 slider64: 1<1,2,1>                                                                                          -Preference Page
 
@@ -106,14 +118,15 @@ import zenomod_VU Meter (ZenoMOD) - UserThemes/User Theme 02.jsfx-inc
 @init
 
 // version
-version = (" v1.7.7");
-
+version = (" v1.8.0");
 
 
 
 /////////////////////////////////////////////////////////////////
 /////////////////// INITIALIZE VARIABLES ////////////////////////
 /////////////////////////////////////////////////////////////////
+
+gfx_ext_retina = 1;
 
 // volume
 AMP_dB_i = 1/8.68588963806504;
@@ -131,14 +144,18 @@ dt = 10 / srate;
 mom = 0.00042;
 damp = 1 - 0.0053 * (48000 / srate);
 dbL = dbR = -20;
+disp_dbL = -20;
+disp_vuL = -21;
 peakL = peakR = -20;
+disp_peakL = -20;
+disp_pkL = -316.5;
 overL = overR = 0;
-holdcounter1 = 0;
-holdcounter2 = 0;
+vu_holdcounter1 = 0;
+vu_holdcounter2 = 0;
+nd_holdcounter1 = 0;
+nd_holdcounter2 = 0;
 
 // peak meter
-peak_timeout = 0;
-value = 0;
 peak = 1;
 left = 0;
 right = 4;
@@ -146,10 +163,17 @@ clip = 3;
 slider26 = -316.5;
 slider27 = -316.5;
 
+// peak accumulation
+block_peak_L = 0;
+block_peak_R = 0;
+pk_holdcounterL = 0;
+pk_holdcounterR = 0;
+
 // preferences
 yu = 12.25;
 ylo = gfx_h-yu;
 slider64 = 1;
+wheel = 0;
 
 
 
@@ -157,44 +181,16 @@ slider64 = 1;
 ////////////////////// METER FUNCTIONS //////////////////////////
 /////////////////////////////////////////////////////////////////
 
-// Polynomial Regression on 'dbL' and 'dbR' to fit VU
-function vu(x)(
-  (x > -10.739772 && x < 3.1) ? (
-    0.0000000018574144851277023*pow(x,7)
-    -0.000000007181675534274909*pow(x,6)
-    +0.00000026010069461917307*pow(x,5)
-    -0.000010602895408755132*pow(x,4)
-    +0.0002816973632214551*pow(x,3)
-    -0.009181854972743169*pow(x,2)
-    +0.39887854736070294*x
-    +1.9117333817772166
-  ) : (
-  x > -15.549665 && x <= -10.739772) ? (
-    0.000045203665592780654*pow(x,5)
-    +0.0025379041863024046*pow(x,4)
-    +0.05990413162348811*pow(x,3)
-    +0.6988138346039348*pow(x,2)
-    +4.640331857325891*x
-    +12.134166801893349
-  ) : (
-  x > -17.826267 && x <= -15.549665) ? (
-    -0.0038388028713626453*pow(x,4)
-    -0.23246545149124698*pow(x,3)
-    -5.395512159008137*pow(x,2)
-    -55.499232285589244*x
-    -216.99316401521162
-  ) : (
-  x > -20 && x <= -17.826237) ? (
-    0.0000028446420086192774*pow(x,7)
-    +0.000047054132856009275*pow(x,6)
-    -0.007734424207833404*pow(x,5)
-    -0.3519383256717419*pow(x,4)
-    -5.193316606317936*pow(x,3)
-    -8.882367411579192*pow(x,2)
-    +436.30657196835705*x
-    +2902.0746462408774
-  ) :
-    -20;
+function vu_display(nd_pos)
+  local(amp)
+(
+  amp = nd_pos * 0.1 + offset;
+  amp > 0 ? 20 * log10(amp / 0.07589) : -20.2;
+);
+
+function vu_automation(nd_pos)
+(
+  min(max(vu_display(nd_pos), -20), 3);
 );
 
 
@@ -205,20 +201,6 @@ function round_dec (x, places)
    div = 1/mult;
    x = div * sign (x) * floor(abs (mult * x) + 0.5);
 );
-
-
-// Update and hold values for Peak level
-function _sample(ch, _spl, decay) local(s) (
-  s = abs(_spl);
-  ch[value] = max(ch[value], s);
-  ch[peak_timeout] -= 1;
-  ch[peak_timeout] <= 0 || s > ch[peak] ? (
-    ch[peak] = s;
-    ch[peak_timeout] = decay;
-  );
-  ch[clip] = max(ch[clip], s);
-);
-
 
 // Convert linear Amplitude value to Decibel
 function dbfs(x) (
@@ -233,9 +215,9 @@ function dbfs(x) (
 /////////////////////////////////////////////////////////////////
 
 function drag_slider(x, y, z, dx)
-  globals(mouse_y, cap_last_y, cap_drag)
+  globals(mouse_y, cap_last_y, cap_drag, gfx_ext_retina)
 (
-  x = min(max(x + dx * ((cap_last_y - mouse_y) / 4), y), z);
+  x = min(max(x + dx * ((cap_last_y - mouse_y) / (4 * gfx_ext_retina)), y), z);
   cap_last_y = mouse_y;
   cap_drag = 1;
   x;
@@ -257,9 +239,16 @@ function cycle_slider(x, y, z, dx)
 );
 
 function wheel_slider(x, y, z, dx)
-  globals(mouse_wheel)
+  globals(mouse_wheel, wheel)
+  local(steps)
 (
-  x = min(max(x + dx * sign(mouse_wheel) , y), z);
+  wheel += mouse_wheel / 120;
+
+  steps = sign(wheel) * floor(abs(wheel));
+  steps != 0 ? (
+    wheel -= steps;
+    x = min(max(x + dx * steps, y), z);
+  );
   x;
 );
 
@@ -290,8 +279,8 @@ function do_mouse () (
       !cap_drag && cap_timer < 13 ? (
         cap_mode == 3 ? ( slider3 = -18; );
         cap_mode == 4 ? ( slider4 = -6; );
-        cap_mode == 5 ? ( slider5 = 50; );
-        cap_mode == 6 ? ( slider6 = 0.0053; );
+        cap_mode == 5 ? ( slider48 = 300; );
+        cap_mode == 6 ? ( slider49 = 1.25; );
         cap_mode == 40 ? ( slider40 = 3; );
         cap_mode == 41 ? ( slider41 = 2; );
         cap_mode == 42 ? ( slider42 = 3; );
@@ -309,7 +298,24 @@ function do_mouse () (
         gfx_ext_flags == 1 ? (
             cap_last_x = mouse_x;
             cap_last_y = mouse_y;
-            cap_mode=7;
+
+            // cmp hitboxes
+            ex_vu_hit = (VU_enabled && gsc >= .238 && mouse_x >= (xd-(50*scaling)) && mouse_x <= (xd-(50*scaling) + ((xd+xw)-(335*scaling))) && mouse_y >= (210*scaling) && mouse_y <= (210*scaling + ((yd+yw)-(10*scaling))));
+            ex_pk_hit = (PK_enabled && gsc >= .238 && mouse_x >= (xd+(330*scaling)) && mouse_x <= (xd+(330*scaling) + ((xd+xw)+(45*scaling))) && mouse_y >= (210*scaling) && mouse_y <= (210*scaling + ((yd+yw)-(10*scaling))));
+            ex_ref_hit = (gsc >= .160 && mouse_x >= 10*scaling && mouse_x <= 10*scaling + 85*scaling && mouse_y >= 10*scaling && mouse_y <= 10*scaling + 55*scaling);
+
+            ex_vu_hit ? (
+                slider24 = -21; slider25 = -21;
+                vu_holdcounter1 = 0; vu_holdcounter2 = 0;
+                slider_automate(slider24);
+                slider_automate(slider25);
+            ) : ex_pk_hit ? (
+                slider12 = 1;
+            ) : ex_ref_hit ? (
+                cap_mode=3;
+            ) : (
+                cap_mode=7;
+            );
         );
 
         uistyle_button.hit_button(mouse_x,mouse_y,1);
@@ -342,13 +348,13 @@ function do_mouse () (
 
     // drag
     cap_mode == 3 && cap_last_y != mouse_y ? (
-        slider3=drag_slider(slider3,-36,0,1); );
+        slider3=drag_slider(slider3,-60,0,1); );
     cap_mode == 4 && cap_last_y != mouse_y ? (
         slider4=drag_slider(slider4,-20,0,1); );
     cap_mode == 5 && cap_last_y != mouse_y ? (
-        slider5=drag_slider(slider5,0,100,1); );
+        slider48=drag_slider(slider48,50,1000,1); );
     cap_mode == 6 && cap_last_y != mouse_y ? (
-        slider6=drag_slider(slider6,0,0.01,0.0001); );
+        slider49=drag_slider(slider49,0,5,0.01); );
     cap_mode == 7 && cap_last_y != mouse_y ? (
         slider7=drag_slider_precise(slider7,-18,18,0.1); slider_automate(slider7) );
     cap_mode == 40 && cap_last_y != mouse_y ? (
@@ -396,13 +402,13 @@ function do_mouse () (
     (
       // wheel
       ref_level_slider ? (
-          slider3=wheel_slider(slider3,-36,0,1); mouse_wheel=0 ):
+          slider3=wheel_slider(slider3,-60,0,1); mouse_wheel=0 ):
       warn_level_slider ? (
           slider4=wheel_slider(slider4,-20,0,1); mouse_wheel=0 ):
       meter_resp_slider ? (
-          slider5=wheel_slider(slider5,0,100,1); mouse_wheel=0 ):
+          slider48=wheel_slider(slider48,50,1000,1); mouse_wheel=0 ):
       meter_damp_slider ? (
-          slider6=wheel_slider(slider6,0,0.01,.0001); mouse_wheel=0 ):
+          slider49=wheel_slider(slider49,0,5,0.05); mouse_wheel=0 ):
       volume_slider ? (
           slider7=wheel_slider(slider7,-18,18,.5); slider_automate(slider7); mouse_wheel=0 ):
       peak_hold_slider ? (
@@ -435,7 +441,7 @@ function do_mouse () (
 
 
 //************************************* Right Click Button Menus ************************************
- 
+
   // UI Style Menu
   cap_mode && cap_timer < 13 ? cap_timer += 1;
   ui_color_slider && (mouse_cap==0 && last_mouse_cap==2) ? (
@@ -528,7 +534,7 @@ function draw_scale() (
     y1 = ya - sinp ;
     x2 = xa - cosp * 1.1;
     y2 = ya - sinp * 1.1;
-    gsc >.237 ? (
+    gsc >= .238 ? (
       !gfx_ext_flags ? (
         x3 = xa - cosp * 1.13;
         y3 = ya - sinp * 1.11;
@@ -547,9 +553,9 @@ function draw_scale() (
       gfx_x = x3*.975 - (gfx_w/500*6);
     );
     gfx_y = y3 - gfx_texth;
-    gsc >.237 ? (gfx_printf("%3d", ii));
+    gsc >= .238 ? (gfx_printf("%3d", ii));
 
-    gsc >.237 ? (jj += 1):(jj += 1.8);
+    gsc >= .238 ? (jj += 1):(jj += 1.8);
     jj == 8 ? (set_color(SclDig2[color]));
   );
 );
@@ -610,6 +616,22 @@ function draw_embedded_gain() (
         xa+50*scaling,yw+70*scaling);
       );
     );
+  );
+);
+
+function draw_embedded_ref() (
+  gfx_ext_flags && gsc >= .160 ? (//.238 ? (
+    gfx_setfont(9);
+    set_color(FontVol[color]);
+
+    ref_draw_x = 10 * scaling;
+    ref_draw_y = 10 * scaling;
+    ref_draw_w = 75 * scaling;
+    ref_draw_h = 45 * scaling;
+
+    gfx_x = ref_draw_x;
+    gfx_y = ref_draw_y;
+    gfx_drawstr(sprintf(#, "%.f", slider3), 261, ref_draw_x + ref_draw_w, ref_draw_y + ref_draw_h);
   );
 );
 
@@ -912,7 +934,7 @@ function draw_level_display (var1, var2, mode)
         str1 = sprintf(str1,"%.1f",var1);
         gfx_x = x2;
         gfx_y = y2;
-        var1 <= -20 ? (
+        var1 <= -20.2 ? (
           gfx_drawstr("--", 261,w2,h2);
         ) : (
           gfx_drawstr(str1, 261,w2,h2);
@@ -921,7 +943,7 @@ function draw_level_display (var1, var2, mode)
         str2 = sprintf(str2,"%.1f",var2);
         gfx_x = x2;
         gfx_y = y2;
-        var2 <= -20 ? (
+        var2 <= -20.2 ? (
           gfx_drawstr("--", 261,w2,h2);
         ) : (
           gfx_drawstr(str2, 261,w2,h2);
@@ -1100,17 +1122,17 @@ function draw_preference_mask () (
         gfx_x=peak_X; gfx_y=peak_Y;
         gfx_drawstr(sprintf(#,"%.f ds",slider40),261,peak_X+peak_W, peak_Y+peak_H);
 
-        // meter response
+        // meter response (Rise Time)
         gfx_x=resp_X; gfx_y=resp_Y;
-        gfx_drawstr("Meter Response :",258,xd-(15*scaling), resp_Y+resp_H);
+        gfx_drawstr("Rise Time :",258,xd-(15*scaling), resp_Y+resp_H);
         gfx_x=resp_X; gfx_y=resp_Y;
-        gfx_drawstr(sprintf(#,"%.f %%",slider5),261,resp_X+resp_W, resp_Y+resp_H);
+        gfx_drawstr(sprintf(#,"%.f ms",slider48),261,resp_X+resp_W, resp_Y+resp_H);
 
-        // meter damping
+        // meter damping (Overshoot)
         gfx_x=damp_X; gfx_y=damp_Y;
-        gfx_drawstr("Meter Damping :",258,xd-(15*scaling), damp_Y+damp_H);
+        gfx_drawstr("Overshoot :",258,xd-(15*scaling), damp_Y+damp_H);
         gfx_x=damp_X; gfx_y=damp_Y;
-        gfx_drawstr(sprintf(#,"%.f %%",slider6*10000),261,damp_X+damp_W, damp_Y+damp_H);
+        gfx_drawstr(sprintf(#,"%.2f %%",slider49),261,damp_X+damp_W, damp_Y+damp_H);
 
         // summed mode
         gfx_x=Smmd_X; gfx_y=Smmd_Y;
@@ -1168,7 +1190,7 @@ function draw_preference_mask () (
 
         // Trackpad support
         gfx_x=Trpd_X; gfx_y=Trpd_Y;
-        gfx_drawstr("Trackpad Support :",258,xd-(15*scaling), Trpd_Y+Trpd_H);
+        gfx_drawstr("Disable Mouse Wheel :",258,xd-(15*scaling), Trpd_Y+Trpd_H);
         gfx_x=Trpd_X; gfx_y=Trpd_Y;
         gfx_drawstr(strcpy_fromslider(Trackpad,slider50),261,Trpd_X+Trpd_W, Trpd_Y+Trpd_H);
 
@@ -1199,8 +1221,35 @@ function compute_meter () (
   wl   = slider4;
   mode = slider2;
   lim = 10 ^ (wl / 20);
-  mom = 0.00010 + 0.00032 *  slider5^3 / 125000;
-  damp = 1 - slider6 * (48000 / srate);
+
+  // if slider5 or slider6 were changed, use legacy
+  slider5 != 50 || slider6 != 0.0053 ? (
+    mom = 0.00010 + 0.00032 * slider5^3 / 125000;
+    damp = 1 - slider6 * (48000 / srate);
+  ) : (
+    ovs_pct = slider49;
+    ovs_pct > 0.01 ? (
+        ln_os = log(ovs_pct / 100);
+        zeta  = -ln_os / sqrt($pi*$pi + ln_os*ln_os);
+    ) : (
+        zeta = 1;
+    );
+
+    alpha = -3.060 * zeta + 4.017;
+    t_corr = (slider48 * alpha) / 1000;
+
+    zeta < 1.0 ? (
+        wn = -log(0.01 * sqrt(1 - zeta*zeta)) / (zeta * t_corr);
+    ) : (
+        wn = 5.8 / t_corr;
+    );
+
+    // convert back to physical parms
+    mom = 0.1 / (wn * wn);
+    damp = exp(-2 * zeta * wn * (10 / srate));
+  );
+
+  dt_div_mom = dt / mom;
 
   color = slider1;
   gain_sldr = slider7;
@@ -1213,10 +1262,14 @@ function compute_meter () (
   PK_current_max = slider11;
   PK_Reset = slider12;
   slider12 == 1 ? (
-    left[peak] = -316.5;
-    right[peak] = -316.5;
-    left[clip] = -316.5;
-    right[clip] = -316.5;
+    left[peak]  = 0;
+    right[peak] = 0;
+    left[clip]  = 0;
+    right[clip] = 0;
+    pk_holdcounterL = 0;
+    pk_holdcounterR = 0;
+    slider26 = -316.5;
+    slider27 = -316.5;
     slider12 = 0;
   );
   rec_needle = slider13;
@@ -1231,12 +1284,9 @@ function compute_meter () (
   Trackpad = slider50;
   Pref_Page = slider64;
 
-  ext_tail_size =
-  (
-    Hold_enabled >= 1 ? (
-      holdtime1 ) : ( -1;
-    )
-  );
+  ext_tail_size = Hold_enabled >= 1 ? holdtime1 * 1.5 : -1;
+
+  led_hold_step = 100 / led_hold;
 );
 
 
@@ -1431,12 +1481,12 @@ function draw_tooltips () (
           );
 
           meter_resp_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
-            gfx_drawstr ("Sets the meter response time.",
+            gfx_drawstr ("Sets the rise time of the VU Meter needle.",
             261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
           );
 
           meter_damp_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
-            gfx_drawstr ("Sets the momentum for the needle.",
+            gfx_drawstr ("Sets the amount of overshoot of the VU Meter needle.",
             261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
           );
 
@@ -1466,7 +1516,7 @@ function draw_tooltips () (
           );
 
           summed_mode_slider ? ( gfx_x = 0; gfx_y = ylo-gfx_texth-18*scaling;
-            gfx_drawstr ("Sets the Summed Mode: Choose between ''Mono'' or ''Logical OR''.",
+            gfx_drawstr ("Sets the Summed Mode: Choose between ''Mono'' or ''Stereo''.",
             261, gfx_w, gfx_y+gfx_texth+(10*scaling) );
           );
 
@@ -1529,11 +1579,12 @@ compute_meter();
 idle = (
   peakL <= -20 &&
   peakR <= -20 &&
-  spl0 <= 0.00000005298331 &&
-  spl1 <= 0.00000005298331 &&
+  abs(spl0) <= 0.00000005298331 &&
+  abs(spl1) <= 0.00000005298331 &&
   ph <= 0.78539816339745 &&
   !PK_Reset
 );
+
 
 //========================================= VOLUME ==================================================/
 
@@ -1551,43 +1602,41 @@ idle = (
 
 //***************************************** VU OUT *************************************************/
 
-
   (VU_enabled || lbx_support || rec_needle) && !idle ?
   (
-        slider20 = round_dec(vu(dbL), 1);
-        slider21 = round_dec(vu(dbR), 1);
+      slider20 = round_dec(vu_automation(nd_posL_g), 1);
+      slider21 = round_dec(vu_automation(nd_posR_g), 1);
 
-      // Holdtime for Max VU
-      vu(dbL) > slider24 ? (
-          slider24 = round_dec(vu(dbL), 1);
-          holdcounter1 = holdtime1;
+      vu_display(nd_posL_g) > slider24 ? (
+          slider24 = round_dec(vu_display(nd_posL_g), 1);
+          vu_holdcounter1 = holdtime1;
+      ) : (
+          vu_holdcounter1 > 0 ? (
+              vu_holdcounter1 -= samplesblock;
           ) : (
-          holdcounter1 > 0 ? (
-              holdcounter1 -= samplesblock;
-          ) : (
-              slider24 = round_dec(vu(dbL), 1);
+              slider24 = round_dec(vu_display(nd_posL_g), 1);
           );
       );
 
-      mode != 1 ? (
-        vu(dbR) > slider25 ? (
-            slider25 = round_dec(vu(dbR), 1);
-            holdcounter2 = holdtime1;
+      mode != 1 || summedMode == 1 ? (
+        vu_display(nd_posR_g) > slider25 ? (
+            slider25 = round_dec(vu_display(nd_posR_g), 1);
+            vu_holdcounter2 = holdtime1;
+        ) : (
+            vu_holdcounter2 > 0 ? (
+                vu_holdcounter2 -= samplesblock;
             ) : (
-            holdcounter2 > 0 ? (
-                holdcounter2 -= samplesblock;
-            ) : (
-                slider25 = round_dec(vu(dbR), 1);
+                slider25 = round_dec(vu_display(nd_posR_g), 1);
             );
-        )
+        );
       ) : (
-        slider25 = -20;
+        slider25 = -21;
       )
-    ) : (
+  ) : (
       slider20 = -20;
       slider21 = -20;
-      slider24 = -20;
-      slider25 = -20;
+      slider24 = -21;
+      slider25 = -21;
   );
 
   !idle ? (
@@ -1606,35 +1655,100 @@ idle = (
 Hold_enabled && !idle ? (
     dbL > peakL ? (
       peakL = dbL;
-      holdcounter1 = holdtime1;
+      nd_holdcounter1 = holdtime1;
     ) : (
-      holdcounter1 > 0 ? (
-        holdcounter1 -= samplesblock;
+      nd_holdcounter1 > 0 ? (
+        nd_holdcounter1 -= samplesblock;
       ) : (
         peakL = dbL;
       );
     );
 
-    mode != 1 ? (
+    mode != 1 || summedMode == 1 ? (
       dbR > peakR ? (
         peakR = dbR;
-        holdcounter2 = holdtime1;
+        nd_holdcounter2 = holdtime1;
       ) : (
-        holdcounter2 > 0 ? (
-          holdcounter2 -= samplesblock;
+        nd_holdcounter2 > 0 ? (
+          nd_holdcounter2 -= samplesblock;
         ) : (
           peakR = dbR;
         );
       )
     ) : (
-      peakR == -20;
+      peakR = -20;
     )
 ) : (
-  peakL == -20;
-  peakR == -20;
+  peakL = -20;
+  peakR = -20;
 );
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+//========================================= PEAK HOLD (Block) ========================================/
+
+PK_enabled ? (
+  !idle ? (
+    block_peak_L > left[peak] ? (
+      left[peak] = block_peak_L;
+      pk_holdcounterL = holdtime2;
+    ) : (
+      pk_holdcounterL > 0 ? (
+        pk_holdcounterL -= samplesblock;
+      ) : (
+        left[peak] = block_peak_L;
+      );
+    );
+
+    mode != 1 || summedMode == 1 ? (
+      block_peak_R > right[peak] ? (
+        right[peak] = block_peak_R;
+        pk_holdcounterR = holdtime2;
+      ) : (
+        pk_holdcounterR > 0 ? (
+          pk_holdcounterR -= samplesblock;
+        ) : (
+          right[peak] = block_peak_R;
+        );
+      );
+    );
+  ) : (
+    PK_current_max == 0 && !PK_Reset ? (
+      left[peak]  = 0;
+      right[peak] = 0;
+      slider26 = -316.5;
+      slider27 = -316.5;
+    );
+    mode == 1 && summedMode == 0 ? ( right[peak] = 0; slider27 = -316.5; );
+    pk_holdcounterL = 0;
+    pk_holdcounterR = 0;
+  );
+  block_peak_L = 0;
+  block_peak_R = 0;
+);
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+is_summed_LR = (mode == 1 && summedMode == 1);
+
+disp_peakL = is_summed_LR ? max(peakL, peakR) : peakL;
+disp_dbL = is_summed_LR ? max(dbL, dbR) : dbL;
+disp_vuL = is_summed_LR ? max(slider24, slider25) : slider24;
+disp_pkL = is_summed_LR ? max(slider26, slider27) : slider26;
+
+PK_enabled ? (
+  !idle ?
+  (
+    PK_current_max == 0 ? (
+      slider26 = is_summed_LR ? round_dec(dbfs(max(left[peak], right[peak])), 1) : round_dec(dbfs(left[peak]), 1);
+      slider27 = round_dec(dbfs(right[peak]), 1);
+    ) : (
+      slider26 = is_summed_LR ? round_dec(dbfs(max(left[clip], right[clip])), 1) : round_dec(dbfs(left[clip]), 1);
+      slider27 = round_dec(dbfs(right[clip]), 1);
+    )
+  ) : (
+    PK_Reset;
+  );
+);
 
 
 
@@ -1670,44 +1784,58 @@ Hold_enabled && !idle ? (
 
       mode == 1 ? (summedMode == 0 ?
                   (smpL = (spl0 + spl1) * 0.5; smpR = smpL):
-                  (smpL = (spl0 > spl1 ? spl0 : spl1); smpR = smpL);
+                  (smpL = spl0; smpR = spl1);
       );
       mode == 2 ? (smpL = (spl0 + spl1) * 0.5; smpR = (spl0 - spl1) * 0.5);
 
       smpL = abs(smpL);
-      smpR = abs(smpR);
+      smpL_sum += smpL;
+
+      mode != 1 || summedMode == 1 ? (
+        smpR = abs(smpR);
+        smpR_sum += smpR;
+      );
 
       scnt += 1;
       scnt === 10 ? (
+              smpL = smpL_sum * 0.1;
 
-  // move left needle
+              mode != 1 || summedMode == 1 ? (
+                smpR = smpR_sum * 0.1;
+              );
+
+      // move left needle
               force = smpL * fact_up  -  (nd_posL * .1 + offset);
 
-              nd_speedL += force * dt / mom;
+              nd_speedL += force * dt_div_mom;
               nd_speedL = nd_speedL * damp;
               nd_posL += nd_speedL * dt;
-              nd_posL < 0 || nd_posL > 1 ? nd_speedL = 0;
 
+
+              nd_posL < 0 || nd_posL > 1 ? nd_speedL = 0;
               nd_posL = min(max(nd_posL,0),1);
 
 
-  // move right needle
-              mode != 1 ? (
+      // move right needle
+              mode != 1 || summedMode == 1 ? (
                 force = smpR * fact_up  - (nd_posR * .1 + offset);
 
-                nd_speedR += force * dt / mom;
+                nd_speedR += force * dt_div_mom;
                 nd_speedR = nd_speedR * damp;
                 nd_posR += nd_speedR * dt;
-                nd_posR < 0 || nd_posR > 1 ? nd_speedR = 0;
 
+
+                nd_posR < 0 || nd_posR > 1 ? nd_speedR = 0;
                 nd_posR = min(max(nd_posR,0),1);
               );
 
 
           // Peak LED
-          overL -= 100 / led_hold;
-          overR -= 100 / led_hold;
+          overL -= led_hold_step;
+          overR -= led_hold_step;
 
+          smpL_sum = 0;
+          smpR_sum = 0;
           scnt = 0;
 
       ); //scnt
@@ -1715,7 +1843,10 @@ Hold_enabled && !idle ? (
   //*****************************************************************************************************
 
       smpL > lim ? overL = srate;
-      smpR > lim ? overR = srate;
+
+      mode != 1 || summedMode == 1 ? (
+        smpR > lim ? overR = srate;
+      );
 
 
   //*****************************************************************************************************
@@ -1752,20 +1883,30 @@ Hold_enabled && !idle ? (
 
 
 //***************************************** Peak OUT *************************************************/
-PK_enabled && !idle ?
-(
-  mode == 0 ? ( _sample(left, spl0, holdtime2); _sample(right, spl1, holdtime2) );
-  mode == 1 ? ( _sample(left, (spl0+spl1) * 0.5, holdtime2); slider27 = -316.5; );
-  mode == 2 ? ( _sample(left, (spl0+spl1) * 0.5, holdtime2); _sample(right, (spl0-spl1), holdtime2 ) );
-) : (
-  PK_current_max == 0 && !PK_Reset ?
-  (
-    slider26 = -316.5;
-    slider27 = -316.5;
+!idle ? (
+  mode == 0 ? (
+    block_peak_L = max(block_peak_L, abs(spl0));
+    block_peak_R = max(block_peak_R, abs(spl1));
+    left[clip]   = max(left[clip],   abs(spl0));
+    right[clip]  = max(right[clip],  abs(spl1));
   );
-  (PK_current_max || !PK_current_max) && mode == 1 ? (
-    slider27 = -316.5;
-  )
+  mode == 1 ? (
+    summedMode == 0 ? (
+      block_peak_L = max(block_peak_L, abs((spl0+spl1)*0.5));
+      left[clip]   = max(left[clip],   abs((spl0+spl1)*0.5));
+    ) : (
+      block_peak_L = max(block_peak_L, abs(spl0));
+      block_peak_R = max(block_peak_R, abs(spl1));
+      left[clip]   = max(left[clip],   abs(spl0));
+      right[clip]  = max(right[clip],  abs(spl1));
+    );
+  );
+  mode == 2 ? (
+    block_peak_L = max(block_peak_L, abs((spl0+spl1)*0.5));
+    block_peak_R = max(block_peak_R, abs(spl0-spl1));
+    left[clip]   = max(left[clip],   abs((spl0+spl1)*0.5));
+    right[clip]  = max(right[clip],  abs(spl0-spl1));
+  );
 );
 
 
@@ -1799,6 +1940,7 @@ gfx_setfont(5, "Arial", fsz*3.0, 'b');
 gfx_setfont(6, "Arial", fsz*5.0, '' );
 gfx_setfont(7, "Arial", fsz*2.2, 'b' );
 gfx_setfont(8, "Arial", fsz*1.8, '' );
+gfx_setfont(9, "Arial", fsz*4.0, '' );
 
 
 // draw meter
@@ -1837,16 +1979,17 @@ while (chan <= 1) (
   draw_peak_str();
   draw_vu_str();
   draw_embedded_gain();
+  draw_embedded_ref();
 
   draw_peak_LED();
-  draw_hold_arc (hold_needle, peakL, peakR);
-  compute_draw_needle(hold_needle, peakL, peakR, 2);
-  compute_draw_needle(ph, dbL, dbR, 1);
+  draw_hold_arc (hold_needle, disp_peakL, peakR);
+  compute_draw_needle(hold_needle, disp_peakL, peakR, 2);
+  compute_draw_needle(ph, disp_dbL, dbR, 1);
   VU_enabled && (gsc >=.238) ? (
-    draw_level_display(slider24, slider25, vu);
+    draw_level_display(disp_vuL, slider25, vu);
   );
   PK_enabled && (gsc >=.238) ? (
-    draw_level_display(slider26, slider27, peak);
+    draw_level_display(disp_pkL, slider27, peak);
   );
   draw_coil_cover();
   draw_channel_labels();
@@ -1863,20 +2006,6 @@ do_mouse();
 
 
 
-PK_enabled ? (
-  !idle ?
-  (
-    PK_current_max == 0 ? (
-      slider26 = round_dec(dbfs(left[peak]), 1);
-      slider27 = round_dec(dbfs(right[peak]), 1);
-    ) : (
-      slider26 = round_dec(dbfs(left[clip]), 1);
-      slider27 = round_dec(dbfs(right[clip]), 1);
-    )
-  ) : (
-    PK_Reset;
-  );
-);
 
 
 // EOF
