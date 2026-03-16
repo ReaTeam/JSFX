@@ -1,0 +1,112 @@
+noindex: true
+
+desc: Cyber-Gate (Toxic Ultra-Lite Forensic)
+version: 1.0
+author: Danny Marshall
+changelog: Standardized streamlined dashboard with Toxic Cyber palette.
+Provides: cyber_gate.jsfx
+about:
+  # Cyber-Gate
+  An ultra-light, single-band gate optimized for forensics.
+  Uses toxic-lime colors to signify the highest performance tier.
+
+options:gmem=CyberGate
+
+slider1:0<-100,0,1>-Threshold
+slider11:5<1,100,1>-Att
+slider12:0<0,1000,1>-Rel
+slider13:0<0,1,0.001>-Floor
+slider14:20<5,60,1>-LearnTime
+slider15:6<1,24,0.5>-Gradient
+slider17:0<0,1,1>-RMSMode
+slider18:1<0,1,1>-LowCut
+slider20:0<0,1,1>-ListenNoise
+
+@init
+i=1; loop(20, slider_show(i, 0); i+=1; );
+r1=0; g1=1; p1=0.00001;
+learn_start = -1; m_latch = 0; last_v = 0;
+rms_f = 1 - exp(-1 / (0.050 * srate));
+
+@slider
+att = exp(-1 / (slider11 * srate / 1000));
+rel = (slider12 == 0) ? 0 : exp(-1 / (slider12 * srate / 1000));
+
+@sample
+s0 = spl0;
+slider18 ? (hp_f=40*2*$pi/srate; hp_in+=(s0-hp_in)*hp_f; s0-=hp_in;);
+slider17 ? ( e1+=(s0*s0-e1)*rms_f; r1=sqrt(max(0,e1)); ) : ( r1=r1*rel+abs(s0)*(1-rel); );
+function calc_g(r_in, t_db, gn, f_lv) (
+  r_db = 20*log10(r_in+0.000001); diff = r_db - t_db;
+  diff >= 0 ? 1 : (diff <= -gn ? f_lv : f_lv + (1-f_lv) * ((diff + gn) / gn));
+);
+gn = slider15; f_v = slider13;
+g1=g1*att + calc_g(r1, slider1, gn, f_v)*(1-att);
+out_sum = s0 * g1;
+slider20 ? (spl0=spl1=(s0 - out_sum);) : (spl0=spl1=out_sum;);
+learn_start > 0 ? (
+  elap = time_precise() - learn_start;
+  elap < slider14 ? ( p1=max(p1,r1); ) : ( slider1=20*log10(p1)+3; slider_automate(1); learn_start = -1; );
+);
+(time_precise() - last_v > 0.04) ? ( gmem[0]=r1; gmem[10]=g1; last_v = time_precise(); );
+
+@gfx 840 640
+gfx_r=0.01; gfx_g=0.02; gfx_b=0.01; gfx_rect(0,0,gfx_w,gfx_h);
+m_w = gfx_w; v_h = gfx_h * 0.48; btn_y = v_h + 80; sld_y = btn_y + 80; pad = m_w * 0.4; 
+click=(mouse_cap==1 && m_latch==0); m_latch=(mouse_cap==1);
+mouse_cap == 1 ? (
+  mouse_y < v_h ? ( slider1=max(-100, min(0, (1-mouse_y/v_h)*100-100)); ) : (
+    mouse_y > sld_y ? (
+      pct = max(0, min(1, (mouse_x - (gfx_w*0.35)) / (gfx_w*0.5)));
+      mouse_y < sld_y + 25 ? slider11=pct*100 : mouse_y < sld_y + 50 ? slider12=pct*1000 : mouse_y < sld_y + 75 ? slider13=pct : slider15=1 + pct*23;
+    );
+  );
+);
+click ? (
+  bw = gfx_w / 4.2;
+  mouse_y > btn_y && mouse_y < btn_y + 45 ? (
+    mouse_x > bw*0.6 && mouse_x < bw ? (
+       slider14 == 5 ? slider14 = 10 : slider14 == 10 ? slider14 = 20 : slider14 == 20 ? slider14 = 30 : slider14 == 30 ? slider14 = 60 : slider14 = 5;
+       slider_automate(slider14);
+    ) :
+    mouse_x < bw*0.6 ? (learn_start=time_precise(); p1=0.00001;) :
+    mouse_x < bw*2 ? slider17=!slider17 : mouse_x < bw*3 ? slider18=!slider18 : slider20=!slider20;
+  );
+);
+curr_t = slider1; t_px = v_h-((curr_t+100)/100)*v_h;
+gfx_r=0.4; gfx_g=1; gfx_b=0.2; gfx_a=0.9; gfx_x=m_w/2-40; gfx_y=v_h+15; gfx_drawstr("FULL RANGE");
+rv=gmem[0]; gv=gmem[10]; h_m=((20*log10(rv+0.000001)+100)/100)*v_h; d_h=(1-gv)*h_m;
+gfx_r=0.1; gfx_g=0.8; gfx_b=0.3; gfx_a=0.4; gfx_rect(pad, v_h-h_m, m_w-(pad*2), d_h);
+gv < slider13+0.01?(gfx_r=0.05;gfx_g=0.2;gfx_b=0.05;gfx_a=0.5):(gfx_r=0.2;gfx_g=1;gfx_b=0.4;gfx_a=0.6;);
+gfx_rect(pad, v_h-h_m+d_h, m_w-(pad*2), h_m-d_h);
+gfx_a=1; gfx_r=0.4; gfx_g=1; gfx_b=0.1; gfx_roundrect(pad-10, t_px-6, m_w-(pad*2)+20, 12, 2, 0);
+bw = gfx_w / 4.2;
+function draw_b(x,y,w,h,lbl,st) (
+  st?(gfx_r=0.2;gfx_g=1;gfx_b=0.4;):(gfx_r=0.05;gfx_g=0.3;gfx_b=0.1;);
+  gfx_roundrect(x+8,y,w-16,h,2,0); gfx_r=1; gfx_a=1; gfx_x=x+15; gfx_y=y+(h/2)-6; gfx_drawstr(lbl);
+);
+draw_b(0, btn_y, bw*0.6, 45, "LEARN", learn_start>0);
+gfx_r=0.05; gfx_g=0.3; gfx_b=0.1; gfx_roundrect(bw*0.6+5, btn_y, bw*0.4-10, 45, 2, 0);
+gfx_r=1; gfx_x=bw*0.6+12; gfx_y=btn_y+16; gfx_drawstr(sprintf(#, "%ds", slider14));
+draw_b(bw, btn_y, bw, 45, (slider17 ? "MODE: RMS" : "MODE: PEAK"), slider17);
+draw_b(bw*2, btn_y, bw, 45, "LO-CUT", slider18);
+draw_b(bw*3, btn_y, bw*1.2, 45, "LISTEN NOISE", slider20);
+function draw_n(x,y,p,l,v,u) (
+  sw = gfx_w * 0.5; gfx_r=0.05; gfx_g=0.15; gfx_b=0.05; gfx_rect(x,y,sw,18);
+  gfx_gradrect(x,y,p*sw,18, 0.2,1,0.4,0.7, 0.001,0.005,0.001,0,0,0,0);
+  gfx_r=0.8; gfx_g=1; gfx_b=0.8; gfx_a=0.9; gfx_x=x-(gfx_w*0.18); gfx_y=y+3; gfx_drawstr(l);
+  gfx_x=x+sw+15; gfx_drawnumber(v,(u=="ms"?0:1)); gfx_drawstr(u);
+);
+sx = gfx_w * 0.35;
+draw_n(sx, sld_y, slider11/100, "ATTACK", slider11, "ms");
+draw_n(sx, sld_y+25, slider12/1000, "RELEASE", slider12, "ms");
+draw_n(sx, sld_y+50, slider13, "FLOOR", slider13*100, "%");
+draw_n(sx, sld_y+75, (slider15-1)/23, "GRADIENT", slider15, "dB");
+learn_start > 0 ? (
+  gfx_r=0.02; gfx_g=0.1; gfx_b=0.02; gfx_a=0.95;
+  gfx_rect(gfx_w/2-140, v_h/2-60, 280, 100, 1);
+  gfx_r=0.2; gfx_g=1; gfx_b=0.4; gfx_a=1;
+  gfx_roundrect(gfx_w/2-140, v_h/2-60, 280, 100, 2, 0);
+  gfx_x=gfx_w/2-110; gfx_y=v_h/2-40; gfx_drawstr("ANALYZING NOISE...");
+  gfx_x=gfx_w/2-15; gfx_y=v_h/2; gfx_drawnumber(max(0, slider14-(time_precise()-learn_start)), 0);
+);
