@@ -1,0 +1,361 @@
+desc: midi note shift
+author: tomaszpio
+version: 1.1.0
+about:
+  desc: MIDI Note Shift
+  author: tomaszpio
+  version: 1.1.0
+  about:
+    Shifts MIDI note numbers by a defined amount (semitones).
+    Input channel is preserved on output.
+    Notes shifted outside 0-127 range are blocked.
+    All other MIDI messages pass through unchanged.
+
+desc: MIDI Note Shift
+author: tomaszpio
+version: 1.1.0
+about:
+  Shifts MIDI note numbers by a defined amount (semitones).
+  Input channel is preserved on output.
+  Notes shifted outside 0-127 range are blocked.
+  All other MIDI messages pass through unchanged.
+
+slider1:0<-48,48,1>Shift (semitones)
+
+in_pin:none
+out_pin:none
+
+@init
+last_in_note  = -1;
+last_in_vel   = 0;
+last_in_ch    = -1;
+last_out_note = -1;
+last_out_vel  = 0;
+blocked_count = 0;
+
+LOG_SIZE   = 10;
+LOG_FIELDS = 5;
+LOG_BASE   = 200;
+log_head   = 0;
+log_count  = 0;
+
+// interp codes:
+// 0=shifted out, 1=blocked out of range, 2=passthru, 3=NoteOff shifted
+
+function log_push(ldir, lstatus, lnote, lvel, linterp) local(base) (
+  base = LOG_BASE + log_head * LOG_FIELDS;
+  base[0] = ldir;
+  base[1] = lstatus;
+  base[2] = lnote;
+  base[3] = lvel;
+  base[4] = linterp;
+  log_head = (log_head + 1) % LOG_SIZE;
+  log_count < LOG_SIZE ? log_count += 1;
+);
+
+@slider
+shift = slider1|0;
+
+@block
+while (midirecv(offset, msg1, msg23)) (
+  status = msg1 & 0xF0;
+  in_ch  = msg1 & 0x0F;
+  note   = msg23 & 0xFF;
+  vel    = (msg23 >> 8) & 0xFF;
+
+  is_note_on  = (status == 0x90) && vel > 0;
+  is_note_off = (status == 0x80) || ((status == 0x90) && vel == 0);
+
+  is_note_on ? (
+    shifted = note + shift;
+    log_push(0, status | in_ch, note, vel, 0);
+
+    shifted >= 0 && shifted <= 127 ? (
+      midisend(offset, 0x90 | in_ch, shifted | (vel << 8));
+      log_push(1, 0x90 | in_ch, shifted, vel, 0);
+      last_in_note  = note;
+      last_in_vel   = vel;
+      last_in_ch    = in_ch + 1;
+      last_out_note = shifted;
+      last_out_vel  = vel;
+    ) : (
+      log_push(0, status | in_ch, note, vel, 1);
+      blocked_count += 1;
+      last_in_note  = note;
+      last_in_vel   = vel;
+      last_in_ch    = in_ch + 1;
+      last_out_note = -1;
+    );
+
+  ) : is_note_off ? (
+    shifted = note + shift;
+    log_push(0, status | in_ch, note, vel, 3);
+    shifted >= 0 && shifted <= 127 ? (
+      midisend(offset, 0x80 | in_ch, shifted);
+      log_push(1, 0x80 | in_ch, shifted, 0, 3);
+    );
+
+  ) : (
+    // non-note → passthrough unchanged
+    log_push(0, status | in_ch, note, vel, 2);
+    midisend(offset, msg1, msg23);
+    log_push(1, msg1, note, vel, 2);
+  );
+);
+
+@gfx 520 560
+gfx_clear = 0x0c0c18;
+
+function draw_box(x,y,w,h,r,g,b) (
+  gfx_r=r; gfx_g=g; gfx_b=b; gfx_a=1;
+  gfx_rect(x,y,w,h);
+);
+
+function draw_note(n) (
+  n < 0 ? (
+    gfx_drawstr("---");
+  ) : (
+    oct=(n/12)|0; nn=n%12;
+    nn==0?gfx_drawstr("C"):nn==1?gfx_drawstr("C#"):nn==2?gfx_drawstr("D"):
+    nn==3?gfx_drawstr("D#"):nn==4?gfx_drawstr("E"):nn==5?gfx_drawstr("F"):
+    nn==6?gfx_drawstr("F#"):nn==7?gfx_drawstr("G"):nn==8?gfx_drawstr("G#"):
+    nn==9?gfx_drawstr("A"):nn==10?gfx_drawstr("A#"):gfx_drawstr("B");
+    gfx_drawnumber(oct-1,0);
+  );
+);
+
+function draw_hex(val) local(hi,lo) (
+  hi=(val>>4)&0xF; lo=val&0xF;
+  gfx_drawstr("0x");
+  hi<10?gfx_drawnumber(hi,0):(hi==10?gfx_drawstr("A"):hi==11?gfx_drawstr("B"):hi==12?gfx_drawstr("C"):hi==13?gfx_drawstr("D"):hi==14?gfx_drawstr("E"):gfx_drawstr("F"));
+  lo<10?gfx_drawnumber(lo,0):(lo==10?gfx_drawstr("A"):lo==11?gfx_drawstr("B"):lo==12?gfx_drawstr("C"):lo==13?gfx_drawstr("D"):lo==14?gfx_drawstr("E"):gfx_drawstr("F"));
+);
+
+// ── TITLE ────────────────────────────────────────────────
+draw_box(0,0,gfx_w,26, 0.12,0.28,0.55);
+gfx_setfont(1,"Arial",14,'b');
+gfx_r=1;gfx_g=1;gfx_b=1;gfx_a=1;
+gfx_x=10;gfx_y=5;
+gfx_drawstr("MIDI Note Shift  v1.1");
+
+// ── SETTINGS BAR ─────────────────────────────────────────
+draw_box(0,28,gfx_w,20, 0.07,0.07,0.16);
+gfx_setfont(1,"Arial",10,0);
+gfx_r=0.5;gfx_g=0.6;gfx_b=0.8;gfx_a=1;
+gfx_x=10;gfx_y=32;
+gfx_drawstr("Shift: ");
+shift>0?(gfx_r=0.3;gfx_g=0.9;gfx_b=0.5;gfx_a=1;gfx_drawstr("+");gfx_drawnumber(shift,0);gfx_drawstr(" semitones")):
+shift<0?(gfx_r=1;  gfx_g=0.4;gfx_b=0.4;gfx_a=1;gfx_drawnumber(shift,0);gfx_drawstr(" semitones")):
+        (gfx_r=0.5;gfx_g=0.5;gfx_b=0.65;gfx_a=1;gfx_drawstr("0  (bypass)"));
+gfx_r=0.4;gfx_g=0.4;gfx_b=0.55;gfx_a=1;
+gfx_drawstr("   Channel: preserved   Blocked: ");
+gfx_r=1;gfx_g=0.35;gfx_b=0.35;gfx_a=1;
+gfx_drawnumber(blocked_count,0);
+
+// ── SHIFT VISUALIZER BAR ─────────────────────────────────
+bary=54; barh=30; barx=10; barw=gfx_w-20;
+
+draw_box(barx,bary,barw,barh, 0.06,0.06,0.12);
+
+// octave tick marks
+gfx_r=0.18;gfx_g=0.18;gfx_b=0.28;gfx_a=1;
+lp=0;
+loop(11,
+  mx=(barx + lp*0.1*barw)|0;
+  gfx_line(mx,bary,mx,bary+barh);
+  lp+=1;
+);
+
+last_in_note >= 0 ? (
+  in_px  = (barx + last_in_note/127.0*barw)|0;
+
+  last_out_note >= 0 ? (
+    out_px = (barx + last_out_note/127.0*barw)|0;
+
+    // arrow between in and out
+    shift != 0 ? (
+      shift>0?(gfx_r=0.25;gfx_g=0.85;gfx_b=0.4;):(gfx_r=1;gfx_g=0.38;gfx_b=0.38;);
+      gfx_a=0.55;
+      gfx_line(in_px, bary+barh/2, out_px, bary+barh/2);
+      // arrowhead
+      gfx_a=1;
+      shift>0?(gfx_r=0.25;gfx_g=0.85;gfx_b=0.4;):(gfx_r=1;gfx_g=0.38;gfx_b=0.38;);
+      shift>0?(
+        gfx_line(out_px,bary+barh/2, out_px-4,bary+barh/2-4);
+        gfx_line(out_px,bary+barh/2, out_px-4,bary+barh/2+4);
+      ):(
+        gfx_line(out_px,bary+barh/2, out_px+4,bary+barh/2-4);
+        gfx_line(out_px,bary+barh/2, out_px+4,bary+barh/2+4);
+      );
+    );
+
+    // output marker
+    shift>0?(gfx_r=0.2;gfx_g=0.9;gfx_b=0.4;):
+    shift<0?(gfx_r=1;  gfx_g=0.35;gfx_b=0.35;):
+            (gfx_r=0.3;gfx_g=0.6;gfx_b=1;);
+    gfx_a=1;
+    gfx_rect(out_px-3,bary+3,6,barh-6);
+  ) : (
+    // blocked — red X zone
+    gfx_r=0.5;gfx_g=0.1;gfx_b=0.1;gfx_a=0.35;
+    gfx_rect(in_px-6,bary+2,12,barh-4);
+  );
+
+  // input marker (always blue)
+  gfx_r=0.3;gfx_g=0.55;gfx_b=1;gfx_a=1;
+  gfx_rect(in_px-3,bary+3,6,barh-6);
+);
+
+// bar range labels
+gfx_setfont(1,"Arial",8,0);
+gfx_r=0.28;gfx_g=0.28;gfx_b=0.4;gfx_a=1;
+gfx_x=barx;gfx_y=bary+barh+2;gfx_drawstr("C-1(0)");
+gfx_x=barx+barw-28;gfx_y=bary+barh+2;gfx_drawstr("G9(127)");
+
+// ── IN / OUT PANELS ──────────────────────────────────────
+py=100; ph=120; pw=(gfx_w-30)/2; gap=10;
+px0=10; px1=px0+pw+gap;
+
+// IN panel
+last_in_note>=0?(draw_box(px0,py,pw,ph,0.04,0.18,0.32);gfx_r=0.4;gfx_g=0.82;gfx_b=1;):
+               (draw_box(px0,py,pw,ph,0.07,0.09,0.13); gfx_r=0.3;gfx_g=0.45;gfx_b=0.6;);
+gfx_a=1;
+gfx_setfont(1,"Arial",11,'b');
+gfx_x=px0+8;gfx_y=py+6;gfx_drawstr("IN");
+gfx_setfont(1,"Arial",9,0);
+gfx_r=0.45;gfx_g=0.65;gfx_b=0.85;gfx_a=1;
+gfx_x=px0+8;gfx_y=py+24;
+gfx_drawstr("ch:"); last_in_ch>0?gfx_drawnumber(last_in_ch,0):gfx_drawstr("--");
+gfx_setfont(1,"Arial",22,'b');
+last_in_note>=0?(gfx_r=0.45;gfx_g=0.88;gfx_b=1;):(gfx_r=0.22;gfx_g=0.35;gfx_b=0.5;);
+gfx_a=1;gfx_x=px0+8;gfx_y=py+36;draw_note(last_in_note);
+gfx_setfont(1,"Arial",11,0);
+gfx_r=0.38;gfx_g=0.62;gfx_b=0.82;gfx_a=1;
+gfx_x=px0+8;gfx_y=py+68;
+last_in_note>=0?(gfx_drawstr("#");gfx_drawnumber(last_in_note,0);):gfx_drawstr("#--");
+gfx_setfont(1,"Arial",9,0);
+gfx_r=0.38;gfx_g=0.62;gfx_b=0.5;gfx_a=1;
+gfx_x=px0+8;gfx_y=py+86;
+gfx_drawstr("vel:"); last_in_note>=0?gfx_drawnumber(last_in_vel,0):gfx_drawstr("--");
+// shift badge
+gfx_setfont(1,"Arial",12,'b');
+gfx_x=px0+8;gfx_y=py+102;
+shift>0?(gfx_r=0.25;gfx_g=0.85;gfx_b=0.4;gfx_a=1;gfx_drawstr("+");gfx_drawnumber(shift,0);gfx_drawstr(" st")):
+shift<0?(gfx_r=1;   gfx_g=0.35;gfx_b=0.35;gfx_a=1;gfx_drawnumber(shift,0);gfx_drawstr(" st")):
+        (gfx_r=0.42;gfx_g=0.42;gfx_b=0.55;gfx_a=1;gfx_drawstr("bypass"));
+
+// OUT panel
+last_out_note>=0?(
+  draw_box(px1,py,pw,ph,0.05,0.24,0.1);gfx_r=0.3;gfx_g=1;gfx_b=0.45;
+):(
+  last_in_note>=0?(draw_box(px1,py,pw,ph,0.28,0.06,0.06);gfx_r=1;gfx_g=0.35;gfx_b=0.35;):
+                  (draw_box(px1,py,pw,ph,0.07,0.1,0.07);  gfx_r=0.3;gfx_g=0.5;gfx_b=0.35;)
+);
+gfx_a=1;
+gfx_setfont(1,"Arial",11,'b');
+gfx_x=px1+8;gfx_y=py+6;
+last_out_note>=0?gfx_drawstr("OUT"):last_in_note>=0?gfx_drawstr("BLOCKED"):gfx_drawstr("OUT");
+gfx_setfont(1,"Arial",9,0);
+gfx_r=0.38;gfx_g=0.68;gfx_b=0.42;gfx_a=1;
+gfx_x=px1+8;gfx_y=py+24;
+gfx_drawstr("ch:"); last_in_ch>0?gfx_drawnumber(last_in_ch,0):gfx_drawstr("--");
+gfx_setfont(1,"Arial",22,'b');
+last_out_note>=0?(gfx_r=0.3;gfx_g=1;gfx_b=0.5;):
+last_in_note>=0? (gfx_r=1;  gfx_g=0.3;gfx_b=0.3;):
+                 (gfx_r=0.2;gfx_g=0.4;gfx_b=0.25;);
+gfx_a=1;gfx_x=px1+8;gfx_y=py+36;
+last_out_note>=0?draw_note(last_out_note):last_in_note>=0?gfx_drawstr("---"):draw_note(-1);
+gfx_setfont(1,"Arial",11,0);
+gfx_r=0.28;gfx_g=0.82;gfx_b=0.42;gfx_a=1;
+gfx_x=px1+8;gfx_y=py+68;
+last_out_note>=0?(gfx_drawstr("#");gfx_drawnumber(last_out_note,0);):gfx_drawstr("#--");
+gfx_setfont(1,"Arial",9,0);
+gfx_r=0.32;gfx_g=0.68;gfx_b=0.38;gfx_a=1;
+gfx_x=px1+8;gfx_y=py+86;
+gfx_drawstr("vel:"); last_out_note>=0?gfx_drawnumber(last_out_vel,0):gfx_drawstr("--");
+gfx_r=1;gfx_g=0.38;gfx_b=0.38;gfx_a=1;
+gfx_x=px1+8;gfx_y=py+102;
+gfx_drawstr("blk:"); gfx_drawnumber(blocked_count,0);
+
+// ── MIDI LOG TABLE ───────────────────────────────────────
+log_top = py+ph+10;
+draw_box(0,log_top,gfx_w,16, 0.07,0.07,0.18);
+gfx_setfont(1,"Arial",9,'b');
+gfx_r=0.5;gfx_g=0.6;gfx_b=1;gfx_a=1;
+
+lx_dir=6; lx_st=48; lx_ch=100; lx_note=128; lx_vel=200; lx_int=238;
+
+gfx_x=lx_dir; gfx_y=log_top+3; gfx_drawstr("DIR");
+gfx_x=lx_st;  gfx_y=log_top+3; gfx_drawstr("STATUS");
+gfx_x=lx_ch;  gfx_y=log_top+3; gfx_drawstr("CH");
+gfx_x=lx_note;gfx_y=log_top+3; gfx_drawstr("NOTE");
+gfx_x=lx_vel; gfx_y=log_top+3; gfx_drawstr("VEL");
+gfx_x=lx_int; gfx_y=log_top+3; gfx_drawstr("INTERPRETATION");
+
+row_h=22;
+ri=0;
+loop(LOG_SIZE,
+  entry=(log_head-1-ri+LOG_SIZE)%LOG_SIZE;
+  base=LOG_BASE+entry*LOG_FIELDS;
+  ldir=base[0]; lstatus=base[1]; lnote=base[2]; lvel=base[3]; linterp=base[4];
+  ry=log_top+18+ri*row_h;
+
+  ri%2==0?draw_box(0,ry,gfx_w,row_h-1,0.06,0.06,0.11):
+          draw_box(0,ry,gfx_w,row_h-1,0.04,0.04,0.09);
+
+  lstatus>0 ? (
+    gfx_setfont(1,"Arial",9,0);
+
+    // DIR badge
+    ldir==0?(
+      draw_box(lx_dir,ry+3,34,15,0.04,0.18,0.1);
+      gfx_r=0.3;gfx_g=1;gfx_b=0.5;gfx_x=lx_dir+5;gfx_y=ry+6;gfx_drawstr(" IN");
+    ):(
+      draw_box(lx_dir,ry+3,34,15,0.22,0.12,0.04);
+      gfx_r=1;gfx_g=0.62;gfx_b=0.18;gfx_x=lx_dir+3;gfx_y=ry+6;gfx_drawstr("OUT");
+    );
+    gfx_a=1;
+
+    // STATUS
+    gfx_r=0.5;gfx_g=0.6;gfx_b=0.85;gfx_a=1;
+    gfx_x=lx_st;gfx_y=ry+6;
+    draw_hex(lstatus&0xF0); gfx_drawstr(" ");
+    (lstatus&0xF0)==0x90?gfx_drawstr("NOn") :
+    (lstatus&0xF0)==0x80?gfx_drawstr("NOff"):
+    (lstatus&0xF0)==0xA0?gfx_drawstr("AT")  :
+    (lstatus&0xF0)==0xB0?gfx_drawstr("CC")  :gfx_drawstr("??");
+
+    // CH
+    gfx_r=0.55;gfx_g=0.55;gfx_b=0.7;gfx_a=1;
+    gfx_x=lx_ch;gfx_y=ry+6;gfx_drawnumber((lstatus&0x0F)+1,0);
+
+    // NOTE
+    linterp==1?(gfx_r=0.5;gfx_g=0.28;gfx_b=0.28;):
+    ldir==0?   (gfx_r=0.4;gfx_g=0.88;gfx_b=1;)   :
+               (gfx_r=1;  gfx_g=0.62;gfx_b=0.2;);
+    gfx_a=1;gfx_x=lx_note;gfx_y=ry+6;
+    draw_note(lnote);gfx_drawstr("(");gfx_drawnumber(lnote,0);gfx_drawstr(")");
+
+    // VEL
+    gfx_r=0.5;gfx_g=0.5;gfx_b=0.62;gfx_a=1;
+    gfx_x=lx_vel;gfx_y=ry+6;gfx_drawnumber(lvel,0);
+
+    // INTERPRETATION
+    gfx_x=lx_int;gfx_y=ry+6;
+    linterp==0&&ldir==0?(gfx_r=0.4; gfx_g=0.88;gfx_b=1;    gfx_drawstr("Note On -> shift")):
+    linterp==0&&ldir==1?(gfx_r=0.32;gfx_g=1;   gfx_b=0.44; gfx_drawstr("-> shifted out")):
+    linterp==1&&ldir==0?(gfx_r=1;   gfx_g=0.38;gfx_b=0.1;  gfx_drawstr("out of range -> BLOCKED")):
+    linterp==2&&ldir==0?(gfx_r=0.45;gfx_g=0.45;gfx_b=0.55; gfx_drawstr("non-note -> in")):
+    linterp==2&&ldir==1?(gfx_r=0.38;gfx_g=0.38;gfx_b=0.5;  gfx_drawstr("-> forwarded")):
+    linterp==3&&ldir==0?(gfx_r=0.6; gfx_g=0.4; gfx_b=0.4;  gfx_drawstr("Note Off -> in")):
+    linterp==3&&ldir==1?(gfx_r=1;   gfx_g=0.35;gfx_b=0.35; gfx_drawstr("-> Note Off shifted out")):
+                        (gfx_r=0.32;gfx_g=0.32;gfx_b=0.38; gfx_drawstr("-"));
+    gfx_a=1;
+  );
+  ri+=1;
+);
+
+gfx_setfont(1,"Arial",8,0);
+gfx_r=0.28;gfx_g=0.28;gfx_b=0.38;gfx_a=1;
+gfx_x=gfx_w-46;gfx_y=log_top+20;gfx_drawstr("newest");
+gfx_x=gfx_w-44;gfx_y=log_top+18+row_h*(LOG_SIZE-1);gfx_drawstr("oldest");
