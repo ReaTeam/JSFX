@@ -1,0 +1,69 @@
+desc: Bassducker
+author: VISΛGE
+version: 1.0
+about:
+  # Bassducker
+
+  Smarted ringmod sidechain and clip delta designed to make way for your bass. Just send it to channels 3 and 4 and dial anything you might need to.
+
+// Copyright © 2026 VISΛGE
+//
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the “Software”),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
+// is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+desc:Bassducker
+
+slider1:rm_int=0<0,1>AM Intensity (0-1)
+slider2:clip_int=0<0,1>Clip Intensity (0-1)
+slider3:in_gain=0<0,36>In Gain (dB)
+slider4:sc_gain=0<0,36>SC Gain (dB)
+
+in_pin:Left
+in_pin:Right
+in_pin:Left SC
+in_pin:Right SC
+out_pin:Left
+out_pin:Right
+
+@init
+
+@slider
+in_mult = pow(10, (in_gain/20));
+sc_mult = pow(10, (sc_gain/20));
+
+
+@block
+
+@sample
+spl0 *= in_mult; spl1 *= in_mult;
+spl2 *= sc_mult; spl3 *= sc_mult;
+
+abs(spl0) > 1 ? spl0 = sign(spl0);
+abs(spl1) > 1 ? spl1 = sign(spl1);
+abs(spl2) > 1 ? spl2 = sign(spl2);
+abs(spl3) > 1 ? spl3 = sign(spl3);
+
+spl0 = spl0 * (1 - (abs(spl2) * rm_int));
+spl1 = spl1 * (1 - (abs(spl3) * rm_int));
+
+clip_inL = spl0 + (spl2 * clip_int); clip_inR = spl1 + (spl3 * clip_int);
+
+abs(clip_inL) > 1 ? clip_inL = sign(clip_inL);
+abs(clip_inR) > 1 ? clip_inR = sign(clip_inR);
+
+spl0 = clip_inL - (spl2 * clip_int);
+spl1 = clip_inR - (spl3 * clip_int);
