@@ -1,20 +1,20 @@
 desc: MB MIDI Event Filter
 author: mabian
-version: 2.0
-changelog: - First version (same as classic MB_Filter2) added to Reapack
+version: 2.2
+changelog:
+  - First version (same as classic MB_Filter2) added to Reapack
+  - Added MIDI Time Code (MTC) filter
+  - Added MIDI Clock filter
 about:
   # MB MIDI Event Filter
 
   Simple but flexible MIDI plugin that allows filtering out (suppressing) specific MIDI events in the FX chain on which it is added.
 
-  It can be used to prevent recording unwanted MIDI messages by using the “record (output)” REAPER track recording mode (if in track FX chain) or to discard them right at the source (if in Input FX chain).
+  It can be used to prevent recording unwanted MIDI messages by using the "record (output)" REAPER track recording mode (if in track FX chain) or to discard them right at the source (if in Input FX chain).
 
-  Additionally, event “rechannelization” option is available, to route to a specified MIDI channel all events that aren't filtered out.
+  Additionally, event "rechannelization" option is available, to route to a specified MIDI channel all events that aren't filtered out.
 
   Different filter settings are available per MIDI message category (pitch bend, poly aftertouch, channel aftertouch and up to 4 control changes).
-
-// MB MIDI Event Filter2
-// 16.05.2010
 
 slider1:0<0,17,1{Off,All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Channel for filters
 slider2:0<0,16,1{Same as input,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI Channel for output
@@ -26,7 +26,8 @@ slider7:0<0,129,1{Off,All,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,2
 slider8:0<0,129,1{Off,All,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>Control Change filter #2
 slider9:0<0,129,1{Off,All,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>Control Change filter #3
 slider10:0<0,129,1{Off,All,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127}>Control Change filter #4
-
+slider11:0<0,1,1{Off,On}>MIDI Time Code filter (0xF1)
+slider12:1<0,1,1{Off,On}>MIDI Clock filter (0xF8)
 
 in_pin:none
 out_pin:none
@@ -39,6 +40,8 @@ out_pin:none
     PROGRAM_CHANGE = $xC0;    // program change MIDI message code
     AFTERTOUCH_CHANNEL = $xD0;    // channel aftertouch MIDI message code
     PITCH_BEND = $xE0;        // pitch bend MIDI message code
+    MTC_QUARTER_FRAME = $xF1; // MIDI time code quarter frame
+    MIDI_CLOCK = $xF8;        // MIDI timing clock code
     OTHER = $xF0;
 
 @block
@@ -84,13 +87,24 @@ while
       (
         eat = 1;
       );
-      
       ((msg == PROGRAM_CHANGE) && (slider6 == 1)) ?    // program changes
       (
         eat = 1;
       );      
     );
-      
+
+    // MIDI Time Code filter (system message, check full status byte)
+    ((msg1 == MTC_QUARTER_FRAME) && (slider11 == 1)) ?
+    (
+      eat = 1;
+    );
+
+    // New MIDI Clock filter (0xF8)
+    ((msg1 == MIDI_CLOCK) && (slider12 == 1)) ?
+    (
+      eat = 1;
+    );
+
     (eat == 0) ?
     (
       // channel remap
