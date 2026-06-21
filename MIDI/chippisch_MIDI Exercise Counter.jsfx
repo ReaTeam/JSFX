@@ -1,0 +1,135 @@
+desc: MIDI Exercise Counter
+author: chippisch
+version: 0.2
+changelog:
+  Option to learn the counted MIDI-event .
+  Display event to count.
+  Renamed Events (A" to c'""), added modwheel to liust of count-events.
+about:
+  Count the repetitions of your exercises.
+  When I was a student for church organ, there were plenty of tally sheets next to the organ, where each stundent counted the repetitions of his exercises.
+  This simple jsfx-plugin does the counting for you: just press the pedal or a specific key to go on counting.
+
+  Key Features:
+  - Select the MIDI-event to be counted: Pedal or one of the 3 lowest or highest keys.
+  - If your exercise-target (or its muliple) is reached, the highest C will be played and the display will turn green.
+  - Use the counter-slider to reset.
+
+slider1:100<0,127,1>Loudness of "target reached"
+slider2:0<0,1,1{0 Pedal,1 A ",2 Bb ",3 B ",4 C ',5 b b" ",6  b" ",7 c " " ',8 Modwheel (127),9 LEARNED,10 Learn}>Controller
+slider3:25<0,100,1>Target
+
+//slider4 is used as counter:
+slider4:0<0,200,1>Counter
+
+@init
+
+@slider
+TargetLoudness = slider1;
+TriggerEvent = slider2;
+Target = slider3;
+
+// Select Midievent choosen by slider1
+TriggerEvent == 0 ? (
+       MidiEvent1 = 176;
+       MidiEvent2 = 64;
+       MidiEvent3 = 1;
+     ): TriggerEvent == 1 ? (
+       MidiEvent1 = 144;
+       MidiEvent2 = 21;
+       MidiEvent3 = 1;
+     ): TriggerEvent == 2 ? (
+       MidiEvent1 = 144;
+       MidiEvent2 = 22;
+       MidiEvent3 = 1;
+     ): TriggerEvent == 3 ? (
+      MidiEvent1 = 144;
+      MidiEvent2 = 23;
+      MidiEvent3 = 1;
+     ): TriggerEvent == 4 ? (
+      MidiEvent1 = 144;
+      MidiEvent2 = 24;
+      MidiEvent3 = 1;
+     ): TriggerEvent == 5 ? (
+      MidiEvent1 = 144;
+      MidiEvent2 = 106;
+      MidiEvent3 = 1;
+     ): TriggerEvent == 6 ? (
+      MidiEvent1 = 144;
+      MidiEvent2 = 107;
+      MidiEvent3 = 1;
+     ): TriggerEvent == 7 ? (
+       MidiEvent1 = 144;
+       MidiEvent2 = 108;
+       MidiEvent3 = 1;
+    ): TriggerEvent == 8 ? (
+         MidiEvent1 = 176;
+         MidiEvent2 = 1;
+         MidiEvent3 = 127;
+     ): TriggerEvent == 9 ? (
+        midirecv(offset,msg1,msg2,msg3);
+       MidiEvent1 = LearnedMidiEvent1;
+       MidiEvent2 = LearnedMidiEvent2;
+     );
+
+@block
+
+// Learn
+      TriggerEvent == 10 ? (
+        lmsg3 = 0;
+        midirecv(offset,lmsg1,lmsg2,lmsg3);
+        lmsg3 !== 0 ?(
+        MidiEvent1=lmsg1;
+        MidiEvent2=lmsg2;
+        MidiEvent3=1;
+        TriggerEvent = 9;
+        slider2=9;
+        );
+        );
+
+// Count
+    while (midirecv(offset,msg1,msg2,msg3)) (
+        midisend(offset,msg1,msg2,msg3); // passthrough all events
+        msg1==MidiEvent1 && msg2== MidiEvent2 && msg3>=MidiEvent3 ? (
+
+          slider4+=1;                   // Count in  slider1
+
+         // Decide Backgroundcolor:
+          slider4 % Target !== 0 ? (       // not matching
+           backgroundcolor=0;
+          );
+          (slider4 +2) % Target == 0 ? (  // 2 to go
+            backgroundcolor=0x003300;
+          );
+          (slider4 +1) % Target == 0 ? (  // 1 to go
+           backgroundcolor=0x006600;
+         );
+          slider4 % Target == 0 ? (       //Target reached
+            backgroundcolor=0x00FF00;
+            midisend(0, 144, 108, TargetLoudness); midisend(0, 144, 108, 0);
+         );
+      );
+
+ );
+
+
+@gfx
+gfx_r = 1.0; gfx_g =2.0;  gfx_b = 1.0;
+gfx_x=0;
+gfx_y=0;
+gfx_clear=backgroundcolor; //set backgroundcolor
+
+// set fontsize to gfx_h
+gfx_setfont(1, "Arial", gfx_h);
+
+// Print the Counter stored in slider4 (convert numer to string with sprintf)
+gfx_drawstr(sprintf(#, "%d", slider4 ), 1, gfx_w, gfx_h);
+gfx_x=0;
+gfx_y=0;
+gfx_setfont(1, "Arial", 16);
+gfx_drawstr("MIDI-Event to count: ");
+gfx_drawstr(sprintf(#, "%d", MidiEvent1 ) );
+gfx_drawstr(", ");
+gfx_drawstr(sprintf(#, "%d", MidiEvent2 ) );
+gfx_drawstr(" >= ");
+gfx_drawstr(sprintf(#, "%d", MidiEvent3 ) );
