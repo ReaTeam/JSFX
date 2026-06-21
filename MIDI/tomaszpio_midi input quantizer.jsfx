@@ -1,0 +1,543 @@
+desc: midi input quantizer
+author: tomaszpio
+version: 1.6.0
+about:
+  desc: MIDI Beat Quantizer
+  author: tomaszpio
+  version: 1.6.0
+  about:
+    Captures incoming MIDI notes and holds them until the next DAW beat.
+    On each beat boundary, queued Note Ons are fired.
+    Note Off is sent only when the keyboard releases the note,
+    delayed to the next beat boundary.
+    CC64 kill uses hysteresis: pedal arms at >= 10 (fast response),
+    kills when drops below 5 — safe margin for analog pedals.
+    Kill only affects notes from before the pedal release — notes played
+    while pedal is releasing are protected via generation counter.
+    Non-note messages pass through unchanged.
+
+    Memory layout:
+      100..195  queue      (32 notes * 3 fields)
+      300..811  active     (128 notes * 4 fields: note, ch, pending_off, generation)
+      900..979  CC64 wave  (80 slots)
+      1000..1049 log       (10 entries * 5 fields)
+
+desc: MIDI Beat Quantizer
+author: tomaszpio
+version: 1.6.0
+about:
+  Captures incoming MIDI notes and holds them until the next DAW beat.
+  On each beat boundary, queued Note Ons are fired.
+  Note Off is sent only when the keyboard releases the note,
+  delayed to the next beat boundary.
+  CC64 kill uses hysteresis: pedal arms at >= 10 (fast response),
+  kills when drops below 5 — safe margin for analog pedals.
+  Kill only affects notes from before the pedal release — notes played
+  while pedal is releasing are protected via generation counter.
+  Non-note messages pass through unchanged.
+
+  Memory layout:
+    100..195  queue      (32 notes * 3 fields)
+    300..811  active     (128 notes * 4 fields: note, ch, pending_off, generation)
+    900..979  CC64 wave  (80 slots)
+    1000..1049 log       (10 entries * 5 fields)
+
+slider1:0<0,16,1>Channel (0=omni)
+slider2:0<0,3,1{1/1,1/2,1/4,1/8}>Quantize grid
+
+in_pin:none
+out_pin:none
+
+@init
+QUEUE_SIZE  = 32;
+QUEUE_BASE  = 100;
+queue_count = 0;
+
+ACTIVE_BASE   = 300;
+// 128 notes * 4 fields = 512 slots -> 300..811
+memset(ACTIVE_BASE, 0, 128*4);
+active_count  = 0;
+
+pedal_generation = 0;
+
+last_beat     = -1;
+queued_count  = 0;
+fired_count   = 0;
+last_note_in  = -1;
+last_note_out = -1;
+last_vel_in   = 0;
+last_vel_out  = 0;
+last_ch_in    = -1;
+cc64_kills    = 0;
+
+CC64_ARM_THRESH  = 10;  // arm fast — pedal barely pressed
+CC64_KILL_THRESH = 5;   // kill just above zero — safe for analog pedals
+cc64_val         = 0;
+cc64_armed       = 0;
+
+CC64_WAVE_SIZE = 80;
+CC64_WAVE_BASE = 900;   // 900..979
+cc64_wave_head = 0;
+memset(CC64_WAVE_BASE, 0, CC64_WAVE_SIZE);
+
+function cc64_wave_push(v) local(base) (
+  base = CC64_WAVE_BASE + cc64_wave_head;
+  base[0] = v;
+  cc64_wave_head = (cc64_wave_head + 1) % CC64_WAVE_SIZE;
+);
+
+LOG_SIZE   = 10;
+LOG_FIELDS = 5;
+LOG_BASE   = 1000;      // 1000..1049
+log_head   = 0;
+log_count  = 0;
+
+function log_push(ldir, lstatus, lch, lnote, lvel) local(base) (
+  base = LOG_BASE + log_head * LOG_FIELDS;
+  base[0] = ldir;
+  base[1] = lstatus;
+  base[2] = lch;
+  base[3] = lnote;
+  base[4] = lvel;
+  log_head = (log_head + 1) % LOG_SIZE;
+  log_count < LOG_SIZE ? log_count += 1;
+);
+
+function queue_add(qnote, qvel, qch) local(base) (
+  queue_count < QUEUE_SIZE ? (
+    base = QUEUE_BASE + queue_count * 3;
+    base[0] = qnote;
+    base[1] = qvel;
+    base[2] = qch;
+    queue_count += 1;
+  );
+);
+
+function queue_clear() (
+  queue_count = 0;
+);
+
+// active slot: base[0]=note, base[1]=ch, base[2]=pending_off, base[3]=generation
+function active_add(anote, ach) local(base) (
+  base = ACTIVE_BASE + anote * 4;
+  base[0] = anote;
+  base[1] = ach;
+  base[2] = 0;
+  base[3] = pedal_generation;
+  active_count += 1;
+);
+
+function active_mark_off(anote) local(base) (
+  base = ACTIVE_BASE + anote * 4;
+  base[0] == anote && base[2] == 0 ? (
+    base[2] = 1;
+  );
+);
+
+function flush_pending_offs(ts) local(n, base) (
+  n = 0;
+  loop(128,
+    base = ACTIVE_BASE + n * 4;
+    base[2] == 1 && !cc64_armed ? (  // hold Note Off while pedal is armed
+      midisend(ts, 0x80 | base[1], base[0]);
+      log_push(1, 0x80 | base[1], base[1], base[0], 0);
+      base[0] = 0; base[1] = 0; base[2] = 0; base[3] = 0;
+      active_count > 0 ? active_count -= 1;
+    );
+    n += 1;
+  );
+);
+
+function kill_all_active(ts) local(n, base) (
+  n = 0;
+  loop(128,
+    base = ACTIVE_BASE + n * 4;
+    // only kill notes from previous generation — protects notes played during pedal release
+    (base[0] > 0 || base[1] > 0 || base[2] > 0) && base[3] < pedal_generation ? (
+      midisend(ts, 0x80 | base[1], base[0]);
+      log_push(1, 0x80 | base[1], base[1], base[0], 0);
+      base[0] = 0; base[1] = 0; base[2] = 0; base[3] = 0;
+      active_count > 0 ? active_count -= 1;
+    );
+    n += 1;
+  );
+  queue_clear();
+  cc64_kills += 1;
+  pedal_generation += 1;  // new notes added after this are safe
+);
+
+function flush_queue(ts) local(i, base, anote, avel, ach) (
+  i = 0;
+  loop(queue_count,
+    base = QUEUE_BASE + i * 3;
+    anote = base[0]; avel = base[1]; ach = base[2];
+    midisend(ts, 0x90 | ach, anote | (avel << 8));
+    log_push(1, 0x90 | ach, ach, anote, avel);
+    active_add(anote, ach);
+    last_note_out = anote;
+    last_vel_out  = avel;
+    fired_count  += 1;
+    i += 1;
+  );
+  queue_clear();
+);
+
+@slider
+s1   = slider1|0;
+chan = s1 ? (s1 - 1) : -1;
+grid = slider2|0;
+
+@block
+tempo > 0 ? (
+  subdiv = grid==0?1.0:grid==1?2.0:grid==2?4.0:8.0;
+  current_beat = (beat_position * subdiv)|0;
+
+  play_state && current_beat != last_beat ? (
+    flush_pending_offs(0);
+    flush_queue(0);
+    last_beat = current_beat;
+  );
+  !play_state ? (
+    last_beat = -1;
+  );
+);
+
+while (midirecv(offset, msg1, msg23)) (
+  status = msg1 & 0xF0;
+  in_ch  = msg1 & 0x0F;
+  note   = msg23 & 0xFF;
+  vel    = (msg23 >> 8) & 0xFF;
+
+  is_note_on  = (status == 0x90) && vel > 0;
+  is_note_off = (status == 0x80) || ((status == 0x90) && vel == 0);
+  is_cc       = (status == 0xB0);
+  in_chan     = (chan < 0) || (in_ch == chan);
+
+  is_note_on && in_chan ? (
+    log_push(0, status | in_ch, in_ch, note, vel);
+    queue_add(note, vel, in_ch);
+    queued_count += 1;
+    last_note_in = note;
+    last_vel_in  = vel;
+    last_ch_in   = in_ch + 1;
+
+  ) : is_note_off && in_chan ? (
+    log_push(0, status | in_ch, in_ch, note, vel);
+    active_mark_off(note);
+
+  ) : is_cc && note == 64 && in_chan ? (
+    cc64_val = vel;
+    cc64_wave_push(vel);
+
+    vel >= CC64_ARM_THRESH ? (
+      cc64_armed = 1;
+    );
+
+    vel < CC64_KILL_THRESH && cc64_armed ? (
+      log_push(0, status | in_ch, in_ch, 64, vel);
+      kill_all_active(offset);
+      cc64_armed = 0;
+      // kill event consumed, not forwarded downstream
+    ) : (
+      midisend(offset, msg1, msg23);
+    );
+
+  ) : (
+    midisend(offset, msg1, msg23);
+  );
+);
+
+@gfx 520 600
+gfx_clear = 0x0c0c18;
+
+function draw_box(x,y,w,h,r,g,b) (
+  gfx_r=r; gfx_g=g; gfx_b=b; gfx_a=1;
+  gfx_rect(x,y,w,h);
+);
+
+function draw_note(n) (
+  n < 0 ? (
+    gfx_drawstr("---");
+  ) : (
+    oct=(n/12)|0; nn=n%12;
+    nn==0?gfx_drawstr("C"):nn==1?gfx_drawstr("C#"):nn==2?gfx_drawstr("D"):
+    nn==3?gfx_drawstr("D#"):nn==4?gfx_drawstr("E"):nn==5?gfx_drawstr("F"):
+    nn==6?gfx_drawstr("F#"):nn==7?gfx_drawstr("G"):nn==8?gfx_drawstr("G#"):
+    nn==9?gfx_drawstr("A"):nn==10?gfx_drawstr("A#"):gfx_drawstr("B");
+    gfx_drawnumber(oct-1,0);
+  );
+);
+
+function draw_hex(val) local(hi,lo) (
+  hi=(val>>4)&0xF; lo=val&0xF;
+  gfx_drawstr("0x");
+  hi<10?gfx_drawnumber(hi,0):(hi==10?gfx_drawstr("A"):hi==11?gfx_drawstr("B"):hi==12?gfx_drawstr("C"):hi==13?gfx_drawstr("D"):hi==14?gfx_drawstr("E"):gfx_drawstr("F"));
+  lo<10?gfx_drawnumber(lo,0):(lo==10?gfx_drawstr("A"):lo==11?gfx_drawstr("B"):lo==12?gfx_drawstr("C"):lo==13?gfx_drawstr("D"):lo==14?gfx_drawstr("E"):gfx_drawstr("F"));
+);
+
+draw_box(0,0,gfx_w,26, 0.12,0.24,0.48);
+gfx_setfont(1,"Arial",14,'b');
+gfx_r=1;gfx_g=1;gfx_b=1;gfx_a=1;
+gfx_x=10;gfx_y=5;
+gfx_drawstr("MIDI Beat Quantizer  v1.6");
+
+play_state?(draw_box(0,28,gfx_w,20,0.05,0.28,0.08);gfx_r=0.3;gfx_g=1;gfx_b=0.42;):
+           (draw_box(0,28,gfx_w,20,0.22,0.06,0.06);gfx_r=0.9;gfx_g=0.3;gfx_b=0.3;);
+gfx_a=1;gfx_setfont(1,"Arial",10,'b');
+gfx_x=10;gfx_y=32;
+play_state?gfx_drawstr("PLAYING"):gfx_drawstr("STOPPED");
+gfx_setfont(1,"Arial",10,0);
+gfx_r=0.6;gfx_g=0.7;gfx_b=0.85;gfx_a=1;
+gfx_drawstr("   BPM: "); gfx_drawnumber(tempo,0);
+gfx_drawstr("   Grid: ");
+grid==0?gfx_drawstr("1/1"):grid==1?gfx_drawstr("1/2"):grid==2?gfx_drawstr("1/4"):gfx_drawstr("1/8");
+gfx_drawstr("   ch: ");
+chan<0?(gfx_r=0.4;gfx_g=0.9;gfx_b=0.5;gfx_drawstr("Omni")):(gfx_r=0.9;gfx_g=0.75;gfx_b=0.2;gfx_drawnumber(chan+1,0));
+
+bary=54; barh=20; barx=10; barw=gfx_w-20;
+draw_box(barx,bary,barw,barh, 0.06,0.06,0.12);
+
+play_state ? (
+  beat_frac = (beat_position * subdiv) - ((beat_position * subdiv)|0);
+  fill_w = (beat_frac * barw)|0;
+  gfx_r=0.18;gfx_g=0.5;gfx_b=0.88;gfx_a=1;
+  gfx_rect(barx,bary,fill_w,barh);
+  si=1;
+  loop(subdiv-1,
+    tx=(barx + si/subdiv*barw)|0;
+    gfx_r=0.45;gfx_g=0.45;gfx_b=0.65;gfx_a=0.7;
+    gfx_line(tx,bary,tx,bary+barh);
+    si+=1;
+  );
+);
+
+gfx_setfont(1,"Arial",9,0);
+gfx_r=0.5;gfx_g=0.6;gfx_b=0.8;gfx_a=1;
+gfx_x=barx+5;gfx_y=bary+5;
+play_state?(gfx_drawstr("beat "); gfx_drawnumber(beat_position|0,0);):(gfx_drawstr("—"));
+
+sy=80; sh=60; pw3=(gfx_w-26)/3;
+
+queue_count>0?(draw_box(8,sy,pw3,sh,0.2,0.16,0.03);gfx_r=1;gfx_g=0.82;gfx_b=0.1;):
+              (draw_box(8,sy,pw3,sh,0.08,0.08,0.12);gfx_r=0.38;gfx_g=0.38;gfx_b=0.5;);
+gfx_a=1;gfx_setfont(1,"Arial",10,'b');
+gfx_x=16;gfx_y=sy+5;gfx_drawstr("QUEUED");
+gfx_setfont(1,"Arial",24,'b');
+queue_count>0?(gfx_r=1;gfx_g=0.85;gfx_b=0.1;):(gfx_r=0.25;gfx_g=0.25;gfx_b=0.38;);
+gfx_a=1;gfx_x=16;gfx_y=sy+18;gfx_drawnumber(queue_count,0);
+gfx_setfont(1,"Arial",9,0);
+gfx_r=0.42;gfx_g=0.42;gfx_b=0.55;gfx_a=1;
+gfx_x=16;gfx_y=sy+48;gfx_drawstr("tot: ");gfx_drawnumber(queued_count,0);
+
+px2=8+pw3+5;
+active_count>0?(draw_box(px2,sy,pw3,sh,0.04,0.22,0.08);gfx_r=0.28;gfx_g=1;gfx_b=0.45;):
+               (draw_box(px2,sy,pw3,sh,0.07,0.1,0.07); gfx_r=0.22;gfx_g=0.42;gfx_b=0.28;);
+gfx_a=1;gfx_setfont(1,"Arial",10,'b');
+gfx_x=px2+8;gfx_y=sy+5;gfx_drawstr("ACTIVE");
+gfx_setfont(1,"Arial",24,'b');
+active_count>0?(gfx_r=0.25;gfx_g=1;gfx_b=0.48;):(gfx_r=0.15;gfx_g=0.32;gfx_b=0.2;);
+gfx_a=1;gfx_x=px2+8;gfx_y=sy+18;gfx_drawnumber(active_count,0);
+gfx_setfont(1,"Arial",9,0);
+gfx_r=0.25;gfx_g=0.5;gfx_b=0.3;gfx_a=1;
+gfx_x=px2+8;gfx_y=sy+48;gfx_drawstr("fired: ");gfx_drawnumber(fired_count,0);
+
+px3=px2+pw3+5;
+cc64_kills>0?(draw_box(px3,sy,pw3,sh,0.28,0.06,0.06);gfx_r=1;gfx_g=0.35;gfx_b=0.35;):
+             (draw_box(px3,sy,pw3,sh,0.1,0.07,0.07);  gfx_r=0.4;gfx_g=0.28;gfx_b=0.28;);
+gfx_a=1;gfx_setfont(1,"Arial",10,'b');
+gfx_x=px3+8;gfx_y=sy+5;gfx_drawstr("CC64 KILL");
+gfx_setfont(1,"Arial",24,'b');
+cc64_kills>0?(gfx_r=1;gfx_g=0.35;gfx_b=0.35;):(gfx_r=0.32;gfx_g=0.18;gfx_b=0.18;);
+gfx_a=1;gfx_x=px3+8;gfx_y=sy+18;gfx_drawnumber(cc64_kills,0);
+gfx_setfont(1,"Arial",9,0);
+gfx_r=0.55;gfx_g=0.28;gfx_b=0.28;gfx_a=1;
+gfx_x=px3+8;gfx_y=sy+48;gfx_drawstr("sustain off");
+
+ny=148; nh=104; pw2=(gfx_w-30)/2;
+
+last_note_in>=0?(draw_box(10,ny,pw2,nh,0.04,0.18,0.32);gfx_r=0.4;gfx_g=0.82;gfx_b=1;):
+               (draw_box(10,ny,pw2,nh,0.07,0.09,0.13); gfx_r=0.25;gfx_g=0.42;gfx_b=0.6;);
+gfx_a=1;gfx_setfont(1,"Arial",10,'b');
+gfx_x=18;gfx_y=ny+6;gfx_drawstr("LAST IN");
+gfx_setfont(1,"Arial",9,0);
+gfx_r=0.38;gfx_g=0.62;gfx_b=0.82;gfx_a=1;
+gfx_x=18;gfx_y=ny+22;gfx_drawstr("ch: ");last_ch_in>0?gfx_drawnumber(last_ch_in,0):gfx_drawstr("--");
+gfx_setfont(1,"Arial",22,'b');
+last_note_in>=0?(gfx_r=0.42;gfx_g=0.88;gfx_b=1;):(gfx_r=0.18;gfx_g=0.35;gfx_b=0.52;);
+gfx_a=1;gfx_x=18;gfx_y=ny+34;draw_note(last_note_in);
+gfx_setfont(1,"Arial",10,0);
+gfx_r=0.35;gfx_g=0.6;gfx_b=0.8;gfx_a=1;
+gfx_x=18;gfx_y=ny+66;
+last_note_in>=0?(gfx_drawstr("#");gfx_drawnumber(last_note_in,0);):gfx_drawstr("#--");
+gfx_setfont(1,"Arial",9,0);
+gfx_r=0.3;gfx_g=0.55;gfx_b=0.72;gfx_a=1;
+gfx_x=18;gfx_y=ny+80;gfx_drawstr("vel: ");last_note_in>=0?gfx_drawnumber(last_vel_in,0):gfx_drawstr("--");
+gfx_r=1;gfx_g=0.82;gfx_b=0.1;gfx_a=1;
+gfx_x=18;gfx_y=ny+94;gfx_drawstr("waiting for beat...");
+
+last_note_out>=0?(draw_box(20+pw2,ny,pw2,nh,0.04,0.22,0.08);gfx_r=0.25;gfx_g=1;gfx_b=0.45;):
+                (draw_box(20+pw2,ny,pw2,nh,0.07,0.11,0.07);gfx_r=0.2;gfx_g=0.42;gfx_b=0.26;);
+gfx_a=1;gfx_setfont(1,"Arial",10,'b');
+gfx_x=28+pw2;gfx_y=ny+6;gfx_drawstr("LAST OUT");
+gfx_setfont(1,"Arial",9,0);
+gfx_r=0.28;gfx_g=0.62;gfx_b=0.34;gfx_a=1;
+gfx_x=28+pw2;gfx_y=ny+22;gfx_drawstr("ch: ");last_ch_in>0?gfx_drawnumber(last_ch_in,0):gfx_drawstr("--");
+gfx_setfont(1,"Arial",22,'b');
+last_note_out>=0?(gfx_r=0.22;gfx_g=1;gfx_b=0.46;):(gfx_r=0.15;gfx_g=0.35;gfx_b=0.2;);
+gfx_a=1;gfx_x=28+pw2;gfx_y=ny+34;draw_note(last_note_out);
+gfx_setfont(1,"Arial",10,0);
+gfx_r=0.2;gfx_g=0.78;gfx_b=0.34;gfx_a=1;
+gfx_x=28+pw2;gfx_y=ny+66;
+last_note_out>=0?(gfx_drawstr("#");gfx_drawnumber(last_note_out,0);):gfx_drawstr("#--");
+gfx_setfont(1,"Arial",9,0);
+gfx_r=0.18;gfx_g=0.62;gfx_b=0.28;gfx_a=1;
+gfx_x=28+pw2;gfx_y=ny+80;gfx_drawstr("vel: ");last_note_out>=0?gfx_drawnumber(last_vel_out,0):gfx_drawstr("--");
+gfx_r=0.22;gfx_g=1;gfx_b=0.44;gfx_a=1;
+gfx_x=28+pw2;gfx_y=ny+94;gfx_drawstr("fired on beat");
+
+wvy=ny+nh+6; wvh=64; wvx=8; wvw=gfx_w-16;
+draw_box(wvx,wvy,wvw,wvh, 0.06,0.06,0.14);
+
+gfx_setfont(1,"Arial",9,'b');
+gfx_r=0.45;gfx_g=0.55;gfx_b=0.85;gfx_a=1;
+gfx_x=wvx+6;gfx_y=wvy+4;
+gfx_drawstr("CC64");
+
+cc64_armed ? (
+  draw_box(wvx+44,wvy+3,42,13, 0.28,0.06,0.06);
+  gfx_setfont(1,"Arial",8,'b');
+  gfx_r=1;gfx_g=0.35;gfx_b=0.35;gfx_a=1;
+  gfx_x=wvx+47;gfx_y=wvy+4;
+  gfx_drawstr("ARMED");
+) : (
+  draw_box(wvx+44,wvy+3,42,13, 0.08,0.14,0.08);
+  gfx_setfont(1,"Arial",8,'b');
+  gfx_r=0.3;gfx_g=0.7;gfx_b=0.35;gfx_a=1;
+  gfx_x=wvx+47;gfx_y=wvy+4;
+  gfx_drawstr("SAFE");
+);
+
+gfx_setfont(1,"Arial",9,0);
+gfx_r=0.55;gfx_g=0.65;gfx_b=0.9;gfx_a=1;
+gfx_x=wvx+96;gfx_y=wvy+4;
+gfx_drawstr("val:");gfx_drawnumber(cc64_val,0);
+
+plot_x0 = wvx+4; plot_x1 = wvx+wvw-4;
+plot_y0 = wvy+18; plot_y1 = wvy+wvh-4;
+plot_h  = plot_y1 - plot_y0;
+plot_w  = plot_x1 - plot_x0;
+
+arm_y = plot_y0 + plot_h - (CC64_ARM_THRESH/127)*plot_h;
+gfx_r=0.8;gfx_g=0.3;gfx_b=0.3;gfx_a=0.35;
+gfx_line(plot_x0, arm_y, plot_x1, arm_y);
+gfx_setfont(1,"Arial",7,0);
+gfx_r=0.7;gfx_g=0.25;gfx_b=0.25;gfx_a=0.7;
+gfx_x=plot_x1-22;gfx_y=arm_y-7;gfx_drawstr("arm");
+
+kill_y = plot_y0 + plot_h - (CC64_KILL_THRESH/127)*plot_h;
+gfx_r=0.9;gfx_g=0.55;gfx_b=0.1;gfx_a=0.35;
+gfx_line(plot_x0, kill_y, plot_x1, kill_y);
+gfx_r=0.8;gfx_g=0.48;gfx_b=0.1;gfx_a=0.7;
+gfx_x=plot_x1-22;gfx_y=kill_y+2;gfx_drawstr("kill");
+
+gfx_r=0.25;gfx_g=0.2;gfx_b=0.06;gfx_a=0.18;
+gfx_rect(plot_x0, arm_y, plot_w, kill_y-arm_y);
+
+i = 0;
+loop(CC64_WAVE_SIZE - 1,
+  idx_a = (cc64_wave_head + i)     % CC64_WAVE_SIZE;
+  idx_b = (cc64_wave_head + i + 1) % CC64_WAVE_SIZE;
+  va = (CC64_WAVE_BASE + idx_a)[0];
+  vb = (CC64_WAVE_BASE + idx_b)[0];
+  xa = plot_x0 + (i     / (CC64_WAVE_SIZE-1)) * plot_w;
+  xb = plot_x0 + ((i+1) / (CC64_WAVE_SIZE-1)) * plot_w;
+  ya = plot_y0 + plot_h - (va/127) * plot_h;
+  yb = plot_y0 + plot_h - (vb/127) * plot_h;
+  va >= CC64_ARM_THRESH ? (
+    gfx_r=0.9;gfx_g=0.28;gfx_b=0.28;gfx_a=0.9;
+  ) : va >= CC64_KILL_THRESH ? (
+    gfx_r=0.85;gfx_g=0.55;gfx_b=0.15;gfx_a=0.9;
+  ) : (
+    gfx_r=0.25;gfx_g=0.82;gfx_b=0.38;gfx_a=0.9;
+  );
+  gfx_line(xa, ya, xb, yb);
+  i += 1;
+);
+
+cur_x = plot_x1;
+cur_y = plot_y0 + plot_h - (cc64_val/127) * plot_h;
+cc64_val >= CC64_ARM_THRESH ? (gfx_r=1;gfx_g=0.3;gfx_b=0.3;) :
+cc64_val >= CC64_KILL_THRESH ? (gfx_r=1;gfx_g=0.6;gfx_b=0.15;) :
+                               (gfx_r=0.2;gfx_g=1;gfx_b=0.4;);
+gfx_a=1;
+gfx_circle(cur_x, cur_y, 3, 1);
+
+log_top=wvy+wvh+4;
+draw_box(0,log_top,gfx_w,16, 0.07,0.07,0.18);
+gfx_setfont(1,"Arial",9,'b');
+gfx_r=0.5;gfx_g=0.6;gfx_b=1;gfx_a=1;
+
+lx_dir=6; lx_st=48; lx_ch=100; lx_note=128; lx_vel=212; lx_int=248;
+
+gfx_x=lx_dir; gfx_y=log_top+3; gfx_drawstr("DIR");
+gfx_x=lx_st;  gfx_y=log_top+3; gfx_drawstr("STATUS");
+gfx_x=lx_ch;  gfx_y=log_top+3; gfx_drawstr("CH");
+gfx_x=lx_note;gfx_y=log_top+3; gfx_drawstr("NOTE");
+gfx_x=lx_vel; gfx_y=log_top+3; gfx_drawstr("VEL");
+gfx_x=lx_int; gfx_y=log_top+3; gfx_drawstr("INTERPRETATION");
+
+row_h=22;
+ri=0;
+loop(LOG_SIZE,
+  entry=(log_head-1-ri+LOG_SIZE)%LOG_SIZE;
+  base=LOG_BASE+entry*LOG_FIELDS;
+  ldir=base[0]; lstatus=base[1]; lch=base[2]; lnote=base[3]; lvel=base[4];
+  ry=log_top+18+ri*row_h;
+
+  ri%2==0?draw_box(0,ry,gfx_w,row_h-1,0.06,0.06,0.11):
+          draw_box(0,ry,gfx_w,row_h-1,0.04,0.04,0.09);
+
+  lstatus>0 ? (
+    gfx_setfont(1,"Arial",9,0);
+    ldir==0?(
+      draw_box(lx_dir,ry+3,34,15,0.04,0.18,0.1);
+      gfx_r=0.3;gfx_g=1;gfx_b=0.5;gfx_x=lx_dir+5;gfx_y=ry+6;gfx_drawstr(" IN");
+    ):(
+      draw_box(lx_dir,ry+3,34,15,0.22,0.12,0.04);
+      gfx_r=1;gfx_g=0.62;gfx_b=0.18;gfx_x=lx_dir+3;gfx_y=ry+6;gfx_drawstr("OUT");
+    );
+    gfx_a=1;
+    gfx_r=0.5;gfx_g=0.6;gfx_b=0.85;gfx_a=1;
+    gfx_x=lx_st;gfx_y=ry+6;
+    draw_hex(lstatus&0xF0); gfx_drawstr(" ");
+    (lstatus&0xF0)==0x90?gfx_drawstr("NOn") :
+    (lstatus&0xF0)==0x80?gfx_drawstr("NOff"):
+    (lstatus&0xF0)==0xB0?gfx_drawstr("CC")  :gfx_drawstr("??");
+    gfx_r=0.55;gfx_g=0.55;gfx_b=0.7;gfx_a=1;
+    gfx_x=lx_ch;gfx_y=ry+6;gfx_drawnumber(lch+1,0);
+    ldir==0?(gfx_r=0.4;gfx_g=0.88;gfx_b=1;):(gfx_r=1;gfx_g=0.62;gfx_b=0.2;);
+    gfx_a=1;gfx_x=lx_note;gfx_y=ry+6;
+    (lstatus&0xF0)==0xB0 ? (
+      gfx_r=1;gfx_g=0.4;gfx_b=0.4;gfx_a=1;
+      gfx_drawstr("CC64");
+    ) : (
+      draw_note(lnote);gfx_drawstr("(");gfx_drawnumber(lnote,0);gfx_drawstr(")");
+    );
+    gfx_r=0.5;gfx_g=0.5;gfx_b=0.62;gfx_a=1;
+    gfx_x=lx_vel;gfx_y=ry+6;gfx_drawnumber(lvel,0);
+    gfx_x=lx_int;gfx_y=ry+6;
+    ldir==0&&(lstatus&0xF0)==0x90?(gfx_r=1;   gfx_g=0.82;gfx_b=0.1;  gfx_drawstr("queued -> next beat")):
+    ldir==0&&(lstatus&0xF0)==0x80?(gfx_r=0.8; gfx_g=0.45;gfx_b=0.1;  gfx_drawstr("Note Off -> pending")):
+    ldir==0&&(lstatus&0xF0)==0xB0?(gfx_r=1;   gfx_g=0.3; gfx_b=0.3;  gfx_drawstr("CC64 -> kill all active")):
+    ldir==1&&(lstatus&0xF0)==0x90?(gfx_r=0.32;gfx_g=1;   gfx_b=0.44; gfx_drawstr("-> fired on beat")):
+    ldir==1&&(lstatus&0xF0)==0x80?(gfx_r=1;   gfx_g=0.35;gfx_b=0.35; gfx_drawstr("-> Note Off sent")):
+                                   (gfx_r=0.32;gfx_g=0.32;gfx_b=0.38;gfx_drawstr("-"));
+    gfx_a=1;
+  );
+  ri+=1;
+);
+
+gfx_setfont(1,"Arial",8,0);
+gfx_r=0.28;gfx_g=0.28;gfx_b=0.38;gfx_a=1;
+gfx_x=gfx_w-46;gfx_y=log_top+20;gfx_drawstr("newest");
+gfx_x=gfx_w-44;gfx_y=log_top+18+row_h*(LOG_SIZE-1);gfx_drawstr("oldest");
