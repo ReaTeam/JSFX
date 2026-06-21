@@ -1,0 +1,370 @@
+desc: midi note toggle range
+author: tomaszpio
+version: 1.3.0
+about:
+  desc: TP MIDI Note Toggle (Range)
+  author: tomaszpio
+  version: 1.3.0
+  about:
+    Toggles MIDI notes within a defined range and channel.
+    Only Note On messages flip the toggle state.
+    Toggle ON: sends Note On. Toggle OFF: sends Note Off.
+    Note Off messages always pass through unchanged.
+    Notes outside range or channel pass through unchanged.
+    All other MIDI messages pass through unchanged.
+
+desc: TP MIDI Note Toggle (Range)
+author: tomaszpio
+version: 1.3.0
+about:
+  Toggles MIDI notes within a defined range and channel.
+  Only Note On messages flip the toggle state.
+  Toggle ON: sends Note On. Toggle OFF: sends Note Off.
+  Note Off messages always pass through unchanged.
+  Notes outside range or channel pass through unchanged.
+  All other MIDI messages pass through unchanged.
+
+slider1:36<0,127,1>Range Low (note)
+slider2:84<0,127,1>Range High (note)
+slider3:1<1,16,1>MIDI Channel (1=all)
+
+in_pin:none
+out_pin:none
+
+@init
+toggle_state = 1000;
+memset(toggle_state, 0, 128);
+
+last_vel = 1200;
+memset(last_vel, 100, 128);
+
+MAX_EV   = 12;
+ESIZE    = 6;
+ev_buf   = 1500;
+ev_count = 0;
+ev_head  = 0;
+
+FLASH_DUR = 5000;
+flash_on  = 0;
+flash_off = 0;
+
+range_lo = slider1;
+range_hi = slider2;
+tgt_ch   = slider3 - 1;
+
+@slider
+range_lo = slider1;
+range_hi = slider2;
+tgt_ch   = slider3 - 1;
+
+@block
+while (midirecv(offset, msg1, msg2, msg3)) (
+  status  = msg1 & 0xF0;
+  channel = msg1 & 0x0F;
+  note    = msg2;
+  vel     = msg3;
+
+  is_note_on  = (status == 0x90 && vel > 0);
+  is_note_off = (status == 0x80) || (status == 0x90 && vel == 0);
+  in_range    = (note >= range_lo && note <= range_hi);
+  ch_match    = (tgt_ch < 0) || (channel == tgt_ch);
+
+  is_note_on && in_range && ch_match ? (
+    last_vel[note] = vel;
+
+    toggle_state[note] = 1 - toggle_state[note];
+
+    toggle_state[note] == 1 ? (
+      midisend(offset, 0x90 | channel, note, last_vel[note]);
+      sent = 1;
+      flash_on = FLASH_DUR;
+    ) : (
+      midisend(offset, 0x80 | channel, note, 0);
+      sent = 2;
+      flash_off = FLASH_DUR;
+    );
+
+    eb = ev_buf + ev_head * ESIZE;
+    eb[0] = 1;
+    eb[1] = channel;
+    eb[2] = note;
+    eb[3] = vel;
+    eb[4] = sent;
+    eb[5] = 0;
+    ev_head  = (ev_head + 1) % MAX_EV;
+    ev_count = min(ev_count + 1, MAX_EV);
+
+  ) : (
+    midisend(offset, msg1, msg2, msg3);
+
+    (is_note_on || is_note_off) ? (
+      eb = ev_buf + ev_head * ESIZE;
+      eb[0] = is_note_on ? 1 : 2;
+      eb[1] = channel;
+      eb[2] = note;
+      eb[3] = vel;
+      eb[4] = 3;
+      eb[5] = 0;
+      ev_head  = (ev_head + 1) % MAX_EV;
+      ev_count = min(ev_count + 1, MAX_EV);
+    );
+  );
+
+  flash_on  > 0 ? flash_on  -= samplesblock;
+  flash_off > 0 ? flash_off -= samplesblock;
+);
+
+@gfx 520 460
+gfx_clear = 0x0c0c18;
+
+function set_rgb(r,g,b) ( gfx_r=r; gfx_g=g; gfx_b=b; gfx_a=1; );
+function fill_rect(x,y,w,h) ( gfx_rect(x,y,w,h,1); );
+
+function note_name(n) local(oct,nn) (
+  oct = (n/12)|0; nn = n%12;
+  nn==0  ? sprintf(#s,"C%d",  oct-1) :
+  nn==1  ? sprintf(#s,"C#%d", oct-1) :
+  nn==2  ? sprintf(#s,"D%d",  oct-1) :
+  nn==3  ? sprintf(#s,"D#%d", oct-1) :
+  nn==4  ? sprintf(#s,"E%d",  oct-1) :
+  nn==5  ? sprintf(#s,"F%d",  oct-1) :
+  nn==6  ? sprintf(#s,"F#%d", oct-1) :
+  nn==7  ? sprintf(#s,"G%d",  oct-1) :
+  nn==8  ? sprintf(#s,"G#%d", oct-1) :
+  nn==9  ? sprintf(#s,"A%d",  oct-1) :
+  nn==10 ? sprintf(#s,"A#%d", oct-1) :
+           sprintf(#s,"B%d",  oct-1);
+  #s
+);
+
+W = gfx_w;
+
+// ── TITLE ────────────────────────────────────────────────
+set_rgb(0.08,0.10,0.28);
+fill_rect(0,0,W,26);
+gfx_setfont(1,"Arial",14,'b');
+set_rgb(1,1,1);
+gfx_x=10; gfx_y=5;
+gfx_drawstr("TP MIDI Note Toggle  /  Range");
+
+// ── SETTINGS BAR ─────────────────────────────────────────
+set_rgb(0.07,0.07,0.16);
+fill_rect(0,28,W,20);
+gfx_setfont(1,"Arial",10,0);
+set_rgb(0.5,0.6,0.8);
+gfx_x=10; gfx_y=32;
+gfx_drawstr("Range: ");
+set_rgb(0.55,0.42,1);
+gfx_drawstr(note_name(range_lo));
+set_rgb(0.5,0.6,0.8);
+gfx_drawstr(" - ");
+set_rgb(0.55,0.42,1);
+gfx_drawstr(note_name(range_hi));
+set_rgb(0.5,0.6,0.8);
+gfx_drawstr("   Ch: ");
+tgt_ch < 0 ? (
+  set_rgb(0.5,0.5,0.65); gfx_drawstr("All");
+) : (
+  set_rgb(0.4,0.88,1); gfx_drawnumber(tgt_ch+1,0);
+);
+
+active_count = 0;
+n = range_lo;
+loop(range_hi - range_lo + 1,
+  toggle_state[n] == 1 ? active_count += 1;
+  n += 1;
+);
+set_rgb(0.5,0.6,0.8);
+gfx_drawstr("   Active: ");
+active_count > 0 ? set_rgb(0.3,1,0.5) : set_rgb(0.35,0.35,0.5);
+gfx_drawnumber(active_count,0);
+set_rgb(0.5,0.6,0.8);
+gfx_drawstr(" / ");
+gfx_drawnumber(range_hi - range_lo + 1,0);
+
+// ── FLASH PILLS ──────────────────────────────────────────
+fo = flash_on  / FLASH_DUR; fo < 0 ? fo = 0;
+ff = flash_off / FLASH_DUR; ff < 0 ? ff = 0;
+
+set_rgb(0.07+0.18*fo, 0.38+0.42*fo, 0.10+0.05*fo);
+fill_rect(10,56,155,22);
+set_rgb(0.6+0.4*fo, 1, 0.5+0.3*fo);
+gfx_setfont(1,"Arial",10,'b');
+gfx_x=18; gfx_y=61;
+gfx_drawstr("TOGGLE  ->  NOTE ON");
+
+set_rgb(0.26+0.18*ff, 0.06, 0.06+0.04*ff);
+fill_rect(175,56,155,22);
+set_rgb(1, 0.32+0.38*ff, 0.32+0.12*ff);
+gfx_x=183; gfx_y=61;
+gfx_drawstr("TOGGLE  ->  NOTE OFF");
+
+set_rgb(0.08,0.08,0.14);
+fill_rect(340,56,W-350,22);
+set_rgb(0.38,0.38,0.52);
+gfx_setfont(1,"Arial",9,0);
+gfx_x=348; gfx_y=61;
+gfx_drawstr("NoteOff always passthru");
+
+// ── NOTE RANGE BAR ───────────────────────────────────────
+bary=86; barh=24; barx=10; barw=W-20;
+
+set_rgb(0.06,0.06,0.12);
+fill_rect(barx,bary,barw,barh);
+
+lp=0;
+loop(11,
+  mx=(barx + lp*0.1*barw)|0;
+  set_rgb(0.18,0.18,0.28);
+  gfx_line(mx,bary,mx,bary+barh);
+  lp+=1;
+);
+
+rx0 = (barx + range_lo/127.0*barw)|0;
+rx1 = (barx + range_hi/127.0*barw)|0;
+set_rgb(0.18,0.10,0.38);
+fill_rect(rx0,bary+2,rx1-rx0,barh-4);
+set_rgb(0.55,0.38,0.95);
+gfx_line(rx0,bary+2,rx0,bary+barh-2);
+gfx_line(rx1,bary+2,rx1,bary+barh-2);
+
+n = range_lo;
+loop(range_hi - range_lo + 1,
+  toggle_state[n] == 1 ? (
+    np = (barx + n/127.0*barw)|0;
+    set_rgb(0.3,1,0.5);
+    fill_rect(np-2,bary+4,4,barh-8);
+  );
+  n += 1;
+);
+
+gfx_setfont(1,"Arial",8,0);
+set_rgb(0.28,0.28,0.4);
+gfx_x=barx;         gfx_y=bary+barh+2; gfx_drawstr("C-1(0)");
+gfx_x=barx+barw-28; gfx_y=bary+barh+2; gfx_drawstr("G9(127)");
+
+// ── TOGGLE STATE GRID ────────────────────────────────────
+grid_y = bary+barh+16;
+grid_h = 80;
+grid_x = 10;
+grid_w = W-20;
+
+set_rgb(0.06,0.06,0.12);
+fill_rect(grid_x,grid_y,grid_w,grid_h);
+
+gfx_setfont(1,"Arial",9,'b');
+set_rgb(0.45,0.38,0.8);
+gfx_x=grid_x+4; gfx_y=grid_y+4;
+gfx_drawstr("Toggle state  (range only)");
+
+range_count = range_hi - range_lo + 1;
+range_count < 1 ? range_count = 1;
+
+cell_w = 18; cell_h = 14;
+cells_per_row = ((grid_w - 8) / (cell_w + 2))|0;
+
+row = 0; col = 0; n = range_lo;
+loop(range_count,
+  cx = grid_x + 4 + col*(cell_w+2);
+  cy = grid_y + 18 + row*(cell_h+4);
+
+  cy + cell_h <= grid_y + grid_h - 16 ? (
+    toggle_state[n] == 1 ? (
+      set_rgb(0.12,0.58,0.24);
+      fill_rect(cx,cy,cell_w,cell_h);
+      set_rgb(0.55,1,0.65);
+    ) : (
+      set_rgb(0.10,0.10,0.18);
+      fill_rect(cx,cy,cell_w,cell_h);
+      set_rgb(0.28,0.28,0.42);
+    );
+    gfx_setfont(1,"Arial",7,0);
+    gfx_x=cx+1; gfx_y=cy+2;
+    gfx_drawnumber(n,0);
+  );
+
+  col += 1;
+  col >= cells_per_row ? (col=0; row+=1;);
+  n += 1;
+);
+
+set_rgb(0.12,0.58,0.24); fill_rect(grid_x+4,  grid_y+grid_h-14,10,10);
+set_rgb(0.55,1,0.65);
+gfx_setfont(1,"Arial",8,0);
+gfx_x=grid_x+18; gfx_y=grid_y+grid_h-13; gfx_drawstr("ON");
+
+set_rgb(0.10,0.10,0.18); fill_rect(grid_x+46, grid_y+grid_h-14,10,10);
+set_rgb(0.28,0.28,0.42);
+gfx_x=grid_x+60; gfx_y=grid_y+grid_h-13; gfx_drawstr("OFF");
+
+// ── MIDI LOG TABLE ────────────────────────────────────────
+log_top = grid_y + grid_h + 8;
+
+set_rgb(0.07,0.07,0.18);
+fill_rect(0,log_top,W,16);
+gfx_setfont(1,"Arial",9,'b');
+set_rgb(0.5,0.6,1);
+
+lx_type=6; lx_note=50; lx_ch=130; lx_vel=168; lx_act=206;
+
+gfx_x=lx_type; gfx_y=log_top+3; gfx_drawstr("IN");
+gfx_x=lx_note; gfx_y=log_top+3; gfx_drawstr("NOTE");
+gfx_x=lx_ch;   gfx_y=log_top+3; gfx_drawstr("CH");
+gfx_x=lx_vel;  gfx_y=log_top+3; gfx_drawstr("VEL");
+gfx_x=lx_act;  gfx_y=log_top+3; gfx_drawstr("ACTION");
+
+row_h = 20;
+ri = 0;
+loop(ev_count,
+  idx = (ev_head - 1 - ri + MAX_EV) % MAX_EV;
+  eb  = ev_buf + idx * ESIZE;
+  etype = eb[0]; ech = eb[1]; enote = eb[2];
+  evel  = eb[3]; esent = eb[4];
+
+  ry = log_top + 18 + ri*row_h;
+  ry + row_h > gfx_h ? (ri = ev_count;) : (
+
+    ri%2==0 ? set_rgb(0.06,0.06,0.11) : set_rgb(0.04,0.04,0.09);
+    fill_rect(0,ry,W,row_h-1);
+
+    gfx_setfont(1,"Arial",9,0);
+
+    etype==1 ? (
+      set_rgb(0.04,0.18,0.10); fill_rect(lx_type,ry+2,36,15);
+      set_rgb(0.3,1,0.5);
+      gfx_x=lx_type+4; gfx_y=ry+5; gfx_drawstr("NOn");
+    ) : (
+      set_rgb(0.20,0.06,0.06); fill_rect(lx_type,ry+2,36,15);
+      set_rgb(1,0.45,0.35);
+      gfx_x=lx_type+4; gfx_y=ry+5; gfx_drawstr("NOff");
+    );
+    gfx_a=1;
+
+    set_rgb(0.4,0.88,1);
+    gfx_x=lx_note; gfx_y=ry+5;
+    gfx_drawstr(note_name(enote));
+    gfx_drawstr("("); gfx_drawnumber(enote,0); gfx_drawstr(")");
+
+    set_rgb(0.55,0.55,0.7);
+    gfx_x=lx_ch; gfx_y=ry+5; gfx_drawnumber(ech+1,0);
+
+    set_rgb(0.5,0.5,0.62);
+    gfx_x=lx_vel; gfx_y=ry+5; gfx_drawnumber(evel,0);
+
+    gfx_x=lx_act; gfx_y=ry+5;
+    esent==1 ? (set_rgb(0.3,1,0.5);    gfx_drawstr("toggle ON  -> sent NoteOn"))  :
+    esent==2 ? (set_rgb(1,0.38,0.35);  gfx_drawstr("toggle OFF -> sent NoteOff")) :
+               (set_rgb(0.4,0.4,0.55); gfx_drawstr("out of range/ch -> passthru"));
+    gfx_a=1;
+  );
+  ri += 1;
+);
+
+gfx_setfont(1,"Arial",8,0);
+set_rgb(0.28,0.28,0.38);
+gfx_x=W-46; gfx_y=log_top+20;
+gfx_drawstr("newest");
+ev_count > 1 ? (
+  gfx_x=W-44; gfx_y=log_top+18+row_h*(ev_count-1);
+  gfx_drawstr("oldest");
+);
