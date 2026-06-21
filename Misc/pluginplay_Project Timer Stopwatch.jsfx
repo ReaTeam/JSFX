@@ -1,0 +1,170 @@
+desc: Project Timer Stopwatch
+author: Plug-In Play
+version: 1.0
+screenshot: Clock Demo https://plug-inplay.com/images/plugins/clock.gif
+about:
+  # Project Timer Stopwatch
+
+  This is a heavily modified version of witti Clock - Project Time. Witti's Clock plugin tracks the total time spent with a project open and active (window in focus). My modification adds the following functionality to this:
+
+  Key features:
+
+  - Clicking on the clockface (left or right click) will pause the timer
+  - Pressing Left/Right arrow keys (while plugin is in focus) will manually move the clock forward/backward by 1 minute
+  - The timer will time out after a set interval without project activity.* The idle threshold (set to 300 seconds by default) can be edited by automation
+  - The clock will automatically resume when activity is detected while the clock is paused* (this can be prevented, and the timer locked, by bypassing the plugin)
+  - Pressing Backspace will reset the clock to 0:00
+
+  *activity being measured by the position of Reaper's cursor and by any audio going through the plugin. For most accurate results, it is best to keep this plugin on your master track.
+
+desc: Project Timer Stopwatch
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+slider1:idle=0<0,1,1>-Pause
+slider2:timeout=300<0,10000,1>-Timeou
+
+options:no_meter
+
+@init
+ext_noinit = 1;   // don't call @init on transport change
+input_active = 0; // flag to track if we are editing input
+input_value = "";
+idle_counter = 0;
+activity_buffer = beat_position;
+idle = 0;         // idle state (bool - slider)
+input_detection = 0;
+timeout = 300;    // seconds idle to trigger a pause
+click_count=1;
+
+@serialize
+file_var(0, proj_open_seconds);
+
+@block
+sr_ticker += samplesblock;
+sr_ticker > srate ?
+(
+    click_count == 1 ? (
+      idle_counter = idle_counter+1;
+      idle = 0;
+    );
+    click_count == 0 ? (
+      idle = 1;
+      idle_counter = 0;
+    );
+
+    sr_ticker -= srate;
+
+    !idle ? (
+        proj_open_seconds += 1;
+        temp_secs = proj_open_seconds;
+        days = (temp_secs / 86400)|0; temp_secs -= days * 86400;
+        hours = (temp_secs / 3600)|0; temp_secs -= hours * 3600;
+        minutes = (temp_secs / 60)|0; temp_secs -= minutes * 60;
+        seconds = temp_secs;
+    );
+    // count seconds idle
+    activity_buffer == beat_position ? (
+        // If idle for longer than timeout, clock will pause
+        idle_counter >= timeout ? (
+            idle = 1;
+        );
+
+    ) :
+    (
+        //idle_counter = 0;
+        activity_buffer = beat_position;
+        //idle = 0;
+
+        click_count = 1;
+    );
+  idle_counter >= timeout ? (
+    click_count = 0;
+  );
+);
+
+
+@gfx 0 100
+fontsize=gfx_w/4.5|0; // Adjust font size
+
+gfx_r=0; gfx_g=1; gfx_b=0; gfx_a=1;
+idle ? (gfx_g=0.5;gfx_r=1);
+gfx_setfont(1,"Arial", fontsize);
+
+// Display the time at the top of the screen
+gfx_x = 10; gfx_y = gfx_h/8|0; // Position the clock
+gfx_printf("%01d:%02d:%02d:%02d", days, hours, minutes, seconds);
+// Handle input
+char = gfx_getchar();
+
+/*/ Handle enter (ASCII 13) or any letter key (ASCII 97-122)
+char == 13 || (char < 123 && char > 96) || click == 1 ? (
+  idle_counter = 0;
+  idle = !idle;
+  click_count = !click_count;
+);
+*/
+// Handle backspace (ASCII 8) to reset time
+char == 8 ? (
+    proj_open_seconds = 0;
+    temp_secs = proj_open_seconds;
+    days = 0;
+    hours = 0;
+    minutes = 0;
+    seconds = temp_secs;
+);
+
+// Handle left arrow - (ASCII 1818584692)
+char == 1818584692 ? (
+  proj_open_seconds = proj_open_seconds - 60;
+  temp_secs = proj_open_seconds;
+
+  temp_secs = proj_open_seconds;
+  days = (temp_secs / 86400)|0; temp_secs -= days * 86400;
+  hours = (temp_secs / 3600)|0; temp_secs -= hours * 3600;
+  minutes = (temp_secs / 60)|0; temp_secs -= minutes * 60;
+  seconds = temp_secs;
+
+  minutes <= 0 ? (
+     hours <= 0 ? (
+       proj_open_seconds = 0;
+     );
+   );
+);
+
+// Handle right arrow - (ASCII 1919379572)
+char == 1919379572 ? (
+  proj_open_seconds = proj_open_seconds + 60;
+  temp_secs = proj_open_seconds;
+
+  temp_secs = proj_open_seconds;
+  days = (temp_secs / 86400)|0; temp_secs -= days * 86400;
+  hours = (temp_secs / 3600)|0; temp_secs -= hours * 3600;
+  minutes = (temp_secs / 60)|0; temp_secs -= minutes * 60;
+  seconds = temp_secs;
+);
+
+// Handle mouse clicks (right or left)
+mouse_cap != old_mouse_cap ? (
+    old_mouse_cap = mouse_cap;
+    mouse_cap == 0 ? (
+        click_count=click_count+1;
+    );
+    mouse_cap == 1 && click_count~=0 ? (
+        click_count=click_count;
+    );
+);
+
+click_count >= 2 ? (
+  click_count=0;
+);
+
+@sample
+//Unpause timer if any audio is played
+(spl1 + spl2) != 0 ? (
+  idle_counter = 0;
+  click_count = 1;
+);
