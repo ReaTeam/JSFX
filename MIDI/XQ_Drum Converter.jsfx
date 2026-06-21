@@ -188,7 +188,7 @@ function convert(n)
     gm_drum_note(n) ? (
         sl_out_map==OUT_AD ? r=gm_to_ad(n);
         sl_out_map==OUT_BFD ? r=gm_to_bfd(n);
-        sl_out_map==OUT_SD ? r=gm_to_ad(n);
+        sl_out_map==OUT_SD ? r=gm_to_sd(n);
     ) : r=-1;
     r;
 );
