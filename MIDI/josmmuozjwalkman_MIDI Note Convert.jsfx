@@ -1,0 +1,14 @@
+desc: MIDI Note Convert
+author: José M Muñoz (J-WalkMan)
+version: 0.9
+changelog: Initial release
+metapackage: true
+provides:
+  josmmuozjwalkman_MIDI Note Convert/MIDI Note to CC.jsfx > josmmuozjwalkman_MIDI Note Convert/JWM_MIDI Note to CC
+  josmmuozjwalkman_MIDI Note Convert/MIDI Note to PC.jsfx > josmmuozjwalkman_MIDI Note Convert/JWM_Midi Note to PC
+  josmmuozjwalkman_MIDI Note Convert/MIDI Note Trigger CC > josmmuozjwalkman_MIDI Note Convert/JWM_MIDI Note Trigger CC
+about:
+  #MIDI Note Convert
+
+  These JSFX Plugins turn MIDI note messages to other types of messages like CC or PC
+
