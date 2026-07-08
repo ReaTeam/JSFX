@@ -1,0 +1,41 @@
+noindex: true
+
+desc:MIDI Note to PC
+//tags: MIDI processing routing
+// turn all note messages to Program Change messages
+// note = pc number, velocity ignored
+
+slider1:passthrough=1<0,1,1{no, yes}> Other events (CC, etc) pass through
+
+in_pin:none
+out_pin:none
+
+@init
+
+  NOTE_OFF = 8;
+  NOTE_ON = 9;
+
+@block
+
+  // function(offset, status_byte, data_byte)
+  //          samples, type_chan, MSB, LSB) 
+  // midisend(0, $x80, 10, 20) // Note OFF
+  // midisend(0, $x90, 10, 20) // Note ON
+  // midisend(0, $xBF, 10, 20) // CC on chan 16
+  // midisend(0, $xC0, 10, 20) // Program Change
+  // midisend(0, $xE0, 10, 20) // Pitch Bend
+
+  while (midirecv(offset, type_chan, d_byte1, d_byte2)) (
+    status_type = (type_chan/16)|0;
+    status_chan = (type_chan-(status_type*16))|0;
+    
+    status_type == NOTE_ON ? (
+      type_chan = type_chan + $x30;
+      midisend(offset, type_chan, d_byte1, d_byte2);
+    );
+
+    passthrough == 1 && status_type != NOTE_OFF ? (
+      midisend(offset, type_chan, d_byte1, d_byte2);
+    )
+    
+  );
