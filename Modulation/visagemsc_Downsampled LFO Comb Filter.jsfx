@@ -1,0 +1,84 @@
+desc: Downsampled LFO Comb Filter
+author: VISΛGE
+version: 1.0.0
+about:
+  # Downsampled LFO Comb Filter
+
+  My attempt at replicating the Corpus pipe model with it's crummy LFO. Good for adding buzz for brostep growls.
+
+// Copyright © 2026 VISΛGE
+//
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the “Software”),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
+// is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+// CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+slider1:cutoff=50<1,200:log=2>Cutoff (Hz)
+slider2:mod_amt=1<0,10>Modulation Amount (± Hz)
+slider3:mod_rate=1<0,5>Modulation Rate (Hz)
+slider4:mod_srate=1000<20,8000:log=2>Mod Sample Rate (Hz)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+TAPE_LENGTH = srate;
+
+TWO_PI = 2*$pi;
+
+mod_index; old_mod;
+mod_downsampling_index;
+
+tape0[TAPE_LENGTH]; tape1[TAPE_LENGTH]; record_head;
+
+@slider
+followback = 1/cutoff*srate;
+followback_floor = floor(followback);
+static_followback_error = followback - floor(followback);
+followback_error = static_followback_error;
+
+downsample_factor = 1/mod_srate*srate;
+downsample_floor = floor(downsample_factor);
+downsample_error = downsample_factor - floor(downsample_factor);
+static_downsample_error = downsample_error;
+
+mod_amt_mult = followback / cutoff;
+mod_increment = mod_rate/srate*TWO_PI;
+
+@sample
+record_head >= TAPE_LENGTH ? record_head = 0;
+
+mod_downsampling_index >= (downsample_floor + floor(downsample_error)) ? mod_downsampling_index = 0;
+mod_downsampling_index == 0 ? static_downsample_error != 0 ? downsample_error = downsample_error + static_downsample_error;
+downsample_error >= 1 ? downsample_error = downsample_error - floor(downsample_error);
+
+mod_downsampling_index == 0 ? old_mod = sin(mod_index) * mod_amt * mod_amt_mult;
+
+playback_head = record_head - followback_floor - floor(followback_error) + floor(old_mod);
+playback_head < 0 ? playback_head = playback_head + TAPE_LENGTH;
+
+static_followback_error != 0 ? followback_error = followback_error + static_followback_error;
+followback_error >= 1 ? followback_error = followback_error - floor(followback_error);
+
+tape0[record_head] = spl0; tape1[record_head] = spl1;
+spl0 = (spl0 - tape0[playback_head]); spl1 = (spl1 - tape1[playback_head]);
+
+record_head = record_head + 1;
+
+mod_downsampling_index = mod_downsampling_index + 1;
+
+mod_index = mod_index + mod_increment;
