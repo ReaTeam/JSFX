@@ -4,11 +4,9 @@ version: 1.0
 changelog: Initial release
 about:
   # Note Frequency Calculator
-
   Calculate note frequencies based on manual entry or MIDI note input.
-
   ## Usage
-  Add the plugin to your track and determine individual note frequencies. Calculations are performed based on the A4 note, which can be set anywhere between 360 and 530 Hz. You can apply fine tuning, input notes using MIDI and play the resulting frequency back via a simple tone generator.
+  Add the plugin to your track and determine individual note frequencies. Calculations are performed based on the A4 note, which can be set anywhere between 360 and 530 Hz. You can apply fine tuning in cents, input notes using MIDI and play the resulting frequency back via a simple tone generator with selectable waveforms.
 
 // 1. Hardware Controls (Sliders)
 slider1:440<360,530,1>Base Frequency A4 (Hz)
