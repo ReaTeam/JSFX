@@ -14,21 +14,23 @@ slider2:9<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Note
 slider3:0<-5,5,1>Octave
 slider4:0<-100,100,0.01>Fine Tune (cents)
 slider5:440<2,20000,0.1>Resulting Frequency (Hz)
-slider6:1<0,2,1{57 (A4 = Note #57),69 (A4 = Note #69),81 (A4 = Note #81)}>MIDI Note for A4
-slider7:2<0,2,1{Off,Always,On MIDI input}>Waveform Playback
-slider8:0<0,2,1{Sine,Triangle,Saw}>Waveform Shape
-slider9:-12<-120,6,0.1>Waveform Volume (dB)
+slider6:1<0,1,1{No,Yes}>Receive MIDI
+slider7:0<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Input Channel
+slider8:1<0,2,1{57 (A4 = Note #57),69 (A4 = Note #69),81 (A4 = Note #81)}>MIDI Note for A4
+slider9:2<0,2,1{Off,Always,On MIDI input}>Waveform Playback
+slider10:0<0,2,1{Sine,Triangle,Saw}>Waveform Shape
+slider11:-12<-120,6,0.1>Waveform Volume (dB)
 
 @init
 // Numeric-only initialization variables to prevent memory corruption
 result_freq = 440;
 phase = 0;
 
-// Internal tracker for active MIDI notes
+// Internal tracker for total active MIDI notes globally
 midi_note_count = 0;
 
-// Allocate memory block array for tracking 128 MIDI keys (0-127)
-note_array = 0; 
+// Allocate memory block array for tracking 128 MIDI keys (stores channel number 1-16, or 0 for off)
+note_chan_array = 0; 
 
 // FIXED AUDIO ATTENUATOR OFFSET (Change as needed)
 volume_offset = -12;
@@ -39,12 +41,15 @@ last_note = 9;
 last_octave = 0;
 last_fine = 0;
 last_result = 440;
+last_receive_midi = 1; 
+last_channel = 0; 
 last_volume = -12;
 last_waveform = 0;
-last_a4_ref = 1; // Matches the true default state definition
+last_a4_ref = 1; 
 
 // Directional state flag: 0 = calculate down from notes, 1 = manual override active
 override_active = 0;
+engine_has_note = 0;
 
 // Mathematical constants
 LN2 = 0.6931471805599453;
@@ -52,15 +57,18 @@ PI2 = 6.283185307179586;
 
 // Function to resolve what MIDI note number maps to A4 based on listbox selection
 function get_a4_midi_reference() (
-  slider6 == 0 ? 57 : slider6 == 2 ? 81 : 69;
+  slider8 == 0 ? 57 : slider8 == 2 ? 81 : 69;
 );
 
-// Function to scan memory array and update engine to the first active note found
-function trigger_first_active_note() local(i, found, m_note, m_semitones, abs_note, a4_ref, total_calc_semitones) (
+// Function to scan memory array and find the first active note matching the target channel filter
+function trigger_first_active_channel_note(target_chan) local(i, found, m_note, m_semitones, abs_note, a4_ref, total_calc_semitones) (
   i = 0;
   found = 0;
+  
+  // Scan all 128 keys
   while (i < 128 && found == 0) (
-    note_array[i] == 1 ? (
+    // Match if note is active AND (filter is "All" (0) OR matches the target channel)
+    note_chan_array[i] > 0 && (target_chan == 0 || note_chan_array[i] == target_chan) ? (
       m_note = i;
       found = 1;
     );
@@ -76,7 +84,7 @@ function trigger_first_active_note() local(i, found, m_note, m_semitones, abs_no
     result_freq = slider1 * pow(2, total_calc_semitones / 12);
     slider5 = result_freq;
     
-    // Map absolute display note based on reference (A4 is always Absolute 57 internally for UI mapping)
+    // Map absolute display note based on reference
     abs_note = m_semitones + 57;
     slider3 = floor(abs_note / 12) - 4;
     slider2 = abs_note - ((slider3 + 4) * 12);
@@ -88,7 +96,16 @@ function trigger_first_active_note() local(i, found, m_note, m_semitones, abs_no
     last_fine = slider4;
     last_result = slider5;
     override_active = 0;
+    
+    engine_has_note = 1; // Internal flag for the audio gate logic
+  ) : (
+    override_active = 0;
+    engine_has_note = 0;
   );
+  
+  sliderchange(slider2);
+  sliderchange(slider3);
+  sliderchange(slider5);
 );
 
 // PolyBLEP helper function for clean anti-aliased waveforms
@@ -111,21 +128,35 @@ slider2 != slider2 ? slider2 = last_note;
 slider3 != slider3 ? slider3 = last_octave;
 slider4 != slider4 ? slider4 = last_fine;
 slider5 != slider5 || slider5 < 2 ? slider5 = last_result;
-slider6 != slider6 ? slider6 = last_a4_ref;
-slider9 != slider9 ? slider9 = last_volume;
+slider6 != slider6 ? slider6 = last_receive_midi;
+slider7 != slider7 ? slider7 = last_channel;
+slider8 != slider8 ? slider8 = last_a4_ref;
+slider11 != slider11 ? slider11 = last_volume;
 
 // Enforce boundary limits during manual text editing
 slider1 < 360 ? slider1 = 360 : slider1 > 530 ? slider1 = 530;
 slider3 = floor(slider3);
 slider3 < -5 ? slider3 = -5 : slider3 > 5 ? slider3 = 5;
 slider4 < -100 ? slider4 = -100 : slider4 > 100 ? slider4 = 100;
-slider9 < -120 ? slider9 = -120 : slider9 > 6 ? slider9 = 6;
+slider11 < -120 ? slider11 = -120 : slider11 > 6 ? slider11 = 6;
+
+// --- SEAMLESS CATCH-UP ON SLIDER CHANGES (MIDI Switch or Channel Switch) ---
+(slider6 == 1 && last_receive_midi == 0) || (slider7 != last_channel) ? (
+  slider6 == 1 ? (
+    trigger_first_active_channel_note(slider7);
+  );
+);
+
+slider6 == 0 && last_receive_midi == 1 ? (
+  phase = 0; // Cut off tone generator phase instantly when turning off MIDI receive
+  engine_has_note = 0;
+);
 
 // --- FIXED VOLUME CALCULATION WITH PERMANENT OFFSET ---
-slider9 <= -120 ? (
+slider11 <= -120 ? (
   gain = 0;
 ) : (
-  actual_db = slider9 + volume_offset;
+  actual_db = slider11 + volume_offset;
   gain = pow(10, actual_db / 20);
 );
 
@@ -143,13 +174,8 @@ slider5 != last_result ? (
 override_active == 1 ? (
   slider5 < 2 ? slider5 = 2 : slider5 > 20000 ? slider5 = 20000;
 
-  // Calculate total exact log semitones from reference frequency
   exact_semitones = 12 * (log(slider5 / slider1) / LN2);
-  
-  // Round to the closest integer semitone for note/octave assignment
   total_semitones = floor(exact_semitones + 0.5);
-  
-  // The fractional remainder represents the deviation in Cents
   slider4 = (exact_semitones - total_semitones) * 100;
   
   absolute_note = total_semitones + 9;
@@ -160,11 +186,8 @@ override_active == 1 ? (
   
   result_freq = slider5;
 ) : (
-  // Downward direction: Mapping note + octave + fine tune cents directly to Hz
   note_diff = slider2 - 9;
   calc_semitones = note_diff + (slider3 * 12);
-  
-  // Include fine tune cents as fractional parts of a semitone
   total_calc_semitones = calc_semitones + (slider4 / 100);
   
   result_freq = slider1 * pow(2, total_calc_semitones / 12);
@@ -176,61 +199,48 @@ last_note = slider2;
 last_octave = slider3;
 last_fine = slider4;
 last_result = slider5;
-last_a4_ref = slider6;
-last_volume = slider9;
+last_receive_midi = slider6;
+last_channel = slider7;
+last_a4_ref = slider8;
+last_volume = slider11;
 
-slider8 != last_waveform ? (
+slider10 != last_waveform ? (
   phase = 0;
-  last_waveform = slider8;
+  last_waveform = slider10;
 );
 
 @block
 // ========================================================
-// STEP 3: MIDI INPUT PROCESSING WITH NOTE SCANNER
+// STEP 3: GLOBAL BACKGROUND MIDI PROCESSING
 // ========================================================
 a4_midi_base = get_a4_midi_reference();
 
 while (midirecv(offset, msg1, msg2, msg3)) (
   status = msg1 & $xF0;
-  
-  // Note On event
+  msg_chan = (msg1 & $x0F) + 1; // Extract MIDI channel (1-16)
+
+  // 1. ALWAYS track every incoming note from all channels into background memory
   status == $x90 ? (
     msg3 > 0 ? (
       midi_note = msg2;
-      
-      note_array[midi_note] == 0 ? (
-        note_array[midi_note] = 1;
+      note_chan_array[midi_note] == 0 ? (
+        note_chan_array[midi_note] = msg_chan; 
         midi_note_count += 1;
       );
       
-      // Calculate distance based on dynamically loaded A4 reference number
-      midi_semitones = midi_note - a4_midi_base;
-      
-      total_calc_semitones = midi_semitones + (slider4 / 100);
-      
-      result_freq = slider1 * pow(2, total_calc_semitones / 12);
-      slider5 = result_freq;
-      
-      absolute_note = midi_semitones + 57;
-      slider3 = floor(absolute_note / 12) - 4; 
-      slider2 = absolute_note - ((slider3 + 4) * 12);
-      
-      slider3 < -5 ? (slider3 = -5; slider2 = 0;) : slider3 > 5 ? (slider3 = 5; slider2 = 11;);
-      
-      last_note = slider2;
-      last_octave = slider3;
-      last_fine = slider4;
-      last_result = slider5;
-      override_active = 0; 
+      // Update engine UI and calculations ONLY if Receive MIDI is Yes
+      slider6 == 1 ? (
+        trigger_first_active_channel_note(slider7);
+      );
     ) : (
-      // Note On with velocity 0 is treated as Note Off
+      // Note On with velocity 0 -> Treat as Note Off
       midi_note = msg2;
-      note_array[midi_note] == 1 ? (
-        note_array[midi_note] = 0;
+      note_chan_array[midi_note] > 0 ? (
+        note_chan_array[midi_note] = 0;
         midi_note_count -= 1;
         midi_note_count < 0 ? midi_note_count = 0;
         
-        midi_note_count > 0 ? trigger_first_active_note();
+        slider6 == 1 ? trigger_first_active_channel_note(slider7);
       );
     );
   );
@@ -238,12 +248,12 @@ while (midirecv(offset, msg1, msg2, msg3)) (
   // Standard Note Off event
   status == $x80 ? (
     midi_note = msg2;
-    note_array[midi_note] == 1 ? (
-      note_array[midi_note] = 0;
+    note_chan_array[midi_note] > 0 ? (
+      note_chan_array[midi_note] = 0;
       midi_note_count -= 1;
       midi_note_count < 0 ? midi_note_count = 0;
       
-      midi_note_count > 0 ? trigger_first_active_note();
+      slider6 == 1 ? trigger_first_active_channel_note(slider7);
     );
   );
   
@@ -256,18 +266,19 @@ while (midirecv(offset, msg1, msg2, msg3)) (
 // ========================================================
 osc_sample = 0;
 
-play_gate = (slider7 == 1) || (slider7 == 2 && midi_note_count > 0);
+// The synth plays if Always on (1) OR (On MIDI input (2) AND MIDI is active AND the engine actually has a valid note filtered)
+play_gate = (slider9 == 1) || (slider9 == 2 && slider6 == 1 && midi_note_count > 0 && engine_has_note == 1);
 
 play_gate ? (
   phase_incr = result_freq / srate;
   
-  slider8 == 0 ? (
+  slider10 == 0 ? (
     osc_sample = sin(phase * PI2);
   ) : 
-  slider8 == 1 ? (
+  slider10 == 1 ? (
     osc_sample = 1.0 - 4.0 * abs(floor(phase + 0.25) - (phase - 0.25));
   ) : 
-  slider8 == 2 ? (
+  slider10 == 2 ? (
     osc_sample = 2.0 * phase - 1.0;
     osc_sample -= poly_blep(phase, phase_incr);
   );
