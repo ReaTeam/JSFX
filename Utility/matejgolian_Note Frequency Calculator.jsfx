@@ -18,7 +18,7 @@ slider6:1<0,1,1{No,Yes}>Receive MIDI
 slider7:0<0,16,1{All,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>Input Channel
 slider8:1<0,2,1{57 (A4 = Note #57),69 (A4 = Note #69),81 (A4 = Note #81)}>MIDI Note for A4
 slider9:2<0,2,1{Off,Always,On MIDI input}>Waveform Playback
-slider10:0<0,2,1{Sine,Triangle,Saw}>Waveform Shape
+slider10:0<3,1,1{Sine,Triangle,Square,Saw}>Waveform Shape
 slider11:-12<-120,6,0.1>Waveform Volume (dB)
 
 @init
@@ -31,6 +31,10 @@ midi_note_count = 0;
 
 // Allocate memory block array for tracking 128 MIDI keys (stores channel number 1-16, or 0 for off)
 note_chan_array = 0; 
+
+// Track the arrival order of notes using a global atomic counter
+note_order_array = 200; 
+note_order_counter = 0;
 
 // FIXED AUDIO ATTENUATOR OFFSET (Change as needed)
 volume_offset = -12;
@@ -60,22 +64,24 @@ function get_a4_midi_reference() (
   slider8 == 0 ? 57 : slider8 == 2 ? 81 : 69;
 );
 
-// Function to scan memory array and find the first active note matching the target channel filter
-function trigger_first_active_channel_note(target_chan) local(i, found, m_note, m_semitones, abs_note, a4_ref, total_calc_semitones) (
+// Function to scan memory array and find the active note with the highest arrival timestamp
+function trigger_last_active_channel_note(target_chan) local(i, max_order, m_note, m_semitones, abs_note, a4_ref, total_calc_semitones) (
   i = 0;
-  found = 0;
+  max_order = -1;
+  m_note = -1;
   
-  // Scan all 128 keys
-  while (i < 128 && found == 0) (
-    // Match if note is active AND (filter is "All" (0) OR matches the target channel)
+  // Scan all 128 keys to find the one that was pressed last (highest order value)
+  while (i < 128) (
     note_chan_array[i] > 0 && (target_chan == 0 || note_chan_array[i] == target_chan) ? (
-      m_note = i;
-      found = 1;
+      note_order_array[i] > max_order ? (
+        max_order = note_order_array[i];
+        m_note = i;
+      );
     );
     i += 1;
   );
 
-  found ? (
+  m_note >= 0 ? (
     a4_ref = get_a4_midi_reference();
     m_semitones = m_note - a4_ref;
     
@@ -143,7 +149,7 @@ slider11 < -120 ? slider11 = -120 : slider11 > 6 ? slider11 = 6;
 // --- SEAMLESS CATCH-UP ON SLIDER CHANGES (MIDI Switch or Channel Switch) ---
 (slider6 == 1 && last_receive_midi == 0) || (slider7 != last_channel) ? (
   slider6 == 1 ? (
-    trigger_first_active_channel_note(slider7);
+    trigger_last_active_channel_note(slider7);
   );
 );
 
@@ -219,41 +225,31 @@ while (midirecv(offset, msg1, msg2, msg3)) (
   status = msg1 & $xF0;
   msg_chan = (msg1 & $x0F) + 1; // Extract MIDI channel (1-16)
 
-  // 1. ALWAYS track every incoming note from all channels into background memory
-  status == $x90 ? (
-    msg3 > 0 ? (
-      midi_note = msg2;
-      note_chan_array[midi_note] == 0 ? (
-        note_chan_array[midi_note] = msg_chan; 
-        midi_note_count += 1;
-      );
-      
-      // Update engine UI and calculations ONLY if Receive MIDI is Yes
-      slider6 == 1 ? (
-        trigger_first_active_channel_note(slider7);
-      );
-    ) : (
-      // Note On with velocity 0 -> Treat as Note Off
-      midi_note = msg2;
-      note_chan_array[midi_note] > 0 ? (
-        note_chan_array[midi_note] = 0;
-        midi_note_count -= 1;
-        midi_note_count < 0 ? midi_note_count = 0;
-        
-        slider6 == 1 ? trigger_first_active_channel_note(slider7);
-      );
+  // NOTE ON
+  status == $x90 && msg3 > 0 ? (
+    midi_note = msg2;
+    note_chan_array[midi_note] == 0 ? (
+      note_chan_array[midi_note] = msg_chan; 
+      midi_note_count += 1;
     );
-  );
+    
+    // Assign higher timestamp value to make it the most recent note
+    note_order_counter += 1;
+    note_order_array[midi_note] = note_order_counter;
+    
+    slider6 == 1 ? trigger_last_active_channel_note(slider7);
+  ) : 
   
-  // Standard Note Off event
-  status == $x80 ? (
+  // NOTE OFF (Either status $x80 OR status $x90 with velocity 0)
+  (status == $x80 || (status == $x90 && msg3 == 0)) ? (
     midi_note = msg2;
     note_chan_array[midi_note] > 0 ? (
       note_chan_array[midi_note] = 0;
+      note_order_array[midi_note] = -1; // Reset order value
       midi_note_count -= 1;
       midi_note_count < 0 ? midi_note_count = 0;
       
-      slider6 == 1 ? trigger_first_active_channel_note(slider7);
+      slider6 == 1 ? trigger_last_active_channel_note(slider7);
     );
   );
   
@@ -279,6 +275,13 @@ play_gate ? (
     osc_sample = 1.0 - 4.0 * abs(floor(phase + 0.25) - (phase - 0.25));
   ) : 
   slider10 == 2 ? (
+    // Clean PolyBLEP Square Wave
+    osc_sample = phase < 0.5 ? 1.0 : -1.0;
+    osc_sample += poly_blep(phase, phase_incr);
+    osc_sample -= poly_blep(phase < 0.5 ? phase + 0.5 : phase - 0.5, phase_incr);
+  ) : 
+  slider10 == 3 ? (
+    // Clean PolyBLEP Saw Wave (shifted to index 3)
     osc_sample = 2.0 * phase - 1.0;
     osc_sample -= poly_blep(phase, phase_incr);
   );
