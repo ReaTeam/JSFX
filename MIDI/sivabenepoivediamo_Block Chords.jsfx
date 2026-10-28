@@ -1,0 +1,458 @@
+desc: Block Chords
+author: Davide Fumai
+version: 1.0
+about:
+  ## Block Chords
+
+  A MIDI melody harmonizer. Every incoming note is treated as the top voice of the melody and expanded into a block chord. It is a port of the "blockchords" web tool.
+
+  ### How it works
+
+  - **Notes in the base shape** use the inversion of that shape that puts the melody note on top.
+  - **Other scale degrees** are harmonized with descending thirds along the chosen scale. A voice that would form a tritone with the melody is moved up one scale step.
+  - **Notes outside both the scale and the base shape** are treated as a chromatic alteration of the nearest in-scale note. You can choose whether the whole chord is transposed with it or only the melody note is altered.
+  - **Bass doubling** adds the melody an octave below.
+  - **Drop 2 / Drop 3 / Drop 4** move the second, third or fourth voice an octave below the bass doubling.
+
+  Overlapping chords share notes safely: output notes are reference-counted, so releasing one chord never cuts off a note that another chord is still holding.
+
+  ### Usage
+
+  1. Put the effect on a MIDI track, before your instrument.
+  2. Play single notes. Each one comes out as a chord.
+  3. Pick a **root** and a **scale**, then choose a **base shape**.
+
+  Scales and shapes are chosen from a category list plus a second list for the category. Choosing **Custom** in either category reveals twelve toggles (relative to the root) so you can build your own.
+
+  Notes outside the **Harmonize from / up to** range pass through unchanged.
+
+  ### Library
+
+  The effect ships with a large built-in library:
+
+  - **Scales:** major and minor modes, European, Asian, Indian (melas and ragas), pentatonic, modal, jazz, symmetric and miscellaneous.
+  - **Base shapes:** triads, sixth, seventh, ninth, eleventh and thirteenth chords, altered dominants, suspended and added-tone chords, symmetric and cluster chords, polychords and hybrids, and classical chromatic harmony.
+
+// ---------------------------------------------------------------------------
+// Block Chords
+//
+// JSFX port of the "blockchords" web tool. Every incoming note is treated as the
+// melody (top voice) and is expanded into a block chord:
+//  * notes that belong to the base shape use the inversion of that shape
+//    which has the melody note on top;
+//  * other scale degrees are harmonized with descending thirds along the scale
+//    (a voice that makes a tritone with the melody is moved up one scale step);
+//  * notes outside both scale and base shape are harmonized as a chromatic
+//    alteration of the nearest in-scale note (optionally transposing the whole
+//    chord);
+//  * the melody is doubled an octave below, and voices 2/3/4 can be dropped
+//    an octave below that doubling (drop 2 / drop 3 / drop 4).
+//
+// Put it before your instrument on a MIDI track and play single notes.
+// Choose the scale and the base shape from the category + list pickers, or
+// pick "Custom" and use the 12 toggles (relative to the root).
+// ---------------------------------------------------------------------------
+
+slider1:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Root (key)
+slider2:0<0,12,1{Major and minor,European,Asian,Indian 1/3: Mela Bhavapriya .. Raga Gamakakriya,Indian 2/3: Raga Gandharavam .. Raga Nattai (desc),Indian 3/3: Raga Nattaikurinji .. Raga Zilaf,Pentatonic,Modal 1/2: Ionian b5 .. Locrian Dominant,Modal 2/2: Locrian bb7 .. Leading Whole-Tone,Jazz,Symmetric,Misc,Custom (use toggles below)}>Scale category
+slider3:0<0,20,1{Ionian (Major),Dorian,Phrygian,Lydian,Mixolydian,Aeolian (Natural Minor),Locrian,Melodic Minor,Dorian b2,Lydian Augmented,Lydian Dominant,Melodic Major,Half Diminished,Altered Dominant,Harmonic Minor,Locrian #6,Ionian Augmented,Romanian Minor,Phrygian Dominant,Lydian #2,Ultralocrian}>Scale - Major and minor
+slider4:0<0,37,1{Adonai Malakh,Enigmatic (asc),Enigmatic (desc),Enigmatic Minor,Enigmatic Mixed,Flamenco,Gypsy,Gypsy Hexatonic,Gypsy Inverse,Gypsy Minor,Hijaz Major,Houseini,Houzam,Hungarian Major,Hungarian Major Inverse,Hungarian Minor b2,Istrian,Jeths,Kiourdi,Magen Abot,Moorish Phrygian,Neapolitan Major,Neapolitan Major b4,Neapolitan Major b5,Neapolitan Minor,Harmonic Neapolitan Minor,Neseveri,Prokofiev,Prometheus,Prometheus Neapolitan,Romanian Major,Sabach,Sabach Maj7,Scottish Hexatonic,Sengiach,Shostakovich,Spanish Heptatonic,Spanish Octatonic}>Scale - European
+slider5:0<0,19,1{Honkoshi,Ichilkotsucho,Insen,Maqam Shadd'araban,Maqam Hijaz,Maqam Shawq Afza,Maqam Tarzanuyn,Nando-Kyemyonjo,Noh,Nohkan,Oriental,Oriental 2,Pelog,Persian,Ritzu,Sho,Sho #2,Takemitzu Tree 1,Takemitzu Tree 2,Youlan}>Scale - Asian
+slider6:0<0,53,1{Mela Bhavapriya,Mela Calanata,Mela Dhavalambari,Mela Dhatuvardhani,Mela Divyamani,Mela Ganamurti,Mela Gavambodhi,Mela Gayakapriya,Mela Hatakambari,Mela Jalarnava,Mela Jhalavarli,Mela Jhankaradhvani,Mela Jyotisvarupini,Mela Kantamani,Mela Manavati,Mela Naganandini,Mela Namanarayani,Mela Navanitam,Mela Nitimati,Mela Pavani,Mela Ragavardhani,Mela Raghupriya,Mela Ratnangi,Mela Rupavati,Mela Salaga,Mela Syamalangi,Mela Suvarnangi,Mela Tenarupi,Mela Venaspati,Mela Varunapriya,Mela Visvambhari,Mela Yagapriya,Raga Abhogi,Raga Aivarati,Raga Amarasenapriya,Raga Audav Tukhari,Raga Bhatiyar,Raga Bhinna Pancama,Raga Brindabani,Raga Bowli (asc),Raga Bowli (desc),Raga Budhamanohari,Raga Chandrajyoti,Raga Chandrakauns Kafi,Raga Chandrakauns Kiravani,Raga Chandrakauns Modern,Raga Chaya Todi,Raga Chinthamani,Raga Deshgaur,Raga Devaranjani,Raga Dhavalangam,Raga Dhavalashri,Raga Dipak,Raga Gamakakriya}>Scale - Indian 1/3
+slider7:0<0,53,1{Raga Gandharavam,Raga Gangatarangini,Raga Gaula,Raga Gaurikriya,Raga Ghantana,Raga Gopikatilaka,Raga Gowla (asc),Raga Gowla (desc),Raga Gurjari Todi,Raga Hamsadhvani,Raga Hansanandi,Raga Hamsa Vinodini,Raga Hari Nata,Raga Hejjajji,Raga Jaganmohanam,Raga Jivantika,Raga Jyoty,Raga Kalagada,Raga Kalakanthi,Raga Kalavati,Raga Kamalamanohari,Raga Kashyapi,Raga Kedaram (asc),Raga Kedaram (desc),Raga Khamach (asc),Raga Khamach (desc),Raga Kshanika,Raga Kumarapriya,Raga Kumurdaki,Raga Kuntvarali,Raga Lalita,Raga Lalita Bhairav,Raga Latika,Raga Madhukauns,Raga Malarani,Raga Malayamarutam,Raga Malahari (asc),Raga Malahari (desc),Raga Malkauns,Raga Malini,Raga Manaranjani,Raga Manavi,Raga Manohari,Raga Marwa Thaat,Raga Matha Kokila,Raga Megharamji,Raga Miam Ki Malhar,Raga Mohanangi,Raga Mruganandana,Raga Multani,Raga Nabhomani,Raga Nagagandhari,Raga Nattai (asc),Raga Nattai (desc)}>Scale - Indian 2/3
+slider8:0<0,51,1{Raga Nattaikurinji,Raga Navamanohari,Raga Neroshta,Raga Nishadi,Raga Padi,Raga Pahadi,Raga Paras (asc),Raga Paras (desc),Raga Priyadharshini,Raga Puruhutika,Raga Putrika,Raga Rageshri,Raga Ramkali,Raga Rangini,Raga Rasamanjari,Raga Rasavali,Raga Rasranjani,Raga Ratnakanthi,Raga Rudra Pancama,Raga Rukmangi,Raga Salagavarali,Raga Samudhra Priya,Raga Santanamanjari,Raga Sarasanana,Raga Sarasvati,Raga Saravati,Raga Saugandhini,Raga Saurashtra,Raga Shreeranjani,Raga Shri Kalyan,Raga Shubravarni,Raga Sindhura Kafi,Raga Sindhi-Bhairavi,Raga Siva Kambhoji,Raga Sorati,Raga Suddha Mukhari,Raga Suddha Simantini,Raga Syamalam,Raga Takka,Raga Tilang,Raga Trimurti,Raga Valaji,Raga Vasanta (asc),Raga Vasanta (desc),Raga Vegavahini (asc),Raga Vegavahini (desc),Raga Vijayanagari,Raga Vijayasri,Raga Vijayavasanta,Raga Viyogavarali,Raga Vutari,Raga Zilaf}>Scale - Indian 3/3
+slider9:0<0,43,1{Major Pentatonic,Suspended Pentatonic,Man Gong,Ritusen,Minor Pentatonic,Dorian Pentatonic,Kokin-Choshi,Raga Hindol,Han-Kumoi,Minor Pentatonic 7 b5,Ionian Pentatonic,Pelog Pentatonic,Raga Hamsanada,Raga Khamaji Durga,Dominant Pentatonic,Chaio,Chin,Kyemyonjo,Kung,In,Hirajoshi,Ake-Bono,Iwato,Major Pentatonic b2,Major Pentatonic b2 b5,Major Pentatonic b3,Major Pentatonic b6,Major Pentatonic b7 #9,Mixolydian Pentatonic,Tcherepnin Major Pentatonic,Altered Pentatonic,Locrian Pentatonic,Pentatonic Whole-Tone,Center-Cluster PentaMirror,Raga Nagaswaravali,Raga Chitthakarshini,Raga Hamsadhvani 2,Pyeong Jo,Raga Shailaja,Pygmy,Raga Mamata,Raga Kokil Pancham,Romanian Bacovia,Syrian Pentatonic}>Scale - Pentatonic
+slider10:0<0,31,1{Ionian b5,Ionian #5,Ionian Augmented #2,Ionian Augmented b9,Minor Hexatonic,Major Locrian,Jazz Minor #5,Full Minor All Flats,Dorian Aeolian,Dorian b2 b4,Dorian b2 Maj7,Dorian b9 #11,Phrygian Hexatonic,Phrygian Aeolian b4,Phrygian b4,Phrygian b4 Maj7,Double Phrygian,Ultraphrygian,Lydian Hexatonic,Lydian #2 Hexatonic,Lydian #2 #6,Lydian Dominant b6,Lydian Mixolydian,Lydian Diminished,Lydian #6,Lydian Augmented Dominant,Mixolydian Hexatonic,Mixolydian b5,Mixolydian Augmented,Mixolydian Augmented Maj9,Aeolian b1,Locrian Dominant}>Scale - Modal 1/2
+slider11:0<0,31,1{Locrian bb7,Locrian bb3 bb7,Locrian Maj7,Semilocrian b4,Superlocrian bb3,Superlocrian Maj7,Superlocrian bb6 bb7,Superlocrian #6,Ultralocrian bb3,Harmonic Major,Harmonic Major 2,Harmonic Minor b5,Harmonic Minor Inverse,Double Harmonic,Chromatic Dorian,Chromatic Dorian Inverse,Chromatic Diatonic Dorian,Chromatic Phrygian,Chromatic Phrygian Inverse,Chromatic Lydian,Chromatic Lydian Inverse,Chromatic Mixolydian,Chromatic Mixolydian 2,Chromatic Mixolydian Inverse,Chromatic Hypodorian,Chromatic Hypodorian Inverse,Chromatic Hypolydian,Chromatic Hypophrygian Inverse,Chromatic Permutated Diatonic Dorian,Major Minor Mixed,Minor Pentatonic with Leading Tones,Leading Whole-Tone}>Scale - Modal 2/2
+slider12:0<0,22,1{Blues,Blues Heptatonic,Blues Heptatonic 2,Blues Octatonic,Blues Enneatonic,Blues Enneatonic 2,Blues Dorian Hexatonic,Blues Phrygian,Blues Minor Maj7,Blues Modified,Blues Leading Tone,Rock 'n Roll,Bebop,Bebop Major,Bebop Major Hexatonic,Bebop Major Heptatonic,Bebop Minor,Bebop Dorian,Bebop Melodic Minor,Bebop Harmonic Minor,Bebop Half-diminished,Bebop Locrian,Bebop Chromatic}>Scale - Jazz
+slider13:0<0,21,1{Whole-Tone,Augmented,Inverted Augmented,Diminished,Diminished Half-tone,Chromatic,Tritone,Raga Neelangi,Messiaen 2nd Mode Truncated,Messiaen 3rd Mode,Messiaen 4th Mode,Messiaen 4th Mode Inverse,Messiaen 5th Mode,Messiaen 5th Mode Inverse,Messiaen 6th Mode,Messiaen 6th Mode Inverse,Messiaen 7th Mode,Messiaen 7th Mode Inverse,Genus Chromaticum,Two-semitone Tritone,Symmetrical Decatonic,Van Der Host}>Scale - Symmetric
+slider14:0<0,9,1{Algerian Octatonic,Algerian,Eskimo Hexatonic,Eskimo Hexatonic 2,Hamel,Hawaiian,LG Octatonic,Pyramid Hexatonic,Nonatonic 2,Symmetrical Nonatonic}>Scale - Misc
+slider15:1<0,1,1{Off,On}>Custom scale: 1
+slider16:0<0,1,1{Off,On}>Custom scale: b2
+slider17:1<0,1,1{Off,On}>Custom scale: 2
+slider18:0<0,1,1{Off,On}>Custom scale: b3
+slider19:1<0,1,1{Off,On}>Custom scale: 3
+slider20:1<0,1,1{Off,On}>Custom scale: 4
+slider21:0<0,1,1{Off,On}>Custom scale: b5
+slider22:1<0,1,1{Off,On}>Custom scale: 5
+slider23:0<0,1,1{Off,On}>Custom scale: b6
+slider24:1<0,1,1{Off,On}>Custom scale: 6
+slider25:0<0,1,1{Off,On}>Custom scale: b7
+slider26:1<0,1,1{Off,On}>Custom scale: 7
+slider27:1<0,11,1{Triads,Sixth chords,Seventh chords,Ninth chords,Eleventh chords,Thirteenth chords,Altered dominants,Suspended and added tone,Symmetric and cluster,Polychords and hybrids,Classical chromatic harmony,Custom (use toggles below)}>Base shape category
+slider28:0<0,10,1{Major,Minor,Diminished,Augmented,Sus2,Sus4,Open Fifth (power chord),Major Flat Five (b5),Minor Sharp Five (#5),Phrygian Triad,Lydian Triad}>Base shape - Triads
+slider29:0<0,6,1{Major Sixth (6),Minor Sixth (min6),Sixth Sus Four (6sus4),Sixth Flat Five (6b5),Sixth Sharp Five (6#5),Major Six-Nine (6/9),Minor Six-Nine (min6/9)}>Base shape - Sixth chords
+slider30:0<0,13,1{Major Seventh (maj7),Dominant Seventh (7),Minor Seventh (min7),Minor Major Seventh (minMaj7),Diminished Seventh (dim7),Half-Diminished (min7b5),Augmented Major Seventh (maj7#5),Augmented Seventh (7#5),Major Seventh Flat Five (maj7b5),Diminished Major Seventh (dimMaj7),Seventh Sus Four (7sus4),Seventh Sus Two (7sus2),Major Seventh Sus Four (maj7sus4),Major Seventh Sus Two (maj7sus2)}>Base shape - Seventh chords
+slider31:0<0,13,1{Major Ninth (maj9),Dominant Ninth (9),Minor Ninth (min9),Minor Major Ninth (minMaj9),Dominant Flat Ninth (7b9),Dominant Sharp Ninth (7#9),Half-Diminished Ninth (min9b5),Diminished Ninth (dim9),Diminished Flat Ninth (dim7b9),Augmented Ninth (9#5),Major Ninth Sharp Five (maj9#5),Ninth Sus Four (9sus4),Add Nine (add9),Minor Add Nine (min add9)}>Base shape - Ninth chords
+slider32:0<0,8,1{Major Eleventh (maj11),Dominant Eleventh (11),Minor Eleventh (min11),Minor Major Eleventh (minMaj11),Dominant Sharp Eleventh (7#11),Major Sharp Eleventh (maj7#11),Add Eleven (add11),Add Sharp Eleven (add#11),Half-Diminished Eleventh (min11b5)}>Base shape - Eleventh chords
+slider33:0<0,4,1{Major Thirteenth (maj13),Dominant Thirteenth (13),Minor Thirteenth (min13),Dominant Thirteenth Flat Nine (13b9),Dominant Thirteenth Sharp Eleven (13#11)}>Base shape - Thirteenth chords
+slider34:0<0,7,1{Seventh Flat Five (7b5),Seventh Flat Nine Flat Five (7b9b5),Seventh Flat Nine Sharp Five (7b9#5),Seventh Sharp Nine Flat Five (7#9b5),Seventh Sharp Nine Sharp Five (7#9#5),Altered Dominant (7alt),Thirteenth Flat Nine (13b9 alt),Thirteenth Sharp Nine (13#9 alt)}>Base shape - Altered dominants
+slider35:0<0,3,1{Sus2 Sus4 (add both),Add Flat Nine (add b9),Add Sharp Nine (add #9),Seven Six (7/6 dominant+6)}>Base shape - Suspended and added tone
+slider36:0<0,11,1{Whole Tone Tetrad,Whole Tone Scale (hexad),Chromatic Cluster (3 semitones),Chromatic Cluster (4 semitones),Quartal Triad (fourths),Quartal Tetrad (fourths),So What Chord,Mystic Chord (Scriabin),Tritone Stack,Secundal Triad (seconds),Secundal Tetrad (seconds),Viennese Trichord}>Base shape - Symmetric and cluster
+slider37:0<0,8,1{Major over Minor (bitonal),Slash: Minor Triad over Flat Six Bass,Hendrix Chord (7#9),Elektra Chord,Farben Chord (Schoenberg),Contrary Motion Chord,Tristan Chord,Magic Chord (Bartok),Petrushka Chord}>Base shape - Polychords and hybrids
+slider38:0<0,1,1{Italian Augmented Sixth (It+6),French Augmented Sixth (Fr+6)}>Base shape - Classical chromatic harmony
+slider39:1<0,1,1{Off,On}>Custom shape: 1
+slider40:0<0,1,1{Off,On}>Custom shape: b2
+slider41:0<0,1,1{Off,On}>Custom shape: 2
+slider42:0<0,1,1{Off,On}>Custom shape: b3
+slider43:1<0,1,1{Off,On}>Custom shape: 3
+slider44:0<0,1,1{Off,On}>Custom shape: 4
+slider45:0<0,1,1{Off,On}>Custom shape: b5
+slider46:1<0,1,1{Off,On}>Custom shape: 5
+slider47:0<0,1,1{Off,On}>Custom shape: b6
+slider48:1<0,1,1{Off,On}>Custom shape: 6
+slider49:0<0,1,1{Off,On}>Custom shape: b7
+slider50:0<0,1,1{Off,On}>Custom shape: 7
+slider51:0<0,1,1{Off,On}>Drop voice 2
+slider52:0<0,1,1{Off,On}>Drop voice 3
+slider53:0<0,1,1{Off,On}>Drop voice 4
+slider54:1<0,1,1{Off,On}>Out-of-scale notes: transpose whole chord
+slider55:1<0,1,1{Off,On}>Bass doubling (octave below melody)
+slider56:85<10,150,1>Harmony velocity (% of melody)
+slider57:60<0,127,1>Harmonize from note (MIDI)
+slider58:127<0,127,1>Harmonize up to note (MIDI)
+
+in_pin:none
+out_pin:none
+options:no_meter
+
+@init
+// ----- slider numbers -----
+NSG = 12;  NCG = 11;
+SB = 3;  CSB = 15;  CGRP = 27;  HB = 28;  CHB = 39;
+S_DR2 = 51;  S_DR3 = 52;  S_DR4 = 53;
+S_TW = 54;  S_DBL = 55;  S_HV = 56;  S_LO = 57;  S_HI = 58;
+
+// ----- memory map -----
+SC = 0;        // scale steps, ascending (relative to root)
+SCP = 16;      // scale pitch classes (root applied)
+SHP = 32;      // base shape pitch classes (root applied)
+VOICES = 48;   // harmonized voices (melody first)
+OUT = 64;      // final chord notes
+DRF = 80;      // drop flags, index 1..3
+LS = 1000;     // scale library (12-bit masks)
+LH = 2000;     // base shape library (12-bit masks)
+GSS = 2200;    // first library index of each scale group
+GSC = 2260;    // first library index of each shape group
+CNT = 4000;    // [ch*128+note] number of chord notes sounding for that input note
+REFC = 6100;   // [ch*128+pitch] reference count of output notes
+STORE = 9000;  // [(ch*128+note)*8+slot] output pitches of each held input note
+
+// string handles (named strings are not directly accessible inside functions)
+NMS = #nm;  CHS = #chordstr;
+memset(CNT, 0, 2048);
+memset(REFC, 0, 2048);
+
+// ---------------------------------------------------------------------------
+// music theory core (same maths as the web tool)
+// ---------------------------------------------------------------------------
+function mod12(n) ( n - 12 * floor(n / 12); );
+
+// index of pitch class pc inside the scale, or -1
+function scale_idx(pc) local(i, r) global(SCP, scN) (
+  r = -1; i = 0;
+  while (i < scN) (
+    SCP[i] == pc ? ( r = i; i = scN; );
+    i += 1;
+  );
+  r;
+);
+
+function in_shape(pc) local(i, r) global(SHP, shN) (
+  r = 0; i = 0;
+  while (i < shN) (
+    SHP[i] == pc ? ( r = 1; );
+    i += 1;
+  );
+  r;
+);
+
+function pos_note(pos) local(o, d) global(scN, scRoot, SC) (
+  o = floor(pos / scN);
+  d = pos - scN * o;
+  scRoot + o * 12 + SC[d];
+);
+
+// move a scale note by `count` scale steps; -9999 if the note is not in the scale
+function step_scale(note, count) local(idx, pos) global(scN, scRoot) (
+  idx = scale_idx(mod12(note));
+  idx < 0 ? -9999 : (
+    pos = floor((note - scRoot) / 12) * scN + idx;
+    pos_note(pos + count);
+  );
+);
+
+// base-shape inversion with `mnote` on top. Fills VOICES, returns voice count or -1
+function harm_shape(mnote, vc) local(mpc, idx, i, k, pc, cand, prev, cnt, res) global(SHP, shN, VOICES) (
+  mpc = mod12(mnote);
+  idx = -1; i = 0;
+  while (i < shN) (
+    SHP[i] == mpc && idx < 0 ? ( idx = i; );
+    i += 1;
+  );
+  res = -1;
+  idx >= 0 ? (
+    VOICES[0] = mnote; cnt = 1; prev = mnote; i = 1;
+    while (i < vc && i < shN) (
+      k = idx - i;
+      k = k - shN * floor(k / shN);
+      pc = SHP[k];
+      cand = prev - 1;
+      while (mod12(cand) != pc) ( cand -= 1; 1; );
+      VOICES[cnt] = cand; cnt += 1; prev = cand;
+      i += 1;
+    );
+    res = cnt;
+  );
+  res;
+);
+
+// Harmonize one melody note. Result in OUT[0..outN-1] (OUT[0] is the melody).
+function harmonize(note) local(mpc, alt, ref, dist, found, d1, d2, vn, cur, nxt, i, j, orig) global(OUT, VOICES, DRF, outN, TWHOLE, DBLON, scN, shN) (
+  mpc = mod12(note);
+  alt = 0; ref = note;
+
+  // out-of-scale and out-of-shape: alteration of the nearest in-scale pitch class
+  (in_shape(mpc) == 0 && scale_idx(mpc) < 0) ? (
+    dist = 1; found = 0;
+    while (dist <= 6 && found == 0) (
+      d1 = scale_idx(mod12(mpc - dist)) >= 0;
+      d2 = scale_idx(mod12(mpc + dist)) >= 0;
+      d1 ? ( alt = dist; found = 1; ) : ( d2 ? ( alt = -dist; found = 1; ); );
+      dist += 1;
+    );
+    ref = note - alt;
+  );
+
+  vn = harm_shape(ref, 4);
+  vn < 0 ? (
+    // descending thirds along the scale
+    VOICES[0] = ref; vn = 1; cur = ref; i = 0;
+    while (i < 3) (
+      nxt = step_scale(cur, -2);
+      nxt < -1000 ? ( i = 99; ) : (
+        mod12(nxt - ref) == 6 ? ( nxt = step_scale(nxt, 1); );
+        VOICES[vn] = nxt; vn += 1; cur = nxt;
+      );
+      i += 1;
+    );
+  );
+
+  alt != 0 ? (
+    TWHOLE ? (
+      j = 0;
+      while (j < vn) ( VOICES[j] += alt; j += 1; );
+    ) : (
+      VOICES[0] = note;
+    );
+  );
+
+  // assemble the final chord, with optional drops
+  OUT[0] = VOICES[0]; outN = 1;
+  vn >= 4 ? (
+    i = 1;
+    while (i <= 3) ( DRF[i] == 0 ? ( OUT[outN] = VOICES[i]; outN += 1; ); i += 1; );
+    DBLON ? ( OUT[outN] = note - 12; outN += 1; );
+    i = 1;
+    while (i <= 3) ( DRF[i] != 0 ? ( OUT[outN] = VOICES[i] - 12; outN += 1; ); i += 1; );
+  ) : (
+    i = 1;
+    while (i < vn) ( OUT[outN] = VOICES[i]; outN += 1; i += 1; );
+    DBLON ? ( OUT[outN] = note - 12; outN += 1; );
+  );
+  outN;
+);
+
+// ---------------------------------------------------------------------------
+// MIDI helpers (reference-counted so overlapping chords never cut each other)
+// ---------------------------------------------------------------------------
+function play_note(ch, p, v, offs) local(k) global(REFC) (
+  k = ch * 128 + p;
+  REFC[k] > 0 ? ( midisend(offs, 0x80 | ch, p, 0); );
+  REFC[k] += 1;
+  midisend(offs, 0x90 | ch, p, v);
+);
+
+function stop_note(ch, p, ov, offs) local(k) global(REFC) (
+  k = ch * 128 + p;
+  REFC[k] > 0 ? (
+    REFC[k] -= 1;
+    REFC[k] == 0 ? ( midisend(offs, 0x80 | ch, p, ov); );
+  );
+);
+
+function chord_off(ch, note, ov, offs) local(key, j) global(CNT, STORE) (
+  key = ch * 128 + note;
+  j = 0;
+  while (j < CNT[key]) (
+    stop_note(ch, STORE[key * 8 + j], ov, offs);
+    j += 1;
+  );
+  CNT[key] = 0;
+);
+
+function pc_name(dest, pc) global(NMS) (
+  sprintf(NMS, "%c", str_getchar("CCDDEFFGGAAB", pc));
+  strcat(dest, NMS);
+  str_getchar("010100101010", pc) == '1' ? ( strcat(dest, "#"); );
+);
+
+function note_name(dest, midi) global(NMS) (
+  pc_name(dest, mod12(midi));
+  sprintf(NMS, "%d", floor(midi / 12) - 1);
+  strcat(dest, NMS);
+);
+
+function chord_on(ch, note, vel, offs) local(key, j, p, v, s, dup) global(CNT, STORE, OUT, outN, HVEL, CHS) (
+  key = ch * 128 + note;
+  CNT[key] > 0 ? ( chord_off(ch, note, 64, offs); );
+  harmonize(note);
+  CNT[key] = 0;
+  strcpy(CHS, "Last chord:");
+  j = 0;
+  while (j < outN) (
+    p = OUT[j];
+    dup = 0; s = 0;
+    while (s < CNT[key]) ( STORE[key * 8 + s] == p ? ( dup = 1; ); s += 1; );
+    (dup == 0 && p >= 0 && p <= 127 && CNT[key] < 8) ? (
+      v = j == 0 ? vel : max(1, min(127, floor(vel * HVEL / 100 + 0.5)));
+      play_note(ch, p, v, offs);
+      STORE[key * 8 + CNT[key]] = p;
+      CNT[key] += 1;
+      strcat(CHS, " ");
+      note_name(CHS, p);
+    );
+    j += 1;
+  );
+);
+
+// ---------------------------------------------------------------------------
+// library loading
+// ---------------------------------------------------------------------------
+lsN = 0;  lhN = 0;
+function ls(m) global(lsN, LS) ( LS[lsN] = m; lsN += 1; );
+function lh(m) global(lhN, LH) ( LH[lhN] = m; lhN += 1; );
+
+// scales
+ls(2741); ls(1709); ls(1451); ls(2773); ls(1717); ls(1453); ls(1387); ls(2733); ls(1707); ls(2901); ls(1749); ls(1461); ls(1389); ls(1371); ls(2477); ls(1643);
+ls(2869); ls(1741); ls(1459); ls(2777); ls(859); ls(1711); ls(3411); ls(3379); ls(3403); ls(3443); ls(1467); ls(1485); ls(947); ls(2739); ls(2509); ls(1891);
+ls(1981); ls(2745); ls(1753); ls(877); ls(2511); ls(219); ls(2669); ls(2029); ls(2907); ls(3515); ls(2731); ls(2715); ls(2667); ls(2475); ls(2479); ls(3531);
+ls(3435); ls(1621); ls(1619); ls(1747); ls(1437); ls(2461); ls(693); ls(2489); ls(2779); ls(1401); ls(1403); ls(1131); ls(2805); ls(1443); ls(1659); ls(3507);
+ls(3069); ls(2043); ls(173); ls(2981); ls(2917); ls(1651); ls(3699); ls(2517); ls(2419); ls(1323); ls(685); ls(1115); ls(2381); ls(1357); ls(1783); ls(1483);
+ls(1209); ls(979); ls(2521); ls(3275); ls(2471); ls(971); ls(3763); ls(3251); ls(2791); ls(3303); ls(941); ls(1497); ls(981); ls(2727); ls(3253); ls(1491);
+ls(1735); ls(3277); ls(2759); ls(1465); ls(3271); ls(1447); ls(3243); ls(967); ls(973); ls(2763); ls(3239); ls(1703); ls(3245); ls(3283); ls(953); ls(557);
+ls(725); ls(2253); ls(301); ls(2803); ls(2469); ls(3237); ls(403); ls(2451); ls(181); ls(711); ls(1577); ls(2345); ls(2601); ls(331); ls(1997); ls(2435);
+ls(2465); ls(467); ls(721); ls(245); ls(2259); ls(1195); ls(2417); ls(1203); ls(3273); ls(2349); ls(1229); ls(2211); ls(2227); ls(1355); ls(2189); ls(2643);
+ls(2613); ls(2737); ls(851); ls(1477); ls(2723); ls(1489); ls(915); ls(909); ls(691); ls(1733); ls(1419); ls(2225); ls(2229); ls(3761); ls(1717); ls(2339);
+ls(2311); ls(2133); ls(1697); ls(2355); ls(1331); ls(2453); ls(1737); ls(3269); ls(1683); ls(419); ls(435); ls(3369); ls(939); ls(1171); ls(1677); ls(1705);
+ls(2771); ls(1669); ls(2099); ls(3757); ls(665); ls(2645); ls(2853); ls(199); ls(2725); ls(3257); ls(2217); ls(1589); ls(1445); ls(2581); ls(2757); ls(2467);
+ls(4021); ls(2481); ls(2483); ls(2341); ls(2721); ls(775); ls(3637); ls(2547); ls(2637); ls(2917); ls(1699); ls(2597); ls(2261); ls(1587); ls(1163); ls(1675);
+ls(1225); ls(985); ls(2357); ls(1733); ls(945); ls(451); ls(2995); ls(1581); ls(709); ls(1605); ls(2221); ls(3519); ls(1205); ls(3749); ls(807); ls(427);
+ls(461); ls(2473); ls(3249); ls(1421); ls(1681); ls(2609); ls(2611); ls(1713); ls(1715); ls(717); ls(2247); ls(3281); ls(2347); ls(1745); ls(1745); ls(661);
+ls(1189); ls(1321); ls(677); ls(1193); ls(653); ls(1187); ls(2641); ls(421); ls(1129); ls(2225); ls(395); ls(2245); ls(1585); ls(1173); ls(1317); ls(1353);
+ls(681); ls(597); ls(419); ls(2257); ls(397); ls(1123); ls(659); ls(595); ls(587); ls(405); ls(1177); ls(1201); ls(2213); ls(675); ls(1113); ls(1361);
+ls(313); ls(689); ls(299); ls(2197); ls(1573); ls(1417); ls(1165); ls(2705); ls(425); ls(2353); ls(307); ls(2677); ls(2869); ls(2873); ls(2867); ls(1197);
+ls(1397); ls(2861); ls(4013); ls(1965); ls(1691); ls(2651); ls(1739); ls(1449); ls(1455); ls(1435); ls(2459); ls(619); ls(923); ls(2709); ls(2713); ls(3289);
+ls(1493); ls(3829); ls(2765); ls(3285); ls(1877); ls(1701); ls(1653); ls(1845); ls(1843); ls(2905); ls(1395); ls(875); ls(871); ls(2411); ls(1373); ls(1367);
+ls(2395); ls(731); ls(1627); ls(855); ls(2485); ls(2869); ls(2413); ls(1715); ls(2483); ls(935); ls(3257); ls(1967); ls(3385); ls(919); ls(2675); ls(2507);
+ls(1255); ls(1239); ls(3301); ls(925); ls(1849); ls(2515); ls(743); ls(2999); ls(4029); ls(3837); ls(3413); ls(1257); ls(1645); ls(1769); ls(1773); ls(3773);
+ls(1789); ls(667); ls(1259); ls(2281); ls(1261); ls(3305); ls(1721); ls(3765); ls(2997); ls(917); ls(949); ls(1693); ls(1725); ls(2989); ls(3501); ls(2539);
+ls(1515); ls(3767); ls(1365); ls(2457); ls(819); ls(2925); ls(1755); ls(4095); ls(1235); ls(845); ls(715); ls(3549); ls(2535); ls(3705); ls(2275); ls(3185);
+ls(3445); ls(1495); ls(3055); ls(3965); ls(3003); ls(455); ls(3575); ls(2795); ls(2541); ls(2509); ls(853); ls(2389); ls(3499); ls(2701); ls(1723); ls(621);
+ls(1787); ls(3543);
+// base shapes
+lh(145); lh(137); lh(73); lh(273); lh(133); lh(161); lh(129); lh(81); lh(265); lh(131); lh(193); lh(657); lh(649); lh(673); lh(593); lh(785);
+lh(661); lh(653); lh(2193); lh(1169); lh(1161); lh(2185); lh(585); lh(1097); lh(2321); lh(1297); lh(2129); lh(2121); lh(1185); lh(1157); lh(2209); lh(2181);
+lh(2197); lh(1173); lh(1165); lh(2189); lh(1171); lh(1177); lh(1101); lh(589); lh(587); lh(1301); lh(2325); lh(1189); lh(149); lh(141); lh(2229); lh(1205);
+lh(1197); lh(2221); lh(1237); lh(2261); lh(177); lh(209); lh(1133); lh(2709); lh(1685); lh(1677); lh(1683); lh(1749); lh(1105); lh(1107); lh(1299); lh(1113);
+lh(1305); lh(1371); lh(1619); lh(1689); lh(165); lh(147); lh(153); lh(1681); lh(1297); lh(1365); lh(7); lh(15); lh(1057); lh(1065); lh(1193); lh(1621);
+lh(65); lh(21); lh(85); lh(67); lh(2457); lh(393); lh(1177); lh(667); lh(275); lh(341); lh(1097); lh(1235); lh(1105); lh(1041); lh(1105);
+GSS[0]=0; GSS[1]=21; GSS[2]=59; GSS[3]=79; GSS[4]=133; GSS[5]=187; GSS[6]=239; GSS[7]=283; GSS[8]=315; GSS[9]=347; GSS[10]=370; GSS[11]=392;
+GSC[0]=0; GSC[1]=11; GSC[2]=18; GSC[3]=32; GSC[4]=46; GSC[5]=55; GSC[6]=60; GSC[7]=68; GSC[8]=72; GSC[9]=84; GSC[10]=93;
+
+outN = 0;
+
+@slider
+scRoot = slider(1);
+
+// ----- scale -----
+g = slider(2);
+g < NSG ? (
+  mask = LS[GSS[g] + slider(SB + g)];
+) : (
+  mask = 0; b = 0;
+  while (b < 12) ( mask += (slider(CSB + b) >= 0.5) * pow(2, b); b += 1; );
+);
+scN = 0; b = 0;
+while (b < 12) (
+  (mask & pow(2, b)) != 0 ? ( SC[scN] = b; SCP[scN] = mod12(scRoot + b); scN += 1; );
+  b += 1;
+);
+scN == 0 ? ( SC[0] = 0; SCP[0] = scRoot; scN = 1; );
+
+// ----- base shape -----
+g2 = slider(CGRP);
+g2 < NCG ? (
+  smask = LH[GSC[g2] + slider(HB + g2)];
+) : (
+  smask = 0; b = 0;
+  while (b < 12) ( smask += (slider(CHB + b) >= 0.5) * pow(2, b); b += 1; );
+);
+shN = 0; b = 0;
+while (b < 12) (
+  (smask & pow(2, b)) != 0 ? ( SHP[shN] = mod12(scRoot + b); shN += 1; );
+  b += 1;
+);
+shN == 0 ? ( SHP[0] = scRoot; shN = 1; );
+
+// ----- options -----
+DRF[1] = slider(S_DR2) >= 0.5;
+DRF[2] = slider(S_DR3) >= 0.5;
+DRF[3] = slider(S_DR4) >= 0.5;
+TWHOLE = slider(S_TW) >= 0.5;
+DBLON = slider(S_DBL) >= 0.5;
+HVEL = slider(S_HV);
+rlo = slider(S_LO);
+rhi = slider(S_HI);
+
+// ----- show only the pickers that matter -----
+i = 0;
+while (i < NSG) ( slider_show(pow(2, SB + i - 1), g == i); i += 1; );
+i = 0;
+while (i < 12) ( slider_show(pow(2, CSB + i - 1), g == NSG); i += 1; );
+i = 0;
+while (i < NCG) ( slider_show(pow(2, HB + i - 1), g2 == i); i += 1; );
+i = 0;
+while (i < 12) ( slider_show(pow(2, CHB + i - 1), g2 == NCG); i += 1; );
+
+// ----- info text -----
+strcpy(#scalestr, "Scale:");
+i = 0;
+while (i < scN) ( strcat(#scalestr, " "); pc_name(#scalestr, SCP[i]); i += 1; );
+strcpy(#shapestr, "Base shape:");
+i = 0;
+while (i < shN) ( strcat(#shapestr, " "); pc_name(#shapestr, SHP[i]); i += 1; );
+
+@block
+while (midirecv(offs, m1, m2, m3)) (
+  st = m1 & 0xF0;
+  ch = m1 & 0x0F;
+  st == 0x90 && m3 > 0 ? (
+    (m2 >= rlo && m2 <= rhi) ? ( chord_on(ch, m2, m3, offs); ) : ( midisend(offs, m1, m2, m3); );
+  ) : (st == 0x80 || (st == 0x90 && m3 == 0)) ? (
+    CNT[ch * 128 + m2] > 0 ? ( chord_off(ch, m2, m3, offs); ) : ( midisend(offs, m1, m2, m3); );
+  ) : (
+    midisend(offs, m1, m2, m3);
+    // all sound off / all notes off: forget what is held on this channel
+    (st == 0xB0 && (m2 == 120 || m2 == 123)) ? (
+      memset(CNT + ch * 128, 0, 128);
+      memset(REFC + ch * 128, 0, 128);
+    );
+  );
+);
+
+@gfx 520 64
+gfx_r = 0.85; gfx_g = 0.85; gfx_b = 0.85; gfx_a = 1;
+gfx_x = 10; gfx_y = 6;  gfx_drawstr(#scalestr);
+gfx_x = 10; gfx_y = 24; gfx_drawstr(#shapestr);
+gfx_x = 10; gfx_y = 42; gfx_drawstr(#chordstr);
