@@ -1,0 +1,418 @@
+desc: Strip These
+author: Boodaman
+version: 1.0
+screenshot: StripThese https://www.boodaman.com/download/Boodaman_StripThese.png
+about:
+  A stereo channel strip for Reaper, designed to add warmth, presence and character to electronic sources, synths and full mixes.
+  The plugin runs four stages in the order of a classic analog channel strip:
+
+  Input Trim: input gain from -12 to +12 dB.
+  EQ: switchable high-pass filter (20 to 300 Hz), low shelf, low-mid, high-mid and high shelf (air), each with adjustable gain and frequency.
+  Saturation: analog-style drive (0 to 100%) with an asymmetry control for warmer, rounder harmonics.
+  Compressor: threshold, ratio, attack, release and makeup gain, with an FET colour control (0 to 100%) and a gain reduction meter.
+
+  Output section: a Mix knob (dry/wet) for parallel processing, letting you blend the processed signal with the untouched original to keep the punch and transients of the source while adding the colour of the chain. Plus an output level from -12 to +12 dB.
+  Each module can be enabled or bypassed independently with a checkbox, so you can quickly compare the processed and original signals.
+
+desc:Boodaman StripThese (Channel Strip v0.10)
+tags:channel strip eq compressor saturation
+
+slider1:0<-12,12,0.1>-Input Trim (dB)
+slider2:20<20,300,1>-HPF Freq (Hz)
+slider3:0<-10,10,0.1>-Low Shelf (dB)
+slider4:100<30,300,1>-Low Shelf Freq (Hz)
+slider5:0<-10,10,0.1>-Low-Mid (dB)
+slider6:300<100,800,1>-Low-Mid Freq (Hz)
+slider7:0<-10,10,0.1>-High-Mid (dB)
+slider8:3000<1000,8000,10>-High-Mid Freq (Hz)
+slider9:0<-10,10,0.1>-Air Shelf (dB)
+slider10:10000<3000,16000,100>-Air Freq (Hz)
+slider11:0<0,100,0.1>-Sat Drive (%)
+slider12:0.3<0,1,0.01>-Sat Asymmetry
+slider13:-12<-40,0,0.1>-Comp Threshold (dB)
+slider14:4<1,20,0.1>-Comp Ratio
+slider15:0.5<0.02,100,0.01>-Comp Attack (ms)
+slider16:150<20,1000,1>-Comp Release (ms)
+slider17:0<0,18,0.1>-Makeup (dB)
+slider18:100<0,100,1>-Dry/Wet (%)
+slider19:0<-12,12,0.1>-Output (dB)
+slider20:1<0,1,1{Off,On}>-EQ On
+slider21:1<0,1,1{Off,On}>-Saturation On
+slider22:1<0,1,1{Off,On}>-Compressor On
+slider23:0<0,100,0.1>-FET Colour (%)
+slider24:1<0,1,1{Off,On}>-HPF On
+
+@init
+function bq(x) (
+  y = this.b0*x + this.z1;
+  this.z1 = this.b1*x - this.a1*y + this.z2;
+  this.z2 = this.b2*x - this.a2*y;
+  y;
+);
+
+function set_hpf(freq) (
+  w0 = 2*$pi*freq/srate;
+  cw = cos(w0);
+  alpha = sin(w0)/(2*0.7071);
+  a0 = 1 + alpha;
+  this.b0 = (1+cw)*0.5/a0;
+  this.b1 = -(1+cw)/a0;
+  this.b2 = (1+cw)*0.5/a0;
+  this.a1 = -2*cw/a0;
+  this.a2 = (1-alpha)/a0;
+);
+
+function set_lshelf(freq, gain_db) (
+  A = 10^(gain_db/40);
+  w0 = 2*$pi*freq/srate;
+  cw = cos(w0);
+  alpha = sin(w0)/2*sqrt(2);
+  sA = 2*sqrt(A)*alpha;
+  a0 = (A+1) + (A-1)*cw + sA;
+  this.b0 = A*((A+1) - (A-1)*cw + sA)/a0;
+  this.b1 = 2*A*((A-1) - (A+1)*cw)/a0;
+  this.b2 = A*((A+1) - (A-1)*cw - sA)/a0;
+  this.a1 = -2*((A-1) + (A+1)*cw)/a0;
+  this.a2 = ((A+1) + (A-1)*cw - sA)/a0;
+);
+
+function set_hshelf(freq, gain_db) (
+  A = 10^(gain_db/40);
+  w0 = 2*$pi*freq/srate;
+  cw = cos(w0);
+  alpha = sin(w0)/2*sqrt(2);
+  sA = 2*sqrt(A)*alpha;
+  a0 = (A+1) - (A-1)*cw + sA;
+  this.b0 = A*((A+1) + (A-1)*cw + sA)/a0;
+  this.b1 = -2*A*((A-1) + (A+1)*cw)/a0;
+  this.b2 = A*((A+1) + (A-1)*cw - sA)/a0;
+  this.a1 = 2*((A-1) - (A+1)*cw)/a0;
+  this.a2 = ((A+1) - (A-1)*cw - sA)/a0;
+);
+
+function set_peak(freq, gain_db, q) (
+  A = 10^(gain_db/40);
+  w0 = 2*$pi*freq/srate;
+  cw = cos(w0);
+  alpha = sin(w0)/(2*q);
+  a0 = 1 + alpha/A;
+  this.b0 = (1 + alpha*A)/a0;
+  this.b1 = -2*cw/a0;
+  this.b2 = (1 - alpha*A)/a0;
+  this.a1 = -2*cw/a0;
+  this.a2 = (1 - alpha/A)/a0;
+);
+
+function tanh_(x) (
+  x > 3 ? 1 : x < -3 ? -1 : (
+    x2 = x*x;
+    x*(27 + x2)/(27 + 9*x2);
+  );
+);
+
+function sat_core(x) (
+  d = this.drive;
+  g = 1 + d*6;
+  bias = this.asym*d*0.25;
+  y = tanh_(x*g + bias) - tanh_(bias);
+  y/(1 + d*1.2);
+);
+
+function sat(x) (
+  this.drive < 0.001 ? x : (
+    mid = (x + this.prev)*0.5;
+    y0 = this.sat_core(mid);
+    y1 = this.sat_core(x);
+    this.prev = x;
+    out = (y0 + y1)*0.5;
+    res = out - this.dcx + 0.995*this.dcy;
+    this.dcx = out;
+    this.dcy = res;
+    res;
+  );
+);
+
+function comp_detect(lvl) (
+  coef = lvl > this.env ? this.att : this.rel;
+  this.env = this.env*coef + lvl*(1 - coef);
+  env_db = 20*log10(max(this.env, 0.000001));
+  over = env_db - this.thr;
+  knee = 6;
+  over <= -knee/2 ? gr = 0 :
+  over >= knee/2 ? gr = over : (
+    gr = (over + knee/2)*(over + knee/2)/(2*knee);
+  );
+  eff_ratio = 1 + (this.ratio - 1)*(1 - exp(-gr/8));
+  this.gr = gr*(1 - 1/eff_ratio);
+  this.gr;
+);
+
+function fet_color(x, gr_db, amount) (
+  amt = amount*min(gr_db/12, 1);
+  amt < 0.0001 ? x : (
+    drv = 1 + amt*3;
+    y = tanh_(x*drv + amt*0.08)*(1/drv);
+    y - amt*0.08*0.2;
+  );
+);
+
+function rrect(x, y, w, h, r) (
+  gfx_rect(x + r, y, w - 2*r, h);
+  gfx_rect(x, y + r, w, h - 2*r);
+  gfx_circle(x + r,     y + r,     r, 1, 0);
+  gfx_circle(x + w - r - 1, y + r,     r, 1, 0);
+  gfx_circle(x + r,     y + h - r - 1, r, 1, 0);
+  gfx_circle(x + w - r - 1, y + h - r - 1, r, 1, 0);
+);
+
+function update_params() (
+  in_gain = 10^(slider1/20);
+  out_gain = 10^(slider19/20);
+  wet = slider18/100;
+
+  eq_on = slider20;
+  sat_on = slider21;
+  cmp_on = slider22;
+  hpf_on = slider24;
+
+  hpfL.set_hpf(slider2); hpfR.set_hpf(slider2);
+  lsL.set_lshelf(slider4, slider3); lsR.set_lshelf(slider4, slider3);
+  lmL.set_peak(slider6, slider5, 0.8); lmR.set_peak(slider6, slider5, 0.8);
+  hmL.set_peak(slider8, slider7, 0.8); hmR.set_peak(slider8, slider7, 0.8);
+  aiL.set_hshelf(slider10, slider9); aiR.set_hshelf(slider10, slider9);
+
+  satL.drive = slider11/100; satR.drive = slider11/100;
+  satL.asym = slider12; satR.asym = slider12;
+
+  cmp.thr = slider13;
+  cmp.ratio = slider14;
+  cmp.att = exp(-1/(slider15*0.001*srate));
+  cmp.rel = exp(-1/(slider16*0.001*srate));
+  mk_gain = 10^(slider17/20);
+  fet_amt = slider23/100;
+);
+
+// ---------- Potard ----------
+function knob(cx, cy, r, sl, mn, mx, def, label, unit, fmt) (
+  v = slider(sl);
+  norm = (v - mn)/(mx - mn);
+
+  ang_min = -2.35619;
+  ang_max =  2.35619;
+  ang_v = ang_min + norm*(ang_max - ang_min);
+
+  gfx_set(0.07,0.07,0.07);
+  gfx_circle(cx, cy, r, 1, 0);
+
+  gfx_set(0.18,0.18,0.18);
+  gfx_arc(cx, cy, r - 5, ang_min, ang_max, 0);
+  gfx_arc(cx, cy, r - 6, ang_min, ang_max, 0);
+
+  gfx_set(0.75,0.75,0.75);
+  gfx_arc(cx, cy, r - 5, ang_min, ang_v, 0);
+  gfx_arc(cx, cy, r - 6, ang_min, ang_v, 0);
+
+  gfx_set(0.95,0.95,0.95);
+  gfx_line(cx + sin(ang_v)*(r*0.25), cy - cos(ang_v)*(r*0.25),
+           cx + sin(ang_v)*(r*0.55), cy - cos(ang_v)*(r*0.55), 0);
+
+  // Libellé centré sous le potard
+  gfx_set(1,1,1);
+  gfx_setfont(1, "Arial", 11);
+  gfx_measurestr(label, lw, lh);
+  gfx_x = cx - lw/2; gfx_y = cy + r + 6;
+  gfx_drawstr(label);
+
+  // Valeur centrée sous le libellé
+  gfx_setfont(1, "Arial", 11);
+  fmt == 2 ? sprintf(vtxt, "%.2f%s", v, unit) : sprintf(vtxt, "%.1f%s", v, unit);
+  gfx_measurestr(vtxt, vw, vh);
+  gfx_x = cx - vw/2; gfx_y = cy + r + 19;
+  gfx_drawstr(vtxt);
+
+  hover = (mouse_x - cx)*(mouse_x - cx) + (mouse_y - cy)*(mouse_y - cy) < r*r;
+
+  (mouse_cap & 1) && !last_cap && hover && dragging == 0 ? (
+    (time_precise() - last_click_t < 0.3 && last_click_sl == sl) ? (
+      slider(sl) = def;
+      slider_automate(sl);
+      update_params();
+      dragging = 0;
+    ) : (
+      dragging = sl;
+      drag_y = mouse_y;
+      drag_v = v;
+    );
+    last_click_t = time_precise();
+    last_click_sl = sl;
+  );
+
+  dragging == sl && (mouse_cap & 1) ? (
+    fine = (mouse_cap & 8) ? 0.1 : 1;
+    nv = drag_v + (drag_y - mouse_y)*(mx - mn)/150*fine;
+    nv = min(max(nv, mn), mx);
+    slider(sl) = nv;
+    slider_automate(sl);
+    update_params();
+  );
+);
+
+// ---------- Bouton bypass (case + libellé) ----------
+function bypass_btn(x, y, sl, cr, cg, cb) (
+  on = slider(sl);
+  s = 10;
+
+  // Case
+  gfx_set(0.08,0.08,0.08);
+  gfx_rect(x, y, s, s);
+  on ? gfx_set(cr, cg, cb) : gfx_set(0.4,0.4,0.4);
+  gfx_rect(x, y, s, 1);
+  gfx_rect(x, y + s - 1, s, 1);
+  gfx_rect(x, y, 1, s);
+  gfx_rect(x + s - 1, y, 1, s);
+
+  // Coche si actif
+  on ? (
+    gfx_set(cr, cg, cb);
+    gfx_line(x + 2, y + 5, x + 4, y + 7, 0);
+    gfx_line(x + 4, y + 7, x + 8, y + 2, 0);
+  );
+
+  // Libellé
+  gfx_set(0.8,0.8,0.8);
+  gfx_setfont(1, "Arial", 10);
+  gfx_x = x + s + 4; gfx_y = y - 1;
+  gfx_drawstr("bypass");
+
+  // Zone cliquable : case + libellé uniquement
+  hover = mouse_x >= x && mouse_x <= x + s + 45 && mouse_y >= y - 2 && mouse_y <= y + s + 2;
+  (mouse_cap & 1) && !last_cap && hover && dragging == 0 ? (
+    slider(sl) = 1 - on;
+    slider_automate(sl);
+    update_params();
+    dragging = -1;
+  );
+);
+
+dragging = 0; drag_y = 0; drag_v = 0; last_cap = 0;
+last_click_t = 0; last_click_sl = 0;
+gr_disp = 0; gr_peak = 0; gr_peak_t = 0;
+
+update_params();
+
+@slider
+update_params();
+
+@sample
+dl = spl0; dr = spl1;
+l = spl0*in_gain; r = spl1*in_gain;
+
+el = hpf_on ? hpfL.bq(l) : l;
+er = hpf_on ? hpfR.bq(r) : r;
+el = lsL.bq(el); er = lsR.bq(er);
+el = lmL.bq(el); er = lmR.bq(er);
+el = hmL.bq(el); er = hmR.bq(er);
+el = aiL.bq(el); er = aiR.bq(er);
+eq_on ? ( l = el; r = er; );
+
+sl_ = satL.sat(l); sr_ = satR.sat(r);
+sat_on ? ( l = sl_; r = sr_; );
+
+lvl = max(abs(l), abs(r));
+gr = cmp.comp_detect(lvl);
+cmp_on ? (
+  g = 10^((-gr)/20)*mk_gain;
+  l *= g; r *= g;
+  l = fet_color(l, gr, fet_amt);
+  r = fet_color(r, gr, fet_amt);
+) : (
+  cmp.gr = 0;
+);
+
+spl0 = (dl*(1 - wet) + l*wet)*out_gain;
+spl1 = (dr*(1 - wet) + r*wet)*out_gain;
+
+@gfx 620 290
+gfx_clear = 0x141414;
+
+
+TITLE_Y = 16;
+
+// ---- INPUT (10..130) ----
+gfx_set(0.15,0.2,0.28); rrect(10,10,120,130,8);
+gfx_set(0.4,0.7,1); gfx_setfont(1, "Arial", 14);
+gfx_x=20; gfx_y=TITLE_Y; gfx_drawstr("INPUT");
+knob(70, 75, 24, 1, -12, 12, 0, "Trim", " dB", 1);
+
+// ---- EQ (140..470) ----
+gfx_set(0.15,0.25,0.15); rrect(140,10,330,130,8);
+gfx_set(0.4,1,0.5); gfx_setfont(1, "Arial", 14);
+gfx_x=150; gfx_y=TITLE_Y; gfx_drawstr("EQ");
+bypass_btn(172, 17, 20, 0.4, 1, 0.5);
+bypass_btn(160, 40, 24, 0.4, 1, 0.5);   // HPF on/off
+knob(175, 75, 20, 2, 20, 300, 20, "HPF", " Hz", 1);
+knob(230, 75, 20, 3, -10, 10, 0, "Low", " dB", 1);
+knob(285, 75, 20, 5, -10, 10, 0, "LoMid", " dB", 1);
+knob(340, 75, 20, 7, -10, 10, 0, "HiMid", " dB", 1);
+knob(395, 75, 20, 9, -10, 10, 0, "Air", " dB", 1);
+
+// ---- SAT (480..610) ----
+gfx_set(0.3,0.2,0.1); rrect(480,10,130,130,8);
+gfx_set(1,0.7,0.3); gfx_setfont(1, "Arial", 14);
+gfx_x=490; gfx_y=TITLE_Y; gfx_drawstr("SAT");
+bypass_btn(525, 17, 21, 1, 0.7, 0.3);
+knob(525, 85, 22, 11, 0, 100, 0, "Drive", " %", 1);
+knob(580, 85, 22, 12, 0, 1, 0.3, "Asym", "", 2);
+
+// ---- COMP (10..440, y 150..280) ----
+COMP_Y = 150;
+gfx_set(0.25,0.15,0.3); rrect(10,COMP_Y,430,130,8);
+gfx_set(0.8,0.5,1); gfx_setfont(1, "Arial", 14);
+gfx_x=20; gfx_y=COMP_Y + 6; gfx_drawstr("COMP");
+bypass_btn(65, 157, 22, 0.8, 0.5, 1);
+
+// Barre GR
+gr_now = cmp_on ? cmp.gr : 0;
+gr_now > gr_disp ? gr_disp = gr_now : gr_disp = gr_disp*0.9 + gr_now*0.1;
+gr_now > gr_peak ? ( gr_peak = gr_now; gr_peak_t = time_precise(); );
+time_precise() - gr_peak_t > 1 ? gr_peak = max(gr_peak - 0.2, gr_disp);
+
+bar_x = 140; bar_y = COMP_Y + 20; bar_w = 130; bar_h = 14; bar_max = 20;
+gfx_set(0.1,0.05,0.12);
+rrect(bar_x, bar_y, bar_w, bar_h, 3);
+
+fill = min(gr_disp/bar_max, 1)*bar_w;
+fill > 6 ? (
+  gr_disp > 10 ? gfx_set(1,0.4,0.3) : gfx_set(0.8,0.5,1);
+  rrect(bar_x + bar_w - fill, bar_y, fill, bar_h, 3);
+);
+
+pk = min(gr_peak/bar_max, 1)*bar_w;
+gr_peak > 0.1 ? (
+  gfx_set(1,1,1);
+  gfx_rect(bar_x + bar_w - pk, bar_y, 2, bar_h);
+);
+
+gfx_set(1,1,1); gfx_setfont(1, "Arial", 11);
+gfx_x = bar_x; gfx_y = bar_y - 14; gfx_drawstr("GR");
+sprintf(grtxt, "%.1f dB", -gr_disp);
+gfx_measurestr(grtxt, gw, gh);
+gfx_x = bar_x + bar_w - gw; gfx_y = bar_y - 14; gfx_drawstr(grtxt);
+
+// Rangée de potards COMP
+knob(55,  225, 20, 13, -40, 0, -12, "Thresh", " dB", 1);
+knob(125, 225, 20, 14, 1, 20, 4, "Ratio", "", 1);
+knob(195, 225, 20, 15, 0.02, 100, 0.5, "Attack", " ms", 2);
+knob(265, 225, 20, 16, 20, 1000, 150, "Release", " ms", 1);
+knob(335, 225, 20, 17, 0, 18, 0, "Makeup", " dB", 1);
+knob(405, 225, 20, 23, 0, 100, 0, "FET/C", " %", 1);
+
+// ---- OUTPUT (450..610, y 150..280) ----
+gfx_set(0.3,0.15,0.15); rrect(450,150,160,130,8);
+gfx_set(1,0.4,0.4); gfx_setfont(1, "Arial", 14);
+gfx_x=460; gfx_y=156; gfx_drawstr("OUTPUT");
+knob(500, 225, 20, 18, 0, 100, 100, "Dry/Wet", " %", 1);
+knob(560, 225, 20, 19, -12, 12, 0, "Level", " dB", 1);
+
+!(mouse_cap & 1) ? dragging = 0;
+last_cap = mouse_cap & 1;
