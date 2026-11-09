@@ -1,416 +1,811 @@
 desc: MIDI Chord Strummer
 author: ALBtheALBatross
-version: 2.0-1
-changelog: Add missing image to the package
+version: 3
+changelog: New GUI now displays key presses. New strum order modes.
 provides: albthealbatross_MIDI Chord Strummer/strummer_diagram.png
 about:
-  Strum any chord UP/DOWN in a guitar-ish way.
+  Basic instructions:
+  - Simply layout chords in piano roll how you normally would, then layer a strumming pattern over it with the strumming keys.
 
   Tips:
-  - Use the "Ring Current Notes" key to ring notes.  Ringing notes aren't strummed.
-  This is great on guitar allowing bass notes to ring out while you strum higher notes at the same time.
+  - Use the "Ring Current Notes" key to ring notes. Ringing notes aren't strummed. This is great on guitar allowing bass notes to ring out while you strum higher notes at the same time.			
+  - Change the Keyswitches to match your instrument. Use instrument Keyswitches via the Keyswitch keys. (see diagram)
+  - Multitrack up to 4 MIDI channels at once with random timing to create lush stereo strums. 
+  - Use large speed curves for dramatic strums. Great for harps.
+  - Use "Skip End Notes" to create more realistic guitar strums by not playing the highest/lowest notes in the chord. (only kicks in when there are 3 or more notes)
 
-  - Change the Keyswitches to match your instrument
-Use instrument Keyswitches via the Keyswitch keys (see diagram)
-
-  - Use Bypass Mode "Stopped DAW" for easier chord editing, then strum it live for a natural strum sound
-
-  - Use multiple channels with random timing to create lush stereo strums
-
-  - Use large speed curves for dramatic strums. Great for harps
-
-  - Use "Skip End Notes" to create more realistic guitar strums by not playing the highest/lowest notes (only kicks in when there are 3 or more notes)
-
-slider1:40<1,200,1>Strum Down Speed (ms)
-slider2:-5<-40,40,1>Strum Down Speed Curve
-slider3:-6<-20,20,1>Strum Down Velocity Curve
-slider4:0<0,4,1>Skip End Notes Down
-
-slider5:40<1,200,1>Strum Up Speed (ms)
-slider6:4<-40,40,1>Strum Up Speed Curve
-slider7:-10<-20,20,1>Strum Up Velocity Curve
-slider8:1<0,4,1>Skip End Notes Up
-
-slider9:0<0,1,1{Key Activated,DAW Stopped}>Bypass Mode
-
-
-slider10:0<0,127,1>Keyswitch 1 Note
-slider11:0<0,127,1>Keyswitch 2 Note
-slider12:0<0,127,1>Keyswitch 3 Note
-slider13:0<-12,12,1>Key Map Octave
-
-slider14:0<0,3,1{1 Channel,2 Channels,3 Channels,4 Channels}>MIDI Channels
-slider15:10<0,200,5>Channel Timing Randomizer (ms)
+slider1:60<1,200,1>Long Strum Speed (ms)
+slider2:20<1,200,1>Medium Strum Speed (ms)
+slider3:10<1,200,1>Short Strum Speed (ms)
+slider4:80<1,200,1>Custom Strum 1 Speed (ms)
+slider5:80<1,200,1>Custom Strum 2 Speed (ms)
+slider6:10<-40,40,1>Custom Strum 1 Speed Curve
+slider7:-10<-40,40,1>Custom Strum 2 Speed Curve
+slider8:-6<-20,20,1>Strum D Velocity Curve
+slider9:-10<-20,20,1>Strum U Velocity Curve
+slider10:0<0,4,1>Skip End Notes D
+slider11:2<0,4,1>Skip End Notes U
+slider12:6<0,20,1>Muted Notes Length (ms)
+slider13:0<0,3,1{Lowest to Highest,As Played,MIDI Channel,MIDI Channel I/O}>Strum Order
+slider14:1<0,1,1{Off,On}>Bypass Played Notes
+slider15:1<0,1,1{Off,On}>Demo Chord
+slider16:0<0,127,1>Keyswitch 1 Note
+slider17:0<0,127,1>Keyswitch 2 Note
+slider18:0<0,127,1>Keyswitch 3 Note
+slider19:0<0,127,1>Keyswitch 4 Note
+slider20:0<-12,12,1>Key Map Octave
+slider21:0<0,3,1{Disabled,2 Channels,3 Channels,4 Channels}>Multitracking MIDI Channels
+slider22:15<0,200,5>Multitracking Timing Randomizer (ms)
 
 filename:0,albthealbatross_MIDI Chord Strummer/strummer_diagram.png
 
 @init
+	// memory layout allocation
+	storedNotes = 0;
+	channel_states = 128;
+	chord_buffer = 13000;     // 2048 slots: note number of each chord entry
+	chord_chan = 15100;       // 2048 slots: input channel of each chord entry
+	muted_timers = 2048;      // 2048 slots, indexed by out_channel*128+note
+	active_mute_list = 18000; // 2048 slots per multitrack channel
+	active_mute_counts = 5000;
+	direct_note_played = 6000;
+	key_pressed = 7000;
+	key_rects = 7100;
+	key_rects2 = 7200;
+	note_order = 7300;
+	note_order_count = 0;
+	demo_notes = 7700;     // open-string guitar demo chord (6 notes)
+	note_channel = 7500;   // incoming MIDI channel (0-15) of each held note (by pitch, used by MIDI Channel mode)
+	io_stored = 8000;      // held notes per input channel, indexed channel*128+note (0=off, 1=held, 2=ringing)
+	direct_io = 10100;     // directly played notes per channel, indexed channel*128+note
 
-	// Memory layout allocation. finally works
-	storedNotes = 0;           // 128 bytes for note storage
-	channel_states = 128;      // Channel state data starts at 128
-	chord_buffer = 1024;       // Chord buffer starts at 1024
+	max_channels = 4;
 
+	// open guitar strings demo E3 A3 D4 G4 B4 E5 default
+	demo_count = 6;
+	demo_notes[0] = 40;
+	demo_notes[1] = 45;
+	demo_notes[2] = 50;
+	demo_notes[3] = 55;
+	demo_notes[4] = 59;
+	demo_notes[5] = 64;
+	chord_is_demo = 0;
+
+	// note order modes
+	ORDER_PITCH = 0;
+	ORDER_PLAYED = 1;
+	ORDER_CHANNEL = 2;
+	ORDER_CHANNEL_IO = 3;
 
 	memset(storedNotes, 0, 128);
+	memset(channel_states, 0, max_channels * 20);
+	memset(chord_buffer, 0, 2048);
+	memset(chord_chan, 0, 2048);
+	memset(muted_timers, 0, 2048);
+	memset(active_mute_counts, 0, max_channels);
+	memset(direct_note_played, 0, 128);
+	memset(key_pressed, 0, 23);
+	memset(key_rects, 0, 92);
+	memset(key_rects2, 0, 92);
+	memset(note_channel, 0, 128);
+	memset(io_stored, 0, 2048);
+	memset(direct_io, 0, 2048);
 
-	memset(channel_states, 0, 40);
+	// diagram key rects
+	function set_rect(slot, x1, y1, x2, y2) local(rb) (
+		rb = key_rects + slot * 4;
+		rb[0] = x1; rb[1] = y1; rb[2] = x2; rb[3] = y2;
+	);
+	function set_rect2(slot, x1, y1, x2, y2) local(rb) (
+		rb = key_rects2 + slot * 4;
+		rb[0] = x1; rb[1] = y1; rb[2] = x2; rb[3] = y2;
+	);
 
-	memset(chord_buffer, 0, 128);
+	// black keys
+	set_rect(1,   72, 82,  85,172);  // bypass_off
+	set_rect(3,   97, 82, 110,172);  // bypass_on
+	set_rect(5,  122, 82, 135,172);  // ring_current_notes
+	set_rect(8,  161, 82, 174,172);  // medium_mute_down
+	set_rect(10, 187, 82, 200,172);  // medium_mute_up
+	set_rect(13, 226, 82, 239,172);  // short_mute_down
+	set_rect(15, 251, 82, 264,172);  // short_mute_up
+	set_rect(17, 276, 82, 289,172);  // note_off (instant mute)
+	set_rect(20, 315, 82, 328,172);  // keyswitch_2
+	set_rect(22, 341, 82, 354,172);  // keyswitch_4
+	// white keys
+	set_rect(0,   59,172,  82,217);  set_rect2(0,   59, 82,  72,172);  // custom1_down
+	set_rect(2,   82,172, 104,217);  set_rect2(2,   85, 82,  97,172);  // custom1_up
+	set_rect(4,  104,172, 126,217);  set_rect2(4,  110, 82, 122,172);  // custom2_down
+	set_rect(6,  126,172, 148,217);  set_rect2(6,  135, 82, 148,172);  // custom2_up
+	set_rect(7,  148,172, 170,217);  set_rect2(7,  148, 82, 161,172);  // long_down
+	set_rect(9,  170,172, 192,217);  set_rect2(9,  174, 82, 187,172);  // long_up
+	set_rect(11, 192,172, 214,217);  set_rect2(11, 200, 82, 214,172);  // medium_down
+	set_rect(12, 214,172, 236,217);  set_rect2(12, 214, 82, 226,172);  // medium_up
+	set_rect(14, 236,172, 258,217);  set_rect2(14, 239, 82, 251,172);  // short_down
+	set_rect(16, 258,172, 280,217);  set_rect2(16, 264, 82, 276,172);  // short_up
+	set_rect(18, 280,172, 302,217);  set_rect2(18, 289, 82, 302,172);  // stab (instant chord)
+	set_rect(19, 302,172, 324,217);  set_rect2(19, 302, 82, 315,172);  // keyswitch_1
+	set_rect(21, 324,172, 346,217);  set_rect2(21, 328, 82, 341,172);  // keyswitch_3
+
+	// map midi note to its diagram slot
+	function key_slot(note) local(s) (
+		note == trigger_custom1_down ? s = 0 :
+		note == bypass_off_key ? s = 1 :
+		note == trigger_custom1_up ? s = 2 :
+		note == bypass_on_key ? s = 3 :
+		note == trigger_custom2_down ? s = 4 :
+		note == ring_current_notes_key ? s = 5 :
+		note == trigger_custom2_up ? s = 6 :
+		note == trigger_long_down ? s = 7 :
+		note == trigger_medium_mute_down ? s = 8 :
+		note == trigger_long_up ? s = 9 :
+		note == trigger_medium_mute_up ? s = 10 :
+		note == trigger_medium_down ? s = 11 :
+		note == trigger_medium_up ? s = 12 :
+		note == trigger_short_mute_down ? s = 13 :
+		note == trigger_short_down ? s = 14 :
+		note == trigger_short_mute_up ? s = 15 :
+		note == trigger_short_up ? s = 16 :
+		note == trigger_note_off ? s = 17 :
+		note == trigger_stab ? s = 18 :
+		note == keyswitch_1_key ? s = 19 :
+		note == keyswitch_2_key ? s = 20 :
+		note == keyswitch_3_key ? s = 21 :
+		note == keyswitch_4_key ? s = 22 :
+		s = -1;
+		s;
+	);
+
+	// remove note from the insertion-order list while preserving order
+	function remove_note_from_order(note) local(i, j) (
+		i = 0;
+		while (i < note_order_count) (
+			(note_order[i] == note) ? (
+				j = i;
+				while (j < note_order_count - 1) (
+					note_order[j] = note_order[j + 1];
+					j += 1;
+				);
+				note_order_count -= 1;
+			) : (
+				i += 1;
+			);
+		);
+	);
 
 
-	// Constants for channel states
-	CH_STRIDE = 11;
+	// MIDI trigger and chord helpers
+
+
+	function is_strum_trigger(note) (
+		note == trigger_custom1_down || note == trigger_custom1_up ||
+		note == trigger_custom2_down || note == trigger_custom2_up ||
+		note == trigger_medium_down || note == trigger_medium_up ||
+		note == trigger_short_down || note == trigger_short_up ||
+		note == trigger_long_down || note == trigger_long_up ||
+		note == trigger_stab ||
+		note == trigger_medium_mute_down || note == trigger_medium_mute_up ||
+		note == trigger_short_mute_down || note == trigger_short_mute_up;
+	);
+
+	function is_strum_up(note) (
+		note == trigger_custom1_up || note == trigger_custom2_up ||
+		note == trigger_medium_up || note == trigger_long_up ||
+		note == trigger_short_up || note == trigger_medium_mute_up ||
+		note == trigger_short_mute_up;
+	);
+
+	function get_strum_type(note) (
+		(note == trigger_short_down || note == trigger_short_up ||
+		 note == trigger_short_mute_down || note == trigger_short_mute_up) ? 3 :
+		(note == trigger_medium_down || note == trigger_medium_up ||
+		 note == trigger_medium_mute_down || note == trigger_medium_mute_up) ? 2 :
+		(note == trigger_custom2_down || note == trigger_custom2_up) ? 1 :
+		(note == trigger_stab) ? 4 :
+		(note == trigger_long_down || note == trigger_long_up) ? 5 : 0;
+	);
+
+	function is_mute_strum(note) (
+		note == trigger_medium_mute_down || note == trigger_medium_mute_up ||
+		note == trigger_short_mute_down || note == trigger_short_mute_up;
+	);
+
+	// check if currently held or ringing
+	function note_is_held(note, ch) local(s) (
+		s = io_mode ? io_stored[ch * 128 + note] : storedNotes[note];
+		s == 1 || s == 2;
+	);
+
+	// check if pitch is held on any input channel
+	function any_channel_holds(note) local(ch, held, s) (
+		held = 0;
+		ch = 0;
+		loop(16,
+			s = io_stored[ch * 128 + note];
+			(s == 1 || s == 2) ? held = 1;
+			ch += 1;
+		);
+		held;
+	);
+
+	// clear per-channel held state of a pitch on every channel
+	function clear_io_note(note) local(ch) (
+		ch = 0;
+		loop(16,
+			io_stored[ch * 128 + note] = 0;
+			ch += 1;
+		);
+	);
+
+	// clear per-channel direct-play state of a pitch on every channel
+	function clear_direct_io(note) local(ch) (
+		ch = 0;
+		loop(16,
+			direct_io[ch * 128 + note] = 0;
+			ch += 1;
+		);
+	);
+
+	// build chord_buffer from held notes.
+	function build_chord_buffer() local(i, ch, ordered_note) (
+		chord_size = 0;
+		chord_is_demo = 0;
+
+		strum_order_mode == ORDER_PITCH ? (
+			i = 0;
+			loop(128,
+				storedNotes[i] == 1 ? (
+					(chord_buffer + chord_size)[0] = i;
+					(chord_chan + chord_size)[0] = 0;
+					chord_size += 1;
+				);
+				i += 1;
+			);
+		) : strum_order_mode == ORDER_PLAYED ? (
+			i = 0;
+			loop(note_order_count,
+				ordered_note = note_order[i];
+				storedNotes[ordered_note] == 1 ? (
+					(chord_buffer + chord_size)[0] = ordered_note;
+					(chord_chan + chord_size)[0] = 0;
+					chord_size += 1;
+				);
+				i += 1;
+			);
+		) : strum_order_mode == ORDER_CHANNEL ? (
+			ch = 0;
+			loop(16,
+				i = 0;
+				loop(128,
+					(storedNotes[i] == 1 && note_channel[i] == ch) ? (
+						(chord_buffer + chord_size)[0] = i;
+						(chord_chan + chord_size)[0] = 0;
+						chord_size += 1;
+					);
+					i += 1;
+				);
+				ch += 1;
+			);
+		) : (
+			ch = 0;
+			loop(16,
+				i = 0;
+				loop(128,
+					io_stored[ch * 128 + i] == 1 ? (
+						(chord_buffer + chord_size)[0] = i;
+						(chord_chan + chord_size)[0] = ch;
+						chord_size += 1;
+					);
+					i += 1;
+				);
+				ch += 1;
+			);
+		);
+
+		(chord_size == 0 && demo_chord && !is_daw_playing) ? (
+			i = 0;
+			loop(demo_count,
+				(chord_buffer + i)[0] = demo_notes[i];
+				(chord_chan + i)[0] = 0;
+				i += 1;
+			);
+			chord_size = demo_count;
+			chord_is_demo = 1;
+		);
+
+		chord_size;
+	);
+
+	// channel state structure
+	CH_STRIDE = 16;
 	S_IS_ACTIVE = 0;
 	S_VELOCITY = 1;
 	S_NOTE_INDEX = 2;
 	S_TIMER = 3;
 	S_IS_UP = 4;
-	S_SPEED_MOD = 5;
+	S_STRUM_TYPE = 5;
 	S_IS_MUTED = 6;
 	S_CHORD_SIZE = 7;
 	S_FIRST_NOTE = 8;
-	S_HUMANIZE_DELAY = 9;  // test
+	S_HUMANIZE_DELAY = 9;
+	S_CACHE_BASE_SPEED = 10;
+	S_CACHE_CURVE = 11;
+	S_CACHE_VEL_CURVE = 12;
+	S_CACHE_IGNORE_COUNT = 13;
+	S_IS_DEMO = 14;
 
+	humanize_note = 2;
 
-	humanize_note = 2;  // maximum random delay between strummed notes. this might cause some problemos. check for note bleed
-
-	// Initialize other states
-	bypass_active = 0;
-	prev_state = -1;
-
-	//func send a note off to all channels
-	function send_note_off_all_channels(note) local(c) (
+	// send note-off to all output channels
+	function send_note_off_all_channels(note) local(c, tmr_ptr) (
 		c = 0;
 		loop(num_channels,
+			midisend(0, 0x80 + c, note);
+			tmr_ptr = muted_timers + c * 128 + note;
+			tmr_ptr[0] = 0;
+			c += 1;
+		);
+	);
+
+	// send all notes of a type to off and stop strums
+	function silence_all_stored_notes(note_type) local(i, j, n) (
+		i = 0;
+		io_mode ? (
+			loop(2048,
+				io_stored[i] == note_type ? (
+					midisend(0, 0x80 + (i >> 7), i & 127);
+					(muted_timers + i)[0] = 0;
+				);
+				i += 1;
+			);
+		) : (
+			loop(128,
+				storedNotes[i] == note_type ? send_note_off_all_channels(i);
+				i += 1;
+			);
+		);
+		i = 0;
+		loop(num_channels,
+			(channel_states + i * CH_STRIDE)[S_IS_ACTIVE] = 0;
+			i += 1;
+		);
+
+		demo_chord ? (
+			i = 0;
+			loop(demo_count,
+				n = demo_notes[i];
+				storedNotes[n] == 0 ? (
+					j = 0;
+					loop(num_channels,
+						midisend(0, 0x80 + j, n);
+						(muted_timers + j * 128 + n)[0] = 0;
+						j += 1;
+					);
+				);
+				i += 1;
+			);
+		);
+
+		chord_is_demo = 0;
+		note_order_count = 0;
+	);
+	
+	// send keyswitch to all output channels
+	function send_keyswitch(note) local(c, n) (
+		n = strum_order_mode == ORDER_CHANNEL_IO ? 16 : num_channels;
+		c = 0;
+		loop(n,
+			midisend(0, 0x90 + c, note | (100 << 8));
 			midisend(0, 0x80 + c, note);
 			c += 1;
 		);
 	);
 
-	//func clear all notes and states
-	function clear_all_notes() local(i) (
-		memset(storedNotes, 0, 128);
-		i = 0;
-		loop(128,
-			send_note_off_all_channels(i);
-			i += 1;
-		);
-		i = 0;
-		loop(num_channels,
-			(channel_states + i * CH_STRIDE)[S_IS_ACTIVE] = 0;
-			i += 1;
+	// pass a message through to the output
+	function send_passthrough(offset, m1, m23) local(c) (
+		strum_order_mode == ORDER_CHANNEL_IO ? (
+			midisend(offset, m1, m23);
+		) : (
+			c = 0;
+			loop(num_channels,
+				midisend(offset, (m1 & 0xF0) + c, m23);
+				c += 1;
+			);
 		);
 	);
 
-	//func sends a note off to every active note of that note type and stops strums. only used on trigger_note_off key for now
-	function silence_all_stored_notes(note_type) local(i) (
-		i = 0;
-		loop(128,
-			storedNotes[i] == note_type ? (
-				send_note_off_all_channels(i);
-			);
-			i += 1;
-		);
-		i = 0;
-		loop(num_channels,
-			(channel_states + i * CH_STRIDE)[S_IS_ACTIVE] = 0;
-			i += 1;
-		);
-	);
 
 @slider
+	long_strum_speed_down = slider1;
+	medium_strum_speed_down = slider2;
+	short_strum_speed_down = slider3;
+	custom_strum_1_speed_down = slider4;
+	custom_strum_2_speed_down = slider5;
 
-	base_timing_down = slider1;
-	timing_curve_down = slider2;
-	velocity_curve_down = slider3;
-	ignore_last_notes_down = slider4;
-	base_timing_up = slider5;
-	timing_curve_up = slider6;
-	velocity_curve_up = slider7;
-	ignore_last_notes_up = slider8;
+	long_strum_speed_up = long_strum_speed_down * 0.9;
+	custom_strum_1_speed_up = custom_strum_1_speed_down * 0.9;
+	custom_strum_2_speed_up = custom_strum_2_speed_down * 0.9;
+	medium_strum_speed_up = medium_strum_speed_down * 0.9;
+	short_strum_speed_up = short_strum_speed_down * 0.9;
 
-	bypass_mode = slider9;
+	custom_strum_1_timing_curve = slider6;
+	custom_strum_2_timing_curve = slider7;
 
-	bypass_mode == 1 ? (
-		play_state == 0 ? (
-			bypass_active = 1;
-		) : (
-			bypass_active = 0;
-		);
-	);
+	long_timing_curve_down = long_strum_speed_down * -0.1;
+	long_timing_curve_up = long_strum_speed_up * 0.1;
+	medium_timing_curve_down = medium_strum_speed_down * -0.08;
+	medium_timing_curve_up = medium_strum_speed_up * 0.08;
+	short_timing_curve_down = short_strum_speed_down * -0.05;
+	short_timing_curve_up = short_strum_speed_up * 0.05;
 
-	keyswitch_1_note = slider10;
-	keyswitch_2_note = slider11;
-	keyswitch_3_note = slider12;
+	velocity_curve_down = slider8;
+	velocity_curve_up = slider9;
+	ignore_last_notes_down = slider10;
+	ignore_last_notes_up = slider11;
+	muted_length_ms = slider12;
+	strum_order_mode = slider13;
+	io_mode = (strum_order_mode == ORDER_CHANNEL_IO);
+	bypass_played_notes = slider14;
+	demo_chord = slider15;
 
-	num_channels = slider14 + 1;
-	channel_randomizer = slider15;
+	keyswitch_1_note = slider16;
+	keyswitch_2_note = slider17;
+	keyswitch_3_note = slider18;
+	keyswitch_4_note = slider19;
+	key_transpose = slider20 * 12;
 
-	key_transpose = slider13 * 12;
+	num_channels = (strum_order_mode == ORDER_CHANNEL_IO) ? 1 : slider21 + 1;
+	channel_randomizer = slider22;
+
+	bypass_off_key = 18 + key_transpose;
+	bypass_on_key = 20 + key_transpose;
+	ring_current_notes_key = 22 + key_transpose;
+	trigger_custom1_down = 17 + key_transpose;
+	trigger_custom1_up = 19 + key_transpose;
+	trigger_custom2_down = 21 + key_transpose;
+	trigger_custom2_up = 23 + key_transpose;
+	trigger_long_down = 24 + key_transpose;
+	trigger_long_up = 26 + key_transpose;
+	trigger_medium_down = 28 + key_transpose;
+	trigger_medium_up = 29 + key_transpose;
+	trigger_short_down = 31 + key_transpose;
+	trigger_short_up = 33 + key_transpose;
+	trigger_stab = 35 + key_transpose;
+	trigger_medium_mute_down = 25 + key_transpose;
+	trigger_medium_mute_up = 27 + key_transpose;
+	trigger_short_mute_down = 30 + key_transpose;
+	trigger_short_mute_up = 32 + key_transpose;
+	trigger_note_off = 34 + key_transpose;
+	keyswitch_1_key = 36 + key_transpose;
+	keyswitch_2_key = 37 + key_transpose;
+	keyswitch_3_key = 38 + key_transpose;
+	keyswitch_4_key = 39 + key_transpose;
 
 
 @block
+	ms_to_samples_mult = srate / 1000;
+	muted_length_samples = muted_length_ms * ms_to_samples_mult;
 
-	// key mappings
-	ring_current_notes_key = 23 + key_transpose;
-	trigger_long_down = 24 + key_transpose;
-	trigger_long_up = 26 + key_transpose;
-	trigger_medium_down = 25 + key_transpose;
-	trigger_medium_up = 27 + key_transpose;
-	trigger_short_down = 28 + key_transpose;
-	trigger_short_up = 29 + key_transpose;
-	trigger_mute_down = 30 + key_transpose;
-	trigger_mute_up = 32 + key_transpose;
-	trigger_short_mute_down = 31 + key_transpose;
-	trigger_short_mute_up = 33 + key_transpose;
-	trigger_note_off = 34 + key_transpose;
-
-	keyswitch_1_key = 35 + key_transpose;
-	keyswitch_2_key = 36 + key_transpose;
-	keyswitch_3_key = 37 + key_transpose;
-
-	bypass_off_key = 38 + key_transpose;
-	bypass_on_key = 39 + key_transpose;
-
-	play_state = play_state ? play_state : 0;
-
-	// stopped DAW bypass
-	bypass_mode == 1 ? (
-		prev_state != play_state ? (
-			bypass_active = (play_state == 0);
-			bypass_active ? clear_all_notes();
-			prev_state = play_state;
-		);
+	(strum_order_mode == ORDER_CHANNEL_IO && slider21 != 0) ? (
+		slider21 = 0;
+		sliderchange(slider21);
+		slider_automate(slider21);
 	);
 
-	//handle midi
+
+@sample
+	play_state = play_state ? play_state : 0;
+	new_daw_playing = !(play_state == 0 || play_state == 2);
+
+	// stop all notes if the DAW just started playing
+	(new_daw_playing && !is_daw_playing) ? (
+		silence_all_stored_notes(0);
+		silence_all_stored_notes(1);
+		silence_all_stored_notes(2);
+	);
+	is_daw_playing = new_daw_playing;
+
+	should_play_direct = (!bypass_played_notes) || (!is_daw_playing);
+
+	// process incoming MIDI
 	while (midirecv(offset, msg1, msg23)) (
 		status = msg1 & 0xF0;
+		in_channel = msg1 & 0x0F;
 		note = msg23 & 0xFF;
 		vel = msg23 >> 8;
-
 		is_noteon = status == 0x90 && vel > 0;
 		is_noteoff = status == 0x80 || (status == 0x90 && vel == 0);
 
-		// bypass keys
-		bypass_mode == 0 ? (
-			is_noteon && note == bypass_on_key ? (
-				bypass_active = 1;
-				clear_all_notes();
-			);
-			is_noteon && note == bypass_off_key ? bypass_active = 0;
+		// track pressed keys for gui
+		(is_noteon || is_noteoff) ? (
+			kslot = key_slot(note);
+			kslot >= 0 ? key_pressed[kslot] = is_noteon ? 1 : 0;
 		);
 
-		bypass_active ? (
-			midisend(offset, msg1, msg23);
+		// kill demo notes when real note is played
+		is_noteon && chord_is_demo && !is_strum_trigger(note) && kslot < 0 ? (
+			silence_all_stored_notes(1);
+		);
+
+		note == ring_current_notes_key && is_noteon ? (
+			i = 0;
+			loop(128,
+				storedNotes[i] == 1 ? (
+					storedNotes[i] = 2;
+					remove_note_from_order(i);
+				);
+				i += 1;
+			);
+			i = 0;
+			loop(2048,
+				io_stored[i] == 1 ? io_stored[i] = 2;
+				i += 1;
+			);
 		) : (
-			// ring current notes key
-			note == ring_current_notes_key ? (
-				is_noteon ? (
-					// Convert all stored notes from 1 to 2 (ring them)
-					i = 0;
-					loop(128,
-						storedNotes[i] == 1 ? storedNotes[i] = 2;
-						i += 1;
-					);
-				);
-			) : (
-				// check for strum triggers
-				is_strum_trigger = (
-					note == trigger_long_down || note == trigger_long_up ||
-					note == trigger_medium_down || note == trigger_medium_up ||
-					note == trigger_mute_down || note == trigger_mute_up ||
-					note == trigger_short_down || note == trigger_short_up ||
-					note == trigger_short_mute_down || note == trigger_short_mute_up
-				);
+			strum_trigger_pressed = is_strum_trigger(note);
 
-				is_noteon ? (
-					is_strum_trigger ? (
-						// build chord buffer low to high - only include notes with value 1, not 2 (ringed notes)
-						chord_size = 0;
-						i = 0;
-						loop(128,
-							storedNotes[i] == 1 ? (
-								(chord_buffer + chord_size)[0] = i;
-								chord_size += 1;
-							);
-							i += 1;
-						);
+			is_noteon && strum_trigger_pressed ? (
+				chord_size = build_chord_buffer();
 
-						chord_size > 0 ? (
-							// Determine strum parameters
-							strum_up = (
-								note == trigger_long_up || note == trigger_medium_up ||
-								note == trigger_mute_up || note == trigger_short_up ||
-								note == trigger_short_mute_up
-							);
-							strum_medium = (
-								note == trigger_medium_down || note == trigger_medium_up ||
-								note == trigger_mute_down || note == trigger_mute_up ||
-								note == trigger_short_down || note == trigger_short_up ||
-								note == trigger_short_mute_down || note == trigger_short_mute_up
-							);
-							strum_short = (
-								note == trigger_short_down || note == trigger_short_up ||
-								note == trigger_short_mute_down || note == trigger_short_mute_up
-							);
-							mute_strum = (
-								note == trigger_mute_down || note == trigger_mute_up ||
-								note == trigger_short_mute_down || note == trigger_short_mute_up
-							);
+				chord_size > 0 ? (
+					strum_up = is_strum_up(note);
+					strum_type = get_strum_type(note);
+					mute_strum = is_mute_strum(note);
 
-							speed_scale = strum_short ? 0.15 : strum_medium ? 0.5 : 1;
-
-							// choose random channel with no delay
-							root_ch = floor(rand() * num_channels);
-
-							// initialize per-channel states
-							c = 0;
-							loop(num_channels,
-								ch_base = channel_states + c * CH_STRIDE;
-								ch_base[S_IS_ACTIVE] = 1;
-								ch_base[S_VELOCITY] = vel;
-								ch_base[S_NOTE_INDEX] = 0;
-								ch_base[S_TIMER] = (c == root_ch ? 0 : -(rand() * channel_randomizer));
-								ch_base[S_IS_UP] = strum_up;
-								ch_base[S_SPEED_MOD] = speed_scale;
-								ch_base[S_IS_MUTED] = mute_strum;
-								ch_base[S_CHORD_SIZE] = chord_size;
-								ch_base[S_FIRST_NOTE] = 1;
-								ch_base[S_HUMANIZE_DELAY] = 0;  // initialize humanize delay
-								c += 1;
-							);
-						);
-					) : note == trigger_note_off ? (
-						silence_all_stored_notes(1);
-					) : note == keyswitch_1_key ? (
-						// Keyswitch 1
-						c = 0;
-						loop(num_channels,
-							midisend(offset, 0x90 + c, keyswitch_1_note | (100 << 8));
-							midisend(offset, 0x80 + c, keyswitch_1_note);
-							c += 1;
-						);
-					) : note == keyswitch_2_key ? (
-						// Keyswitch 2
-						c = 0;
-						loop(num_channels,
-							midisend(offset, 0x90 + c, keyswitch_2_note | (100 << 8));
-							midisend(offset, 0x80 + c, keyswitch_2_note);
-							c += 1;
-						);
-					) : note == keyswitch_3_key ? (
-						// Keyswitch 3
-						c = 0;
-						loop(num_channels,
-							midisend(offset, 0x90 + c, keyswitch_3_note | (100 << 8));
-							midisend(offset, 0x80 + c, keyswitch_3_note);
-							c += 1;
-						);
-					) : note == bypass_off_key || note == ring_current_notes_key ||  note == bypass_on_key ? (
-						// skip keys
-						0;
+					strum_type == 4 ? (
+						p_base = 0; p_curve = 0;
+					) : strum_type == 5 ? (
+						p_base = strum_up ? long_strum_speed_up : long_strum_speed_down;
+						p_curve = strum_up ? long_timing_curve_up : long_timing_curve_down;
+					) : strum_type == 3 ? (
+						p_base = strum_up ? short_strum_speed_up : short_strum_speed_down;
+						p_curve = strum_up ? short_timing_curve_up : short_timing_curve_down;
+					) : strum_type == 2 ? (
+						p_base = strum_up ? medium_strum_speed_up : medium_strum_speed_down;
+						p_curve = strum_up ? medium_timing_curve_up : medium_timing_curve_down;
+					) : strum_type == 1 ? (
+						p_base = strum_up ? custom_strum_2_speed_up : custom_strum_2_speed_down;
+						p_curve = custom_strum_2_timing_curve;
 					) : (
-						// store regular notes
-						storedNotes[note] = 1;
+						p_base = strum_up ? custom_strum_1_speed_up : custom_strum_1_speed_down;
+						p_curve = custom_strum_1_timing_curve;
 					);
-				) : is_noteoff ? (
-					// handle note-off for both regular (1) and ringed (2)
-					storedNotes[note] == 1 || storedNotes[note] == 2 ? (
-						storedNotes[note] = 0;
-						send_note_off_all_channels(note);
-					);
-				) : (
-					// pass through other midi
+					p_base_samples = p_base * ms_to_samples_mult;
+					p_curve_samples = p_curve * ms_to_samples_mult;
+					p_vel_curve = strum_up ? velocity_curve_up : velocity_curve_down;
+					p_ignore = strum_up ? ignore_last_notes_up : ignore_last_notes_down;
+
+					root_ch = floor(rand() * num_channels);
+
 					c = 0;
 					loop(num_channels,
-						midisend(offset, (msg1 & 0xF0) + c, msg23);
+						ch_base = channel_states + c * CH_STRIDE;
+						ch_base[S_IS_ACTIVE] = 1;
+						ch_base[S_VELOCITY] = vel;
+						ch_base[S_NOTE_INDEX] = 0;
+						ch_base[S_TIMER] = (c == root_ch ? 0 : -(rand() * channel_randomizer * ms_to_samples_mult));
+						ch_base[S_IS_UP] = strum_up;
+						ch_base[S_STRUM_TYPE] = strum_type;
+						ch_base[S_IS_MUTED] = mute_strum;
+						ch_base[S_CHORD_SIZE] = chord_size;
+						ch_base[S_FIRST_NOTE] = 1;
+						ch_base[S_HUMANIZE_DELAY] = 0;
+						ch_base[S_IS_DEMO] = chord_is_demo;
+
+						ch_base[S_CACHE_BASE_SPEED] = p_base_samples;
+						ch_base[S_CACHE_CURVE] = p_curve_samples;
+						ch_base[S_CACHE_VEL_CURVE] = p_vel_curve;
+						ch_base[S_CACHE_IGNORE_COUNT] = p_ignore;
+
 						c += 1;
 					);
 				);
-			);
-		);
-	);
-
-	// strum timing processing
-	!bypass_active ? (
-		block_duration_ms = samplesblock / srate * 1000;
-		c = 0;
-		loop(num_channels,
-			ch_base = channel_states + c * CH_STRIDE;
-			ch_base[S_IS_ACTIVE] ? (
-				ch_base[S_TIMER] += block_duration_ms;
-				timer = ch_base[S_TIMER];
-				ch_base[S_FIRST_NOTE] && timer < 0 ? ( 0;
-					// wait for channel delay on first note
+			) : is_noteon && note == trigger_note_off ? (
+				silence_all_stored_notes(1);
+			) : is_noteon && note == keyswitch_1_key && keyswitch_1_note != 0 ? (
+				send_keyswitch(keyswitch_1_note);
+			) : is_noteon && note == keyswitch_2_key && keyswitch_2_note != 0 ? (
+				send_keyswitch(keyswitch_2_note);
+			) : is_noteon && note == keyswitch_3_key && keyswitch_3_note != 0 ? (
+				send_keyswitch(keyswitch_3_note);
+			) : is_noteon && note == keyswitch_4_key && keyswitch_4_note != 0 ? (
+				send_keyswitch(keyswitch_4_note);
+			) : is_noteon && note == bypass_off_key ? (
+				bypass_played_notes = 0;
+				slider14 = 0;
+				slider_automate(slider14);
+				should_play_direct = (!bypass_played_notes) || (!is_daw_playing);
+			) : is_noteon && note == bypass_on_key ? (
+				bypass_played_notes = 1;
+				slider14 = 1;
+				slider_automate(slider14);
+				should_play_direct = (!bypass_played_notes) || (!is_daw_playing);
+			) : is_noteon ? (
+				storedNotes[note] != 1 ? (
+					remove_note_from_order(note);
+					note_order[note_order_count] = note;
+					note_order_count += 1;
+				);
+				storedNotes[note] = 1;
+				note_channel[note] = in_channel;
+				io_stored[in_channel * 128 + note] = 1;
+				should_play_direct ? (
+					direct_note_played[note] = 1;
+					direct_io[in_channel * 128 + note] = 1;
+					send_passthrough(offset, msg1, msg23);
+				);
+			) : is_noteoff ? (
+				io_mode ? (
+					io_key = in_channel * 128 + note;
+					(io_stored[io_key] == 1 || io_stored[io_key] == 2) ? (
+						io_stored[io_key] = 0;
+						midisend(0, 0x80 + in_channel, note);
+						(muted_timers + io_key)[0] = 0;
+						!any_channel_holds(note) ? (
+							storedNotes[note] = 0;
+							remove_note_from_order(note);
+						);
+					);
+					direct_io[io_key] ? (
+						direct_io[io_key] = 0;
+						direct_note_played[note] = 0;
+						send_passthrough(offset, msg1, msg23);
+					);
 				) : (
-					strum_idx = ch_base[S_NOTE_INDEX];
-					chord_size = ch_base[S_CHORD_SIZE];
-					is_up = ch_base[S_IS_UP];
-					is_muted = ch_base[S_IS_MUTED];
-
-					// calculate effective chord size based on ignore settings (ignore last notes in strums)
-					ignore_count = is_up ? ignore_last_notes_up : ignore_last_notes_down;
-
-					// ignore at least 2 notes or at most the ignore count
-					actual_ignore = is_muted ? 0 : min(ignore_count, max(0, chord_size - 2));
-					effective_chord_size = chord_size - actual_ignore;
-
-					strum_idx < effective_chord_size ? (
-						base_speed = is_up ? base_timing_up : base_timing_down;
-						timing_curve = is_up ? timing_curve_up : timing_curve_down;
-						vel_curve = is_up ? velocity_curve_up : velocity_curve_down;
-						speed_mod = ch_base[S_SPEED_MOD];
-
-						// calculate humanize random delay for this note - might remove this
-						// scale humanization by speed modifier
-						ch_base[S_HUMANIZE_DELAY] == 0 && strum_idx > 0 && humanize_note > 0 ? (
-							scaled_humanize = humanize_note * speed_mod;
-							ch_base[S_HUMANIZE_DELAY] = (rand() - 0.5) * 2 * scaled_humanize;
-						);
-
-						target_time = ch_base[S_FIRST_NOTE] ? 0 :
-							(base_speed * speed_mod) +
-							strum_idx * (timing_curve * speed_mod) +
-							ch_base[S_HUMANIZE_DELAY];
-
-						timer >= target_time ? (
-							note_idx_in_buffer = is_up ? (chord_size - 1 - strum_idx) : strum_idx;
-							note_to_play = (chord_buffer + note_idx_in_buffer)[0];
-							(storedNotes[note_to_play] == 1 || storedNotes[note_to_play] == 2) ? (
-								decayed_vel = min(127, max(1, ch_base[S_VELOCITY] + strum_idx * vel_curve));
-								midisend(0, 0x80 + c, note_to_play); // < ------------------------------------------------- note off the same note before the note is played. prevents CPU disaster
-								midisend(0, 0x90 + c, note_to_play | (decayed_vel << 8));
-								is_muted ? midisend(0, 0x80 + c, note_to_play);
-							);
-							ch_base[S_NOTE_INDEX] += 1;
-							ch_base[S_TIMER] -= target_time;
-							ch_base[S_FIRST_NOTE] = 0;
-							ch_base[S_HUMANIZE_DELAY] = 0;  // reset humanize random delay for next note
-						);
-					) : (
-						// End strum for this channel
-						ch_base[S_IS_ACTIVE] = 0;
+					(storedNotes[note] == 1 || storedNotes[note] == 2) ? (
+						storedNotes[note] = 0;
+						remove_note_from_order(note);
+						clear_io_note(note);
+						send_note_off_all_channels(note);
+					);
+					direct_note_played[note] ? (
+						direct_note_played[note] = 0;
+						clear_direct_io(note);
+						send_passthrough(offset, msg1, msg23);
 					);
 				);
+			) : (
+				send_passthrough(offset, msg1, msg23);
 			);
-			c += 1;
 		);
 	);
 
+	// process strum
+	c = 0;
+	loop(num_channels,
+		ch_base = channel_states + c * CH_STRIDE;
+
+		ch_base[S_IS_ACTIVE] ? (
+			ch_base[S_TIMER] += 1;
+			timer = ch_base[S_TIMER];
+
+			!(ch_base[S_FIRST_NOTE] && timer < 0) ? (
+				strum_idx = ch_base[S_NOTE_INDEX];
+				chord_size = ch_base[S_CHORD_SIZE];
+				is_up = ch_base[S_IS_UP];
+				is_muted = ch_base[S_IS_MUTED];
+
+				base_speed_samples = ch_base[S_CACHE_BASE_SPEED];
+				timing_curve_samples = ch_base[S_CACHE_CURVE];
+
+				ignore_count = ch_base[S_CACHE_IGNORE_COUNT];
+				actual_ignore = is_muted ? 0 : min(ignore_count, max(0, chord_size - 2));
+				effective_chord_size = chord_size - actual_ignore;
+
+				strum_idx < effective_chord_size ? (
+					vel_curve = ch_base[S_CACHE_VEL_CURVE];
+
+					ch_base[S_HUMANIZE_DELAY] == 0 && strum_idx > 0 && humanize_note > 0 && ch_base[S_STRUM_TYPE] != 4 ? (
+						scaled_humanize = humanize_note * ms_to_samples_mult;
+						ch_base[S_HUMANIZE_DELAY] = (rand() - 0.5) * 2 * scaled_humanize;
+					);
+
+					target_time = ch_base[S_FIRST_NOTE] ? 0 :
+						base_speed_samples +
+						strum_idx * timing_curve_samples +
+						ch_base[S_HUMANIZE_DELAY];
+
+					timer >= target_time ? (
+						note_idx_in_buffer = is_up ? (chord_size - 1 - strum_idx) : strum_idx;
+						note_to_play = (chord_buffer + note_idx_in_buffer)[0];
+						note_in_ch = (chord_chan + note_idx_in_buffer)[0];
+
+						(ch_base[S_IS_DEMO] || note_is_held(note_to_play, note_in_ch)) ? (
+							decayed_vel = min(127, max(1, ch_base[S_VELOCITY] + strum_idx * vel_curve));
+
+							out_ch = io_mode ? note_in_ch : c;
+							slot = out_ch * 128 + note_to_play;
+
+							midisend(0, 0x80 + out_ch, note_to_play);
+
+							tmr_ptr = muted_timers + slot;
+							tmr_ptr[0] = 0;
+
+							midisend(0, 0x90 + out_ch, note_to_play | (decayed_vel << 8));
+
+							is_muted ? (
+								muted_length_samples > 0 ? (
+									tmr_ptr[0] <= 0 ? (
+										ac_count = active_mute_counts[c];
+										(active_mute_list + c * 2048)[ac_count] = slot;
+										active_mute_counts[c] = ac_count + 1;
+									);
+									tmr_ptr[0] = muted_length_samples;
+								) : (
+									midisend(0, 0x80 + out_ch, note_to_play);
+								);
+							);
+						);
+
+						ch_base[S_NOTE_INDEX] += 1;
+						ch_base[S_TIMER] -= target_time;
+						ch_base[S_FIRST_NOTE] = 0;
+						ch_base[S_HUMANIZE_DELAY] = 0;
+					);
+				) : (
+					ch_base[S_IS_ACTIVE] = 0;
+				);
+			);
+		);
+
+		m_count = active_mute_counts[c];
+		m_count > 0 ? (
+			m_list_ptr = active_mute_list + c * 2048;
+			m_idx = m_count - 1;
+
+			loop(m_count,
+				m_slot = m_list_ptr[m_idx];
+				m_tmr_ptr = muted_timers + m_slot;
+
+				m_tmr_ptr[0] > 0 ? (
+					m_tmr_ptr[0] -= 1;
+					m_tmr_ptr[0] <= 0 ? (
+						midisend(0, 0x80 + (m_slot >> 7), m_slot & 127);
+						m_tmr_ptr[0] = 0;
+
+						m_count -= 1;
+						m_list_ptr[m_idx] = m_list_ptr[m_count];
+					);
+				) : (
+					m_count -= 1;
+					m_list_ptr[m_idx] = m_list_ptr[m_count];
+				);
+
+				m_idx -= 1;
+			);
+			active_mute_counts[c] = m_count;
+		);
+
+		c += 1;
+	);
+
+
 @gfx
+	gfx_x = 50;
+	gfx_y = 0;
+	gfx_a = 1.0; 
+	gfx_blit(0, 1.0, 0, 0, 0);
 
-bypass_active ? (
-	gfx_x = 80;
+	gfx_set(1, 0, 0, 0.75);
+	i = 0;
+	loop(23,
+		key_pressed[i] ? (
+			rb = key_rects + i * 4;
+			gfx_rect(50 + rb[0], rb[1], rb[2] - rb[0], rb[3] - rb[1]);
 
-	gfx_set(1, 0, 0);
-	gfx_setfont(1, "Arial", 72);
-	gfx_drawstr("BYPASSED");
-
-	gfx_y += 75;
-);
-
-gfx_x = 50;
-gfx_blit(0, 1.0, 0, 0, 0);
-gfx_y = 0;
+			rb2 = key_rects2 + i * 4;
+			(rb2[2] - rb2[0]) > 0 ? (
+				gfx_rect(50 + rb2[0], rb2[1], rb2[2] - rb2[0], rb2[3] - rb2[1]);
+			);
+		);
+		i += 1;
+	);
+	
+	
+	chord_is_demo ? (
+		gfx_set(1, 0.8, 0.2, 1);
+		gfx_setfont(1, "Arial", 20);
+		gfx_x = 25;
+		gfx_y = 130;
+		gfx_drawstr(" DEMO\nCHORD");
+	);
